@@ -1339,21 +1339,7 @@ start = { kind = "bodyweight" }
 instructions = { en = "Jog at an easy, steady pace. Keep the steps short and relaxed.", ru = "Бегите в лёгком ровном темпе. Делайте короткие свободные шаги." }
 load_step_kg = 1.0
 
-# Added from the operator's program (generic parts only; personal data removed)
-
-# New catalog entries derived from the operator's personal training program
-# (user_exercises.toml), de-duplicated against src/fitme/catalog/exercises.toml and
-# scrubbed of all personal content (working weights, "left shoulder" references, program
-# notes). See REPORT.md in this same directory for the full merge decision log.
-#
-# This file holds ONLY the genuinely new movements. Everything else in the source file
-# duplicated an existing catalog entry; proposed cue improvements for those existing
-# entries are listed in REPORT.md, not applied here.
-#
-# Ids and style follow the house conventions in src/fitme/catalog/exercises.toml:
-# equipment-prefixed snake_case ids, conservative calibration starts, explicit
-# load_step_kg on cable/machine entries, and contraindicated_by covering every
-# loads_areas entry.
+# ───────────── Additional gym and cardio movements ─────────────
 
 [[exercise]]
 id = "barbell_deficit_deadlift"
