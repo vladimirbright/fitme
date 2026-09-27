@@ -73,3 +73,12 @@ async def insert_plan_version(
     )
     assert cursor.lastrowid is not None
     return cursor.lastrowid
+
+
+async def clear_default_plan(conn: aiosqlite.Connection, user_id: int, plan_id: int) -> None:
+    """Unset `is_default` on one of this user's plans (used when archiving the default plan,
+    A§6.2: the default then moves to another active plan, or none). A plan_id that isn't this
+    user's own is a no-op rather than an error: nothing to clear."""
+    await conn.execute(
+        "UPDATE plans SET is_default = 0 WHERE id = ? AND user_id = ?", (plan_id, user_id)
+    )

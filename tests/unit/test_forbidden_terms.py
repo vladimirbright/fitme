@@ -11,79 +11,21 @@ leaking into user-visible copy), sharing the same scanner `fitme catalog check` 
 from __future__ import annotations
 
 import importlib.resources
-import re
 
 import pytest
 
 from fitme import i18n
 from fitme.catalog import load_catalog
 from fitme.cli.catalog_check import forbidden_reference_problems
+from fitme.i18n import wording
 
-# Case-insensitive bans. Kept short and specific (AGENTS.md §3's own words plus the M3-round-2
-# review), rather than stemming everything, to avoid banning legitimate uses:
-# - "diagnosed"/"diagnose" is deliberately NOT banned in English: A§5.1's own screening
-#   copy asks about "diagnosed high blood pressure" (self-reported history), which is not the
-#   system making a diagnosis claim. Russian "диагноз" is banned and doesn't collide with the
-#   verb form "диагностировано" used the same way (different letter after "диагно").
-# - Every term in `_WORD_START_TERMS` is matched at a word boundary (`\bterm`, no boundary
-#   required at the end, so it still catches an inflected form: "trainers", "cures") rather
-#   than as a plain substring anywhere in the text. Plain substring matching is too broad for
-#   these specific short words once the catalog is a few thousand words of prose: "cure"
-#   plainly matches inside "se-CURE" ("a secure bar", a real M3-round-3 false positive on the
-#   band lat pulldown instructions), and "heal" matches inside "health" (used constantly —
-#   this is a health screening flow). None of the terms below happen to prefix-match any
-#   other word actually used in this project's copy (verified by the tests further down).
-#   Multi-word phrases stay plain-substring: a phrase is specific enough that this risk
-#   doesn't apply in practice.
-_WORD_START_TERMS: frozenset[str] = frozenset(
-    {
-        "trainer",
-        "coach",
-        "physio",
-        "nutritionist",
-        "therapy",
-        "therapeutic",
-        "rehab",
-        "cure",
-        "treat",
-    }
-)
-_FORBIDDEN_EN: tuple[str, ...] = (
-    "trainer",
-    "coach",
-    "physio",
-    "personal trainer",
-    "your personal",
-    "nutritionist",
-    "therapy",
-    "therapeutic",
-    "rehab",
-    "heal",
-    "treat",
-    "cure",
-    "prevent injury",
-    "weight loss",
-    "fat loss",
-    "lose weight",
-    "burn fat",
-)
-_FORBIDDEN_RU: tuple[str, ...] = (
-    "тренер",
-    "коуч",
-    "персональн",
-    "физиотерапевт",
-    "терапи",
-    "реабилит",
-    "диагноз",
-    "лечит",
-    "лечение",
-    "похудение",
-    "похуде",
-    "сбросить вес",
-    "жиросжиг",
-)
-
-_HEAL_PATTERN = re.compile(r"\bheal(?!th)\w*")
+# The term lists and the matcher live in `fitme.i18n.wording` (shared with the runtime check
+# over model-authored plan text); this test only supplies the corpora.
+_WORD_START_TERMS = wording.WORD_START_TERMS
+_FORBIDDEN_EN = wording.FORBIDDEN_EN
+_FORBIDDEN_RU = wording.FORBIDDEN_RU
+_HEAL_PATTERN = wording.HEAL_PATTERN
+_term_present = wording.term_present
 
 # M4: prompts legitimately state, in one fixed sentence repeated verbatim across all five
 # `prompts/*.v1.md` files, that the system is "not a trainer, coach, physiotherapist,
@@ -98,14 +40,6 @@ _ALLOWED_PROMPT_DISCLAIMER_SENTENCES: tuple[str, ...] = (
     "physiotherapist, nutritionist, or doctor; it does not diagnose, treat, cure, or "
     "otherwise manage any medical condition, and it makes no weight-loss claims.",
 )
-
-
-def _term_present(text: str, term: str) -> bool:
-    if term == "heal":
-        return _HEAL_PATTERN.search(text) is not None
-    if term in _WORD_START_TERMS:
-        return re.search(rf"\b{re.escape(term)}", text) is not None
-    return term in text
 
 
 def _locale_text(lang: str) -> str:

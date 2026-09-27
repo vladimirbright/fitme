@@ -24,13 +24,17 @@ from fitme.db.controllers.training import (
 from fitme.db.selectors.training import (
     get_checkin,
     get_workout_session,
+    historical_max_by_exercise,
     historical_max_kg,
+    latest_checkin_answers,
     list_checkins_for_session,
     list_open_health_holds,
     list_set_logs_for_session,
     list_workout_sessions_for_user,
     recent_session_outcomes,
+    recent_session_outcomes_by_exercise,
 )
+from fitme.domain.enums import CheckinAnswer
 
 
 async def _insert_plan_version(db: Database, user_id: int) -> int:
@@ -450,3 +454,98 @@ async def test_health_hold_open_and_clear(db: Database, user_id: int) -> None:
     async with db.read() as conn:
         open_holds = await list_open_health_holds(conn, user_id)
     assert open_holds == []
+
+
+async def _completed_session_with_sets(
+    db: Database, user_id: int, plan_version_id: int, sets: list[tuple[str, float, int]]
+) -> int:
+    """One completed session; `sets` = (exercise_id, load_kg, reps), planned 5-8 at that load."""
+    async with db.transaction() as conn:
+        session_id = await insert_workout_session(
+            conn,
+            user_id=user_id,
+            plan_version_id=plan_version_id,
+            workout_key="A",
+            status="completed",
+        )
+        for index, (exercise_id, load_kg, reps) in enumerate(sets, start=1):
+            await insert_set_log(
+                conn,
+                session_id=session_id,
+                exercise_id=exercise_id,
+                set_index=index,
+                planned_load_kg=load_kg,
+                planned_reps_min=5,
+                planned_reps_max=8,
+                actual_load_kg=load_kg,
+                actual_reps=reps,
+                rpe=None,
+                source="button",
+            )
+    return session_id
+
+
+async def test_historical_max_by_exercise_covers_every_logged_exercise(
+    db: Database, user_id: int
+) -> None:
+    plan_version_id = await _insert_plan_version(db, user_id)
+    await _completed_session_with_sets(
+        db, user_id, plan_version_id, [("barbell_back_squat", 40.0, 8), ("pushup", 1.0, 10)]
+    )
+    await _completed_session_with_sets(
+        db, user_id, plan_version_id, [("barbell_back_squat", 50.0, 5)]
+    )
+
+    async with db.read() as conn:
+        by_exercise = await historical_max_by_exercise(conn, user_id)
+    assert by_exercise == {"barbell_back_squat": 50.0, "pushup": 1.0}
+
+
+async def test_historical_max_by_exercise_is_empty_with_no_logs(db: Database, user_id: int) -> None:
+    async with db.read() as conn:
+        assert await historical_max_by_exercise(conn, user_id) == {}
+
+
+async def test_recent_session_outcomes_by_exercise_matches_the_per_exercise_selector(
+    db: Database, user_id: int
+) -> None:
+    plan_version_id = await _insert_plan_version(db, user_id)
+    for load, reps in ((40.0, 8), (42.5, 6), (42.5, 8)):
+        await _completed_session_with_sets(
+            db, user_id, plan_version_id, [("barbell_back_squat", load, reps), ("pushup", 1.0, 12)]
+        )
+
+    async with db.read() as conn:
+        by_exercise = await recent_session_outcomes_by_exercise(conn, user_id, limit=2)
+        squat = await recent_session_outcomes(conn, user_id, "barbell_back_squat", limit=2)
+        pushup = await recent_session_outcomes(conn, user_id, "pushup", limit=2)
+
+    assert set(by_exercise) == {"barbell_back_squat", "pushup"}
+    assert by_exercise["barbell_back_squat"] == squat
+    assert by_exercise["pushup"] == pushup
+    assert len(by_exercise["barbell_back_squat"]) == 2  # limit respected
+    assert by_exercise["barbell_back_squat"][0].planned_load_kg == 42.5  # most recent first
+    assert by_exercise["barbell_back_squat"][0].min_reps_performed == 8
+    assert by_exercise["barbell_back_squat"][1].min_reps_performed == 6
+
+
+async def test_latest_checkin_answers_uses_the_newest_row_per_area(
+    db: Database, user_id: int
+) -> None:
+    async with db.transaction() as conn:
+        older = await insert_checkin(
+            conn, user_id=user_id, session_id=None, question_key="area:knee"
+        )
+        await answer_checkin(conn, older, answer="fine")
+        await insert_checkin(conn, user_id=user_id, session_id=None, question_key="area:knee")
+        back = await insert_checkin(
+            conn, user_id=user_id, session_id=None, question_key="area:lower_back"
+        )
+        await answer_checkin(conn, back, answer="worse")
+        await insert_checkin(conn, user_id=user_id, session_id=None, question_key="precheck")
+
+    async with db.read() as conn:
+        answers = await latest_checkin_answers(conn, user_id)
+
+    # The newer, unanswered knee check-in wins over the older "fine" (silence is not consent).
+    assert answers == {"knee": CheckinAnswer.UNKNOWN, "lower_back": CheckinAnswer.WORSE}

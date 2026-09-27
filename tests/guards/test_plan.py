@@ -16,7 +16,7 @@ from fitme.domain.enums import (
 from fitme.domain.models import Block, Load, Plan, Prescription, ScheduledDay, Workout
 from fitme.domain.screening import ScreeningFlagState
 from fitme.guards.context import GuardContext
-from fitme.guards.plan import validate_plan
+from fitme.guards.plan import LOAD_RULES, load_verdicts, reference_load_kg, validate_plan
 
 _SQUAT = Exercise.model_validate(
     {
@@ -34,13 +34,35 @@ _SQUAT = Exercise.model_validate(
     }
 )
 
-_CATALOG = Catalog.model_validate({"exercise": [_SQUAT.model_dump()]})
+_PUSHUP = Exercise.model_validate(
+    {
+        "id": "pushup",
+        "names": {"en": "Push-up"},
+        "kind": "bodyweight",
+        "pattern": "horizontal_push",
+        "equipment": [],
+        "locations": ["public_gym"],
+        "loads_areas": ["shoulder", "elbow_wrist"],
+        "contraindicated_by": ["shoulder_injury_current", "elbow_wrist_injury_current"],
+        "increment_kg": 2.5,
+        "start": {"kind": "bodyweight"},
+        "instructions": {"en": "..."},
+    }
+)
+_CATALOG = Catalog.model_validate({"exercise": [_SQUAT.model_dump(), _PUSHUP.model_dump()]})
 
 # A "complete" screening (B4): every red flag explicitly answered "no". `validate_plan` now
 # runs `screening.plan_allowed` too, which refuses outright if any red flag is missing or
 # "unknown" — tests that aren't exercising that behavior need a complete baseline so it
 # doesn't mask the thing they're actually checking.
 _ALL_RED_FLAGS_NO = [ScreeningFlagState(flag=flag, value="no") for flag in RED_FLAGS]
+# Lower back flagged: its check-in is required before an increase (A§6.5/A§7). The squat is
+# then also contraindicated (A§4.4 coverage), which these tests don't mind: they look at the
+# check-in verdict specifically.
+_LOWER_BACK_FLAGGED = [
+    *_ALL_RED_FLAGS_NO,
+    ScreeningFlagState(flag=ScreeningFlag.LOWER_BACK_INJURY_CURRENT, value="yes"),
+]
 
 _FINE_CHECKINS = {"knee": CheckinAnswer.FINE, "lower_back": CheckinAnswer.FINE}
 
@@ -182,10 +204,57 @@ def test_kg_proposal_with_no_history_is_rejected_by_the_ceiling_guard() -> None:
 
 def test_an_increase_blocked_by_an_unknown_checkin() -> None:
     plan = _plan("barbell_back_squat", Load(kind="kg", kg=102.5))
-    ctx = _ctx(history_max_kg={"barbell_back_squat": 100.0}, checkins={"knee": CheckinAnswer.FINE})
-    # "lower_back" has no entry: treated as unknown, blocks the increase.
+    ctx = _ctx(
+        flags=_LOWER_BACK_FLAGGED,
+        history_max_kg={"barbell_back_squat": 100.0},
+        checkins={"knee": CheckinAnswer.FINE},
+    )
+    # The flagged "lower_back" has no entry: treated as unknown, blocks the increase.
     verdicts = validate_plan(plan, ctx)
     assert any(v.rule == "checkins.increase_allowed" and not v.ok for v in verdicts)
+
+
+def test_an_increase_on_a_flagged_area_with_a_stale_unknown_checkin_is_blocked() -> None:
+    plan = _plan("barbell_back_squat", Load(kind="kg", kg=102.5))
+    ctx = _ctx(
+        flags=_LOWER_BACK_FLAGGED,
+        history_max_kg={"barbell_back_squat": 100.0},
+        checkins={"lower_back": CheckinAnswer.UNKNOWN},  # the latest, after an older "fine"
+    )
+    verdicts = validate_plan(plan, ctx)
+    assert any(v.rule == "checkins.increase_allowed" and not v.ok for v in verdicts)
+
+
+def test_an_increase_on_a_flagged_area_with_the_latest_checkin_fine_passes_the_guard() -> None:
+    plan = _plan("barbell_back_squat", Load(kind="kg", kg=102.5))
+    ctx = _ctx(
+        flags=_LOWER_BACK_FLAGGED,
+        history_max_kg={"barbell_back_squat": 100.0},
+        checkins={"lower_back": CheckinAnswer.FINE},
+        weekly_cap_kg={"barbell_back_squat": 2.5},
+    )
+    verdicts = validate_plan(plan, ctx)
+    assert all(v.ok for v in verdicts if v.rule == "checkins.increase_allowed")
+    assert ctx.flagged_areas == frozenset({"lower_back"})
+
+
+def test_an_increase_on_unflagged_areas_needs_no_checkins() -> None:
+    """Nothing flagged, no check-ins at all: the check-in guard passes; the increase is still
+    subject to the weekly cap and the ceiling."""
+    plan = _plan("barbell_back_squat", Load(kind="kg", kg=102.5))
+    ctx = _ctx(
+        history_max_kg={"barbell_back_squat": 100.0},
+        current_load_kg={"barbell_back_squat": 100.0},
+        weekly_cap_kg={"barbell_back_squat": 2.5},
+    )
+    assert all(v.ok for v in validate_plan(plan, ctx))
+    capped = _ctx(
+        history_max_kg={"barbell_back_squat": 100.0},
+        current_load_kg={"barbell_back_squat": 100.0},
+        weekly_cap_kg={"barbell_back_squat": 2.5},
+        increases_7d={"barbell_back_squat": [2.5]},
+    )
+    assert any(v.rule == "progression.weekly_cap" and not v.ok for v in validate_plan(plan, capped))
 
 
 def test_an_increase_within_every_check_passes() -> None:
@@ -215,14 +284,14 @@ def test_a_load_at_or_below_history_skips_the_increase_only_checks() -> None:
 def test_b1_increase_from_current_60_to_75_with_no_checkins_is_blocked() -> None:
     """Historical max 80, but the current working load is 60: proposing 75 is a real +15 kg
     increase relative to *current*, which the old (wrong) history-max reference would have
-    missed entirely (75 < 80, "not an increase"). No check-ins at all blocks it regardless."""
+    missed entirely (75 < 80, "not an increase"). A +15 kg jump breaches the weekly cap."""
     plan = _plan("barbell_back_squat", Load(kind="kg", kg=75.0))
     ctx = _ctx(
         history_max_kg={"barbell_back_squat": 80.0},
         current_load_kg={"barbell_back_squat": 60.0},
     )
     verdicts = validate_plan(plan, ctx)
-    assert any(not v.ok for v in verdicts)
+    assert any(v.rule == "progression.weekly_cap" and not v.ok for v in verdicts)
 
 
 def test_b1_increase_to_80_with_the_weekly_cap_already_used_is_blocked() -> None:
@@ -253,3 +322,101 @@ def test_b1_increase_to_82_5_with_fine_checkins_and_cap_already_used_is_blocked(
     )
     verdicts = validate_plan(plan, ctx)
     assert any(v.rule == "progression.weekly_cap" and not v.ok for v in verdicts)
+
+
+def test_a_load_applied_this_week_is_not_counted_as_an_increase_again() -> None:
+    """A§7: current 40 (last session), history max 40, and a plan_confirm at 42.5 this week
+    (cap already used by it). Keeping 42.5 is no increase: no cap/check-in verdict, only the
+    ceiling (42.5 <= 40 + 2.5) — so a later revision doesn't revert it."""
+    ctx = _ctx(
+        history_max_kg={"barbell_back_squat": 40.0},
+        current_load_kg={"barbell_back_squat": 40.0},
+        applied_to_kg_7d={"barbell_back_squat": 42.5},
+        increases_7d={"barbell_back_squat": [2.5]},
+        weekly_cap_kg={"barbell_back_squat": 2.5},
+    )
+    verdicts = validate_plan(_plan("barbell_back_squat", Load(kind="kg", kg=42.5)), ctx)
+    assert all(v.ok for v in verdicts)
+    assert not any(v.rule == "progression.weekly_cap" for v in verdicts)
+    assert reference_load_kg(ctx, "barbell_back_squat") == 42.5
+    # Only the part above the applied load is an increase: 45 is +2.5 on a used cap.
+    verdicts = validate_plan(_plan("barbell_back_squat", Load(kind="kg", kg=45.0)), ctx)
+    assert any(v.rule == "progression.weekly_cap" and not v.ok for v in verdicts)
+    # An applied value below the reference is irrelevant; the ordinary reference stands.
+    lower = _ctx(
+        history_max_kg={"barbell_back_squat": 100.0},
+        current_load_kg={"barbell_back_squat": 60.0},
+        applied_to_kg_7d={"barbell_back_squat": 50.0},
+    )
+    assert reference_load_kg(lower, "barbell_back_squat") == 60.0
+
+
+def test_a_non_finite_applied_load_fails_closed() -> None:
+    for bad in (float("nan"), float("inf"), 0.0, -5.0):
+        ctx = _ctx(
+            history_max_kg={"barbell_back_squat": 100.0},
+            applied_to_kg_7d={"barbell_back_squat": bad},
+        )
+        verdicts = validate_plan(_plan("barbell_back_squat", Load(kind="kg", kg=90.0)), ctx)
+        assert any(v.rule == "plan.reference_load" and not v.ok for v in verdicts), bad
+
+
+def test_load_rules_cover_every_rule_load_verdicts_can_emit() -> None:
+    """A§7.3: `services/` repairs a prescription only when every failing verdict is a load
+    rule, so `LOAD_RULES` must name exactly what `load_verdicts` emits — including the
+    increase-only checks (weekly cap, check-ins) and the fail-closed reference-load verdict."""
+    plans = [
+        (Load(kind="kg", kg=200.0), _ctx(history_max_kg={"barbell_back_squat": 100.0})),
+        (Load(kind="kg", kg=50.0), _ctx()),
+        (
+            Load(kind="kg", kg=75.0),
+            _ctx(
+                history_max_kg={"barbell_back_squat": 100.0},
+                current_load_kg={"barbell_back_squat": 60.0},
+                increases_7d={"barbell_back_squat": [2.5]},
+            ),
+        ),
+        (
+            Load(kind="kg", kg=62.5),
+            _ctx(
+                history_max_kg={"barbell_back_squat": 100.0},
+                current_load_kg={"barbell_back_squat": float("nan")},
+            ),
+        ),
+    ]
+    seen: set[str] = set()
+    for load, ctx in plans:
+        for verdict in load_verdicts(_SQUAT, load, ctx):
+            seen.add(verdict.rule)
+            assert verdict.rule in LOAD_RULES, verdict.rule
+    for verdict in load_verdicts(_PUSHUP, Load(kind="kg", kg=20.0), _ctx()):
+        seen.add(verdict.rule)
+        assert verdict.rule in LOAD_RULES, verdict.rule
+    assert seen == LOAD_RULES
+    # And none of the structural rules is a load rule.
+    structural = {
+        v.rule
+        for v in validate_plan(_plan("unicorn_press", Load(kind="calibration")), _ctx())
+        if not v.ok
+    }
+    assert structural and not structural & LOAD_RULES
+
+
+def test_load_verdicts_match_validate_plan_for_the_same_prescription() -> None:
+    load = Load(kind="kg", kg=200.0)
+    ctx = _ctx(history_max_kg={"barbell_back_squat": 100.0})
+    per_prescription = load_verdicts(_SQUAT, load, ctx)
+    from_plan = [
+        v for v in validate_plan(_plan("barbell_back_squat", load), ctx) if v.rule in LOAD_RULES
+    ]
+    assert per_prescription == from_plan
+
+
+def test_a_kg_load_on_a_non_kg_loadable_exercise_is_a_load_violation() -> None:
+    """A§4.4 "non-kg exercises": rejected by `plan.kg_loadable` (a load rule, so the service
+    substitutes the engine's bodyweight/calibration rather than spending a retry)."""
+    assert _PUSHUP.kg_loadable is False
+    verdicts = validate_plan(_plan("pushup", Load(kind="kg", kg=20.0)), _ctx())
+    failing = [v for v in verdicts if not v.ok]
+    assert [v.rule for v in failing] == ["plan.kg_loadable"]
+    assert all(v.ok for v in validate_plan(_plan("pushup", Load(kind="bodyweight")), _ctx()))

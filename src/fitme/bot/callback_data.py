@@ -43,3 +43,19 @@ class HoldClear(CallbackData, prefix="hc"):
 
 class DeleteConfirm(CallbackData, prefix="dc"):
     action: str  # "start" | "cancel"
+
+
+class PlanMenu(CallbackData, prefix="pm"):
+    """`/plan` list actions (A§6.2): `new`, `list`, or `view`/`default`/`revise`/`archive`
+    for one plan (`plan_id` is 0 for the plan-independent actions)."""
+
+    action: str
+    plan_id: int
+
+
+class PlanDraft(CallbackData, prefix="pd"):
+    """A draft's buttons (A§6.4 step 5): `confirm`, `change` or `cancel`, referencing the
+    draft's decision id (0 when cancelling a pending revision that has no draft yet)."""
+
+    action: str
+    decision_id: int

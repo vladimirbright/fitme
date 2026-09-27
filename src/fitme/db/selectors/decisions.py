@@ -139,3 +139,73 @@ async def list_llm_calls_since(conn: aiosqlite.Connection, since: str) -> list[L
         )
         for row in rows
     ]
+
+
+async def recent_increase_deltas_by_exercise(
+    conn: aiosqlite.Connection, user_id: int, *, since: str
+) -> dict[str, list[float]]:
+    """`recent_increase_deltas` for every exercise at once, in one query: the plan flow
+    (A§6.4) builds `GuardContext.increases_7d` for the whole catalog, not one exercise at a
+    time. Same rules: every decision kind counts, only positive deltas are kept, and the
+    source is the append-only `decisions.load_changes` (A§9.4), never `set_logs`."""
+    async with conn.execute(
+        "SELECT load_changes FROM decisions "
+        "WHERE user_id = ? AND created_at >= ? AND load_changes != '[]'",
+        (user_id, since),
+    ) as cursor:
+        rows = await cursor.fetchall()
+
+    deltas: dict[str, list[float]] = {}
+    for (load_changes_json,) in rows:
+        for change in json.loads(load_changes_json):
+            delta = float(change["to_kg"]) - float(change["from_kg"])
+            if delta > 0:
+                deltas.setdefault(str(change["exercise_id"]), []).append(delta)
+    return deltas
+
+
+async def applied_to_kg_by_exercise(
+    conn: aiosqlite.Connection, user_id: int, *, since: str
+) -> dict[str, float]:
+    """Per exercise, the highest `to_kg` among the `load_changes` entries applied at or after
+    `since` (A§7 / A§4.3: every applying decision kind — `plan_confirm`, `progression`,
+    `session_adjust`, `user_edit`; drafts store `[]` and so never appear). Feeds
+    `guards.context.GuardContext.applied_to_kg_7d`: an increase already applied this week is
+    not counted again."""
+    async with conn.execute(
+        "SELECT load_changes FROM decisions "
+        "WHERE user_id = ? AND created_at >= ? AND load_changes != '[]'",
+        (user_id, since),
+    ) as cursor:
+        rows = await cursor.fetchall()
+
+    highest: dict[str, float] = {}
+    for (load_changes_json,) in rows:
+        for change in json.loads(load_changes_json):
+            exercise_id = str(change["exercise_id"])
+            to_kg = float(change["to_kg"])
+            known = highest.get(exercise_id)
+            highest[exercise_id] = to_kg if known is None else max(known, to_kg)
+    return highest
+
+
+# The decision kinds a `/plan` round writes (A§6.4), plus the confirm itself: the current
+# draft is the latest of these, so a Confirm/Change for an older one — or for a draft that
+# was already confirmed — is stale (A§6.3 "ignore stale callbacks").
+_PLAN_ROUND_KINDS = ("plan_generate", "plan_revise", "refusal", "plan_confirm")
+_PLAN_ROUND_KINDS_SQL = ", ".join("?" for _ in _PLAN_ROUND_KINDS)
+
+
+async def get_latest_plan_round_decision(
+    conn: aiosqlite.Connection, user_id: int
+) -> DecisionRecord | None:
+    """The newest `plan_generate`/`plan_revise`/`refusal`/`plan_confirm` decision for this
+    user, or `None`. `services.planning.confirm_plan` compares a draft's id against this to
+    reject a stale Confirm (a draft superseded by a newer round or already confirmed)."""
+    async with conn.execute(
+        f"SELECT {_DECISION_COLUMNS} FROM decisions WHERE user_id = ? "
+        f"AND kind IN ({_PLAN_ROUND_KINDS_SQL}) ORDER BY id DESC LIMIT 1",
+        (user_id, *_PLAN_ROUND_KINDS),
+    ) as cursor:
+        row = await cursor.fetchone()
+    return None if row is None else _decision_from_row(row)

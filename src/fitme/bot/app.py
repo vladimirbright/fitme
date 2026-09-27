@@ -6,14 +6,23 @@ from __future__ import annotations
 
 from aiogram import Dispatcher
 
-from fitme.bot.handlers import account, activation, free_text, setup, start, stubs
+from fitme.bot.handlers import account, activation, free_text, plan, setup, start, stubs
 from fitme.bot.middleware import OwnerGateMiddleware, StopWordCommandArgsMiddleware
 from fitme.config.settings import Settings
 from fitme.db.connection import Database
+from fitme.services.llm_runtime import LlmRuntime
 
 
-def build_dispatcher(db: Database, settings: Settings) -> Dispatcher:
-    dp = Dispatcher(db=db, settings=settings, pending_deletes=set())
+def build_dispatcher(db: Database, settings: Settings, llm: LlmRuntime | None = None) -> Dispatcher:
+    """`llm` defaults to the real runtime built from `settings`; tests pass one whose agent
+    factories wrap a `FunctionModel`, so no handler ever reaches a provider."""
+    dp = Dispatcher(
+        db=db,
+        settings=settings,
+        llm=llm if llm is not None else LlmRuntime.from_settings(settings),
+        pending_deletes=set(),
+        pending_plan_revisions={},
+    )
     dp.update.outer_middleware(OwnerGateMiddleware(db, settings))
     # Inner middleware on the root `message` observer: covers every router's command
     # handlers (A§6.3 "scan all owner free text", including a command's own arguments).
@@ -23,6 +32,7 @@ def build_dispatcher(db: Database, settings: Settings) -> Dispatcher:
     dp.include_router(setup.build_router())
     dp.include_router(start.build_router())
     dp.include_router(account.build_router())
+    dp.include_router(plan.build_router())
     dp.include_router(stubs.build_router())
     dp.include_router(free_text.build_router())
 

@@ -27,6 +27,7 @@ from fitme.db.connection import Database, DatabaseUnavailableError, open_databas
 from fitme.db.migrate import migrate, pending_migrations
 from fitme.services.account import delete_user, export_user, get_single_user
 from fitme.services.identity import issue_activation_code
+from fitme.services.llm_runtime import LlmRuntime
 from fitme.services.retention import purge as run_retention
 
 _RETENTION_INTERVAL_SECONDS = 24 * 60 * 60
@@ -181,13 +182,14 @@ async def serve_async(settings: Settings) -> int:
     process exits cleanly on error), runs the bot (long polling) and the daily retention job
     in this one event loop, and stops gracefully on SIGINT/SIGTERM (aiogram's
     `start_polling` installs its own handlers for these by default)."""
+    os.environ.setdefault("PYDANTIC_AI_NO_BANNER", "1")  # A§10; also set at CLI entry
     db = await _try_open_database(settings)
     if db is None:
         return 1
     try:
         bot = Bot(token=settings.telegram_bot_token.get_secret_value())
         try:
-            dispatcher = build_dispatcher(db, settings)
+            dispatcher = build_dispatcher(db, settings, LlmRuntime.from_settings(settings))
             await register_commands(bot)
             retention_task = asyncio.create_task(
                 _retention_loop(db, chat_retention_days=settings.chat_retention_days)

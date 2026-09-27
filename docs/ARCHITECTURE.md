@@ -220,7 +220,14 @@ never accept free-form strings from callers.
 
 `decisions.kind` values: `plan_generate`, `plan_revise`, `session_adjust`,
 `result_parse`, `progression`, `session_halt`, `hold_clear`, `refusal`, `user_edit`,
-`session_delete`, `history_import`.
+`session_delete`, `history_import`, `plan_confirm`.
+
+**Load changes count once, when applied.** Draft decisions (`plan_generate`/`plan_revise`)
+show their proposed changes inside `proposal`, but their `load_changes` column is `[]`.
+The `plan_confirm` decision written inside the confirm transaction carries the
+`load_changes`, computed against the **confirm-time** reference. The same holds for every
+other applying decision (`progression`, `session_adjust` when applied, `user_edit`,
+`history_import` = none).
 
 Enforce immutability in the controller layer: `plan_versions`, `decisions` and
 `decision_outcomes` have no update or delete methods, except the full-account delete (§8.3).
@@ -253,7 +260,12 @@ Catalog invariants, enforced by `fitme catalog check` and tests:
   per location; the data is never mislabeled to satisfy them. Required patterns per
   location: all primary patterns, except `apartment_no_equipment`, which does not require
   `vertical_pull` (that needs a bar; plans compensate with horizontal pulls).
-- **Loads are per implement:** for two-dumbbell exercises `kg` is per dumbbell. Prompts and
+- **Loads are per implement:** each exercise declares `load_unit`: `total` (barbell and
+  machine stack), `per_implement` (two dumbbells or kettlebells; kg is for each one, shown
+  as "{kg} kg each") or `single_implement` (one dumbbell or kettlebell).
+- **Non-kg exercises:** `kg_loadable = false` for cardio machines, band-only exercises, mobility and bodyweight
+  conditioning. The guards reject any kg prescription on them, and the engine substitutes
+  bodyweight or calibration. Prompts and
   UI copy must say so.
 - **Implement steps are real:** e.g. kettlebells step 2 or 4 kg.
 - **Safety cues:** barbell rack and bench exercises include a cue to set safety arms. The
@@ -636,10 +648,10 @@ class GuardVerdict(BaseModel):
 |---|---|---|
 | `progression.py` | `check_weekly_increment(exercise, *, increases_7d, proposed_increase_kg, cap_kg) -> GuardVerdict` | The sum of **positive** increases over a trailing 7 days, plus the proposed increase, must be ≤ the per-exercise cap (default 2.5 kg for compounds, catalog may set lower). Proposals above it are **rejected**, not clamped. `increases_7d` is the positive `to_kg − from_kg` of every `load_changes` entry for that exercise in `decisions` of **any** kind (progression, revise, adjust, user_edit). It is read from the append-only log, **not** from `set_logs`, so deleting a training log cannot reset the cap (§9.4). |
 | `ceiling.py` | `check_ceiling(*, history_max_kg, proposed_load_kg, increment_kg) -> GuardVerdict` | proposed ≤ historical max + one increment. With no history, only a `calibration` load (the catalog start) is allowed. |
-| `checkins.py` | `increase_allowed(exercise, checkins) -> GuardVerdict` | Any `unknown`, `worse` or `pain` check-in for an area the exercise loads blocks an increase. |
+| `checkins.py` | `increase_allowed(exercise, checkins, flagged_areas) -> GuardVerdict` | Check-ins are asked for **flagged** areas only (§6.5). For every area the exercise loads **that the user flagged**, the latest check-in must be `fine`. A missing, `unknown`, `worse` or `pain` answer blocks the increase (silence is not consent). Areas the user did not flag need no check-in. An exercise with empty `loads_areas` fails closed. Because the catalog contraindicates every exercise that loads a flagged area, this gate only matters for exercises with a reviewed `contraindication_exceptions` entry. It is kept as defense in depth. |
 | `stop_words.py` | `scan(text, lang) -> StopHit \| None` | Normalizes the text (casefold, strip punctuation) and matches the per-language lists in `stop_words/*.txt` (pain, dizzy, numb, chest, popped, ... and inflections). **Any match halts.** Runs before the LLM. |
 | `screening.py` | `plan_allowed(flags, holds) -> GuardVerdict`; `exercise_allowed(exercise, flags) -> GuardVerdict` | Every red flag must have an explicit `yes`/`no` answer. Missing or `unknown` → `Refusal(SCREENING_INCOMPLETE)` (silence is not consent). Red flags answered `yes` need clearance. Open holds refuse. Contraindications remove exercises. |
-| `plan.py` | `validate_plan(plan, ctx) -> list[GuardVerdict]` | Runs all the checks above (including `plan_allowed`) over every prescription, plus: catalog ids only, location and equipment fit, schedule matches frequency, reps_min ≤ reps_max, superset size. **Reference load:** an increase is measured against the exercise's **current working load**, not the historical max. When both are known, the reference is `min(current, history_max)`. The current working load is the prescribed load of the last completed session, falling back to the active plan version's prescription. If there is history but no current load, the historical max is the reference, and the increase checks still run. Any `proposed > current` must pass `check_weekly_increment` and `increase_allowed`. `check_ceiling` always runs as an absolute backstop. |
+| `plan.py` | `validate_plan(plan, ctx) -> list[GuardVerdict]` | Runs all the checks above (including `plan_allowed`) over every prescription, plus: catalog ids only, location and equipment fit, schedule matches frequency, reps_min ≤ reps_max, superset size. **Reference load:** an increase is measured against the exercise's **current working load**, not the historical max. When both are known, the reference is `min(current, history_max)`. **An increase already applied in the trailing 7 days is not counted twice.** If a `to_kg` from an applied `load_changes` entry for the exercise is above that reference, the reference becomes the highest such applied `to_kg`. Keeping a confirmed load is therefore not a new increase, and only the part above it counts toward the cap. The earlier change was guarded when it was applied, and `check_ceiling` still runs as the absolute backstop. The current working load is the prescribed load of the last completed session, falling back to the active plan version's prescription. If there is history but no current load, the historical max is the reference, and the increase checks still run. Any `proposed > current` must pass `check_weekly_increment` and `increase_allowed`. `check_ceiling` always runs as an absolute backstop. |
 
 All load inputs must be finite and positive. Guards **fail closed** on NaN, infinity or non-positive values.
 
@@ -718,7 +730,9 @@ can never remove one that a deterministic guard produced.
 The engine produces the explicit loads shown in review and recap. It is deterministic
 double progression:
 
-- **No history** for an exercise → `calibration` at the catalog start. The user logs what
+- **No history** for an exercise → `Load(kind="calibration")`. The engine never emits a kg
+  value without history. The catalog `start` is only a display hint ("calibration: start
+  with 20 kg or lighter, log what you used"). The user logs what
   they actually used. There is no progression until one session is completed (AGENTS.md:
   the first session is data collection).
 - Only `completed` sessions count. A session with any prescribed set `skipped`, unlogged,
@@ -970,7 +984,9 @@ session's recap, using the same service.
 
 - Structured logs (stdlib `logging`, JSON formatter) go to stdout/journald. **Never** log
   message text, health values or Telegram ids at INFO level. Log ids and event names.
-- Use no external telemetry, crash reporting or analytics (AGENTS.md §1, §5).
+- Use no external telemetry, crash reporting or analytics (AGENTS.md §1, §5). `fitme serve`
+  and the systemd unit set `PYDANTIC_AI_NO_BANNER=1`, which suppresses pydantic-ai's
+  promotional startup banner.
 - `/system` and `fitme stats` cover operational visibility.
 
 ## 11. CLI (`fitme`)

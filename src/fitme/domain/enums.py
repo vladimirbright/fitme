@@ -232,6 +232,9 @@ class DecisionKind(StrEnum):
     USER_EDIT = "user_edit"
     SESSION_DELETE = "session_delete"
     HISTORY_IMPORT = "history_import"
+    # A§4.3 "load changes count once, when applied": written inside the confirm transaction,
+    # carrying the `load_changes` of the plan version it created; drafts carry none.
+    PLAN_CONFIRM = "plan_confirm"
 
 
 class RefusalCode(StrEnum):

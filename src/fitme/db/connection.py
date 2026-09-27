@@ -25,6 +25,12 @@ import aiosqlite
 
 _BUSY_TIMEOUT_MS = 5000
 
+# The connection type `transaction()`/`read()` yield, re-exported so a service that threads
+# one connection through several selector/controller calls inside one unit of work can name
+# it without importing the driver itself (A§4.6 rule 1: `sqlite3`/`aiosqlite` stay inside
+# `db/`).
+Connection = aiosqlite.Connection
+
 
 class DatabaseUnavailableError(RuntimeError):
     """The database file can't be opened (e.g. its directory doesn't exist).

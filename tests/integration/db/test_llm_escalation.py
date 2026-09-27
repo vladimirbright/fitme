@@ -11,6 +11,7 @@ from pydantic_ai.models.function import AgentInfo, FunctionModel
 
 from fitme.config.settings import Settings
 from fitme.db.connection import Database
+from fitme.db.controllers.decisions import insert_decision
 from fitme.db.selectors.decisions import list_llm_calls_since
 from fitme.domain.enums import RefusalCode
 from fitme.domain.guard_types import GuardVerdict
@@ -25,6 +26,7 @@ from fitme.domain.models import (
 )
 from fitme.llm.agents import plan_revise_agent
 from fitme.llm.escalation import run_with_escalation
+from fitme.llm.usage import AgentRunOutcome
 
 _PLAN = Plan(
     name="Plan",
@@ -201,3 +203,51 @@ async def test_an_llm_refusal_short_circuits_without_further_escalation(db: Data
     assert isinstance(outcome.output, Refusal)
     assert outcome.output.code == RefusalCode.OUT_OF_SCOPE
     assert len(outcome.attempts) == 1
+
+
+async def test_on_attempt_hook_runs_per_attempt_and_links_the_llm_call(db: Database) -> None:
+    """M6 writes each attempt's `decisions` row from the hook; its id lands on that attempt's
+    `llm_calls.decision_id`. The hook sees the guard verdicts of the attempt it's called for."""
+    from fitme.db.controllers.users import insert_user
+
+    async with db.transaction() as conn:
+        user_id = await insert_user(conn, language="en", timezone=None)
+    seen: list[tuple[str, int]] = []
+
+    async def on_attempt(
+        outcome: AgentRunOutcome[Plan], verdicts: Sequence[GuardVerdict]
+    ) -> int | None:
+        async with db.transaction() as conn:
+            decision_id = await insert_decision(
+                conn,
+                user_id=user_id,
+                kind="plan_revise",
+                prompt_template=None,
+                prompt_version=None,
+                model=outcome.record.model,
+                content_version="abc123def456",
+                llm_input=None,
+                user_report=None,
+                proposal=None,
+                guards_fired=[v.model_dump() for v in verdicts],
+            )
+        seen.append((outcome.record.model, decision_id))
+        return decision_id
+
+    outcome = await run_with_escalation(
+        agent_name="plan_revise",
+        agent_factory=_agent_factory,
+        build_prompt=lambda verdicts: "retry" if verdicts else "first attempt",
+        guard_check=_always_fail_guard,
+        settings=_settings(),
+        db=db,
+        prices={},
+        language="en",
+        on_attempt=on_attempt,
+    )
+
+    assert isinstance(outcome.output, Refusal)
+    assert len(seen) == 3
+    async with db.read() as conn:
+        calls = await list_llm_calls_since(conn, since="1970-01-01T00:00:00.000000Z")
+    assert [(c.model, c.decision_id) for c in calls] == seen

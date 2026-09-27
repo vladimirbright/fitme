@@ -26,6 +26,7 @@ from fitme.domain.catalog import (
     HOME_SELECTABLE_EQUIPMENT,
     LOCATION_DEFAULT_EQUIPMENT,
     Catalog,
+    kg_loadable_problems,
     missing_contraindication_coverage,
 )
 from fitme.domain.enums import (
@@ -191,6 +192,7 @@ def catalog_check(*, load: Callable[[], Catalog] = load_catalog) -> int:
     problems = (
         _full_body_coverage_problems(catalog)
         + _contraindication_problems(catalog)
+        + kg_loadable_problems(catalog)
         + _locale_problems()
         + forbidden_reference_problems(catalog)
     )

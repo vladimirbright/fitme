@@ -15,6 +15,12 @@ from fitme.domain.enums import RefusalCode
 
 _STRICT_CONFIG = ConfigDict(extra="forbid", allow_inf_nan=False)
 
+# Caps on model-authored display text (plan name, workout title, prescription note): a
+# hallucinated essay is a validation error, not a wall of text in a Telegram message.
+NAME_MAX_LENGTH = 60
+TITLE_MAX_LENGTH = 60
+NOTE_MAX_LENGTH = 200
+
 
 class Load(BaseModel):
     """An explicit load shown to the user (A§4.5, A§6.5): a kg number, "use your
@@ -48,7 +54,9 @@ class Prescription(BaseModel):
     reps_max: Annotated[int, Field(ge=1, le=50)]
     load: Load
     rest_seconds: Annotated[int, Field(ge=0, le=600)]
-    note: str | None = None  # short cue; no medical language (AGENTS.md §3)
+    # Short cue; no medical language (AGENTS.md §3). Model-authored display text is capped
+    # here and wording-checked before display (`fitme.i18n.wording`).
+    note: Annotated[str, Field(max_length=NOTE_MAX_LENGTH)] | None = None
 
     @model_validator(mode="after")
     def _reps_min_le_reps_max(self) -> Prescription:
@@ -79,7 +87,7 @@ class Workout(BaseModel):
     model_config = _STRICT_CONFIG
 
     key: str  # "A", "B", ...
-    title: str
+    title: Annotated[str, Field(max_length=TITLE_MAX_LENGTH)]
     blocks: list[Block]
 
 
@@ -93,7 +101,7 @@ class ScheduledDay(BaseModel):
 class Plan(BaseModel):
     model_config = _STRICT_CONFIG
 
-    name: str
+    name: Annotated[str, Field(max_length=NAME_MAX_LENGTH)]
     schedule: list[ScheduledDay]
     workouts: list[Workout]
 

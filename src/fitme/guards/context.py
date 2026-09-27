@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from fitme.domain.catalog import Catalog
 from fitme.domain.enums import CheckinAnswer, Equipment, HealthHoldReason, Location
 from fitme.domain.screening import ScreeningFlagState
+from fitme.guards.checkins import flagged_areas_from
 
 
 @dataclass(frozen=True, slots=True)
@@ -45,10 +46,23 @@ class GuardContext:
     # `decisions.load_changes` across every decision kind (A§9.4: never from `set_logs`, so
     # deleting logs can't reset the cap).
     increases_7d: Mapping[str, Sequence[float]] = field(default_factory=dict)
-    # Latest check-in answer per catalog `loads_areas` name (A§4.4); an area with no entry is
-    # treated as `unknown` (AGENTS.md §2: silence is not consent).
+    # Per-exercise highest `to_kg` among the load changes *applied* in the trailing 7 days
+    # (`selectors.decisions.applied_to_kg_by_exercise`, every applying decision kind; drafts
+    # store no `load_changes`, so they never appear). A§7: an increase already applied this
+    # week is not counted twice — the reference is lifted to this value when it is above
+    # `min(current, history_max)`, so keeping a confirmed load is not a new increase.
+    applied_to_kg_7d: Mapping[str, float] = field(default_factory=dict)
+    # Latest check-in answer per catalog `loads_areas` name (A§4.4); a *flagged* area with no
+    # entry is treated as `unknown` (AGENTS.md §2: silence is not consent). Unflagged areas
+    # are never asked and need no entry (A§6.5).
     checkins: Mapping[str, CheckinAnswer] = field(default_factory=dict)
     # Per-exercise weekly increment cap; falls back to `default_weekly_cap_kg` when an
     # exercise has no entry (AGENTS.md §2: default 2.5 kg, catalog/config may set lower).
     weekly_cap_kg: Mapping[str, float] = field(default_factory=dict)
     default_weekly_cap_kg: float = 2.5
+
+    @property
+    def flagged_areas(self) -> frozenset[str]:
+        """The loads-area names the user flagged, derived from `flags` (one source of truth:
+        `guards.checkins.increase_allowed` only requires a check-in for these, A§6.5/A§7)."""
+        return flagged_areas_from(self.flags)

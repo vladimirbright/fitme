@@ -14,11 +14,14 @@ from fitme.db.controllers.decisions import (
     insert_llm_call,
 )
 from fitme.db.selectors.decisions import (
+    applied_to_kg_by_exercise,
     get_decision,
+    get_latest_plan_round_decision,
     list_decision_outcomes,
     list_decisions_for_user,
     list_llm_calls_since,
     recent_increase_deltas,
+    recent_increase_deltas_by_exercise,
 )
 from fitme.domain.models import LoadChange
 
@@ -233,3 +236,113 @@ async def test_recent_increase_deltas_excludes_decreases(db: Database, user_id: 
             conn, user_id, "barbell_back_squat", since="1970-01-01T00:00:00.000000Z"
         )
     assert deltas == []
+
+
+async def _insert_kind(
+    db: Database, user_id: int, kind: str, load_changes: list[LoadChange] | None = None
+) -> int:
+    async with db.transaction() as conn:
+        return await insert_decision(
+            conn,
+            user_id=user_id,
+            kind=kind,
+            prompt_template=None,
+            prompt_version=None,
+            model=None,
+            content_version="abc123def456",
+            llm_input=None,
+            user_report=None,
+            proposal=None,
+            guards_fired=[],
+            load_changes=load_changes or [],
+        )
+
+
+async def test_recent_increase_deltas_by_exercise_groups_positive_deltas(
+    db: Database, user_id: int
+) -> None:
+    await _insert_kind(
+        db,
+        user_id,
+        "progression",
+        [
+            LoadChange(exercise_id="barbell_back_squat", from_kg=40.0, to_kg=42.5),
+            LoadChange(exercise_id="pushup", from_kg=10.0, to_kg=8.0),  # a decrease
+        ],
+    )
+    await _insert_kind(
+        db,
+        user_id,
+        "plan_revise",
+        [LoadChange(exercise_id="barbell_back_squat", from_kg=42.5, to_kg=45.0)],
+    )
+    await _insert_kind(db, user_id, "hold_clear")
+
+    async with db.read() as conn:
+        by_exercise = await recent_increase_deltas_by_exercise(
+            conn, user_id, since="1970-01-01T00:00:00.000000Z"
+        )
+        squat_only = await recent_increase_deltas(
+            conn, user_id, "barbell_back_squat", since="1970-01-01T00:00:00.000000Z"
+        )
+        later = await recent_increase_deltas_by_exercise(
+            conn, user_id, since="2999-01-01T00:00:00.000000Z"
+        )
+
+    assert by_exercise == {"barbell_back_squat": [2.5, 2.5]}
+    assert by_exercise["barbell_back_squat"] == squat_only
+    assert later == {}
+
+
+async def test_applied_to_kg_by_exercise_takes_the_highest_applied_to_kg_in_the_window(
+    db: Database, user_id: int
+) -> None:
+    await _insert_kind(
+        db,
+        user_id,
+        "plan_confirm",
+        [
+            LoadChange(exercise_id="barbell_back_squat", from_kg=40.0, to_kg=42.5),
+            LoadChange(exercise_id="pushup", from_kg=10.0, to_kg=8.0),  # a decrease counts too
+        ],
+    )
+    await _insert_kind(
+        db,
+        user_id,
+        "progression",
+        [LoadChange(exercise_id="barbell_back_squat", from_kg=42.5, to_kg=45.0)],
+    )
+    await _insert_kind(db, user_id, "plan_generate")  # a draft: load_changes == []
+
+    async with db.read() as conn:
+        applied = await applied_to_kg_by_exercise(
+            conn, user_id, since="1970-01-01T00:00:00.000000Z"
+        )
+        later = await applied_to_kg_by_exercise(conn, user_id, since="2999-01-01T00:00:00.000000Z")
+    assert applied == {"barbell_back_squat": 45.0, "pushup": 8.0}
+    assert later == {}
+
+
+async def test_get_latest_plan_round_decision_ignores_other_kinds(
+    db: Database, user_id: int
+) -> None:
+    async with db.read() as conn:
+        assert await get_latest_plan_round_decision(conn, user_id) is None
+
+    first = await _insert_kind(db, user_id, "plan_generate")
+    await _insert_kind(db, user_id, "session_halt")
+    async with db.read() as conn:
+        latest = await get_latest_plan_round_decision(conn, user_id)
+    assert latest is not None and latest.id == first
+
+    second = await _insert_kind(db, user_id, "plan_revise")
+    third = await _insert_kind(db, user_id, "refusal")
+    await _insert_kind(db, user_id, "hold_clear")
+    async with db.read() as conn:
+        latest = await get_latest_plan_round_decision(conn, user_id)
+    assert latest is not None and latest.id == third and latest.id > second
+
+    fourth = await _insert_kind(db, user_id, "plan_confirm")  # a confirm ends the round too
+    async with db.read() as conn:
+        latest = await get_latest_plan_round_decision(conn, user_id)
+    assert latest is not None and latest.id == fourth

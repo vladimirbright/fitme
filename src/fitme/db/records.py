@@ -137,6 +137,10 @@ class SessionOutcome:
     planned_load_kg: float | None
     hit_reps_max: bool
     below_reps_min: bool
+    # The lowest `actual_reps` among the sets actually performed in that session (`None` when
+    # nothing was performed). Only the LLM history summary (A§6.4 step 2: "last working load,
+    # reps, historical max") reads it; the load engine never does.
+    min_reps_performed: int | None = None
 
 
 @dataclass(frozen=True, slots=True)

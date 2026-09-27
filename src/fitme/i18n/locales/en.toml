@@ -292,10 +292,68 @@ skip_button = "⏭ Skip"
 pain_button = "⚠ Pain / feeling unwell"
 
 [load]
-# A two-dumbbell exercise's shown `kg` is the weight of each dumbbell, not the combined
-# total (A§4.4 "loads are per implement"). UI/prompt copy that shows a dumbbell load uses
-# this to say so explicitly.
-per_dumbbell = "{kg} kg per dumbbell"
+# A two-implement exercise's (two dumbbells, two kettlebells) shown `kg` is the weight of
+# each one, not the combined total (A§4.4 "loads are per implement", `load_unit =
+# "per_implement"`). UI copy that shows such a load uses this to say so explicitly.
+per_implement = "{kg} kg each"
+
+[weekday]
+0 = "Monday"
+1 = "Tuesday"
+2 = "Wednesday"
+3 = "Thursday"
+4 = "Friday"
+5 = "Saturday"
+6 = "Sunday"
+
+[plan]
+none_yet = "You don't have a training plan yet. Generate one below — the plan is AI-generated and checked by safety rules before you see it."
+list_title = "Your plans:"
+list_hint = "Tap a plan for actions, or generate a new one."
+new_button = "New plan"
+back_to_list_button = "Back to plans"
+view_button = "View"
+set_default_button = "Set default"
+revise_button = "Revise"
+archive_button = "Archive"
+default_marker = "default"
+status_active = "active"
+status_archived = "archived"
+status_draft = "draft"
+generating = "Generating a plan… this can take a minute."
+revising = "Revising the plan… this can take a minute."
+draft_title = "Proposed plan (draft):"
+plan_title = "{name} (version {version}, {status}{default}):"
+default_suffix = ", default"
+schedule_title = "Schedule:"
+schedule_line = "{weekday}: {workout}"
+workout_title = "Workout {workout_key} — {title}"
+superset_label = "Superset:"
+sets_reps = "{sets} × {reps_min}–{reps_max}"
+prescription_line = "{name}: {sets_reps} @ {load}, rest {rest} s"
+load_kg = "{kg} kg"
+load_bodyweight = "bodyweight"
+load_calibration = "calibration: start light, log what you used"
+load_calibration_from = "calibration: start with {start} or lighter, log what you used"
+confirm_button = "Confirm"
+change_button = "Change something"
+cancel_button = "Cancel"
+change_prompt = "What should change? Describe it in one message, for example: “no lunges, 3 days instead of 4”."
+change_cancelled = "Draft discarded. Send /plan to start again."
+nothing_to_cancel = "There is no draft to discard."
+saved = "Plan “{name}” saved as version {version}."
+saved_default = "It is now your default plan."
+already_saved = "This draft was already saved."
+stale_draft = "This draft is no longer current. Send /plan to start again."
+not_found = "That plan isn't available."
+default_set = "“{name}” is now your default plan."
+default_not_set = "Only an active plan can be the default."
+archived = "“{name}” is archived."
+archive_failed = "That plan couldn't be archived."
+revise_of = "Revising “{name}”."
+# Neutral replacements for model-authored text that fails the wording check.
+default_name = "Plan"
+default_workout_title = "Workout {workout_key}"
 
 [errors]
 generic = "Something went wrong. Please try again."

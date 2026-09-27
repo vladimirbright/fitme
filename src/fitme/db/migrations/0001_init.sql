@@ -159,7 +159,7 @@ CREATE TABLE decisions (
     kind TEXT NOT NULL CHECK (kind IN (
         'plan_generate', 'plan_revise', 'session_adjust', 'result_parse', 'progression',
         'session_halt', 'hold_clear', 'refusal', 'user_edit', 'session_delete',
-        'history_import'
+        'history_import', 'plan_confirm'
     )),
     -- Nullable: not every decision involves an LLM call (e.g. a deterministic halt/refusal).
     prompt_template TEXT,

@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
+
 import aiosqlite
 
 from fitme.db.records import (
@@ -12,6 +14,7 @@ from fitme.db.records import (
     SetLogRecord,
     WorkoutSessionRecord,
 )
+from fitme.domain.enums import CheckinAnswer
 
 _SESSION_COLUMNS = (
     "id, user_id, plan_version_id, workout_key, status, current_block, started_at, "
@@ -101,6 +104,20 @@ async def historical_max_kg(
     return None if row[0] is None else float(row[0])
 
 
+async def historical_max_by_exercise(conn: aiosqlite.Connection, user_id: int) -> dict[str, float]:
+    """`historical_max_kg` for every exercise this user has ever logged a kg load for, in one
+    query (the plan flow, A§6.4, needs the whole map to build a `GuardContext`, not one
+    exercise at a time). An exercise with no logged kg load has no entry."""
+    async with conn.execute(
+        "SELECT s.exercise_id, MAX(s.actual_load_kg) FROM set_logs s "
+        "JOIN workout_sessions w ON w.id = s.session_id "
+        "WHERE w.user_id = ? AND s.actual_load_kg IS NOT NULL GROUP BY s.exercise_id",
+        (user_id,),
+    ) as cursor:
+        rows = await cursor.fetchall()
+    return {row[0]: float(row[1]) for row in rows if row[1] is not None}
+
+
 async def recent_session_outcomes(
     conn: aiosqlite.Connection, user_id: int, exercise_id: str, *, limit: int = 2
 ) -> list[SessionOutcome]:
@@ -131,6 +148,12 @@ async def recent_session_outcomes(
     ) as cursor:
         rows = await cursor.fetchall()
 
+    return _group_outcomes(rows, limit=limit)
+
+
+def _group_outcomes(rows: Iterable[aiosqlite.Row], *, limit: int) -> list[SessionOutcome]:
+    """`rows` (one per set, most recent session first, sets in order) -> at most `limit`
+    `SessionOutcome`s, most recent first."""
     session_ids_in_order: list[int] = []
     sets_by_session: dict[int, list[aiosqlite.Row]] = {}
     for row in rows:
@@ -146,6 +169,33 @@ async def recent_session_outcomes(
     for session_id in session_ids_in_order:
         outcomes.append(_session_outcome_from_set_rows(sets_by_session[session_id]))
     return outcomes
+
+
+async def recent_session_outcomes_by_exercise(
+    conn: aiosqlite.Connection, user_id: int, *, limit: int = 2
+) -> dict[str, list[SessionOutcome]]:
+    """`recent_session_outcomes` for every exercise this user has a completed session for,
+    in one query: the plan flow (A§6.4) runs the load engine (A§7.3) for any exercise the LLM
+    proposes, so it needs every exercise's history up front rather than one query per
+    exercise. Same derivation rules as `recent_session_outcomes`; an exercise with no
+    completed session has no entry."""
+    async with conn.execute(
+        "SELECT w.id, s.actual_load_kg, s.actual_reps, s.planned_load_kg, "
+        "s.planned_reps_min, s.planned_reps_max, s.skipped, s.exercise_id "
+        "FROM set_logs s JOIN workout_sessions w ON w.id = s.session_id "
+        "WHERE w.user_id = ? AND w.status = 'completed' "
+        "ORDER BY w.id DESC, s.set_index ASC",
+        (user_id,),
+    ) as cursor:
+        rows = await cursor.fetchall()
+
+    rows_by_exercise: dict[str, list[aiosqlite.Row]] = {}
+    for row in rows:
+        rows_by_exercise.setdefault(row[7], []).append(row)
+    return {
+        exercise_id: _group_outcomes(exercise_rows, limit=limit)
+        for exercise_id, exercise_rows in rows_by_exercise.items()
+    }
 
 
 def _constant_or_max(values: set[float]) -> float | None:
@@ -165,6 +215,7 @@ def _session_outcome_from_set_rows(set_rows: list[aiosqlite.Row]) -> SessionOutc
 
     all_performed_at_or_above_target = True
     any_performed_below_min = False
+    min_reps_performed: int | None = None
     for row in set_rows:
         (
             _session_id,
@@ -174,10 +225,12 @@ def _session_outcome_from_set_rows(set_rows: list[aiosqlite.Row]) -> SessionOutc
             reps_min,
             reps_max,
             skipped,
-        ) = row
+        ) = row[:7]
         if skipped or actual_reps is None or actual_load_kg is None:
             all_performed_at_or_above_target = False
             continue
+        if min_reps_performed is None or actual_reps < min_reps_performed:
+            min_reps_performed = int(actual_reps)
         if (planned_load_kg_row is not None and actual_load_kg < planned_load_kg_row) or (
             reps_max is not None and actual_reps < reps_max
         ):
@@ -192,6 +245,7 @@ def _session_outcome_from_set_rows(set_rows: list[aiosqlite.Row]) -> SessionOutc
         planned_load_kg=planned_load_kg,
         hit_reps_max=hit_reps_max,
         below_reps_min=below_reps_min,
+        min_reps_performed=min_reps_performed,
     )
 
 
@@ -258,3 +312,28 @@ async def list_checkins_for_session(
         )
         for row in rows
     ]
+
+
+_AREA_QUESTION_PREFIX = "area:"
+
+
+async def latest_checkin_answers(
+    conn: aiosqlite.Connection, user_id: int
+) -> dict[str, CheckinAnswer]:
+    """The latest answer per body area (A§4.2 `checkins.question_key = "area:<area>"`), keyed
+    by the catalog `loads_areas` short name, as `guards.checkins.increase_allowed` and
+    `guards.context.GuardContext.checkins` consume it. "Latest" is by `asked_at` (then id):
+    a newer unanswered check-in (`unknown`) supersedes an older `fine` one — silence is not
+    consent (AGENTS.md §2). Areas never asked about have no entry, which the guard also
+    treats as `unknown`. Question keys without the `area:` prefix are ignored."""
+    async with conn.execute(
+        "SELECT question_key, answer FROM checkins WHERE user_id = ? ORDER BY asked_at, id",
+        (user_id,),
+    ) as cursor:
+        rows = await cursor.fetchall()
+    answers: dict[str, CheckinAnswer] = {}
+    for question_key, answer in rows:
+        if not str(question_key).startswith(_AREA_QUESTION_PREFIX):
+            continue
+        answers[str(question_key)[len(_AREA_QUESTION_PREFIX) :]] = CheckinAnswer(answer)
+    return answers

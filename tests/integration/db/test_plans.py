@@ -10,6 +10,7 @@ from fitme.db.connection import Database
 from fitme.db.controllers.decisions import insert_decision
 from fitme.db.controllers.plans import (
     PlanNotOwnedError,
+    clear_default_plan,
     insert_plan,
     insert_plan_version,
     set_default_plan,
@@ -143,3 +144,24 @@ async def test_update_plan_status(db: Database, user_id: int) -> None:
         plan = await get_plan(conn, plan_id)
     assert plan is not None
     assert plan.status == "active"
+
+
+async def test_clear_default_plan_only_touches_the_users_own_plan(
+    db: Database, user_id: int
+) -> None:
+    async with db.transaction() as conn:
+        plan_id = await insert_plan(
+            conn, user_id=user_id, name="P", is_default=True, status="active"
+        )
+
+    async with db.transaction() as conn:
+        await clear_default_plan(conn, user_id + 1, plan_id)  # not this user's: no-op
+    async with db.read() as conn:
+        assert await get_default_plan(conn, user_id) is not None
+
+    async with db.transaction() as conn:
+        await clear_default_plan(conn, user_id, plan_id)
+    async with db.read() as conn:
+        assert await get_default_plan(conn, user_id) is None
+        record = await get_plan(conn, plan_id)
+    assert record is not None and record.is_default is False

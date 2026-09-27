@@ -416,3 +416,48 @@ def test_render_user_prompt_requires_context_or_language() -> None:
 
     with pytest.raises(ValueError, match="context or an explicit language"):
         render_user_prompt()
+
+
+def test_render_user_prompt_carries_guard_feedback_only_when_given() -> None:
+    from fitme.llm.context import render_user_prompt
+
+    context = _sample_context()
+    first = render_user_prompt(context)
+    assert "guard_feedback" not in first.payload
+    retry = render_user_prompt(
+        context, guard_feedback=["unicorn_press is not a catalog exercise", "schedule has 1 day(s)"]
+    )
+    assert retry.payload["guard_feedback"] == [
+        "unicorn_press is not a catalog exercise",
+        "schedule has 1 day(s)",
+    ]
+    assert json.loads(retry.text) == retry.payload
+
+
+def test_render_user_prompt_carries_load_units_for_result_parse() -> None:
+    """A§4.4: `result_parse` is told what each planned exercise's kg means."""
+    from fitme.domain.models import Block, Load, Prescription
+    from fitme.llm.context import render_user_prompt
+
+    block = Block(
+        kind="single",
+        items=[
+            Prescription(
+                exercise_id="dumbbell_bench_press",
+                sets=3,
+                reps_min=8,
+                reps_max=12,
+                load=Load(kind="kg", kg=12.5),
+                rest_seconds=90,
+            )
+        ],
+    )
+    rendered = render_user_prompt(
+        language="en",
+        planned_block=block,
+        result_text="12,12,10",
+        load_units={"dumbbell_bench_press": "per_implement"},
+    )
+    assert rendered.payload["load_units"] == {"dumbbell_bench_press": "per_implement"}
+    assert json.loads(rendered.text) == rendered.payload
+    assert "load_units" not in render_user_prompt(language="en", planned_block=block).payload

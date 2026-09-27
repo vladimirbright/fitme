@@ -11,6 +11,14 @@
 # - `start`: a conservative calibration start — an empty barbell (20 kg), the lightest
 #   dumbbell/kettlebell (2-4 kg), or bodyweight/calibration. Never a load someone might
 #   already have to work up to.
+# - `load_unit`: what a prescribed `kg` means (`fitme.domain.catalog.LoadUnit`): `total` (a
+#   barbell, a machine stack; unused for bodyweight/band/cardio), `per_implement` (two
+#   dumbbells or kettlebells, kg each) or `single_implement` (one dumbbell/kettlebell).
+#   Required for every dumbbell/kettlebell exercise; the model refuses a missing one.
+# - `kg_loadable`: whether a kg load may be prescribed at all. Derived by the model when
+#   omitted (false for cardio, conditioning, mobility, bodyweight-start and band-only moves);
+#   set it
+#   explicitly only to override, with a comment saying why.
 # - `contraindicated_by`: current-injury-area flags (and `hernia`) this exercise is removed
 #   for. Chosen conservatively: any meaningful spinal loading is contraindicated by
 #   `lower_back_injury_current` and `hernia`; overhead/pressing work by `shoulder_injury_current`
@@ -24,6 +32,7 @@ names = { en = "Barbell back squat", ru = "Приседания со штанг�
 kind = "compound"
 pattern = "squat"
 equipment = ["barbell", "rack"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["knee", "lower_back", "hip", "neck"]
 contraindicated_by = ["knee_injury_current", "lower_back_injury_current", "hernia", "hip_injury_current", "neck_injury_current"]
@@ -37,6 +46,7 @@ names = { en = "Barbell front squat", ru = "Фронтальные присед�
 kind = "compound"
 pattern = "squat"
 equipment = ["barbell", "rack"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["knee", "lower_back", "hip", "shoulder", "neck"]
 contraindicated_by = ["knee_injury_current", "lower_back_injury_current", "hernia", "shoulder_injury_current", "elbow_wrist_injury_current", "hip_injury_current", "neck_injury_current"]
@@ -50,6 +60,7 @@ names = { en = "Kettlebell goblet squat", ru = "Приседания с гире
 kind = "compound"
 pattern = "squat"
 equipment = ["kettlebell"]
+load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["knee", "hip"]
 contraindicated_by = ["knee_injury_current", "hernia", "hip_injury_current"]
@@ -64,6 +75,7 @@ names = { en = "Dumbbell goblet squat", ru = "Приседания с ганте
 kind = "compound"
 pattern = "squat"
 equipment = ["dumbbells"]
+load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["knee", "hip"]
 contraindicated_by = ["knee_injury_current", "hernia", "hip_injury_current"]
@@ -77,6 +89,7 @@ names = { en = "Dumbbell Bulgarian split squat", ru = "Болгарские вы
 kind = "compound"
 pattern = "squat"
 equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["knee", "hip", "ankle"]
 contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current"]
@@ -90,6 +103,7 @@ names = { en = "Bodyweight squat", ru = "Приседания с собстве�
 kind = "bodyweight"
 pattern = "squat"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["knee", "hip"]
 contraindicated_by = ["knee_injury_current", "hip_injury_current"]
@@ -103,6 +117,7 @@ names = { en = "Bodyweight reverse lunge", ru = "Обратные выпады �
 kind = "bodyweight"
 pattern = "squat"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["knee", "hip", "ankle"]
 contraindicated_by = ["knee_injury_current", "ankle_injury_current", "hip_injury_current"]
@@ -116,6 +131,7 @@ names = { en = "Barbell deadlift", ru = "Становая тяга со штан
 kind = "compound"
 pattern = "hinge"
 equipment = ["barbell"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["lower_back", "hip", "knee"]
 contraindicated_by = ["lower_back_injury_current", "hernia", "hip_injury_current", "knee_injury_current"]
@@ -129,6 +145,7 @@ names = { en = "Barbell Romanian deadlift", ru = "Румынская тяга с
 kind = "compound"
 pattern = "hinge"
 equipment = ["barbell"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["lower_back", "hip"]
 contraindicated_by = ["lower_back_injury_current", "hernia", "hip_injury_current"]
@@ -142,6 +159,7 @@ names = { en = "Barbell good morning", ru = "Наклоны со штангой 
 kind = "compound"
 pattern = "hinge"
 equipment = ["barbell", "rack"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["lower_back", "hip", "neck"]
 contraindicated_by = ["lower_back_injury_current", "hernia", "hip_injury_current", "neck_injury_current"]
@@ -155,6 +173,7 @@ names = { en = "Kettlebell deadlift", ru = "Становая тяга с гир�
 kind = "compound"
 pattern = "hinge"
 equipment = ["kettlebell"]
+load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["lower_back", "hip"]
 contraindicated_by = ["lower_back_injury_current", "hernia", "hip_injury_current"]
@@ -169,6 +188,7 @@ names = { en = "Dumbbell Romanian deadlift", ru = "Румынская тяга �
 kind = "compound"
 pattern = "hinge"
 equipment = ["dumbbells"]
+load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["lower_back", "hip"]
 contraindicated_by = ["lower_back_injury_current", "hernia", "hip_injury_current"]
@@ -182,6 +202,7 @@ names = { en = "Glute bridge", ru = "Ягодичный мостик" }
 kind = "bodyweight"
 pattern = "hinge"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["lower_back", "hip"]
 contraindicated_by = ["lower_back_injury_current", "hip_injury_current"]
@@ -195,6 +216,7 @@ names = { en = "Bodyweight single-leg deadlift", ru = "Становая тяга
 kind = "bodyweight"
 pattern = "hinge"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["lower_back", "hip", "ankle"]
 contraindicated_by = ["lower_back_injury_current", "ankle_injury_current", "hip_injury_current"]
@@ -208,6 +230,7 @@ names = { en = "Barbell bench press", ru = "Жим штанги лёжа" }
 kind = "compound"
 pattern = "horizontal_push"
 equipment = ["barbell", "rack", "bench"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["shoulder", "elbow_wrist"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
@@ -221,6 +244,7 @@ names = { en = "Dumbbell bench press", ru = "Жим гантелей лёжа" }
 kind = "compound"
 pattern = "horizontal_push"
 equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["shoulder", "elbow_wrist"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
@@ -234,6 +258,7 @@ names = { en = "Dumbbell floor press", ru = "Жим гантелей с пола
 kind = "compound"
 pattern = "horizontal_push"
 equipment = ["dumbbells"]
+load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["shoulder", "elbow_wrist"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
@@ -247,6 +272,7 @@ names = { en = "Resistance band chest press", ru = "Жим от груди с э
 kind = "compound"
 pattern = "horizontal_push"
 equipment = ["resistance_bands"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["shoulder", "elbow_wrist"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
@@ -260,6 +286,7 @@ names = { en = "Push-up", ru = "Отжимания от пола" }
 kind = "bodyweight"
 pattern = "horizontal_push"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["shoulder", "elbow_wrist"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
@@ -273,6 +300,7 @@ names = { en = "Barbell bent-over row", ru = "Тяга штанги в накл�
 kind = "compound"
 pattern = "horizontal_pull"
 equipment = ["barbell"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["lower_back", "shoulder", "elbow_wrist"]
 contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "hernia", "elbow_wrist_injury_current"]
@@ -286,6 +314,7 @@ names = { en = "Dumbbell row", ru = "Тяга гантели в наклоне" 
 kind = "compound"
 pattern = "horizontal_pull"
 equipment = ["dumbbells", "bench"]
+load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["lower_back", "shoulder", "elbow_wrist"]
 contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
@@ -299,6 +328,7 @@ names = { en = "Resistance band row", ru = "Тяга эспандера к по�
 kind = "compound"
 pattern = "horizontal_pull"
 equipment = ["resistance_bands"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["lower_back", "shoulder", "elbow_wrist", "hip"]
 contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hip_injury_current", "hernia"]
@@ -312,6 +342,7 @@ names = { en = "Bodyweight table row", ru = "Тяга к столу с собс�
 kind = "bodyweight"
 pattern = "horizontal_pull"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment"]
 loads_areas = ["shoulder", "elbow_wrist"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
@@ -325,6 +356,7 @@ names = { en = "Barbell overhead press", ru = "Жим штанги стоя" }
 kind = "compound"
 pattern = "vertical_push"
 equipment = ["barbell", "rack"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["shoulder", "elbow_wrist", "neck", "lower_back"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current", "lower_back_injury_current", "hernia"]
@@ -338,6 +370,7 @@ names = { en = "Dumbbell shoulder press", ru = "Жим гантелей сидя
 kind = "compound"
 pattern = "vertical_push"
 equipment = ["dumbbells"]
+load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia", "neck_injury_current"]
@@ -351,6 +384,7 @@ names = { en = "Kettlebell overhead press", ru = "Жим гири над гол�
 kind = "compound"
 pattern = "vertical_push"
 equipment = ["kettlebell"]
+load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia", "neck_injury_current"]
@@ -365,6 +399,7 @@ names = { en = "Pike push-up", ru = "Отжимания в упоре согну
 kind = "bodyweight"
 pattern = "vertical_push"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["shoulder", "elbow_wrist", "neck"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current"]
@@ -378,6 +413,7 @@ names = { en = "Pull-up", ru = "Подтягивания" }
 kind = "bodyweight"
 pattern = "vertical_pull"
 equipment = ["pull_up_bar"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]
 loads_areas = ["shoulder", "elbow_wrist", "neck"]
 # Conservative: hanging fully from the bar puts load through the abdominal wall exactly like
@@ -394,6 +430,7 @@ names = { en = "Band-assisted pull-up", ru = "Подтягивания с рез
 kind = "bodyweight"
 pattern = "vertical_pull"
 equipment = ["pull_up_bar", "resistance_bands"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["shoulder", "elbow_wrist", "neck"]
 # Conservative: same hanging-pull hernia consistency as pull_up above.
@@ -408,6 +445,7 @@ names = { en = "Doorframe row", ru = "Тяга у дверного проёма"
 kind = "bodyweight"
 pattern = "horizontal_pull"
 equipment = []
+load_unit = "total"
 locations = ["apartment_no_equipment", "home_equipment"]
 loads_areas = ["shoulder", "elbow_wrist"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
@@ -421,6 +459,7 @@ names = { en = "Plank", ru = "Планка" }
 kind = "bodyweight"
 pattern = "core"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["lower_back", "shoulder", "elbow_wrist"]
 contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current"]
@@ -434,6 +473,7 @@ names = { en = "Side plank", ru = "Боковая планка" }
 kind = "bodyweight"
 pattern = "core"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["lower_back", "shoulder", "elbow_wrist"]
 contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current"]
@@ -447,6 +487,7 @@ names = { en = "Dead bug", ru = "Мёртвый жук" }
 kind = "bodyweight"
 pattern = "core"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["lower_back"]
 contraindicated_by = ["lower_back_injury_current"]
@@ -460,6 +501,7 @@ names = { en = "Kettlebell Russian twist", ru = "Русские скручива
 kind = "isolation"
 pattern = "core"
 equipment = ["kettlebell"]
+load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["lower_back"]
 contraindicated_by = ["lower_back_injury_current", "hernia"]
@@ -474,6 +516,7 @@ names = { en = "Hanging leg raise", ru = "Подъём ног в висе" }
 kind = "isolation"
 pattern = "core"
 equipment = ["pull_up_bar"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]
 loads_areas = ["lower_back", "shoulder", "neck"]
 contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "hernia", "neck_injury_current"]
@@ -487,6 +530,7 @@ names = { en = "Cat-cow", ru = "Кошка-корова" }
 kind = "mobility"
 pattern = "mobility"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["lower_back", "neck"]
 contraindicated_by = ["lower_back_injury_current", "neck_injury_current", "hernia"]
@@ -500,6 +544,7 @@ names = { en = "Hip flexor stretch", ru = "Растяжка сгибателей
 kind = "mobility"
 pattern = "mobility"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["hip"]
 contraindicated_by = ["hip_injury_current"]
@@ -513,6 +558,7 @@ names = { en = "Ankle dorsiflexion drill", ru = "Упражнение на по�
 kind = "mobility"
 pattern = "mobility"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["ankle"]
 contraindicated_by = ["ankle_injury_current"]
@@ -526,6 +572,7 @@ names = { en = "Band shoulder dislocate", ru = "Растяжка плеч с э�
 kind = "mobility"
 pattern = "mobility"
 equipment = ["resistance_bands"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["shoulder"]
 contraindicated_by = ["shoulder_injury_current"]
@@ -539,6 +586,7 @@ names = { en = "Thoracic rotation", ru = "Ротация грудного отд
 kind = "mobility"
 pattern = "mobility"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = []
 contraindicated_by = []
@@ -552,6 +600,7 @@ names = { en = "Jumping jacks", ru = "Прыжки «звёздочка»" }
 kind = "cardio"
 pattern = "conditioning"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["knee", "ankle"]
 contraindicated_by = ["knee_injury_current", "ankle_injury_current"]
@@ -565,6 +614,9 @@ names = { en = "Kettlebell swing", ru = "Мах гирей" }
 kind = "cardio"
 pattern = "conditioning"
 equipment = ["kettlebell"]
+load_unit = "single_implement"
+# Conditioning, but loaded with a real kettlebell: its kg matters, so it stays kg-loadable.
+kg_loadable = true
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["lower_back", "hip", "shoulder"]
 contraindicated_by = ["lower_back_injury_current", "hernia", "shoulder_injury_current", "hip_injury_current"]
@@ -579,6 +631,7 @@ names = { en = "Burpee", ru = "Бёрпи" }
 kind = "cardio"
 pattern = "conditioning"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["knee", "ankle", "shoulder", "lower_back", "elbow_wrist"]
 contraindicated_by = ["knee_injury_current", "ankle_injury_current", "shoulder_injury_current", "lower_back_injury_current", "elbow_wrist_injury_current"]
@@ -592,6 +645,7 @@ names = { en = "Mountain climbers", ru = "Скалолаз" }
 kind = "cardio"
 pattern = "conditioning"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["elbow_wrist", "lower_back", "knee", "shoulder"]
 contraindicated_by = ["elbow_wrist_injury_current", "lower_back_injury_current", "knee_injury_current", "shoulder_injury_current"]
@@ -605,6 +659,7 @@ names = { en = "Outdoor interval jog", ru = "Интервальный бег н�
 kind = "cardio"
 pattern = "conditioning"
 equipment = []
+load_unit = "total"
 locations = ["outdoor"]
 loads_areas = ["knee", "ankle"]
 contraindicated_by = ["knee_injury_current", "ankle_injury_current"]
@@ -618,6 +673,7 @@ names = { en = "Dumbbell biceps curl", ru = "Сгибания рук с гант
 kind = "isolation"
 pattern = "accessory"
 equipment = ["dumbbells"]
+load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["elbow_wrist"]
 contraindicated_by = ["elbow_wrist_injury_current"]
@@ -631,6 +687,7 @@ names = { en = "Dumbbell triceps extension", ru = "Разгибания рук �
 kind = "isolation"
 pattern = "accessory"
 equipment = ["dumbbells"]
+load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["elbow_wrist", "shoulder"]
 contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
@@ -644,6 +701,7 @@ names = { en = "Dumbbell lateral raise", ru = "Разведение гантел
 kind = "isolation"
 pattern = "accessory"
 equipment = ["dumbbells"]
+load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["shoulder"]
 contraindicated_by = ["shoulder_injury_current"]
@@ -657,6 +715,7 @@ names = { en = "Calf raise", ru = "Подъём на носки" }
 kind = "isolation"
 pattern = "accessory"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["ankle"]
 contraindicated_by = ["ankle_injury_current"]
@@ -670,6 +729,7 @@ names = { en = "Band pull-apart", ru = "Разведение эспандера 
 kind = "isolation"
 pattern = "accessory"
 equipment = ["resistance_bands"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["shoulder"]
 contraindicated_by = ["shoulder_injury_current"]
@@ -683,6 +743,7 @@ names = { en = "Low bar inverted row", ru = "Тяга в упоре на низ�
 kind = "bodyweight"
 pattern = "horizontal_pull"
 equipment = ["pull_up_bar"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]
 loads_areas = ["shoulder", "elbow_wrist"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
@@ -696,6 +757,7 @@ names = { en = "Machine leg press", ru = "Жим ногами в тренажё�
 kind = "compound"
 pattern = "squat"
 equipment = ["machine"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["knee", "hip", "lower_back"]
 contraindicated_by = ["knee_injury_current", "hip_injury_current", "lower_back_injury_current", "hernia"]
@@ -710,6 +772,7 @@ names = { en = "Seated leg curl", ru = "Сгибание ног сидя" }
 kind = "isolation"
 pattern = "accessory"
 equipment = ["machine"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["knee"]
 contraindicated_by = ["knee_injury_current"]
@@ -724,6 +787,7 @@ names = { en = "Leg extension", ru = "Разгибание ног сидя" }
 kind = "isolation"
 pattern = "accessory"
 equipment = ["machine"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["knee"]
 contraindicated_by = ["knee_injury_current"]
@@ -738,6 +802,7 @@ names = { en = "Machine chest press", ru = "Жим от груди в трена
 kind = "compound"
 pattern = "horizontal_push"
 equipment = ["machine"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["shoulder", "elbow_wrist"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
@@ -752,6 +817,7 @@ names = { en = "Machine seated row", ru = "Тяга сидя в тренажёр
 kind = "compound"
 pattern = "horizontal_pull"
 equipment = ["machine"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["shoulder", "elbow_wrist"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
@@ -766,6 +832,7 @@ names = { en = "Lat pulldown", ru = "Тяга верхнего блока" }
 kind = "compound"
 pattern = "vertical_pull"
 equipment = ["machine"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["shoulder", "elbow_wrist"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
@@ -780,6 +847,7 @@ names = { en = "Machine shoulder press", ru = "Жим вверх в тренаж
 kind = "compound"
 pattern = "vertical_push"
 equipment = ["machine"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia", "neck_injury_current"]
@@ -794,6 +862,7 @@ names = { en = "Cable chest fly", ru = "Сведение рук в кроссо�
 kind = "isolation"
 pattern = "accessory"
 equipment = ["cable"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["shoulder", "elbow_wrist"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
@@ -808,6 +877,7 @@ names = { en = "Cable face pull", ru = "Тяга каната к лицу" }
 kind = "isolation"
 pattern = "accessory"
 equipment = ["cable"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["shoulder", "elbow_wrist"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
@@ -822,6 +892,7 @@ names = { en = "Cable triceps pressdown", ru = "Разгибание рук на
 kind = "isolation"
 pattern = "accessory"
 equipment = ["cable"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["elbow_wrist"]
 contraindicated_by = ["elbow_wrist_injury_current"]
@@ -836,6 +907,7 @@ names = { en = "Cable biceps curl", ru = "Сгибание рук на нижн�
 kind = "isolation"
 pattern = "accessory"
 equipment = ["cable"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["elbow_wrist"]
 contraindicated_by = ["elbow_wrist_injury_current"]
@@ -850,6 +922,7 @@ names = { en = "Machine calf raise", ru = "Подъём на носки в тр�
 kind = "isolation"
 pattern = "accessory"
 equipment = ["machine"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["ankle", "knee"]
 contraindicated_by = ["ankle_injury_current", "knee_injury_current"]
@@ -864,6 +937,7 @@ names = { en = "Cable wood chop", ru = "Диагональная тяга бло
 kind = "compound"
 pattern = "core"
 equipment = ["cable"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["shoulder", "lower_back", "hip"]
 contraindicated_by = ["shoulder_injury_current", "lower_back_injury_current", "hip_injury_current", "hernia"]
@@ -878,6 +952,7 @@ names = { en = "Assisted pull-up machine", ru = "Подтягивание в г�
 kind = "compound"
 pattern = "vertical_pull"
 equipment = ["machine"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["shoulder", "elbow_wrist", "neck"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia", "neck_injury_current"]
@@ -892,6 +967,7 @@ names = { en = "Barbell hip thrust", ru = "Подъём таза со штанг
 kind = "compound"
 pattern = "hinge"
 equipment = ["barbell", "bench"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["hip", "lower_back", "knee"]
 contraindicated_by = ["hip_injury_current", "lower_back_injury_current", "knee_injury_current", "hernia"]
@@ -906,6 +982,7 @@ names = { en = "Dumbbell reverse lunge", ru = "Выпады назад с ган
 kind = "compound"
 pattern = "squat"
 equipment = ["dumbbells"]
+load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["knee", "hip", "ankle", "lower_back"]
 contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current", "lower_back_injury_current", "hernia"]
@@ -920,6 +997,7 @@ names = { en = "Dumbbell step-up", ru = "Зашагивание с гантел�
 kind = "compound"
 pattern = "squat"
 equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["knee", "hip", "ankle", "lower_back"]
 contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current", "lower_back_injury_current", "hernia"]
@@ -934,6 +1012,7 @@ names = { en = "Incline dumbbell press", ru = "Жим гантелей на на
 kind = "compound"
 pattern = "horizontal_push"
 equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["shoulder", "elbow_wrist"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
@@ -953,6 +1032,7 @@ names = { en = "Dumbbell suitcase carry", ru = "Ходьба с гантелью
 kind = "compound"
 pattern = "core"
 equipment = ["dumbbells"]
+load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["shoulder", "elbow_wrist", "lower_back", "hip"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hip_injury_current", "hernia"]
@@ -967,6 +1047,7 @@ names = { en = "One-arm kettlebell row", ru = "Тяга гири одной ру
 kind = "compound"
 pattern = "horizontal_pull"
 equipment = ["kettlebell"]
+load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["shoulder", "elbow_wrist", "lower_back", "hip"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hip_injury_current", "hernia"]
@@ -981,6 +1062,7 @@ names = { en = "Kettlebell farmer carry", ru = "Ходьба с гирями в 
 kind = "compound"
 pattern = "core"
 equipment = ["kettlebell"]
+load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["shoulder", "elbow_wrist", "lower_back", "hip"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hip_injury_current", "hernia"]
@@ -995,6 +1077,7 @@ names = { en = "Band squat", ru = "Приседания с эспандером"
 kind = "compound"
 pattern = "squat"
 equipment = ["resistance_bands"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["knee", "hip", "lower_back"]
 contraindicated_by = ["knee_injury_current", "hip_injury_current", "lower_back_injury_current", "hernia"]
@@ -1009,6 +1092,7 @@ names = { en = "Band good morning", ru = "Наклоны с эспандером
 kind = "compound"
 pattern = "hinge"
 equipment = ["resistance_bands"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["hip", "lower_back"]
 contraindicated_by = ["hip_injury_current", "lower_back_injury_current", "hernia"]
@@ -1023,6 +1107,7 @@ names = { en = "Band overhead press", ru = "Жим эспандера вверх
 kind = "compound"
 pattern = "vertical_push"
 equipment = ["resistance_bands"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia", "neck_injury_current"]
@@ -1037,6 +1122,7 @@ names = { en = "Band lat pulldown", ru = "Тяга эспандера сверх
 kind = "compound"
 pattern = "vertical_pull"
 equipment = ["resistance_bands", "pull_up_bar"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]
 loads_areas = ["shoulder", "elbow_wrist"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
@@ -1051,6 +1137,7 @@ names = { en = "Chair squat", ru = "Приседания до стула" }
 kind = "bodyweight"
 pattern = "squat"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["knee", "hip"]
 contraindicated_by = ["knee_injury_current", "hip_injury_current"]
@@ -1065,6 +1152,7 @@ names = { en = "Bodyweight split squat", ru = "Приседания в разн�
 kind = "bodyweight"
 pattern = "squat"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["knee", "hip", "ankle"]
 contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current"]
@@ -1079,6 +1167,7 @@ names = { en = "Single-leg sit-to-stand", ru = "Вставание со стул
 kind = "bodyweight"
 pattern = "squat"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["knee", "hip", "ankle"]
 contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current"]
@@ -1093,6 +1182,7 @@ names = { en = "Single-leg glute bridge", ru = "Ягодичный мостик 
 kind = "bodyweight"
 pattern = "hinge"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["hip", "lower_back"]
 contraindicated_by = ["hip_injury_current", "lower_back_injury_current", "hernia"]
@@ -1107,6 +1197,7 @@ names = { en = "Bodyweight hip hinge", ru = "Наклоны с отведени�
 kind = "bodyweight"
 pattern = "hinge"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["hip", "lower_back"]
 contraindicated_by = ["hip_injury_current", "lower_back_injury_current", "hernia"]
@@ -1121,6 +1212,7 @@ names = { en = "Incline push-up", ru = "Отжимания от опоры" }
 kind = "bodyweight"
 pattern = "horizontal_push"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["shoulder", "elbow_wrist"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
@@ -1135,6 +1227,7 @@ names = { en = "Decline push-up", ru = "Отжимания с ногами на 
 kind = "bodyweight"
 pattern = "horizontal_push"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
@@ -1149,6 +1242,7 @@ names = { en = "Wall push-up", ru = "Отжимания от стены" }
 kind = "bodyweight"
 pattern = "horizontal_push"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["shoulder", "elbow_wrist"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
@@ -1163,6 +1257,7 @@ names = { en = "Self-resisted row", ru = "Тяга с сопротивление
 kind = "bodyweight"
 pattern = "horizontal_pull"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["shoulder", "elbow_wrist"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
@@ -1177,6 +1272,7 @@ names = { en = "Self-resisted pulldown", ru = "Тяга вниз с сопрот
 kind = "bodyweight"
 pattern = "vertical_pull"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["shoulder", "elbow_wrist"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
@@ -1191,6 +1287,7 @@ names = { en = "Bird dog", ru = "Вытягивание разноимённых
 kind = "bodyweight"
 pattern = "core"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["shoulder", "elbow_wrist", "lower_back", "hip"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hip_injury_current", "hernia"]
@@ -1205,6 +1302,7 @@ names = { en = "Chin-up", ru = "Подтягивания обратным хва
 kind = "bodyweight"
 pattern = "vertical_pull"
 equipment = ["pull_up_bar"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]
 loads_areas = ["shoulder", "elbow_wrist", "neck"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia", "neck_injury_current"]
@@ -1219,6 +1317,7 @@ names = { en = "Side-lying torso rotation", ru = "Поворот корпуса 
 kind = "mobility"
 pattern = "mobility"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["shoulder", "lower_back"]
 contraindicated_by = ["shoulder_injury_current", "lower_back_injury_current", "hernia"]
@@ -1233,6 +1332,7 @@ names = { en = "Ankle circles", ru = "Круговые движения стоп
 kind = "mobility"
 pattern = "mobility"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["ankle"]
 contraindicated_by = ["ankle_injury_current"]
@@ -1247,6 +1347,7 @@ names = { en = "Standing hip circles", ru = "Круговые движения �
 kind = "mobility"
 pattern = "mobility"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["hip", "lower_back"]
 contraindicated_by = ["hip_injury_current", "lower_back_injury_current", "hernia"]
@@ -1261,6 +1362,7 @@ names = { en = "Shoulder circles", ru = "Круговые движения пл�
 kind = "mobility"
 pattern = "mobility"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["shoulder", "neck"]
 contraindicated_by = ["shoulder_injury_current", "neck_injury_current"]
@@ -1275,6 +1377,7 @@ names = { en = "Brisk walk", ru = "Ходьба в бодром темпе" }
 kind = "cardio"
 pattern = "conditioning"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["hip", "knee", "ankle"]
 contraindicated_by = ["hip_injury_current", "knee_injury_current", "ankle_injury_current"]
@@ -1289,6 +1392,7 @@ names = { en = "March in place", ru = "Шаги на месте" }
 kind = "cardio"
 pattern = "conditioning"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["hip", "knee", "ankle"]
 contraindicated_by = ["hip_injury_current", "knee_injury_current", "ankle_injury_current"]
@@ -1303,6 +1407,7 @@ names = { en = "Step jacks", ru = "Шаги в стороны с подъёмо�
 kind = "cardio"
 pattern = "conditioning"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["hip", "knee", "ankle", "shoulder"]
 contraindicated_by = ["hip_injury_current", "knee_injury_current", "ankle_injury_current", "shoulder_injury_current"]
@@ -1317,6 +1422,7 @@ names = { en = "Stair climbing", ru = "Подъём по лестнице" }
 kind = "cardio"
 pattern = "conditioning"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["hip", "knee", "ankle"]
 contraindicated_by = ["hip_injury_current", "knee_injury_current", "ankle_injury_current"]
@@ -1331,6 +1437,7 @@ names = { en = "Easy jog", ru = "Лёгкий бег" }
 kind = "cardio"
 pattern = "conditioning"
 equipment = []
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]
 loads_areas = ["hip", "knee", "ankle"]
 contraindicated_by = ["hip_injury_current", "knee_injury_current", "ankle_injury_current"]
@@ -1347,6 +1454,7 @@ names = { en = "Deficit deadlift", ru = "Становая тяга с дефиц
 kind = "compound"
 pattern = "hinge"
 equipment = ["barbell"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["lower_back", "hip", "knee"]
 contraindicated_by = ["lower_back_injury_current", "hernia", "hip_injury_current", "knee_injury_current"]
@@ -1360,6 +1468,7 @@ names = { en = "Seated dumbbell shoulder press", ru = "Жим гантелей �
 kind = "compound"
 pattern = "vertical_push"
 equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia", "neck_injury_current"]
@@ -1373,6 +1482,7 @@ names = { en = "Close-grip lat pulldown (V-handle)", ru = "Тяга верхне
 kind = "compound"
 pattern = "vertical_pull"
 equipment = ["cable"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["shoulder", "elbow_wrist"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
@@ -1387,6 +1497,7 @@ names = { en = "Neutral-grip lat pulldown", ru = "Тяга верхнего бл
 kind = "compound"
 pattern = "vertical_pull"
 equipment = ["cable"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["shoulder", "elbow_wrist"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
@@ -1401,6 +1512,7 @@ names = { en = "Wide-grip lat pulldown", ru = "Тяга верхнего бло�
 kind = "compound"
 pattern = "vertical_pull"
 equipment = ["cable"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["shoulder", "elbow_wrist"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
@@ -1415,6 +1527,7 @@ names = { en = "Flat dumbbell fly", ru = "Разводка гантелей лё
 kind = "isolation"
 pattern = "accessory"
 equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["shoulder"]
 contraindicated_by = ["shoulder_injury_current"]
@@ -1428,6 +1541,7 @@ names = { en = "Pec deck (machine fly)", ru = "Сведения в тренаж�
 kind = "isolation"
 pattern = "accessory"
 equipment = ["machine"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["shoulder"]
 contraindicated_by = ["shoulder_injury_current"]
@@ -1442,6 +1556,7 @@ names = { en = "Chest-supported incline rear delt raise", ru = "Разведен
 kind = "isolation"
 pattern = "accessory"
 equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["shoulder"]
 contraindicated_by = ["shoulder_injury_current"]
@@ -1455,6 +1570,7 @@ names = { en = "Seated bent-over rear delt raise", ru = "Разведения н
 kind = "isolation"
 pattern = "accessory"
 equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["shoulder"]
 contraindicated_by = ["shoulder_injury_current"]
@@ -1468,6 +1584,7 @@ names = { en = "Band external rotation", ru = "Наружные ротации �
 kind = "isolation"
 pattern = "accessory"
 equipment = ["resistance_bands"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["shoulder"]
 contraindicated_by = ["shoulder_injury_current"]
@@ -1482,6 +1599,7 @@ names = { en = "Seated incline dumbbell curl", ru = "Сгибания на би�
 kind = "isolation"
 pattern = "accessory"
 equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["elbow_wrist", "shoulder"]
 contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
@@ -1495,6 +1613,7 @@ names = { en = "Seated dumbbell French press", ru = "Французский жи
 kind = "isolation"
 pattern = "accessory"
 equipment = ["dumbbells", "bench"]
+load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["elbow_wrist", "shoulder"]
 contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
@@ -1508,6 +1627,7 @@ names = { en = "Cable rotation", ru = "Ротации на блоке" }
 kind = "isolation"
 pattern = "core"
 equipment = ["cable"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["lower_back", "hip"]
 contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "hernia"]
@@ -1522,6 +1642,7 @@ names = { en = "Incline treadmill walk", ru = "Ходьба в горку на �
 kind = "cardio"
 pattern = "conditioning"
 equipment = ["machine"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["hip", "knee", "ankle"]
 contraindicated_by = ["hip_injury_current", "knee_injury_current", "ankle_injury_current"]
@@ -1536,6 +1657,7 @@ names = { en = "Upright bike", ru = "Велотренажёр" }
 kind = "cardio"
 pattern = "conditioning"
 equipment = ["machine"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["hip", "knee"]
 contraindicated_by = ["hip_injury_current", "knee_injury_current"]
@@ -1550,6 +1672,7 @@ names = { en = "Rowing machine", ru = "Гребной тренажёр" }
 kind = "cardio"
 pattern = "conditioning"
 equipment = ["machine"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["lower_back", "shoulder", "hip"]
 contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "hip_injury_current"]
@@ -1564,6 +1687,7 @@ names = { en = "SkiErg", ru = "Лыжный тренажёр (SkiErg)" }
 kind = "cardio"
 pattern = "conditioning"
 equipment = ["machine"]
+load_unit = "total"
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["shoulder", "lower_back"]
 contraindicated_by = ["shoulder_injury_current", "lower_back_injury_current"]

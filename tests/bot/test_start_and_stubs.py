@@ -1,5 +1,5 @@
-"""`/start` (bound, no profile vs. bound, with profile), `/cancel`, and the M6-M9 stub
-commands (`/plan`, `/train`, `/stats`, `/system`) all reply "not available yet" for now."""
+"""`/start` (bound, no profile vs. bound, with profile), `/cancel`, and the M7-M9 stub
+commands (`/train`, `/stats`, `/system`) all reply "not available yet" for now."""
 
 from __future__ import annotations
 
@@ -81,7 +81,7 @@ async def test_stub_commands_reply_not_available_yet(
     await _run_full_setup_with_no_red_flags(dispatcher, bot, db)
     owner = make_user(OWNER_CHAT_ID)
 
-    for command in ("/plan", "/train", "/stats", "/system"):
+    for command in ("/train", "/stats", "/system"):
         await dispatcher.feed_update(
             bot, message_update(user=owner, chat_id=OWNER_CHAT_ID, text=command)
         )

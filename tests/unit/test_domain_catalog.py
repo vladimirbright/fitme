@@ -38,11 +38,35 @@ def test_exercise_defaults_load_step_kg_to_1_0_without_barbell() -> None:
         _exercise(
             id="dumbbell_row",
             equipment=["dumbbells"],
+            load_unit="single_implement",
             loads_areas=["lower_back"],
             contraindicated_by=[],
         )
     )
     assert exercise.load_step_kg == 1.0
+
+
+def test_exercise_defaults_load_unit_to_total_without_dumbbells_or_kettlebell() -> None:
+    assert Exercise.model_validate(_exercise()).load_unit == "total"
+    bodyweight = _exercise(id="pushup", equipment=[], start={"kind": "bodyweight"})
+    assert Exercise.model_validate(bodyweight).load_unit == "total"
+
+
+def test_exercise_requires_an_explicit_load_unit_for_dumbbells_and_kettlebell() -> None:
+    """A§4.4 "loads are per implement": a dumbbell/kettlebell exercise must say what its kg
+    means; the model refuses a missing value instead of defaulting silently."""
+    for equipment in (["dumbbells"], ["kettlebell"], ["dumbbells", "bench"]):
+        with pytest.raises(ValidationError, match="load_unit"):
+            Exercise.model_validate(_exercise(equipment=equipment))
+        exercise = Exercise.model_validate(
+            _exercise(equipment=equipment, load_unit="per_implement")
+        )
+        assert exercise.load_unit == "per_implement"
+
+
+def test_exercise_rejects_an_unknown_load_unit() -> None:
+    with pytest.raises(ValidationError):
+        Exercise.model_validate(_exercise(load_unit="per_hand"))
 
 
 def test_exercise_honors_an_explicit_load_step_kg() -> None:
@@ -97,3 +121,65 @@ def test_bodyweight_start_does_not_require_loads_areas() -> None:
         )
     )
     assert exercise.loads_areas == []
+
+
+def test_kg_loadable_is_derived_from_kind_pattern_and_start() -> None:
+    assert Exercise.model_validate(_exercise()).kg_loadable is True  # barbell, kg start
+    calibration = _exercise(
+        id="machine_leg_press", equipment=["machine"], start={"kind": "calibration"}
+    )
+    assert Exercise.model_validate(calibration).kg_loadable is True
+    bodyweight = _exercise(id="pushup", equipment=[], start={"kind": "bodyweight"})
+    assert Exercise.model_validate(bodyweight).kg_loadable is False
+    cardio = _exercise(
+        id="machine_rower",
+        kind="cardio",
+        pattern="conditioning",
+        equipment=["machine"],
+        start={"kind": "calibration"},
+    )
+    assert Exercise.model_validate(cardio).kg_loadable is False
+    mobility = _exercise(
+        id="cat_cow",
+        kind="mobility",
+        pattern="mobility",
+        equipment=[],
+        start={"kind": "bodyweight"},
+    )
+    assert Exercise.model_validate(mobility).kg_loadable is False
+
+
+def test_band_only_exercises_are_not_kg_loadable() -> None:
+    """A§4.4: a band's load isn't a kg number. Only *load* equipment counts: a band plus a
+    pull-up bar is still band-only, while a band plus a dumbbell is not."""
+    band = _exercise(id="band_row", equipment=["resistance_bands"], start={"kind": "calibration"})
+    assert Exercise.model_validate(band).kg_loadable is False
+    band_and_bar = _exercise(
+        id="band_lat_pulldown",
+        equipment=["resistance_bands", "pull_up_bar"],
+        start={"kind": "calibration"},
+    )
+    assert Exercise.model_validate(band_and_bar).kg_loadable is False
+    band_and_dumbbell = _exercise(
+        id="banded_dumbbell_press",
+        equipment=["resistance_bands", "dumbbells"],
+        load_unit="per_implement",
+        start={"kind": "calibration"},
+    )
+    assert Exercise.model_validate(band_and_dumbbell).kg_loadable is True
+
+
+def test_kg_loadable_explicit_override_and_consistency_rules() -> None:
+    swing = _exercise(
+        id="kettlebell_swing",
+        kind="cardio",
+        pattern="conditioning",
+        equipment=["kettlebell"],
+        load_unit="single_implement",
+        start={"kind": "kg", "kg": 8.0},
+    )
+    with pytest.raises(ValidationError, match="kg_loadable"):
+        Exercise.model_validate(swing)  # derived false, but a kg start: contradiction
+    assert Exercise.model_validate({**swing, "kg_loadable": True}).kg_loadable is True
+    with pytest.raises(ValidationError, match="loads_areas"):
+        Exercise.model_validate(_exercise(kg_loadable=True, loads_areas=[], contraindicated_by=[]))

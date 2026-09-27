@@ -239,6 +239,8 @@ def render_user_prompt(
     workout: Workout | None = None,
     planned_block: Block | None = None,
     result_text: str | None = None,
+    guard_feedback: Sequence[str] | None = None,
+    load_units: Mapping[str, str] | None = None,
 ) -> RenderedInput:
     """Build the one `user_prompt` every agent factory's caller sends (B2: "one rendering
     path"), so `plan_generate`/`plan_revise`/`session_adjust`/`result_parse` never each grow
@@ -254,6 +256,14 @@ def render_user_prompt(
     Every free-text field (`request`, `result_text`) is passed through `scrub()` here,
     unconditionally — a caller can never forget to scrub, because there is no way to reach
     the model with this function without going through it.
+
+    `guard_feedback` (A§6.4 step 4: "re-prompt once with the list of violations") is the
+    previous attempt's failing guard details, verbatim — they are machine-built strings
+    (catalog ids, rule names, kg numbers), never user text, so they aren't scrubbed.
+
+    `load_units` (A§4.4 "loads are per implement") maps each exercise id in `planned_block`
+    to its catalog `load_unit`, so `result_parse` knows whether a reported kg is a total, per
+    implement (each dumbbell/kettlebell), or a single implement.
     """
     payload: dict[str, object] = {}
     if context is not None:
@@ -272,5 +282,9 @@ def render_user_prompt(
         payload["user_request"] = scrub(request)
     if result_text is not None:
         payload["result_text"] = scrub(result_text)
+    if guard_feedback is not None:
+        payload["guard_feedback"] = list(guard_feedback)
+    if load_units is not None:
+        payload["load_units"] = dict(load_units)
     text = json.dumps(payload, ensure_ascii=False)
     return RenderedInput(text=text, payload=payload)

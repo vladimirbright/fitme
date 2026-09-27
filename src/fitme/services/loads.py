@@ -17,12 +17,12 @@ The catalog's kg `start` is only ever emitted when there is no history at all.
 from __future__ import annotations
 
 import math
-from collections.abc import Mapping, Sequence
+from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass, field
 
 from fitme.db.connection import Database
 from fitme.db.records import SessionOutcome
-from fitme.db.selectors.decisions import recent_increase_deltas
+from fitme.db.selectors.decisions import applied_to_kg_by_exercise, recent_increase_deltas
 from fitme.db.selectors.training import historical_max_kg, recent_session_outcomes
 from fitme.domain.catalog import Exercise
 from fitme.domain.enums import CheckinAnswer
@@ -123,10 +123,18 @@ def next_load(
     checkins: Mapping[str, CheckinAnswer],
     increases_7d: Sequence[float],
     cap_kg: float,
+    *,
+    flagged_areas: Collection[str],
+    applied_to_kg_7d: float | None = None,
 ) -> LoadDecision:
-    """Deterministic double progression (A§7.3):
+    """Deterministic double progression (A§7.3). `flagged_areas` is the set of loads-area
+    names the user flagged (`guards.checkins.flagged_areas_from`): only those need a `fine`
+    check-in before an increase. `applied_to_kg_7d` is the highest `to_kg` already applied
+    to this exercise in the trailing 7 days (`GuardContext.applied_to_kg_7d`), if any: a
+    plan confirmed at that load is the current prescription, so the engine holds there
+    rather than re-deriving (and re-capping) the same increase from the last session.
 
-    - no history -> calibration at the catalog start;
+    - no history -> `calibration` (never a kg value; the catalog `start` is a display hint);
     - the last session was itself a calibration session (no prescribed load) -> anchor on
       what the user logged, held (there is no prescribed load to progress from); if nothing
       usable was logged, calibration again. Never the catalog kg start;
@@ -145,11 +153,37 @@ def next_load(
     ceiling (e.g. prescribed 60, but the user only ever logged 50) is clamped down or
     replaced by calibration.
     """
+    if not exercise.kg_loadable:
+        # A§4.4 "non-kg exercises": bodyweight for a bodyweight move, calibration for the rest
+        # (a cardio machine, a band). Never a kg number, whatever the history says.
+        if exercise.start.kind == "bodyweight":
+            return LoadDecision(load=Load(kind="bodyweight"), reason="not kg-loadable: bodyweight")
+        return _calibration("not kg-loadable: calibration", [])
     if not history.sessions:
-        return LoadDecision(load=exercise.start, reason="no history: calibration")
+        return _calibration("no history: calibration", [])
 
     last = history.sessions[0]
     prescribed_kg = last.planned_load_kg
+
+    if applied_to_kg_7d is not None and not _is_valid_kg(applied_to_kg_7d):
+        return _calibration(
+            f"applied_to_kg_7d {applied_to_kg_7d!r} is not a finite positive number; failing "
+            "closed to calibration — log what you use",
+            [],
+        )
+    if (
+        prescribed_kg is not None
+        and applied_to_kg_7d is not None
+        and applied_to_kg_7d > prescribed_kg
+    ):
+        # A§7: the increase was already applied (and guarded) this week; hold at it.
+        return _within_ceiling(
+            applied_to_kg_7d,
+            "hold at the load applied this week",
+            [],
+            exercise=exercise,
+            history=history,
+        )
 
     if prescribed_kg is None:
         # After a calibration session there is nothing to progress from: anchor on what the
@@ -167,7 +201,7 @@ def next_load(
 
     if last.hit_reps_max:
         proposed_kg = prescribed_kg + exercise.increment_kg
-        checkins_verdict = increase_allowed(exercise, checkins)
+        checkins_verdict = increase_allowed(exercise, checkins, flagged_areas)
         weekly_verdict = check_weekly_increment(
             exercise,
             increases_7d=increases_7d,
@@ -234,6 +268,7 @@ async def next_load_for_exercise(
     user_id: int,
     exercise: Exercise,
     checkins: Mapping[str, CheckinAnswer],
+    flagged_areas: Collection[str],
     cap_kg: float,
     since_7d: str,
 ) -> LoadDecision:
@@ -247,5 +282,14 @@ async def next_load_for_exercise(
         history_max = await historical_max_kg(conn, user_id, exercise.id)
         sessions = await recent_session_outcomes(conn, user_id, exercise.id, limit=2)
         increases_7d = await recent_increase_deltas(conn, user_id, exercise.id, since=since_7d)
+        applied = await applied_to_kg_by_exercise(conn, user_id, since=since_7d)
     history = ExerciseHistory(history_max_kg=history_max, sessions=sessions)
-    return next_load(exercise, history, checkins, increases_7d, cap_kg)
+    return next_load(
+        exercise,
+        history,
+        checkins,
+        increases_7d,
+        cap_kg,
+        flagged_areas=flagged_areas,
+        applied_to_kg_7d=applied.get(exercise.id),
+    )

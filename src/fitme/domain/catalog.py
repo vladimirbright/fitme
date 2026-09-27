@@ -7,6 +7,8 @@ file I/O.
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, model_validator
 
 from fitme.domain.enums import (
@@ -27,6 +29,28 @@ _STRICT_CONFIG = ConfigDict(extra="forbid", allow_inf_nan=False)
 _BARBELL_LOAD_STEP_KG = 2.5
 _DEFAULT_LOAD_STEP_KG = 1.0
 
+# A§4.4 "loads are per implement": what a prescribed `kg` means for this exercise.
+# `total` — the whole load (a barbell, a machine stack; also bodyweight/band/cardio moves,
+# where it's unused); `per_implement` — two dumbbells or kettlebells, kg for each one (shown
+# as "{kg} kg each"); `single_implement` — one dumbbell or kettlebell held with one or both
+# hands.
+LoadUnit = Literal["total", "per_implement", "single_implement"]
+# A§4.4 "non-kg exercises": these never take a kg prescription (see `Exercise.kg_loadable`).
+_NON_KG_PATTERNS = frozenset({ExercisePattern.CONDITIONING.value, ExercisePattern.MOBILITY.value})
+# Equipment a kg load is actually put on. A rack, bench or pull-up bar carries no load of its
+# own, and a resistance band's load isn't meaningfully a kg number: an exercise whose only
+# load equipment is `resistance_bands` (band-only) is never kg-loadable (A§4.4).
+_KG_LOAD_EQUIPMENT = frozenset(
+    {
+        Equipment.BARBELL.value,
+        Equipment.DUMBBELLS.value,
+        Equipment.KETTLEBELL.value,
+        Equipment.MACHINE.value,
+        Equipment.CABLE.value,
+    }
+)
+_LOAD_UNIT_REQUIRED_EQUIPMENT = frozenset({Equipment.DUMBBELLS.value, Equipment.KETTLEBELL.value})
+
 
 class Exercise(BaseModel):
     """One `[[exercise]]` entry (A§4.4)."""
@@ -41,6 +65,18 @@ class Exercise(BaseModel):
     # full-body set" test to check that each location offers every primary pattern.
     pattern: ExercisePattern
     equipment: list[Equipment]
+    # Required in the catalog for every dumbbell/kettlebell exercise (`fitme catalog check`
+    # fails on a missing one via this model); everything else defaults to `total` — see
+    # `_default_load_unit` below.
+    load_unit: LoadUnit
+    # A§4.4 "non-kg exercises": whether a `kg` load may ever be prescribed. Derived when
+    # omitted (`_default_kg_loadable`): false for cardio (incl. cardio machines), for the
+    # conditioning/mobility patterns, for bodyweight-start moves and for band-only exercises
+    # (`_is_band_only`); true otherwise. The
+    # catalog may override it explicitly (e.g. a kettlebell swing: conditioning, but a real
+    # kg implement). The guards reject a kg prescription on a non-kg-loadable exercise and
+    # the engine substitutes bodyweight/calibration.
+    kg_loadable: bool
     locations: list[Location]
     # Catalog short names for the areas this exercise loads, e.g. "knee", "lower_back"
     # (A§4.4). Matches `domain.enums.AREA_FLAG_TO_LOADS_AREA`'s values, not its keys.
@@ -72,17 +108,37 @@ class Exercise(BaseModel):
         return self
 
     @model_validator(mode="after")
-    def _kg_capable_exercises_declare_loads_areas(self) -> Exercise:
-        """An exercise whose `start` (or, in a later milestone, any other allowed load) can be
-        a `kg` number must declare which body areas it loads: `checkins.increase_allowed`
-        (A§7) can only gate a numeric increase against areas it's told about, and a kg-capable
-        exercise with no declared area would otherwise let an increase through unchecked."""
-        if self.start.kind == "kg" and not self.loads_areas:
+    def _kg_loadable_is_consistent(self) -> Exercise:
+        """A kg `start` on an exercise that may never take a kg load is a contradiction; and
+        a kg-loadable exercise must declare which body areas it loads:
+        `checkins.increase_allowed` (A§7) can only gate a numeric increase against areas it's
+        told about, and a kg-capable exercise with no declared area would otherwise let an
+        increase through unchecked."""
+        if self.start.kind == "kg" and not self.kg_loadable:
+            raise ValueError(f"{self.id}: start.kind == 'kg' but kg_loadable is false")
+        if self.kg_loadable and not self.loads_areas:
             raise ValueError(
-                f"{self.id}: a kg-capable exercise (start.kind == 'kg') must have a "
-                "non-empty loads_areas (needed for check-in gating, A§7)"
+                f"{self.id}: a kg-loadable exercise must have a non-empty loads_areas "
+                "(needed for check-in gating, A§7)"
             )
         return self
+
+    @model_validator(mode="before")
+    @classmethod
+    def _default_kg_loadable(cls, data: object) -> object:
+        if not isinstance(data, dict) or data.get("kg_loadable") is not None:
+            return data
+        start = data.get("start")
+        start_kind = start.get("kind") if isinstance(start, dict) else getattr(start, "kind", None)
+        derived = (
+            start_kind != "bodyweight"
+            and data.get("kind") != ExerciseKind.CARDIO.value
+            and data.get("pattern") not in _NON_KG_PATTERNS
+            and not _is_band_only([str(item) for item in (data.get("equipment") or [])])
+        )
+        data = dict(data)
+        data["kg_loadable"] = derived
+        return data
 
     @model_validator(mode="after")
     def _contraindication_exceptions_are_loaded_areas(self) -> Exercise:
@@ -92,6 +148,22 @@ class Exercise(BaseModel):
                 f"{self.id}: contraindication_exceptions {unknown} are not in loads_areas"
             )
         return self
+
+    @model_validator(mode="before")
+    @classmethod
+    def _default_load_unit(cls, data: object) -> object:
+        """`load_unit` may be omitted only where it can't be ambiguous: an exercise using no
+        dumbbells or kettlebell is `total`. A dumbbell/kettlebell exercise must say whether
+        its kg is per dumbbell or for the single implement (A§4.4); leaving it out is a
+        validation error, never a silent default."""
+        if not isinstance(data, dict) or data.get("load_unit") is not None:
+            return data
+        equipment = data.get("equipment") or []
+        if any(item in _LOAD_UNIT_REQUIRED_EQUIPMENT for item in equipment):
+            return data  # missing: let the field's own validation report it
+        data = dict(data)
+        data["load_unit"] = "total"
+        return data
 
     @model_validator(mode="before")
     @classmethod
@@ -169,6 +241,36 @@ LOCATION_DEFAULT_EQUIPMENT: dict[Location, frozenset[Equipment]] = {
 HOME_SELECTABLE_EQUIPMENT: frozenset[Equipment] = frozenset(Equipment) - frozenset(
     {Equipment.MACHINE, Equipment.CABLE}
 )
+
+
+def _is_band_only(equipment: list[str]) -> bool:
+    """Uses resistance bands and no kg load equipment (`_KG_LOAD_EQUIPMENT`)."""
+    return Equipment.RESISTANCE_BANDS.value in equipment and not any(
+        item in _KG_LOAD_EQUIPMENT for item in equipment
+    )
+
+
+def kg_loadable_problems(catalog: Catalog) -> list[str]:
+    """A§4.4 "non-kg exercises": an explicit `kg_loadable = true` override on a cardio,
+    conditioning, mobility, bodyweight-start or band-only exercise is only acceptable when
+    the exercise really is loaded with a kg implement (its `start` is a kg load, e.g. a
+    kettlebell swing).
+    Anything else is a mistake this reports; `fitme catalog check` fails on it. The model
+    itself already rejects a kg `start` with `kg_loadable = false`."""
+    problems: list[str] = []
+    for exercise in catalog.exercise:
+        non_kg_shape = (
+            exercise.kind == ExerciseKind.CARDIO
+            or exercise.pattern.value in _NON_KG_PATTERNS
+            or exercise.start.kind == "bodyweight"
+            or _is_band_only([item.value for item in exercise.equipment])
+        )
+        if exercise.kg_loadable and non_kg_shape and exercise.start.kind != "kg":
+            problems.append(
+                f"{exercise.id}: kg_loadable is true on a {exercise.kind.value}/"
+                f"{exercise.pattern.value} exercise with a {exercise.start.kind} start"
+            )
+    return problems
 
 
 def missing_contraindication_coverage(catalog: Catalog) -> list[str]:

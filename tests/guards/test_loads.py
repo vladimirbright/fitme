@@ -35,6 +35,8 @@ def _squat(**overrides: object) -> Exercise:
 
 
 _FINE_CHECKINS = {"knee": CheckinAnswer.FINE, "lower_back": CheckinAnswer.FINE}
+# Every loaded area flagged: the strict case, where each area needs a `fine` check-in.
+_ALL_AREAS = frozenset({"knee", "lower_back"})
 
 
 def _outcome(
@@ -57,10 +59,33 @@ def _outcome(
 def test_no_history_is_calibration() -> None:
     exercise = _squat()
     decision = next_load(
-        exercise, ExerciseHistory(history_max_kg=None, sessions=[]), {}, [], cap_kg=2.5
+        exercise,
+        ExerciseHistory(history_max_kg=None, sessions=[]),
+        {},
+        [],
+        cap_kg=2.5,
+        flagged_areas=_ALL_AREAS,
     )
-    assert decision.load == exercise.start
+    assert decision.load == Load(kind="calibration")  # never the catalog kg start (A§7.3)
+    assert decision.load != exercise.start
     assert "calibration" in decision.reason
+
+
+def test_unflagged_area_needs_no_checkin_for_an_increment() -> None:
+    """A§6.5/A§7: check-ins are asked for flagged areas only, so with nothing flagged an
+    increment passes the check-in guard with no check-ins at all (cap and ceiling still
+    apply)."""
+    exercise = _squat()
+    history = ExerciseHistory(
+        history_max_kg=100.0,
+        sessions=[_outcome(load_kg=100.0, hit_reps_max=True, below_reps_min=False)],
+    )
+    decision = next_load(exercise, history, {}, increases_7d=[], cap_kg=2.5, flagged_areas=())
+    assert decision.load.kg == 102.5
+    held = next_load(
+        exercise, history, {}, increases_7d=[], cap_kg=2.5, flagged_areas={"lower_back"}
+    )
+    assert held.load.kg == 100.0  # the flagged area has no check-in: blocked
 
 
 def test_hit_reps_max_proposes_an_increment_when_every_guard_passes() -> None:
@@ -69,7 +94,9 @@ def test_hit_reps_max_proposes_an_increment_when_every_guard_passes() -> None:
         history_max_kg=100.0,
         sessions=[_outcome(load_kg=100.0, hit_reps_max=True, below_reps_min=False)],
     )
-    decision = next_load(exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5)
+    decision = next_load(
+        exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5, flagged_areas=_ALL_AREAS
+    )
     assert decision.load.kind == "kg"
     assert decision.load.kg == 102.5
     assert all(v.ok for v in decision.guards_fired)
@@ -82,7 +109,9 @@ def test_unknown_checkin_holds_instead_of_incrementing() -> None:
         sessions=[_outcome(load_kg=100.0, hit_reps_max=True, below_reps_min=False)],
     )
     checkins = {"knee": CheckinAnswer.UNKNOWN, "lower_back": CheckinAnswer.FINE}
-    decision = next_load(exercise, history, checkins, increases_7d=[], cap_kg=2.5)
+    decision = next_load(
+        exercise, history, checkins, increases_7d=[], cap_kg=2.5, flagged_areas=_ALL_AREAS
+    )
     assert decision.load.kg == 100.0  # held, not incremented
     assert any(not v.ok for v in decision.guards_fired)
 
@@ -93,7 +122,9 @@ def test_weekly_cap_already_used_holds_instead_of_incrementing() -> None:
         history_max_kg=100.0,
         sessions=[_outcome(load_kg=100.0, hit_reps_max=True, below_reps_min=False)],
     )
-    decision = next_load(exercise, history, _FINE_CHECKINS, increases_7d=[2.5], cap_kg=2.5)
+    decision = next_load(
+        exercise, history, _FINE_CHECKINS, increases_7d=[2.5], cap_kg=2.5, flagged_areas=_ALL_AREAS
+    )
     assert decision.load.kg == 100.0
     assert any(v.rule == "progression.weekly_cap" and not v.ok for v in decision.guards_fired)
 
@@ -108,7 +139,9 @@ def test_ceiling_violation_holds_instead_of_incrementing() -> None:
         history_max_kg=95.0,
         sessions=[_outcome(load_kg=100.0, hit_reps_max=True, below_reps_min=False)],
     )
-    decision = next_load(exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5)
+    decision = next_load(
+        exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5, flagged_areas=_ALL_AREAS
+    )
     assert decision.load.kg == 97.5
     assert any(v.rule == "ceiling.historical_max" and not v.ok for v in decision.guards_fired)
 
@@ -122,7 +155,9 @@ def test_two_sessions_below_reps_min_decreases_by_10_percent_rounded() -> None:
             _outcome(load_kg=100.0, hit_reps_max=False, below_reps_min=True),
         ],
     )
-    decision = next_load(exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5)
+    decision = next_load(
+        exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5, flagged_areas=_ALL_AREAS
+    )
     # 100 * 0.9 = 90.0, already a multiple of the 2.5 kg step.
     assert decision.load.kg == 90.0
     assert "10%" in decision.reason
@@ -137,7 +172,9 @@ def test_two_sessions_below_reps_min_rounds_to_the_implement_step() -> None:
             _outcome(load_kg=42.5, hit_reps_max=False, below_reps_min=True),
         ],
     )
-    decision = next_load(exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5)
+    decision = next_load(
+        exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5, flagged_areas=_ALL_AREAS
+    )
     # 42.5 * 0.9 = 38.25 -> nearest 2.5 kg step is 37.5.
     assert decision.load.kg == 37.5
 
@@ -148,7 +185,9 @@ def test_a_single_session_below_reps_min_holds_without_decreasing() -> None:
         history_max_kg=100.0,
         sessions=[_outcome(load_kg=100.0, hit_reps_max=False, below_reps_min=True)],
     )
-    decision = next_load(exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5)
+    decision = next_load(
+        exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5, flagged_areas=_ALL_AREAS
+    )
     assert decision.load.kg == 100.0
     assert "hold" in decision.reason
 
@@ -165,7 +204,9 @@ def test_two_sessions_below_reps_min_floors_rather_than_rounds() -> None:
             _outcome(load_kg=13.0, hit_reps_max=False, below_reps_min=True),
         ],
     )
-    decision = next_load(exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5)
+    decision = next_load(
+        exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5, flagged_areas=_ALL_AREAS
+    )
     assert decision.load.kg == 10.0
 
 
@@ -181,7 +222,9 @@ def test_two_sessions_below_reps_min_from_0_5_kg_falls_back_to_calibration() -> 
             _outcome(load_kg=0.5, hit_reps_max=False, below_reps_min=True),
         ],
     )
-    decision = next_load(exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5)
+    decision = next_load(
+        exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5, flagged_areas=_ALL_AREAS
+    )
     assert decision.load.kind == "calibration"
     assert decision.load != exercise.start  # not the (unguarded) catalog kg start
     assert "calibration" in decision.reason
@@ -198,7 +241,9 @@ def test_two_sessions_below_reps_min_from_2_0_kg_step_1_decreases_by_one_step() 
             _outcome(load_kg=2.0, hit_reps_max=False, below_reps_min=True),
         ],
     )
-    decision = next_load(exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5)
+    decision = next_load(
+        exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5, flagged_areas=_ALL_AREAS
+    )
     assert decision.load.kg == 1.0
 
 
@@ -223,7 +268,9 @@ def test_decrease_never_returns_a_kg_load_above_the_prescribed_load() -> None:
                 _outcome(load_kg=prescribed_kg, hit_reps_max=False, below_reps_min=True),
             ],
         )
-        decision = next_load(exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5)
+        decision = next_load(
+            exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5, flagged_areas=_ALL_AREAS
+        )
         if decision.load.kind == "kg":
             assert decision.load.kg is not None
             assert 0 < decision.load.kg < prescribed_kg, (prescribed_kg, step, decision.load)
@@ -242,7 +289,9 @@ def test_hit_reps_max_progresses_from_the_prescribed_load_not_the_logged_one() -
             _outcome(load_kg=70.0, planned_load_kg=60.0, hit_reps_max=True, below_reps_min=False)
         ],
     )
-    decision = next_load(exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5)
+    decision = next_load(
+        exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5, flagged_areas=_ALL_AREAS
+    )
     assert decision.load.kg == 62.5
 
 
@@ -254,7 +303,9 @@ def test_hold_shows_the_prescribed_load_not_the_logged_one() -> None:
             _outcome(load_kg=70.0, planned_load_kg=60.0, hit_reps_max=False, below_reps_min=False)
         ],
     )
-    decision = next_load(exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5)
+    decision = next_load(
+        exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5, flagged_areas=_ALL_AREAS
+    )
     assert decision.load.kg == 60.0
 
 
@@ -264,7 +315,9 @@ def test_steady_state_between_reps_min_and_reps_max_holds() -> None:
         history_max_kg=100.0,
         sessions=[_outcome(load_kg=100.0, hit_reps_max=False, below_reps_min=False)],
     )
-    decision = next_load(exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5)
+    decision = next_load(
+        exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5, flagged_areas=_ALL_AREAS
+    )
     assert decision.load.kg == 100.0
     # Every emitted kg value is ceiling-checked, and the verdict is logged (AGENTS.md §6).
     assert [v.rule for v in decision.guards_fired] == ["ceiling.historical_max"]
@@ -286,7 +339,9 @@ def test_after_calibration_session_anchors_on_the_logged_load_not_the_catalog_st
             )
         ],
     )
-    decision = next_load(exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5)
+    decision = next_load(
+        exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5, flagged_areas=_ALL_AREAS
+    )
     assert decision.load == Load(kind="kg", kg=12.0)
     assert decision.load != exercise.start
     assert any(v.rule == "ceiling.historical_max" and v.ok for v in decision.guards_fired)
@@ -304,7 +359,9 @@ def test_after_calibration_session_all_sets_hit_still_holds_at_the_logged_load()
             )
         ],
     )
-    decision = next_load(exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5)
+    decision = next_load(
+        exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5, flagged_areas=_ALL_AREAS
+    )
     assert decision.load == Load(kind="kg", kg=12.0)
 
 
@@ -318,7 +375,9 @@ def test_after_calibration_session_logged_above_the_catalog_start_anchors_on_the
             )
         ],
     )
-    decision = next_load(exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5)
+    decision = next_load(
+        exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5, flagged_areas=_ALL_AREAS
+    )
     assert decision.load == Load(kind="kg", kg=30.0)
 
 
@@ -332,7 +391,9 @@ def test_after_calibration_session_with_nothing_logged_is_calibration_again() ->
             )
         ],
     )
-    decision = next_load(exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5)
+    decision = next_load(
+        exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5, flagged_areas=_ALL_AREAS
+    )
     assert decision.load == Load(kind="calibration")
     assert decision.load != exercise.start
 
@@ -351,7 +412,9 @@ def test_hold_above_the_ceiling_is_clamped_down_to_the_ceiling() -> None:
             _outcome(load_kg=50.0, planned_load_kg=60.0, hit_reps_max=False, below_reps_min=False)
         ],
     )
-    decision = next_load(exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5)
+    decision = next_load(
+        exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5, flagged_areas=_ALL_AREAS
+    )
     assert decision.load == Load(kind="kg", kg=52.5)
     assert "clamped" in decision.reason
     assert any(v.rule == "ceiling.historical_max" and not v.ok for v in decision.guards_fired)
@@ -366,7 +429,9 @@ def test_hold_above_the_ceiling_is_floored_to_the_implement_step() -> None:
             _outcome(load_kg=50.0, planned_load_kg=60.0, hit_reps_max=False, below_reps_min=False)
         ],
     )
-    decision = next_load(exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5)
+    decision = next_load(
+        exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5, flagged_areas=_ALL_AREAS
+    )
     assert decision.load == Load(kind="kg", kg=50.0)
 
 
@@ -382,7 +447,9 @@ def test_held_increase_above_the_ceiling_is_clamped_too() -> None:
         ],
     )
     checkins = {"knee": CheckinAnswer.UNKNOWN, "lower_back": CheckinAnswer.FINE}
-    decision = next_load(exercise, history, checkins, increases_7d=[], cap_kg=2.5)
+    decision = next_load(
+        exercise, history, checkins, increases_7d=[], cap_kg=2.5, flagged_areas=_ALL_AREAS
+    )
     assert decision.load == Load(kind="kg", kg=52.5)
 
 
@@ -397,7 +464,9 @@ def test_decrease_above_the_ceiling_is_clamped_too() -> None:
             _outcome(load_kg=50.0, planned_load_kg=100.0, hit_reps_max=False, below_reps_min=True),
         ],
     )
-    decision = next_load(exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5)
+    decision = next_load(
+        exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5, flagged_areas=_ALL_AREAS
+    )
     assert decision.load == Load(kind="kg", kg=52.5)
 
 
@@ -411,7 +480,9 @@ def test_hold_with_no_history_max_falls_back_to_calibration() -> None:
             _outcome(load_kg=None, planned_load_kg=60.0, hit_reps_max=False, below_reps_min=False)
         ],
     )
-    decision = next_load(exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5)
+    decision = next_load(
+        exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5, flagged_areas=_ALL_AREAS
+    )
     assert decision.load == Load(kind="calibration")
 
 
@@ -476,7 +547,12 @@ def test_every_emitted_kg_value_is_within_the_ceiling() -> None:
     checked = 0
     for case in _sweep_cases():
         decision = next_load(
-            case.exercise, case.history, case.checkins, increases_7d=[], cap_kg=2.5
+            case.exercise,
+            case.history,
+            case.checkins,
+            increases_7d=[],
+            cap_kg=2.5,
+            flagged_areas=_ALL_AREAS,
         )
         checked += 1
         if decision.load.kind != "kg":
@@ -494,7 +570,12 @@ def test_with_the_weekly_cap_already_used_no_emitted_kg_exceeds_the_reference() 
     checked = 0
     for case in _sweep_cases():
         decision = next_load(
-            case.exercise, case.history, case.checkins, increases_7d=[2.5], cap_kg=2.5
+            case.exercise,
+            case.history,
+            case.checkins,
+            increases_7d=[2.5],
+            cap_kg=2.5,
+            flagged_areas=_ALL_AREAS,
         )
         checked += 1
         if decision.load.kind != "kg":
@@ -503,5 +584,106 @@ def test_with_the_weekly_cap_already_used_no_emitted_kg_exceeds_the_reference() 
         reference = case.logged if case.prescribed is None else case.prescribed
         assert decision.load.kg is not None
         assert decision.load.kg <= reference + 1e-9, (case, decision)
+        assert decision.load.kg <= case.history_max + _SWEEP_INCREMENT + 1e-9, (case, decision)
+    assert checked > 1000
+
+
+def test_engine_never_emits_kg_for_a_non_kg_loadable_exercise() -> None:
+    """A§4.4: bodyweight for a bodyweight move, calibration otherwise — even with history."""
+    pushup = _squat(
+        id="pushup",
+        kind="bodyweight",
+        pattern="horizontal_push",
+        equipment=[],
+        loads_areas=["shoulder"],
+        start={"kind": "bodyweight"},
+    )
+    rower = _squat(
+        id="machine_rower",
+        kind="cardio",
+        pattern="conditioning",
+        equipment=["machine"],
+        loads_areas=["lower_back"],
+        start={"kind": "calibration"},
+    )
+    history = ExerciseHistory(
+        history_max_kg=100.0,
+        sessions=[_outcome(load_kg=100.0, hit_reps_max=True, below_reps_min=False)],
+    )
+    assert not pushup.kg_loadable and not rower.kg_loadable
+    for exercise, expected in ((pushup, "bodyweight"), (rower, "calibration")):
+        decision = next_load(
+            exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5, flagged_areas=()
+        )
+        assert decision.load.kind == expected, exercise.id
+
+
+def test_engine_holds_at_the_load_applied_this_week() -> None:
+    """A§7: the last session (40, hit reps_max) already earned the +2.5 that a confirmed
+    plan applied this week (42.5, cap used). The engine holds at 42.5 instead of re-deriving
+    the increase from the session and having the cap knock it back to 40."""
+    exercise = _squat()
+    history = ExerciseHistory(
+        history_max_kg=40.0,
+        sessions=[_outcome(load_kg=40.0, hit_reps_max=True, below_reps_min=False)],
+    )
+    decision = next_load(
+        exercise,
+        history,
+        _FINE_CHECKINS,
+        increases_7d=[2.5],
+        cap_kg=2.5,
+        flagged_areas=_ALL_AREAS,
+        applied_to_kg_7d=42.5,
+    )
+    assert decision.load == Load(kind="kg", kg=42.5)
+    # An applied load below the prescription changes nothing; a garbage one fails closed.
+    lower = next_load(
+        exercise,
+        history,
+        _FINE_CHECKINS,
+        increases_7d=[2.5],
+        cap_kg=2.5,
+        flagged_areas=_ALL_AREAS,
+        applied_to_kg_7d=30.0,
+    )
+    assert lower.load.kg == 40.0
+    for bad in (float("nan"), float("inf"), 0.0):
+        garbage = next_load(
+            exercise,
+            history,
+            _FINE_CHECKINS,
+            increases_7d=[],
+            cap_kg=2.5,
+            flagged_areas=_ALL_AREAS,
+            applied_to_kg_7d=bad,
+        )
+        assert garbage.load.kind == "calibration", bad
+
+
+def test_sweep_with_an_applied_load_this_week_stays_within_the_ceiling() -> None:
+    """The cap-used sweep again, with a load applied this week one increment above the
+    prescription: every emitted kg is at most that applied load (never a fresh increase on
+    top of it) and always within the ceiling."""
+    checked = 0
+    for case in _sweep_cases():
+        applied = None if case.prescribed is None else case.prescribed + _SWEEP_INCREMENT
+        decision = next_load(
+            case.exercise,
+            case.history,
+            case.checkins,
+            increases_7d=[2.5],
+            cap_kg=2.5,
+            flagged_areas=_ALL_AREAS,
+            applied_to_kg_7d=applied,
+        )
+        checked += 1
+        if decision.load.kind != "kg":
+            assert decision.load.kind == "calibration"
+            continue
+        reference = case.logged if case.prescribed is None else case.prescribed
+        bound = reference if applied is None else max(reference, applied)
+        assert decision.load.kg is not None
+        assert decision.load.kg <= bound + 1e-9, (case, decision)
         assert decision.load.kg <= case.history_max + _SWEEP_INCREMENT + 1e-9, (case, decision)
     assert checked > 1000

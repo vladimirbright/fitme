@@ -7,6 +7,7 @@ no test ever resolves a real model string or makes a network call.
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from fitme.config.settings import Settings, SettingsError
@@ -30,6 +31,7 @@ async def run(settings: Settings, *, agent: str | None, model: str | None, confi
     """Print the spend warning, then refuse without `--yes` (A§8.5 rule 7). `agent` limits
     the run to one agent name; `model` overrides tier resolution with one explicit model
     string for every agent run."""
+    os.environ.setdefault("PYDANTIC_AI_NO_BANNER", "1")  # A§10; also set at CLI entry
     print(_WARNING)
     if not confirmed:
         print("Refusing to run without --yes.")

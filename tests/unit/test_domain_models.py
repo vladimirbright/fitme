@@ -159,3 +159,28 @@ def test_load_change_requires_positive_kg_values() -> None:
 def test_load_change_round_trips() -> None:
     change = LoadChange(exercise_id="barbell_back_squat", from_kg=100.0, to_kg=102.5)
     assert LoadChange.model_validate_json(change.model_dump_json()) == change
+
+
+def test_model_authored_display_text_is_length_capped() -> None:
+    """Plan name, workout title and prescription note are capped (a hallucinated essay is a
+    validation error, not a wall of text); the wording check runs on what passes."""
+    from fitme.domain.models import NAME_MAX_LENGTH, NOTE_MAX_LENGTH, TITLE_MAX_LENGTH
+
+    prescription = Prescription(
+        exercise_id="pushup",
+        sets=3,
+        reps_min=8,
+        reps_max=10,
+        load=Load(kind="bodyweight"),
+        rest_seconds=60,
+    )
+    blocks = [Block(kind="single", items=[prescription])]
+    workout = Workout(key="A", title="x" * TITLE_MAX_LENGTH, blocks=blocks)
+    assert Plan(name="n" * NAME_MAX_LENGTH, schedule=[], workouts=[workout]).name
+    assert Prescription(**{**prescription.model_dump(), "note": "c" * NOTE_MAX_LENGTH}).note
+    with pytest.raises(ValidationError):
+        Plan(name="n" * (NAME_MAX_LENGTH + 1), schedule=[], workouts=[workout])
+    with pytest.raises(ValidationError):
+        Workout(key="A", title="x" * (TITLE_MAX_LENGTH + 1), blocks=blocks)
+    with pytest.raises(ValidationError):
+        Prescription(**{**prescription.model_dump(), "note": "c" * (NOTE_MAX_LENGTH + 1)})

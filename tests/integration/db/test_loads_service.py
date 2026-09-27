@@ -65,10 +65,11 @@ async def test_next_load_for_exercise_with_no_history_is_calibration(
         user_id=user_id,
         exercise=_EXERCISE,
         checkins=_FINE_CHECKINS,
+        flagged_areas=frozenset({"knee", "lower_back"}),
         cap_kg=2.5,
         since_7d="1970-01-01T00:00:00.000000Z",
     )
-    assert decision.load == _EXERCISE.start
+    assert decision.load.kind == "calibration"
     assert "calibration" in decision.reason
 
 
@@ -103,6 +104,7 @@ async def test_next_load_for_exercise_reads_real_history_and_increments(
         user_id=user_id,
         exercise=_EXERCISE,
         checkins=_FINE_CHECKINS,
+        flagged_areas=frozenset({"knee", "lower_back"}),
         cap_kg=2.5,
         since_7d="1970-01-01T00:00:00.000000Z",
     )

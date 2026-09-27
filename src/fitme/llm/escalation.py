@@ -18,7 +18,7 @@ verbatim, not just a final summary.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass, field
 from typing import TypeVar
 
@@ -46,6 +46,13 @@ PromptBuilder = Callable[[Sequence[GuardVerdict] | None], str]
 with the failed guard verdicts from the previous attempt for every retry — the caller decides
 how to phrase that feedback into the prompt, typically via `llm.context.render_user_prompt`."""
 
+AttemptHook = Callable[[AgentRunOutcome[T], Sequence[GuardVerdict]], Awaitable[int | None]]
+"""Called once per attempt, right after the model returned and the guards ran, *before* the
+attempt's `llm_calls` row is written. M6's `/plan` uses it to write the attempt's `decisions`
+row (A§6.4: "every attempt is logged") and returns its id, which is then stored on the
+`llm_calls` row as `decision_id`. It is awaited outside any unit of work; the hook opens its
+own short transaction. Returning `None` leaves `llm_calls.decision_id` NULL."""
+
 
 @dataclass(frozen=True, slots=True)
 class EscalationOutcome[T]:
@@ -68,10 +75,12 @@ async def run_with_escalation[T](
     prices: PriceTable,
     language: str,
     refusal_code: RefusalCode = RefusalCode.NO_SAFE_PLAN,
+    on_attempt: AttemptHook[T] | None = None,
 ) -> EscalationOutcome[T]:
     """Run `agent_name` with escalation (see module docstring). `agent_factory` is one of
     `llm.agents`'s factories (e.g. `plan_revise_agent`) — a callable from a model to a
     `BuiltAgent`, so this stays agnostic to which of the two escalating agents it's driving.
+    `on_attempt` (optional) is awaited once per attempt; see `AttemptHook`.
     """
     attempts: list[AgentRunOutcome[T]] = []
     verdicts: Sequence[GuardVerdict] | None = None
@@ -88,6 +97,7 @@ async def run_with_escalation[T](
             db=db,
             prices=prices,
             language=language,
+            on_attempt=on_attempt,
         )
         attempts.append(control.outcome)
         if control.done:
@@ -105,6 +115,7 @@ async def run_with_escalation[T](
         db=db,
         prices=prices,
         language=language,
+        on_attempt=on_attempt,
     )
     attempts.append(control.outcome)
     if control.done:
@@ -132,6 +143,7 @@ async def _one_attempt[T](
     db: Database,
     prices: PriceTable,
     language: str,
+    on_attempt: AttemptHook[T] | None,
 ) -> _AttemptControl[T]:
     outcome = await run_agent(
         agent_factory,
@@ -142,12 +154,13 @@ async def _one_attempt[T](
         prices=prices,
         language=language,
     )
-    await record_llm_call(db, decision_id=None, record=outcome.record)
+    verdicts: Sequence[GuardVerdict] = ()
+    if not isinstance(outcome.output, Refusal):
+        verdicts = guard_check(outcome.output)
 
-    if isinstance(outcome.output, Refusal):
-        return _AttemptControl(outcome=outcome, done=True)
+    decision_id = None if on_attempt is None else await on_attempt(outcome, verdicts)
+    await record_llm_call(db, decision_id=decision_id, record=outcome.record)
 
-    verdicts = guard_check(outcome.output)
-    if all(verdict.ok for verdict in verdicts):
+    if isinstance(outcome.output, Refusal) or all(verdict.ok for verdict in verdicts):
         return _AttemptControl(outcome=outcome, done=True)
     return _AttemptControl(outcome=outcome, done=False, verdicts=verdicts)

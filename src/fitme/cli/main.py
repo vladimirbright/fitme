@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import os
 import sys
 from collections.abc import Callable, Coroutine, Sequence
 from typing import Any
@@ -79,8 +80,19 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+# pydantic-ai prints a promotional banner on a process's first agent run unless told not to
+# (A§10: no telemetry, and the operator owns the output). It reads `os.environ` lazily, at
+# that first run, so setting it at CLI entry covers `serve` and `llm eval` alike.
+PYDANTIC_AI_NO_BANNER_ENV = "PYDANTIC_AI_NO_BANNER"
+
+
+def suppress_pydantic_ai_banner() -> None:
+    os.environ.setdefault(PYDANTIC_AI_NO_BANNER_ENV, "1")
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Parse arguments and dispatch to a subcommand."""
+    suppress_pydantic_ai_banner()
     configure_logging()
     parser = _build_parser()
     args = parser.parse_args(argv)

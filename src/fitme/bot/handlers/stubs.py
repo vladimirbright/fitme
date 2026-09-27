@@ -1,5 +1,5 @@
-"""Commands that belong to later milestones (A§6.2): `/plan` (M6), `/train` (M7), `/stats`
-and `/system` (M9). Each replies with a short localized "not available yet" message so the
+"""Commands that belong to later milestones (A§6.2): `/train` (M7), `/stats` and `/system`
+(M9). Each replies with a short localized "not available yet" message so the
 command list registered with `setMyCommands` always has a working handler behind it."""
 
 from __future__ import annotations
@@ -20,5 +20,5 @@ async def cmd_not_available_yet(message: Message, db: Database, user_id: int) ->
 
 def build_router() -> Router:
     router = Router(name="stubs")
-    router.message.register(cmd_not_available_yet, Command("plan", "train", "t", "stats", "system"))
+    router.message.register(cmd_not_available_yet, Command("train", "t", "stats", "system"))
     return router

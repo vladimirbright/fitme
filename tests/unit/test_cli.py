@@ -9,9 +9,11 @@ instead. `llm eval` is real as of M4 and is covered in tests/integration/test_cl
 
 from __future__ import annotations
 
+import os
+
 import pytest
 
-from fitme.cli.main import main
+from fitme.cli.main import PYDANTIC_AI_NO_BANNER_ENV, main
 
 
 def test_help_lists_subcommands(capsys: pytest.CaptureFixture[str]) -> None:
@@ -36,3 +38,18 @@ def test_catalog_check_is_no_longer_a_stub(capsys: pytest.CaptureFixture[str]) -
 
     assert exit_code == 0
     assert "content_version" in capsys.readouterr().out
+
+
+def test_cli_entry_suppresses_the_pydantic_ai_banner(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A§10: `fitme` sets `PYDANTIC_AI_NO_BANNER=1` at entry (before any agent run, which is
+    when pydantic-ai reads it), so `serve` and `llm eval` never print the promotional
+    banner. An operator's explicit value is left alone."""
+    monkeypatch.delenv(PYDANTIC_AI_NO_BANNER_ENV, raising=False)
+    with pytest.raises(SystemExit):
+        main(["--help"])
+    assert os.environ.get(PYDANTIC_AI_NO_BANNER_ENV) == "1"
+
+    monkeypatch.setenv(PYDANTIC_AI_NO_BANNER_ENV, "yes")
+    with pytest.raises(SystemExit):
+        main(["--help"])
+    assert os.environ.get(PYDANTIC_AI_NO_BANNER_ENV) == "yes"

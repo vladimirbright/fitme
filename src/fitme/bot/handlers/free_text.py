@@ -3,7 +3,8 @@ so every `Command(...)`-filtered handler gets first refusal; this only ever sees
 (or a caption) that no command handler claimed.
 
 Order (A§6.3, A§6.6): save to `chat_messages`, then the stop-word guard *before anything
-else* — including a pending `/delete` confirmation or an active setup step — **except** for
+else* — including a pending `/delete` confirmation, a pending `/plan` revision request (which
+is the one path where free text reaches the LLM) or an active setup step — **except** for
 the `screening_other` step (B2): that note must be persisted first, because it may set
 `other_unlisted = yes` (needing clearance) regardless of whether it also halts. A halt hit
 halts and nothing below it runs.
@@ -18,16 +19,23 @@ from __future__ import annotations
 from aiogram import F, Router
 from aiogram.types import Message
 
+from fitme.bot.handlers.plan import PendingRevisions, handle_revise_text
 from fitme.bot.handlers.setup import handle_setup_free_text, show_step
 from fitme.db.connection import Database
 from fitme.i18n import t
 from fitme.services import account as account_service
 from fitme.services import profile as profile_service
+from fitme.services.llm_runtime import LlmRuntime
 from fitme.services.safety import record_incoming_text, scan_and_maybe_halt
 
 
 async def on_free_text(
-    message: Message, db: Database, user_id: int, pending_deletes: set[int]
+    message: Message,
+    db: Database,
+    llm: LlmRuntime,
+    user_id: int,
+    pending_deletes: set[int],
+    pending_plan_revisions: PendingRevisions,
 ) -> None:
     text = message.text or message.caption or ""
     await record_incoming_text(db, user_id=user_id, session_id=None, text=text)
@@ -56,6 +64,9 @@ async def on_free_text(
 
     halted = await scan_and_maybe_halt(db, user_id=user_id, lang=lang, text=text)
     if halted is not None:
+        # A pending "what should change?" prompt dies with the halt: the hold now blocks
+        # /plan anyway, and the halting text must never reach the LLM (A§6.3).
+        pending_plan_revisions.pop(user_id, None)
         await message.answer(t("halt.message", lang))
         return
 
@@ -66,6 +77,9 @@ async def on_free_text(
             await message.answer(t("delete.done", lang))
         else:
             await message.answer(t("delete.wrong_confirmation", lang))
+        return
+
+    if await handle_revise_text(message, db, llm, user_id, text, pending_plan_revisions):
         return
 
     if await handle_setup_free_text(message, db, user_id, text):
