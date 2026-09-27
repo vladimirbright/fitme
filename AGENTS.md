@@ -86,7 +86,7 @@ and is very expensive to retrofit.
 - **Export and delete from day one.** A single command that dumps everything for one user as
   JSON, and a single command that removes them entirely. These are ten lines each now and a
   refactor later.
-- **Retention.** Raw chat messages: short TTL (default 90 days). Structured training log:
+- **Retention.** Raw chat messages: bounded TTL (default 365 days). Structured training log:
   keep. Do not keep raw text forever because it "might be useful".
 - **No third-party ad or analytics SDKs anywhere near health data.** Not Meta, not Google Ads,
   not TikTok. If observability is needed, self-host it.

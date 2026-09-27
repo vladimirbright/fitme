@@ -126,12 +126,15 @@ uvicorn for TLS. Backups use `sqlite3 fitme.db ".backup ..."` from cron, with an
 |---|---|---|
 | `FITME_TELEGRAM_BOT_TOKEN` | yes | Bot API token |
 | `FITME_DB_PATH` | yes | Path to the SQLite file |
-| `FITME_LLM_MODEL` | yes | pydantic-ai model string, e.g. `anthropic:claude-sonnet-5` |
+| `FITME_LLM_TIER_LARGE` | no | pydantic-ai model string for the large tier. Default `anthropic:claude-opus-5` (§8.5). |
+| `FITME_LLM_TIER_MEDIUM` | no | Default `anthropic:claude-sonnet-5` |
+| `FITME_LLM_TIER_SMALL` | no | Default `anthropic:claude-haiku-4-5` |
+| `FITME_LLM_AGENT_<NAME>` | no | Per-agent override: a tier name (`large`/`medium`/`small`) or a full model string, e.g. `FITME_LLM_AGENT_PLAN_REVISE=large` |
 | provider key (e.g. `ANTHROPIC_API_KEY`) | yes | Read by pydantic-ai |
 | `FITME_WEB_BASE_URL` | yes | e.g. `https://fit.example.org`. Used for cookies and links. |
 | `FITME_WEB_HOST` / `FITME_WEB_PORT` | no | default `127.0.0.1:8080` |
 | `FITME_SECRET_KEY` | yes | HMAC key for CSRF tokens |
-| `FITME_CHAT_RETENTION_DAYS` | no | default 90 |
+| `FITME_CHAT_RETENTION_DAYS` | no | default 365 |
 | `FITME_MAX_WEEKLY_INCREMENT_KG` | no | default 2.5, compound lifts (catalog can set lower) |
 | `FITME_PRICES_FILE` | no | TOML of per-model token prices for `/system` cost estimates |
 | `FITME_DEV` | no | Allows a non-TLS base URL on localhost |
@@ -617,17 +620,18 @@ At least one test per rule proves that it **blocks** the bad case (AGENTS.md §9
 One pydantic-ai `Agent` per purpose. Each has a typed output, and its prompt is loaded from
 `src/fitme/prompts/<name>.v<N>.md`.
 
-| Agent | Input | Output type |
-|---|---|---|
-| `plan_generate` | pseudonymized context | `PlanProposal` |
-| `plan_revise` | context + current plan + user request | `PlanProposal` |
-| `session_adjust` | context + today's workout + user request | `Workout \| Refusal` |
-| `result_parse` | planned block + user text | `ParsedResults { sets: list[SetResult], safety_signal: bool, unclear: bool }` |
-| `recap` | planned vs actual + engine decisions | `Recap { text: str, suggestions: list[PlanChange] }` |
+| Agent | Input | Output type | Default tier |
+|---|---|---|---|
+| `plan_generate` | pseudonymized context | `PlanProposal` | large |
+| `plan_revise` | context + current plan + user request | `PlanProposal` | medium |
+| `session_adjust` | context + today's workout + user request | `Workout \| Refusal` | medium |
+| `result_parse` | planned block + user text | `ParsedResults { sets: list[SetResult], safety_signal: bool, unclear: bool }` | small |
+| `recap` | planned vs actual + engine decisions | `Recap { text: str, suggestions: list[PlanChange] }` | small |
 
 - The prompt loader returns `(template_name, version, rendered_text)`. Template name and
   version go into `decisions`.
-- The model id comes from `FITME_LLM_MODEL`. Nothing in the code is tied to one provider.
+- Each agent's model comes from its tier or override (§8.5). Nothing in the code is tied to
+  one provider.
 - `llm/usage.py` wraps every run: records `llm_calls` from `result.usage()`, latency, and
   the cost estimate from the price table.
 - Every prompt says, in the user's language: training plan generator, not a
@@ -661,6 +665,57 @@ Runs daily. It deletes:
 - expired `login_codes`, `activation_codes` and `web_sessions`.
 
 It keeps the structured training log.
+
+### 8.5 Model tiers
+
+Different jobs need different model sizes. Building a plan from scratch benefits from the
+largest model. Parsing "8,8,6 at 42.5" does not.
+
+| Tier | Default model | Used for | Why |
+|---|---|---|---|
+| `large` | `anthropic:claude-opus-5` | `plan_generate` | Whole-program design: exercise selection under constraints, balance, schedule. Rare (a few calls per month), so cost barely matters. |
+| `medium` | `anthropic:claude-sonnet-5` | `plan_revise`, `session_adjust` | Targeted edits to an existing structure. Frequent, interactive, latency-sensitive. |
+| `small` | `anthropic:claude-haiku-4-5` | `result_parse`, `recap` | Extraction and short text. Used every session, many times. |
+
+Rules:
+
+1. **Resolution** (`llm/models.py::model_for(agent) -> ModelSpec`):
+   - `FITME_LLM_AGENT_<NAME>` wins if it is set;
+   - otherwise the agent's default tier from the table in §8.1, resolved through
+     `FITME_LLM_TIER_*`.
+
+   The mapping from agent to default tier lives in code, as a plain dict in `llm/models.py`.
+   Env vars only override it. Config is validated at startup: an unknown tier name or a
+   model string pydantic-ai can't parse fails fast.
+2. **Guards don't care about tiers.** A cheaper model is safe to use because every output
+   goes through the same deterministic guards (§7). A cheaper model can only produce more
+   rejections, never a less safe plan.
+3. **Escalate once, then refuse.** For `plan_revise` and `session_adjust`, if both attempts
+   (the first and the guard-feedback retry) fail the guards, make **one** more attempt on
+   the `large` tier before returning a `Refusal`. Log every attempt as its own `llm_calls`
+   row, with the model used. `result_parse` does not escalate: if it can't parse, it sets
+   `unclear=true` and the bot asks the user to re-enter the result or use buttons.
+4. **Provider errors are refusals, not fallbacks to guesses.** Timeouts, rate limits and
+   provider-side refusals become `Refusal(code=LLM_UNAVAILABLE)` after pydantic-ai's normal
+   retries. Never fall back to the previous plan with changed numbers, and never fall back
+   to an unguarded default.
+5. **Traceability.** `decisions.model` and `llm_calls.model` store the **resolved** model
+   string, not the tier name. The price table (`FITME_PRICES_FILE`) must have an entry for
+   every configured model. If one is missing, `/system` shows "cost unknown" for that model,
+   and startup logs a warning.
+6. **Per-agent model settings** (for example reasoning effort or max output tokens) go in
+   the same dict in `llm/models.py`, as pydantic-ai `ModelSettings`. Look up the exact
+   provider-specific keys in the pydantic-ai docs when implementing. Don't guess them.
+7. **Pick tiers with data.** `fitme llm eval` (manual, spends real money, never in CI) runs
+   each agent over the fixture profiles in `tests/fixtures/llm_eval/` on a given model and
+   reports:
+   - guard pass rate;
+   - refusal rate;
+   - tokens and estimated cost per call.
+
+   Use it before moving an agent to a cheaper tier. Also compare against the simpler
+   option: the same larger model at lower effort can match a cheaper model's cost with
+   better quality.
 
 ## 9. Website
 
@@ -726,6 +781,7 @@ A shared footer shows: "Plans are generated by AI. This is not medical advice."
 | `fitme export --out PATH` | Dump all user data as JSON. |
 | `fitme delete --yes` | Delete the user and all data. |
 | `fitme purge` | Run retention now. |
+| `fitme llm eval [--agent NAME] [--model STR]` | Run the LLM eval fixtures against a model; prints guard-pass rate, refusals, tokens, cost (§8.5). Spends money. |
 | `fitme catalog check` | Validate `exercises.toml` and locales (all keys present in all languages); print `content_version`. |
 
 Use `argparse` or `typer`. Pick one and keep it.

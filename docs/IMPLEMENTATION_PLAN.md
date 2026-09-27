@@ -87,13 +87,22 @@ settings test.
   text.
 - Write `prompts/*.v1.md` for the 5 agents in A§8.1, following the language rules in A§12.
 - `llm/context.py`: the pseudonymized context builder and `scrub()` (A§8.2).
+- `llm/models.py`: tier defaults, the agent-to-tier mapping, per-agent settings and
+  `model_for(agent)` (A§8.5).
 - `llm/agents.py`: agent factories that take a model, so tests can inject `TestModel` or
   `FunctionModel`.
+- `fitme llm eval` with a few fixture profiles in `tests/fixtures/llm_eval/`. It is never
+  run in CI.
 - `llm/usage.py`: `llm_calls` accounting and a price-table loader.
 - `services/decisions.py`: helpers that write `decisions` and `decision_outcomes`.
 
 **Accept:**
 
+- Model resolution tests:
+  - the tier default applies when nothing is overridden;
+  - a per-agent tier override works;
+  - a per-agent full model string works;
+  - an unknown tier fails at startup.
 - The pseudonymization test passes (no Telegram ids, names or notes in rendered prompts).
 - A fake-model run records a `llm_calls` row and a `decisions` row with the prompt version
   and model id.
@@ -128,7 +137,9 @@ settings test.
   - a valid plan gets stored as version 1;
   - a plan with a non-catalog exercise is rejected and retried, then refused;
   - an open hold refuses without an LLM call;
-  - every round writes a decision containing `guards_fired`.
+  - every round writes a decision containing `guards_fired`;
+  - a revise that fails guards twice escalates once to the `large` tier, then refuses, with
+    each model recorded in `llm_calls`.
 
 ## M7 — `/train`
 

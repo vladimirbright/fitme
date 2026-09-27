@@ -24,8 +24,8 @@ and no tool-heavy orchestration. The project must stay readable for the person r
 
 ## Decision
 
-Use **pydantic-ai** (`pydantic-ai-slim[<provider>]`). The model comes from
-`FITME_LLM_MODEL`.
+Use **pydantic-ai** (`pydantic-ai-slim[<provider>]`). Each agent's model is resolved from
+its tier (large/medium/small) or a per-agent override. See ARCHITECTURE §8.5.
 
 ## Consequences
 
