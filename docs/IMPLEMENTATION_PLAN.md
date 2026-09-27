@@ -177,6 +177,43 @@ settings test.
   - an increase already applied within the week → the second increase is blocked;
   - an LLM-suggested load above the ceiling is rejected and logged.
 
+## M8b — Paste an existing plan
+
+The operator asked for this during M8. It adds a second entry point to `/plan` next to
+"New plan": **"Paste my plan"**.
+
+- The user pastes the program text. It is stop-word scanned first, like all owner text.
+- A new `plan_import` agent (`prompts/plan_import.v1.md`) **transcribes** the text into the
+  `Plan` schema. It does not design anything:
+  - days, exercises, sets, reps and loads are kept as written;
+  - exercises map to allowed catalog ids; unmatched exercises are listed back to the user
+    and never invented;
+  - per-set loads use the lowest value, with the rest noted; load ranges use the lower
+    bound; durations go into notes.
+- The usual guards run: catalog, contraindications, equipment and location, schedule.
+  Loads follow A§7:
+  - an exercise with no history becomes `calibration`, and the user's declared kg is kept
+    as a display hint ("calibration: your plan says 80 kg, start at or below it and log
+    what you used");
+  - an exercise with history is judged normally (engine substitution).
+  - The declared loads are stored in the draft proposal, so `/train` shows the same hint.
+- Confirm uses the existing revalidating confirm, with a new `plan_versions.origin =
+  'import'` and a new decision kind `plan_import` (pre-release 0001 CHECK edit).
+- EN and RU copy; stale-safe buttons; one decision per LLM attempt, with `llm_input`
+  verbatim.
+
+**Accept:**
+
+- The operator's sample program (fixture) imports with all its days and the right
+  catalog ids.
+- An unmatched exercise is reported, not invented.
+- A no-history kg becomes calibration with the declared hint shown in `/plan` and
+  `/train`.
+- An exercise with history uses the engine value when the declared load breaks the
+  cap or ceiling.
+- A stop word in the pasted text halts with no LLM call.
+- The confirmed version has `origin = 'import'`.
+
 ## M9 — `/stats`, `/system`, `/export`, `/delete`, website
 
 - Bot: `/stats` (A§6.7), `/system`, `/export` and `/delete` (A§6.2).
