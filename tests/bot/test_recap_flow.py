@@ -795,3 +795,38 @@ async def test_volume_counts_both_dumbbells(
     bench = next(item for item in proposal.summary if item.exercise_id == _BENCH)
     assert bench.volume_kg == 600.0  # 3 × 10 reps × 10 kg × 2 dumbbells
     assert "Dumbbell bench press: 3/3 sets, 30 reps, 600 kg total" in _recap_message(session)
+
+
+async def test_apply_swap_drops_the_old_exercises_declared_hint(
+    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
+) -> None:
+    """M8b follow-up: the "your plan says 80 kg" hint belongs to the squat the pasted plan
+    named; a swap to another exercise carries no hint over (and, with no history, gets the
+    engine's calibration load)."""
+    user_id = await _activate(dispatcher, bot, db)
+    await _seed_profile(db, user_id)
+    plan = make_plan()
+    plan.workouts[0].blocks[0].items[0].declared_kg = 80.0
+    plan_id, _version_id = await _seed_plan(db, user_id, plan)
+    llm.recap_responses.append(
+        Recap(
+            text="",
+            suggestions=[
+                SwapExercise(from_exercise_id=_SQUAT, to_exercise_id="dumbbell_goblet_squat")
+            ],
+        )
+    )
+    await _complete_a(dispatcher, bot, session)
+    apply = _last_action(session, "apply")
+
+    await _click(dispatcher, bot, apply)
+
+    assert _last_text(session) == t("recap.applied", "en", name="Home plan", version=2)
+    async with db.read() as conn:
+        versions = await list_plan_versions(conn, plan_id)
+    assert [(v.version, v.origin) for v in versions] == [(1, "llm"), (2, "progression")]
+    swapped = Plan.model_validate(versions[-1].body).workouts[0].blocks[0].items[0]
+    assert swapped.exercise_id == "dumbbell_goblet_squat"
+    assert swapped.load == Load(kind="calibration")
+    assert swapped.declared_kg is None
+    assert Plan.model_validate(versions[0].body).workouts[0].blocks[0].items[0].declared_kg == 80.0

@@ -18,7 +18,7 @@ from fitme.bot.callback_data import PlanDraft, PlanMenu
 from fitme.db.records import PlanRecord
 from fitme.domain.catalog import Catalog, Exercise
 from fitme.domain.models import Load, Plan, Prescription
-from fitme.i18n import t
+from fitme.i18n import t, wording
 
 TELEGRAM_MESSAGE_LIMIT = 4096
 _PLAN_STATUS_ACTIVE = "active"
@@ -97,6 +97,7 @@ def render_plan_text(
     """The whole plan as one text (split with `split_message` before sending): `title`, the
     schedule, every workout with supersets grouped, the "Not matched:" list of a pasted plan's
     exercises that map to no catalog id (M8b, when any), and the AI disclosure footer."""
+    unmatched = displayable_unmatched(unmatched)
     lines: list[str] = [title, "", t("plan.schedule_title", lang)]
     workouts_by_key = {workout.key: workout for workout in plan.workouts}
     for day in sorted(plan.schedule, key=lambda item: item.weekday):
@@ -122,6 +123,13 @@ def render_plan_text(
     lines.append("")
     lines.append(t("disclosure.ai", lang))
     return "\n".join(lines)
+
+
+def displayable_unmatched(unmatched: Sequence[str]) -> list[str]:
+    """M8b: the "Not matched" names are model-authored display text (the user's own wording,
+    condensed by the import agent), so they pass the AGENTS.md §3 wording check like a note
+    does: an entry with a forbidden term is dropped, the rest are shown as they are."""
+    return [name for name in unmatched if wording.first_forbidden_term(name) is None]
 
 
 def split_message(text: str, *, limit: int = TELEGRAM_MESSAGE_LIMIT) -> list[str]:

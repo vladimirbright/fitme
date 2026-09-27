@@ -766,6 +766,8 @@ async def adjust(
 
     payload_by_text: dict[str, dict[str, object]] = {}
     judgements: dict[int, planning.Judgement] = {}
+    # M8b: the declared hints come from the plan's stored workout, never from the model.
+    plan_declared = planning.declared_loads_of(_plan_with(ctx.plan, ctx.workout))
 
     def build_prompt(verdicts: Sequence[GuardVerdict] | None) -> str:
         feedback = (
@@ -780,6 +782,7 @@ async def adjust(
     def guard_check(workout: Workout) -> Sequence[GuardVerdict]:
         # The adjustment is for this session's workout, whatever key the model wrote.
         workout.key = ctx.workout.key
+        planning.restore_declared(_plan_with(ctx.plan, workout), plan_declared)
         judgement = _judge_workout(workout, inputs)
         judgements[id(workout)] = judgement
         return judgement.verdicts

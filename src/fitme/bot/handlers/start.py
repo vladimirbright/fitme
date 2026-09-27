@@ -8,6 +8,7 @@ from aiogram.filters import Command
 from aiogram.types import Message
 
 from fitme.bot.commands import COMMAND_NAMES
+from fitme.bot.handlers.plan import PendingImport, PendingRevisions
 from fitme.bot.handlers.setup import show_step
 from fitme.bot.handlers.train import PendingTrains, handle_cancel, show_pending_recap
 from fitme.bot.keyboards import hold_clear_markup
@@ -62,16 +63,28 @@ async def cmd_cancel(
     user_id: int,
     pending_deletes: set[int],
     pending_train: PendingTrains,
+    pending_plan_revisions: PendingRevisions,
 ) -> None:
     snapshot = await profile_service.get_snapshot(db, user_id)
     lang = snapshot.language
     was_deleting = user_id in pending_deletes
     pending_deletes.discard(user_id)
+    # A pending /plan prompt (a revision's "what should change?", or M8b's "paste your
+    # program") dies with /cancel: the next free text must not reach the LLM as one.
+    pending_plan = pending_plan_revisions.pop(user_id, None)
     step = await profile_service.get_step(db, user_id)
 
     if await handle_cancel(message, db, user_id, pending_train):
         # A§6.2: an in-progress workout is kept (resumable); an unstarted one is aborted.
         # `cancel_train` has already said which.
+        return
+    if pending_plan is not None:
+        key = (
+            "plan.paste_cancelled"
+            if isinstance(pending_plan, PendingImport)
+            else "plan.change_cancelled"
+        )
+        await message.answer(t(key, lang))
         return
     if step is not None:
         # Setup progress is never discarded by /cancel (A§5.1): it's still there to resume.

@@ -140,7 +140,7 @@ async def test_fresh_db_accepts_plan_import_and_origin_import(tmp_path: Path) ->
     db = await open_database(tmp_path / "fresh.db")
     try:
         applied = await migrate(db)
-        assert applied[-1] == "0003_plan_import.sql"
+        assert "0003_plan_import.sql" in applied  # later migrations may follow it
         await _seed_old_rows(db)
         async with db.transaction() as conn:
             await conn.execute(
@@ -190,7 +190,7 @@ async def test_upgrade_from_the_old_migrations_preserves_rows_fks_triggers_and_i
 
         applied = await migrate(db)  # the real package: 0001/0002 match by checksum
 
-        assert applied == ["0003_plan_import.sql"]
+        assert applied[0] == "0003_plan_import.sql"  # later migrations may follow it
         assert await _snapshot(db) == before
         assert await _rows(db, "PRAGMA foreign_key_check") == []
         assert await _rows(db, "PRAGMA foreign_keys") == [(1,)]

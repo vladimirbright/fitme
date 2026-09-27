@@ -1486,3 +1486,42 @@ async def test_a_safety_signal_after_the_pain_button_opens_no_second_hold(
     assert result.status == training.ParseStatus.HALTED and result.halt is None
     assert await _holds(db, user_id) == ["pain_button"]
     assert await _session_status(db, session_id) == "halted"
+
+
+async def test_adjust_cannot_set_or_change_a_declared_hint(
+    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
+) -> None:
+    """M8b follow-up: a `session_adjust` output's `declared_kg` is replaced by the plan's
+    stored hint for that exercise (80 on the squat), or dropped where the plan has none
+    (the bench) — a model can never invent a "your plan says" line."""
+    user_id = await _activate(dispatcher, bot, db)
+    await _seed_profile(db, user_id)
+    plan = make_plan()
+    plan.workouts[0].blocks[0].items[0].declared_kg = 80.0  # squat, calibration load
+    await _seed_plan(db, user_id, plan)
+    await _to_review(dispatcher, bot, session)
+    review = _last_text(session)
+    assert "Barbell back squat: 3 × 8–10 @ calibration — your plan says 80 kg" in review
+    assert "Dumbbell bench press: 3 × 8–10 @ calibration: start with 2 kg each" in review
+
+    adjusted = make_plan().workouts[0]
+    adjusted.blocks[0].items[0].declared_kg = 250.0
+    adjusted.blocks[1].items[0].declared_kg = 30.0
+    llm.adjust_responses.append(adjusted)
+    await _click(dispatcher, bot, _last_action(session, "adjust"))
+    await _send(dispatcher, bot, "same workout, just checking")
+
+    assert llm.calls == 1
+    review = _last_text(session)
+    assert t("train.review_adjusted", "en") in review
+    assert "Barbell back squat: 3 × 8–10 @ calibration — your plan says 80 kg" in review
+    assert "250" not in review and "your plan says 30" not in review
+    assert "Dumbbell bench press: 3 × 8–10 @ calibration: start with 2 kg each" in review
+    async with db.read() as conn:
+        decisions = await list_decisions_for_user(conn, user_id)
+    adjust_decision = next(d for d in decisions if d.kind == "session_adjust")
+    assert adjust_decision.proposal is not None
+    items = [
+        item for block in adjust_decision.proposal["workout"]["blocks"] for item in block["items"]
+    ]
+    assert [item["declared_kg"] for item in items] == [80.0, None, None]

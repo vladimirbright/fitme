@@ -669,6 +669,9 @@ def _apply_change(plan: Plan, change: PlanChange, inputs: planning.Inputs) -> bo
                     prescription.exercise_id = change.to_exercise_id
                     if exercise is not None:
                         prescription.load = planning.engine_load(exercise, inputs)[0]
+                    # M8b: a declared hint belongs to the exercise the user's pasted plan
+                    # named; the swapped-in exercise gets none.
+                    prescription.declared_kg = None
                     changed = True
                 elif isinstance(change, ChangeReps):
                     if prescription.exercise_id != change.exercise_id:

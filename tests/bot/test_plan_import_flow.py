@@ -425,3 +425,30 @@ async def test_import_draft_buttons_go_stale_after_a_newer_round(
     # A second tap is idempotent; a third paste after confirming starts a fresh round.
     await _click(dispatcher, bot, PlanDraft(action="confirm", decision_id=second_id))
     assert _toasts(session)[-1] == t("plan.already_saved", "ru")
+
+
+async def test_cancel_command_drops_a_pending_paste_or_revision(
+    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
+) -> None:
+    await _ready(dispatcher, bot, db)
+
+    await _click(dispatcher, bot, PlanMenu(action="paste", plan_id=0))
+    await _send(dispatcher, bot, "/cancel")
+    assert _texts(session)[-1] == t("plan.paste_cancelled", "ru")
+    await _send(dispatcher, bot, user_plan_text())
+    assert llm.calls == 0
+    assert _texts(session)[-1] == t("unknown.free_text_hint", "ru")
+
+    llm.responses.append(user_plan_import())
+    await _paste(dispatcher, bot, session, user_plan_text())
+    draft_id = _last_draft_id(session)
+    await _click(dispatcher, bot, PlanDraft(action="change", decision_id=draft_id))
+    assert _texts(session)[-1] == t("plan.change_prompt", "ru")
+    await _send(dispatcher, bot, "/cancel")
+    assert _texts(session)[-1] == t("plan.change_cancelled", "ru")
+    await _send(dispatcher, bot, "убери планку")
+    assert llm.calls == 1  # no revise call: the prompt was dropped
+    assert _texts(session)[-1] == t("unknown.free_text_hint", "ru")
+    # /cancel with nothing pending is the ordinary message.
+    await _send(dispatcher, bot, "/cancel")
+    assert _texts(session)[-1] == t("cancel.nothing_active", "ru")
