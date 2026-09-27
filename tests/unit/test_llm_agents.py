@@ -7,7 +7,7 @@ from __future__ import annotations
 from pydantic_ai import Agent
 from pydantic_ai.models.test import TestModel
 
-from fitme.domain.models import PlanProposal, SessionAdjustProposal
+from fitme.domain.models import Plan, PlanProposal, SessionAdjustProposal
 from fitme.domain.results import ParsedResults, Recap
 from fitme.llm.agents import (
     AGENT_FACTORIES,
@@ -17,6 +17,7 @@ from fitme.llm.agents import (
     result_parse_agent,
     session_adjust_agent,
 )
+from fitme.llm.models import output_retries_for
 from fitme.llm.prompts import render_prompt
 
 
@@ -105,3 +106,46 @@ async def test_each_agent_sends_its_own_versioned_prompt_as_instructions() -> No
         instructions = captured["instructions"]
         assert instructions is not None
         assert instructions.strip() == expected.strip(), name
+
+
+def test_every_factory_wires_the_configured_output_retry_budget() -> None:
+    """Bug fix: `_built` passes `retries={"output": output_retries_for(name)}` to `Agent(...)`
+    rather than leaving pydantic-ai's own default (1) in place."""
+    for name, factory in AGENT_FACTORIES.items():
+        built = factory(TestModel())
+        assert built.agent._max_output_retries == output_retries_for(name)
+
+
+async def test_plan_revise_agent_recovers_from_two_invalid_attempts_within_its_budget() -> None:
+    """The exact bug fixed here: pydantic-ai's own default output-retry budget (1) let two
+    invalid structured-output attempts in a row exhaust it (`UnexpectedModelBehavior`,
+    `error_type=UnexpectedModelBehavior` in the operator's log). `plan_revise`'s budget is 3
+    (`llm/models.py::AGENT_OUTPUT_RETRIES`), well clear of two failures, so a third, valid
+    attempt still succeeds."""
+    from pydantic_ai.messages import ModelResponse, ToolCallPart
+    from pydantic_ai.models.function import AgentInfo, FunctionModel
+
+    calls = {"n": 0}
+    valid_plan = Plan(name="Plan", schedule=[], workouts=[])
+
+    def flaky(messages: list, info: AgentInfo) -> ModelResponse:
+        calls["n"] += 1
+        tool = next(
+            t.name for t in info.output_tools if "Plan" in t.name and "Refusal" not in t.name
+        )
+        if calls["n"] <= 2:
+            # A structural validation failure unrelated to display-text length (which is now
+            # trimmed, not rejected) — an out-of-range weekday.
+            args: dict[str, object] = {
+                "name": "ok",
+                "schedule": [{"weekday": 9, "workout_key": "A"}],
+                "workouts": [],
+            }
+        else:
+            args = valid_plan.model_dump(mode="json")
+        return ModelResponse(parts=[ToolCallPart(tool_name=tool, args=args)])
+
+    built = plan_revise_agent(FunctionModel(flaky))
+    result = await built.agent.run("revise please")
+    assert result.output == valid_plan
+    assert calls["n"] == 3

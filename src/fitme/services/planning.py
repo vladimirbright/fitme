@@ -650,13 +650,25 @@ def draft_proposal(plan: Plan, proposed_load_changes: Sequence[LoadChange]) -> d
     }
 
 
-def refusal_proposal(refusal: Refusal, rejected_plan: Plan | None = None) -> dict[str, object]:
+def refusal_proposal(
+    refusal: Refusal, rejected_plan: Plan | None = None, *, cause: str | None = None
+) -> dict[str, object]:
     """`decisions.proposal` for a refused round: the refusal, plus the LLM's rejected plan
     when the guards (not the model) refused, so the log shows what was turned down. Never
-    parses as a `Plan`, so `confirm_plan` can't mistake it for a draft."""
+    parses as a `Plan`, so `confirm_plan` can't mistake it for a draft.
+
+    `cause` (bug fix, A§10) is `llm.usage.CAUSE_OUTPUT_VALIDATION` or `CAUSE_PROVIDER_ERROR`
+    when this refusal is the `LLM_UNAVAILABLE` one `run_agent` synthesizes on a caught agent
+    failure (i.e. `outcome.record.error_cause`) — omitted (`None`) for every other refusal
+    (a gate failure, a guard refusal, or the model's own `Refusal` output), which have no such
+    cause to report. Lets the operator tell "the model's structured output kept failing our
+    schema" from "the provider call itself failed" apart in the log, without ever recording
+    the offending value or any request/response body."""
     proposal: dict[str, object] = {"refusal": refusal.model_dump(mode="json")}
     if rejected_plan is not None:
         proposal["rejected_plan"] = rejected_plan.model_dump(mode="json")
+    if cause is not None:
+        proposal["cause"] = cause
     return proposal
 
 
@@ -743,7 +755,7 @@ async def _log_attempt(
     output = outcome.output
     proposed: list[LoadChange] = []
     if isinstance(output, Refusal):
-        proposal = refusal_proposal(output)
+        proposal = refusal_proposal(output, cause=outcome.record.error_cause)
         guards_fired: list[GuardVerdict] = []
     else:
         assert judgement is not None

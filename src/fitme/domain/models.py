@@ -9,17 +9,51 @@ from __future__ import annotations
 
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, model_validator
 
 from fitme.domain.enums import RefusalCode
 
 _STRICT_CONFIG = ConfigDict(extra="forbid", allow_inf_nan=False)
 
-# Caps on model-authored display text (plan name, workout title, prescription note): a
-# hallucinated essay is a validation error, not a wall of text in a Telegram message.
+# Caps on model-authored display text (plan name, workout title, prescription note). These
+# used to be a hard `Field(max_length=...)`, rejecting the whole structured output — plan or
+# workout — on one over-long field. A pasted real-world program (especially translated/
+# transliterated Russian) routinely produces a name or title past the cap, and pydantic-ai's
+# retry budget is shared across the whole run: two such rejections in a row exhausted it and
+# turned an otherwise-fine plan into a bare `LLM_UNAVAILABLE` refusal. `_trim_to_limit` below
+# trims instead, so a display-text length quirk can no longer sink a structurally valid plan.
 NAME_MAX_LENGTH = 60
 TITLE_MAX_LENGTH = 60
 NOTE_MAX_LENGTH = 200
+
+
+def _trim_to_limit(value: object, limit: int) -> object:
+    """`BeforeValidator` body shared by `name`/`title`/`note`: strip surrounding whitespace
+    and truncate to `limit` characters, appending "…" when truncation actually happened, so
+    the result is always <= `limit` characters. Non-`str` values (including `None`, for the
+    optional `note` field) pass through unchanged — the ordinary type validation that runs
+    right after still rejects a non-string/non-None value, and does so on the type, not on
+    something this helper invented."""
+    if not isinstance(value, str):
+        return value
+    text = value.strip()
+    if len(text) <= limit:
+        return text
+    if limit <= 1:
+        return text[:limit]
+    return text[: limit - 1].rstrip() + "…"
+
+
+def _trim_name(value: object) -> object:
+    return _trim_to_limit(value, NAME_MAX_LENGTH)
+
+
+def _trim_title(value: object) -> object:
+    return _trim_to_limit(value, TITLE_MAX_LENGTH)
+
+
+def _trim_note(value: object) -> object:
+    return _trim_to_limit(value, NOTE_MAX_LENGTH)
 
 
 class Load(BaseModel):
@@ -54,9 +88,10 @@ class Prescription(BaseModel):
     reps_max: Annotated[int, Field(ge=1, le=50)]
     load: Load
     rest_seconds: Annotated[int, Field(ge=0, le=600)]
-    # Short cue; no medical language (AGENTS.md §3). Model-authored display text is capped
-    # here and wording-checked before display (`fitme.i18n.wording`).
-    note: Annotated[str, Field(max_length=NOTE_MAX_LENGTH)] | None = None
+    # Short cue; no medical language (AGENTS.md §3). Model-authored display text is trimmed
+    # to the cap here (never rejected for length) and wording-checked before display
+    # (`fitme.i18n.wording`).
+    note: Annotated[str, BeforeValidator(_trim_note)] | None = None
 
     @model_validator(mode="after")
     def _reps_min_le_reps_max(self) -> Prescription:
@@ -87,7 +122,7 @@ class Workout(BaseModel):
     model_config = _STRICT_CONFIG
 
     key: str  # "A", "B", ...
-    title: Annotated[str, Field(max_length=TITLE_MAX_LENGTH)]
+    title: Annotated[str, BeforeValidator(_trim_title)]
     blocks: list[Block]
 
 
@@ -101,7 +136,7 @@ class ScheduledDay(BaseModel):
 class Plan(BaseModel):
     model_config = _STRICT_CONFIG
 
-    name: Annotated[str, Field(max_length=NAME_MAX_LENGTH)]
+    name: Annotated[str, BeforeValidator(_trim_name)]
     schedule: list[ScheduledDay]
     workouts: list[Workout]
 

@@ -186,3 +186,26 @@ def test_resolve_tier_rejects_an_unknown_tier_name() -> None:
 def test_every_agent_has_model_settings() -> None:
     for agent in models.AGENT_DEFAULT_TIER:
         assert models.model_settings_for(agent)
+
+
+def test_every_agent_has_an_output_retry_budget() -> None:
+    """Bug fix: every agent `llm/agents.py::_built` constructs needs a budget to pass as
+    `Agent(retries={"output": ...})` — pydantic-ai's own default (1) is what let two
+    over-long display-text fields in a row exhaust the retry budget and turn a structurally
+    fine plan into a bare `LLM_UNAVAILABLE` refusal."""
+    for agent in models.AGENT_DEFAULT_TIER:
+        assert models.output_retries_for(agent) >= 2
+
+
+def test_escalating_agents_get_the_largest_output_retry_budget() -> None:
+    """`plan_generate`/`plan_revise`/`session_adjust` (large/medium-tier, structural output)
+    get 3; `result_parse`/`recap` (small-tier, frequent, short output) get 2."""
+    for agent in ("plan_generate", "plan_revise", "session_adjust"):
+        assert models.output_retries_for(agent) == 3
+    for agent in ("result_parse", "recap"):
+        assert models.output_retries_for(agent) == 2
+
+
+def test_output_retries_for_unknown_agent_fails_fast() -> None:
+    with pytest.raises(SettingsError, match="unknown agent"):
+        models.output_retries_for("not_a_real_agent")

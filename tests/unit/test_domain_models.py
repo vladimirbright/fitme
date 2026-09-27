@@ -161,9 +161,9 @@ def test_load_change_round_trips() -> None:
     assert LoadChange.model_validate_json(change.model_dump_json()) == change
 
 
-def test_model_authored_display_text_is_length_capped() -> None:
-    """Plan name, workout title and prescription note are capped (a hallucinated essay is a
-    validation error, not a wall of text); the wording check runs on what passes."""
+def test_model_authored_display_text_at_the_length_ceiling_is_kept_verbatim() -> None:
+    """Plan name, workout title and prescription note are capped, but at-the-limit text is
+    kept exactly as given (no trimming, no trailing "…")."""
     from fitme.domain.models import NAME_MAX_LENGTH, NOTE_MAX_LENGTH, TITLE_MAX_LENGTH
 
     prescription = Prescription(
@@ -176,11 +176,58 @@ def test_model_authored_display_text_is_length_capped() -> None:
     )
     blocks = [Block(kind="single", items=[prescription])]
     workout = Workout(key="A", title="x" * TITLE_MAX_LENGTH, blocks=blocks)
-    assert Plan(name="n" * NAME_MAX_LENGTH, schedule=[], workouts=[workout]).name
-    assert Prescription(**{**prescription.model_dump(), "note": "c" * NOTE_MAX_LENGTH}).note
-    with pytest.raises(ValidationError):
-        Plan(name="n" * (NAME_MAX_LENGTH + 1), schedule=[], workouts=[workout])
-    with pytest.raises(ValidationError):
-        Workout(key="A", title="x" * (TITLE_MAX_LENGTH + 1), blocks=blocks)
-    with pytest.raises(ValidationError):
-        Prescription(**{**prescription.model_dump(), "note": "c" * (NOTE_MAX_LENGTH + 1)})
+    assert Plan(name="n" * NAME_MAX_LENGTH, schedule=[], workouts=[workout]).name == (
+        "n" * NAME_MAX_LENGTH
+    )
+    assert workout.title == "x" * TITLE_MAX_LENGTH
+    noted = Prescription(**{**prescription.model_dump(), "note": "c" * NOTE_MAX_LENGTH})
+    assert noted.note == "c" * NOTE_MAX_LENGTH
+
+
+def test_model_authored_display_text_over_the_length_ceiling_is_trimmed_not_rejected() -> None:
+    """Bug fix: an over-long plan name, workout title or prescription note used to be a hard
+    validation error — rejecting the *whole* structured output (the entire plan or workout)
+    over one long field. A pasted real-world program routinely produces one; the field is now
+    trimmed to the cap (with a trailing "…" marking the cut), never rejected for length alone,
+    so a single over-long field can no longer sink an otherwise-valid plan."""
+    from fitme.domain.models import NAME_MAX_LENGTH, NOTE_MAX_LENGTH, TITLE_MAX_LENGTH
+
+    prescription = Prescription(
+        exercise_id="pushup",
+        sets=3,
+        reps_min=8,
+        reps_max=10,
+        load=Load(kind="bodyweight"),
+        rest_seconds=60,
+    )
+    blocks = [Block(kind="single", items=[prescription])]
+
+    plan = Plan(name="n" * (NAME_MAX_LENGTH + 50), schedule=[], workouts=[])
+    assert len(plan.name) == NAME_MAX_LENGTH
+    assert plan.name.endswith("…")
+
+    workout = Workout(key="A", title="x" * (TITLE_MAX_LENGTH + 50), blocks=blocks)
+    assert len(workout.title) == TITLE_MAX_LENGTH
+    assert workout.title.endswith("…")
+
+    noted = Prescription(**{**prescription.model_dump(), "note": "c" * (NOTE_MAX_LENGTH + 50)})
+    assert noted.note is not None
+    assert len(noted.note) == NOTE_MAX_LENGTH
+    assert noted.note.endswith("…")
+
+
+def test_model_authored_display_text_is_stripped_of_surrounding_whitespace() -> None:
+    plan = Plan(name="  Starter plan  ", schedule=[], workouts=[])
+    assert plan.name == "Starter plan"
+
+
+def test_prescription_note_may_still_be_omitted() -> None:
+    prescription = Prescription(
+        exercise_id="pushup",
+        sets=3,
+        reps_min=8,
+        reps_max=10,
+        load=Load(kind="bodyweight"),
+        rest_seconds=60,
+    )
+    assert prescription.note is None

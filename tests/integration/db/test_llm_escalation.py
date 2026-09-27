@@ -26,7 +26,7 @@ from fitme.domain.models import (
 )
 from fitme.llm.agents import plan_revise_agent
 from fitme.llm.escalation import run_with_escalation
-from fitme.llm.usage import AgentRunOutcome
+from fitme.llm.usage import CAUSE_OUTPUT_VALIDATION, AgentRunOutcome
 
 _PLAN = Plan(
     name="Plan",
@@ -203,6 +203,58 @@ async def test_an_llm_refusal_short_circuits_without_further_escalation(db: Data
     assert isinstance(outcome.output, Refusal)
     assert outcome.output.code == RefusalCode.OUT_OF_SCOPE
     assert len(outcome.attempts) == 1
+
+
+def _invalid_plan_response(messages: list, info: AgentInfo) -> ModelResponse:
+    """A `Plan` tool call that fails pydantic validation regardless of how many times
+    pydantic-ai retries it within one `agent.run()` call (an out-of-range weekday — not
+    display-text length, which is trimmed rather than rejected)."""
+    tool = next(t.name for t in info.output_tools if "Plan" in t.name and "Refusal" not in t.name)
+    args = {"name": "Bad plan", "schedule": [{"weekday": 9, "workout_key": "A"}], "workouts": []}
+    return ModelResponse(parts=[ToolCallPart(tool_name=tool, args=args)])
+
+
+async def test_output_validation_failure_on_the_normal_tier_escalates_to_the_large_tier(
+    db: Database,
+) -> None:
+    """Bug fix: `plan_revise` failing pydantic validation through every output retry (an
+    `UnexpectedModelBehavior`, turned into `Refusal(LLM_UNAVAILABLE)` by `run_agent`) used to
+    end the round immediately, with no large-tier attempt — `_one_attempt` treated *any*
+    `Refusal` as a final answer. It's now eligible for the same one large-tier attempt a guard
+    failure gets: the normal tier fails validation, the large tier returns a valid plan, and
+    both attempts are recorded (not three — an output-validation failure has no guard feedback
+    to retry the normal tier with, so it goes straight to the large tier)."""
+    settings = _settings()
+
+    def agent_factory(model: object):
+        model_str = str(model)
+        if model_str == settings.llm_tier_large:
+            return plan_revise_agent(FunctionModel(_plan_response_factory(), model_name=model_str))
+        return plan_revise_agent(FunctionModel(_invalid_plan_response, model_name=model_str))
+
+    outcome = await run_with_escalation(
+        agent_name="plan_revise",
+        agent_factory=agent_factory,
+        build_prompt=lambda verdicts: "revise please",
+        guard_check=_always_pass_guard,
+        settings=settings,
+        db=db,
+        prices={},
+        language="en",
+    )
+
+    assert outcome.output == _PLAN
+    assert len(outcome.attempts) == 2
+    assert outcome.attempts[0].record.model == settings.llm_tier_medium
+    assert outcome.attempts[0].record.ok is False
+    assert outcome.attempts[0].record.error_cause == CAUSE_OUTPUT_VALIDATION
+    assert outcome.attempts[1].record.model == settings.llm_tier_large
+    assert outcome.attempts[1].record.ok is True
+
+    async with db.read() as conn:
+        calls = await list_llm_calls_since(conn, since="1970-01-01T00:00:00.000000Z")
+    assert len(calls) == 2
+    assert [call.model for call in calls] == [settings.llm_tier_medium, settings.llm_tier_large]
 
 
 async def test_on_attempt_hook_runs_per_attempt_and_links_the_llm_call(db: Database) -> None:

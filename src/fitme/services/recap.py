@@ -173,6 +173,11 @@ class RecapProposal(BaseModel):
     recap_text: str | None = None
     suggestions: list[PlanChange] = Field(default_factory=list)
     refusal: Refusal | None = None
+    # Bug fix, A§10: `llm.usage.CAUSE_OUTPUT_VALIDATION`/`CAUSE_PROVIDER_ERROR` when `refusal`
+    # is the `LLM_UNAVAILABLE` one `run_agent` synthesizes on a caught agent failure
+    # (`outcome.record.error_cause`); `None` otherwise (recap never escalates, A§8.5 rule 3,
+    # so there's only ever the one attempt to describe here).
+    cause: str | None = None
 
 
 # --- Result types -------------------------------------------------------------------------------
@@ -531,7 +536,9 @@ async def build_recap(
     )
     output = outcome.output
     if isinstance(output, Refusal):
-        proposal = RecapProposal(summary=summaries, preview=preview, refusal=output)
+        proposal = RecapProposal(
+            summary=summaries, preview=preview, refusal=output, cause=outcome.record.error_cause
+        )
     else:
         text, text_verdicts = _check_text(output.text, _known_kg(summaries, preview))
         suggestions, suggestion_verdicts = _filter_suggestions(output.suggestions, ctx.plan, inputs)

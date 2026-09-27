@@ -10,6 +10,15 @@ itself is a caller-supplied callback (`guard_check`), so this module never impor
 `guards.plan` or any specific guard rule — M6/M7 plug those in when they build the real
 `/plan` and `/train` flows this helper serves.
 
+Bug fix: an attempt whose `Refusal` is `run_agent`'s own `LLM_UNAVAILABLE` one (the underlying
+agent run raised, `outcome.record.ok is False`) is only eligible for the large-tier escalation
+when `outcome.record.error_cause == usage.CAUSE_OUTPUT_VALIDATION` — the model's structured
+output kept failing our own pydantic schema through every output retry, which is exactly the
+kind of thing a bigger model has a real shot at fixing. A `CAUSE_PROVIDER_ERROR` refusal
+(timeout, HTTP error, rate limit, ...) is never escalated (A§8.5 rule 4: no retry on a
+provider failure); a `Refusal` the model itself returned (`ok is True`) is never escalated
+either — it's a real answer, not a failure. See `_one_attempt`/`_AttemptControl` below.
+
 Every attempt's full `AgentRunOutcome` (B2: the exact `user_prompt` sent, the `template_name`/
 `version` that built it, and the `llm_calls`-shaped record) is kept on `EscalationOutcome.
 attempts`, so a caller (M6/M7) can write one `decisions` row per round with `llm_input` stored
@@ -30,7 +39,13 @@ from fitme.domain.guard_types import GuardVerdict
 from fitme.domain.models import Refusal
 from fitme.llm.agents import AgentModel, BuiltAgent
 from fitme.llm.models import model_for, resolve_tier
-from fitme.llm.usage import AgentRunOutcome, PriceTable, record_llm_call, run_agent
+from fitme.llm.usage import (
+    CAUSE_OUTPUT_VALIDATION,
+    AgentRunOutcome,
+    PriceTable,
+    record_llm_call,
+    run_agent,
+)
 
 T = TypeVar("T")
 
@@ -102,6 +117,13 @@ async def run_with_escalation[T](
         attempts.append(control.outcome)
         if control.done:
             return EscalationOutcome(output=control.outcome.output, attempts=attempts)
+        if control.escalate_immediately:
+            # An output-validation failure: no guard feedback to retry the normal tier with,
+            # so skip straight to the one large-tier attempt instead of resending the same
+            # prompt to the same tier again. `verdicts` is left as whatever the previous
+            # iteration set (possibly still `None`), so a large-tier attempt after an earlier
+            # guard-feedback retry still gets that feedback.
+            break
         verdicts = control.verdicts
 
     large_model = resolve_tier(_LARGE_TIER, settings)
@@ -128,8 +150,17 @@ async def run_with_escalation[T](
 @dataclass(frozen=True, slots=True)
 class _AttemptControl[T]:
     outcome: AgentRunOutcome[T]
-    done: bool  # True: a final answer (success or a Refusal); False: guards failed, retry
+    done: bool  # True: a final answer (success or a Refusal); False: retry
     verdicts: Sequence[GuardVerdict] | None = None
+    # Bug fix: an output-validation failure (the model's structured output kept failing our
+    # own pydantic schema through every output retry, `usage.CAUSE_OUTPUT_VALIDATION`) has no
+    # guard feedback to hand back for a same-tier retry — there's nothing to fix "exactly
+    # this", the whole output never parsed. Rather than loop the normal tier again with an
+    # unchanged prompt, treat it as exhausting the normal-tier attempts and go straight to the
+    # one large-tier attempt (A§8.5 rule 3), the same place a run of exhausted guard-feedback
+    # retries ends up. A provider error (`usage.CAUSE_PROVIDER_ERROR`) is not eligible: it
+    # still maps straight to a refusal with no retry (A§8.5 rule 4, unchanged).
+    escalate_immediately: bool = False
 
 
 async def _one_attempt[T](
@@ -161,6 +192,10 @@ async def _one_attempt[T](
     decision_id = None if on_attempt is None else await on_attempt(outcome, verdicts)
     await record_llm_call(db, decision_id=decision_id, record=outcome.record)
 
-    if isinstance(outcome.output, Refusal) or all(verdict.ok for verdict in verdicts):
+    if isinstance(outcome.output, Refusal):
+        if not outcome.record.ok and outcome.record.error_cause == CAUSE_OUTPUT_VALIDATION:
+            return _AttemptControl(outcome=outcome, done=False, escalate_immediately=True)
+        return _AttemptControl(outcome=outcome, done=True)
+    if all(verdict.ok for verdict in verdicts):
         return _AttemptControl(outcome=outcome, done=True)
     return _AttemptControl(outcome=outcome, done=False, verdicts=verdicts)

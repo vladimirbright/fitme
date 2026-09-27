@@ -902,7 +902,7 @@ Rules:
    every configured model. If one is missing, `/system` shows "cost unknown" for that model,
    and startup logs a warning.
 6. **Per-agent model settings** (for example reasoning effort or max output tokens) go in
-   the same dict in `llm/models.py`, as pydantic-ai `ModelSettings`. Look up the exact
+   the same dict in `llm/models.py`, as pydantic-ai `ModelSettings`. Output-retry budgets live in a sibling dict, `AGENT_OUTPUT_RETRIES`, because `retries` is an `Agent(...)` argument, not a `ModelSettings` key: 3 for plan_generate, plan_revise and session_adjust; 2 for result_parse and recap. An **output-validation** failure on the normal tier counts as a failed attempt and gets the one large-tier attempt. Provider errors do not. Look up the exact
    provider-specific keys in the pydantic-ai docs when implementing. Don't guess them.
 7. **Pick tiers with data.** `fitme llm eval` (manual, spends real money, never in CI) runs
    each agent over the fixture profiles in `tests/fixtures/llm_eval/` on a given model and

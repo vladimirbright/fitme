@@ -696,7 +696,7 @@ async def _log_adjust_attempt(
     output = outcome.output
     event = _EVENT_ADJUST_REJECTED
     if isinstance(output, Refusal):
-        proposal = planning.refusal_proposal(output)
+        proposal = planning.refusal_proposal(output, cause=outcome.record.error_cause)
         fired: list[GuardVerdict] = []
     else:
         assert judgement is not None
@@ -1332,6 +1332,8 @@ async def _log_parse(
     proposal: dict[str, object] = {"verdict": verdict}
     if isinstance(output, Refusal):
         proposal["refusal"] = output.model_dump(mode="json")
+        if outcome.record.error_cause is not None:
+            proposal["cause"] = outcome.record.error_cause
     else:
         proposal["parsed"] = output.model_dump(mode="json")
     info = outcome.prompt

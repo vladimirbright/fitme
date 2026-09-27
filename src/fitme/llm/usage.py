@@ -26,7 +26,8 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
-from pydantic_ai.exceptions import AgentRunError, UserError
+from pydantic import ValidationError
+from pydantic_ai.exceptions import AgentRunError, UnexpectedModelBehavior, UserError
 
 from fitme import i18n
 from fitme.db.connection import Database
@@ -44,6 +45,90 @@ _TOKENS_PER_MILLION = 1_000_000
 # failures (timeouts, HTTP errors, exhausted retries) — both become a refusal, never a crash
 # or a silent fallback (A§8.5 rule 4, B3).
 _AGENT_FAILURE_EXCEPTIONS = (AgentRunError, UserError)
+
+# `AgentRunRecord.error_cause` values (A§10, bug fix): distinguishes "the model's structured
+# output kept failing our own pydantic schema" from "the provider call itself failed"
+# (timeout, HTTP error, rate limit, missing/bad API key, ...) so `llm/escalation.py` can retry
+# the former on the large tier (A§8.5 rule 3) while still refusing the latter immediately, with
+# no fallback (A§8.5 rule 4), and so the operator can tell the two apart in `decisions`.
+CAUSE_OUTPUT_VALIDATION = "output_validation"
+CAUSE_PROVIDER_ERROR = "provider_error"
+
+_MAX_LOGGED_VALIDATION_ERRORS = 10
+
+
+def _validation_errors_in_chain(exc: BaseException) -> list[ValidationError]:
+    """Walk `__cause__`/`__context__` from `exc`, collecting every pydantic `ValidationError`
+    found along the way (there is normally at most one: pydantic-ai's own retry-budget
+    bookkeeping chains it straight onto the `UnexpectedModelBehavior` it raises —
+    `tool_manager.py::_check_max_retries` does `raise UnexpectedModelBehavior(...) from error`
+    with `error` set to the `ValidationError` that blew the budget, and
+    `_tool_execution.py::_run_output_tool_call` copies that same `__cause__` onto the
+    "Exceeded maximum output retries" exception it re-raises — verified against the installed
+    pydantic-ai 2.51 source and with a live `FunctionModel` run, see
+    `tests/unit/test_llm_usage.py`). Follows both links defensively, and stops on a cycle or
+    once nothing pydantic-shaped is left, so a future pydantic-ai version chaining differently
+    still gets *something* logged rather than an infinite loop."""
+    found: list[ValidationError] = []
+    seen: set[int] = set()
+    current: BaseException | None = exc
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        if isinstance(current, ValidationError):
+            found.append(current)
+        current = current.__cause__ or current.__context__
+    return found
+
+
+def _describe_validation_errors(errors: list[ValidationError]) -> list[dict[str, str]]:
+    """Up to `_MAX_LOGGED_VALIDATION_ERRORS` individual pydantic errors from `errors`, each
+    reduced to `loc` (dotted path), `type` and `msg` only. **Never** `input` (the offending
+    value pydantic captured, which can be the model's user-text-derived output) or `ctx`/`url`
+    — A§10: "Never log message text, health values or Telegram ids". `loc` is joined with `.`
+    (matching how it would read in code, e.g. `"workouts.0.title"`) rather than kept as a
+    tuple, so it stays a plain string in the JSON log record."""
+    described: list[dict[str, str]] = []
+    for validation_error in errors:
+        for error in validation_error.errors(
+            include_url=False, include_context=False, include_input=False
+        ):
+            described.append(
+                {
+                    "loc": ".".join(str(part) for part in error["loc"]),
+                    "type": error["type"],
+                    "msg": error["msg"],
+                }
+            )
+            if len(described) >= _MAX_LOGGED_VALIDATION_ERRORS:
+                return described
+    return described
+
+
+@dataclass(frozen=True, slots=True)
+class _FailureDiagnosis:
+    """What `_diagnose_failure` extracts from a caught agent failure: which of the two
+    `CAUSE_*` buckets it belongs in, plus (for `CAUSE_OUTPUT_VALIDATION`) a safe description
+    of the pydantic errors involved, for the WARNING log record. Never carries the input
+    values or any request/response body."""
+
+    cause: str
+    validation_errors: list[dict[str, str]] | None
+    model_message: str | None
+
+
+def _diagnose_failure(exc: AgentRunError | UserError) -> _FailureDiagnosis:
+    """Classify a caught agent failure. A pydantic `ValidationError` anywhere in `exc`'s
+    `__cause__`/`__context__` chain means the model's structured output kept failing our own
+    schema through every output retry (`CAUSE_OUTPUT_VALIDATION`); anything else — a timeout, an
+    HTTP error, a rate limit, a bad/missing API key, a truncated response, ... — is
+    `CAUSE_PROVIDER_ERROR`. `model_message` is `exc.message` (never `.body`, which can hold the
+    raw response) when `exc` is an `UnexpectedModelBehavior` — a short, fixed phrase like
+    "Exceeded maximum output retries (1)", not model- or user-authored text."""
+    validation_errors = _validation_errors_in_chain(exc)
+    cause = CAUSE_OUTPUT_VALIDATION if validation_errors else CAUSE_PROVIDER_ERROR
+    model_message = exc.message if isinstance(exc, UnexpectedModelBehavior) else None
+    described = _describe_validation_errors(validation_errors) if validation_errors else None
+    return _FailureDiagnosis(cause=cause, validation_errors=described, model_message=model_message)
 
 
 @dataclass(frozen=True, slots=True)
@@ -107,7 +192,12 @@ class AgentRunRecord:
     (A§4.3: "No prompt content here"; that lives in `PromptInfo`/`decisions.llm_input`
     instead). `ok=False` on a caught agent-construction or provider failure;
     `input_tokens`/`output_tokens`/`cost_estimate_usd` are then 0/0/`None` (there is no usage
-    to report)."""
+    to report). `error_cause` is one of the `CAUSE_*` constants when `ok` is `False` (`None`
+    when `ok` is `True` — a successful call has no failure to classify); callers
+    (`llm/escalation.py`, `services/planning.py`, `services/training.py`) use it to tell an
+    output-validation failure, which is eligible for the large-tier escalation attempt (A§8.5
+    rule 3), from a provider error, which still maps straight to a refusal with no retry
+    (A§8.5 rule 4) — and to log which one happened on the `decisions` row (this bug fix)."""
 
     purpose: str
     model: str
@@ -116,6 +206,7 @@ class AgentRunRecord:
     cost_estimate_usd: float | None
     latency_ms: int
     ok: bool
+    error_cause: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -166,10 +257,18 @@ async def run_agent[T](
         result = await built.agent.run(user_prompt)
     except _AGENT_FAILURE_EXCEPTIONS as exc:
         latency_ms = round((time.monotonic() - start) * 1000)
-        _logger.warning(
-            "llm call failed",
-            extra={"purpose": purpose, "model": model_name, "error_type": type(exc).__name__},
-        )
+        diagnosis = _diagnose_failure(exc)
+        log_extra: dict[str, object] = {
+            "purpose": purpose,
+            "model": model_name,
+            "error_type": type(exc).__name__,
+            "cause": diagnosis.cause,
+        }
+        if diagnosis.model_message is not None:
+            log_extra["model_message"] = diagnosis.model_message
+        if diagnosis.validation_errors is not None:
+            log_extra["validation_errors"] = diagnosis.validation_errors
+        _logger.warning("llm call failed", extra=log_extra)
         record = AgentRunRecord(
             purpose=purpose,
             model=model_name,
@@ -178,6 +277,7 @@ async def run_agent[T](
             cost_estimate_usd=None,
             latency_ms=latency_ms,
             ok=False,
+            error_cause=diagnosis.cause,
         )
         refusal = Refusal(
             code=RefusalCode.LLM_UNAVAILABLE,

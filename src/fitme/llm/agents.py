@@ -29,7 +29,7 @@ from pydantic_ai.models import Model
 
 from fitme.domain.models import PlanProposal, SessionAdjustProposal
 from fitme.domain.results import ParsedResults, Recap
-from fitme.llm.models import model_settings_for
+from fitme.llm.models import model_settings_for, output_retries_for
 from fitme.llm.prompts import render_prompt
 
 AgentModel = Model | str
@@ -58,6 +58,12 @@ def _built(agent_name: str, model: AgentModel, output_type: Any) -> BuiltAgent[A
         output_type=output_type,
         instructions=rendered.text,
         model_settings=model_settings_for(agent_name),
+        # Output-validation retry budget (bug fix): pydantic-ai's own default is 1 (one retry
+        # after the first attempt), which two over-long display-text fields in a row can
+        # exhaust. `retries` takes an `int` (same budget for both `tools`/`output`) or an
+        # `AgentRetries` dict to set them separately — none of these agents register any
+        # `@agent.tool`, so only `output` matters here; `tools` is left at its default.
+        retries={"output": output_retries_for(agent_name)},
     )
     return BuiltAgent(agent=agent, template_name=rendered.template_name, version=rendered.version)
 

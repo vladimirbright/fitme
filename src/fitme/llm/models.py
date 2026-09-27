@@ -67,6 +67,26 @@ AGENT_MODEL_SETTINGS: dict[str, ModelSettings] = {
     "recap": ModelSettings(max_tokens=512, timeout=30),
 }
 
+# Bug fix (plan_revise output-validation failures): per-agent output-retry budgets, passed to
+# `Agent(retries={"output": N})` in `llm/agents.py::_built` — `Agent.__init__`'s own `retries`
+# kwarg (pydantic_ai/agent/__init__.py:600, `int | AgentRetries | None`) defaults each of the
+# `tools`/`output` budgets to 1 (`_normalize_agent_retries(..., default=1)`,
+# pydantic_ai/agent/__init__.py:404), i.e. one attempt plus one retry. That was not enough for
+# a `Plan | Refusal`/`Workout | Refusal` output: a pasted real-world program (long,
+# transliterated Russian names/titles) could fail pydantic validation twice in a row and
+# exhaust the budget before `domain/models.py`'s trim-instead-of-reject fields (this same bug
+# fix) even had a chance on a third attempt. `plan_generate`/`plan_revise`/`session_adjust`
+# get 3 (large/medium-tier, structural output, worth the extra attempts); `result_parse`/
+# `recap` get 2 (small-tier, frequent, short output — `result_parse` never escalates either,
+# A§8.5 rule 3, so its own retry budget is the only cushion it gets).
+AGENT_OUTPUT_RETRIES: dict[str, int] = {
+    "plan_generate": 3,
+    "plan_revise": 3,
+    "session_adjust": 3,
+    "result_parse": 2,
+    "recap": 2,
+}
+
 
 @dataclass(frozen=True, slots=True)
 class ModelSpec:
@@ -151,6 +171,14 @@ def model_settings_for(agent: str) -> ModelSettings:
     if agent not in AGENT_MODEL_SETTINGS:
         raise SettingsError(f"unknown agent {agent!r}; must be one of {sorted(AGENT_DEFAULT_TIER)}")
     return AGENT_MODEL_SETTINGS[agent]
+
+
+def output_retries_for(agent: str) -> int:
+    """The static per-agent output-retry budget (see `AGENT_OUTPUT_RETRIES` above), for
+    `llm/agents.py`'s factories to pass as `Agent(retries={"output": ...})`."""
+    if agent not in AGENT_OUTPUT_RETRIES:
+        raise SettingsError(f"unknown agent {agent!r}; must be one of {sorted(AGENT_DEFAULT_TIER)}")
+    return AGENT_OUTPUT_RETRIES[agent]
 
 
 def validate_startup(settings: Settings) -> None:
