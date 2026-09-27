@@ -6,7 +6,7 @@ FITME := uv run $(if $(wildcard .env),--env-file .env) fitme
 OUT ?= fitme-export.json
 
 .DEFAULT_GOAL := help
-.PHONY: help install lock migrate serve activate test lint fmt typecheck catalog check export purge llm-eval clean
+.PHONY: help install lock migrate serve activate test lint fmt typecheck catalog check export delete purge llm-eval clean
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -46,6 +46,9 @@ check: lint typecheck catalog test ## lint + typecheck + catalog + test (run bef
 
 export: ## Export all user data to $(OUT)
 	$(FITME) export --out $(OUT)
+
+delete: ## DELETE the user and ALL data permanently (no undo; run 'make export' first)
+	$(FITME) delete --yes
 
 purge: ## Run retention now
 	$(FITME) purge
