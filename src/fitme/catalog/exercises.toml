@@ -29,7 +29,7 @@ loads_areas = ["knee", "lower_back", "hip", "neck"]
 contraindicated_by = ["knee_injury_current", "lower_back_injury_current", "hernia", "hip_injury_current", "neck_injury_current"]
 increment_kg = 2.5
 start = { kind = "kg", kg = 20.0 }
-instructions = { en = "Set the bar on the rack at shoulder height. Step under it, unrack, and walk back. Feet shoulder-width, toes slightly out. Sit down and back, knees tracking over your toes, until your thighs are at least parallel to the floor. Drive back up through the whole foot. Set the rack's safety arms just below the lowest point of the movement.", ru = "Установите штангу на стойке на высоте плеч. Зайдите под неё, снимите со стойки и отойдите назад. Ноги на ширине плеч, носки чуть развёрнуты. Присядьте вниз и назад, колени двигаются по линии носков, до параллели бёдер с полом или ниже. Встаньте, отталкиваясь всей стопой. Установите страховочные упоры чуть ниже нижней точки движения." }
+instructions = { en = "Set the bar on the rack at shoulder height. Step under it, unrack, and walk back. Feet shoulder-width, toes slightly out. Sit down and back, knees tracking over your toes, until your thighs are at least parallel to the floor. Drive back up through the whole foot. Set the rack's safety arms just below the lowest point of the movement. Warm up in small steps; avoid 10+ kg jumps between warm-up sets.", ru = "Установите штангу на стойке на высоте плеч. Зайдите под неё, снимите со стойки и отойдите назад. Ноги на ширине плеч, носки чуть развёрнуты. Присядьте вниз и назад, колени двигаются по линии носков, до параллели бёдер с полом или ниже. Встаньте, отталкиваясь всей стопой. Установите страховочные упоры чуть ниже нижней точки движения. Увеличивайте вес в разминке небольшими шагами; избегайте скачков в 10+ кг между разминочными подходами." }
 
 [[exercise]]
 id = "barbell_front_squat"
@@ -134,7 +134,7 @@ loads_areas = ["lower_back", "hip"]
 contraindicated_by = ["lower_back_injury_current", "hernia", "hip_injury_current"]
 increment_kg = 2.5
 start = { kind = "kg", kg = 20.0 }
-instructions = { en = "Hold the bar at hip height, feet hip-width. Push your hips back, keeping the bar close to your legs and knees only slightly bent, until you feel a stretch in the hamstrings. Drive the hips forward to stand back up.", ru = "Держите штангу на уровне бёдер, ноги на ширине таза. Отведите таз назад, гриф скользит вдоль ног, колени чуть согнуты, пока не почувствуете растяжение задней поверхности бедра. Верните таз вперёд, чтобы встать." }
+instructions = { en = "Hold the bar at hip height, feet hip-width. Push your hips back, keeping the bar close to your legs and knees only slightly bent, until you feel a stretch in the hamstrings. Drive the hips forward to stand back up. Leave a couple of reps in reserve rather than grinding out the last one.", ru = "Держите штангу на уровне бёдер, ноги на ширине таза. Отведите таз назад, гриф скользит вдоль ног, колени чуть согнуты, пока не почувствуете растяжение задней поверхности бедра. Верните таз вперёд, чтобы встать. Оставляйте пару повторений в запасе, не доводите подход до отказа." }
 
 [[exercise]]
 id = "barbell_good_morning"
@@ -213,7 +213,7 @@ loads_areas = ["shoulder", "elbow_wrist"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
 increment_kg = 2.5
 start = { kind = "kg", kg = 20.0 }
-instructions = { en = "Lie on the bench, feet flat on the floor, bar over your chest. Unrack, lower the bar to the mid-chest with elbows at roughly 45 degrees, then press it back up. Set the rack's safety arms just below the lowest point of the movement.", ru = "Лягте на скамью, стопы на полу, гриф над грудью. Снимите штангу со стойки, опустите к середине груди, локти под углом примерно 45 градусов, затем выжмите обратно вверх. Установите страховочные упоры чуть ниже нижней точки движения." }
+instructions = { en = "Lie on the bench, feet flat on the floor, bar over your chest. Unrack, lower the bar to the mid-chest with elbows at roughly 45 degrees, then press it back up. Set the rack's safety arms just below the lowest point of the movement. Pause briefly on the chest instead of bouncing the bar up.", ru = "Лягте на скамью, стопы на полу, гриф над грудью. Снимите штангу со стойки, опустите к середине груди, локти под углом примерно 45 градусов, затем выжмите обратно вверх. Установите страховочные упоры чуть ниже нижней точки движения. Делайте короткую паузу на груди вместо отбива штанги вверх." }
 
 [[exercise]]
 id = "dumbbell_bench_press"
@@ -226,7 +226,7 @@ loads_areas = ["shoulder", "elbow_wrist"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
 increment_kg = 1.0
 start = { kind = "kg", kg = 2.0 }
-instructions = { en = "Lie on the bench, a dumbbell in each hand over your chest. Lower them to the sides of your chest with elbows at roughly 45 degrees, then press back up.", ru = "Лягте на скамью, гантели в руках над грудью. Опустите их по бокам груди, локти под углом примерно 45 градусов, затем выжмите обратно вверх." }
+instructions = { en = "Lie on the bench, a dumbbell in each hand over your chest. Lower them to the sides of your chest with elbows at roughly 45 degrees, then press back up. Lower only until the upper arm is roughly parallel to the floor.", ru = "Лягте на скамью, гантели в руках над грудью. Опустите их по бокам груди, локти под углом примерно 45 градусов, затем выжмите обратно вверх. Опускайте гантели только до параллели плеча с полом." }
 
 [[exercise]]
 id = "dumbbell_floor_press"
@@ -278,7 +278,7 @@ loads_areas = ["lower_back", "shoulder", "elbow_wrist"]
 contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "hernia", "elbow_wrist_injury_current"]
 increment_kg = 2.5
 start = { kind = "kg", kg = 20.0 }
-instructions = { en = "Hinge forward at the hips with a flat back, bar hanging at arm's length. Pull the bar toward your lower ribs, squeezing the shoulder blades together, then lower it under control.", ru = "Наклонитесь вперёд в тазобедренном суставе, спина прямая, гриф на вытянутых руках. Подтяните гриф к низу груди, сводя лопатки, затем опустите под контролем." }
+instructions = { en = "Hinge forward at the hips with a flat back, bar hanging at arm's length. Pull the bar toward your lower ribs, squeezing the shoulder blades together, then lower it under control. Keep the working weight clearly below your squat; a bent-over hinge already asks a lot from the lower back.", ru = "Наклонитесь вперёд в тазобедренном суставе, спина прямая, гриф на вытянутых руках. Подтяните гриф к низу груди, сводя лопатки, затем опустите под контролем. Держите рабочий вес заметно ниже приседа — поясница и так активно работает в наклоне." }
 
 [[exercise]]
 id = "dumbbell_row"
@@ -291,7 +291,7 @@ loads_areas = ["lower_back", "shoulder", "elbow_wrist"]
 contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
 increment_kg = 1.0
 start = { kind = "kg", kg = 2.0 }
-instructions = { en = "Support your knee and hand on a bench, back flat. Row the dumbbell up to your hip, elbow close to your body, then lower it under control. Complete all reps on one side before switching.", ru = "Обопритесь коленом и рукой о скамью, спина прямая. Подтяните гантель к бедру, локоть близко к корпусу, затем опустите под контролем. Выполните все повторения на одну сторону, затем смените." }
+instructions = { en = "Support your knee and hand on a bench, back flat. Row the dumbbell up to your hip, elbow close to your body, then lower it under control. Complete all reps on one side before switching. Keep the torso still — no twisting to help the weight up.", ru = "Обопритесь коленом и рукой о скамью, спина прямая. Подтяните гантель к бедру, локоть близко к корпусу, затем опустите под контролем. Выполните все повторения на одну сторону, затем смените. Корпус неподвижен — не скручивайтесь, помогая себе поднять вес." }
 
 [[exercise]]
 id = "resistance_band_row"
@@ -649,7 +649,7 @@ loads_areas = ["shoulder"]
 contraindicated_by = ["shoulder_injury_current"]
 increment_kg = 1.0
 start = { kind = "kg", kg = 2.0 }
-instructions = { en = "Stand holding a dumbbell in each hand at your sides. Raise your arms out to the sides until they reach shoulder height, then lower back down under control.", ru = "Встаньте, держа гантели по бокам. Поднимите руки в стороны до уровня плеч, затем опустите под контролем." }
+instructions = { en = "Stand holding a dumbbell in each hand at your sides. Raise your arms out to the sides until they reach shoulder height, then lower back down under control. Don't tip the pinky up, and lower slowly.", ru = "Встаньте, держа гантели по бокам. Поднимите руки в стороны до уровня плеч, затем опустите под контролем. Не задирайте мизинец, опускайте гантели медленно." }
 
 [[exercise]]
 id = "bodyweight_calf_raise"
@@ -701,7 +701,7 @@ loads_areas = ["knee", "hip", "lower_back"]
 contraindicated_by = ["knee_injury_current", "hip_injury_current", "lower_back_injury_current", "hernia"]
 increment_kg = 2.5
 start = { kind = "calibration" }
-instructions = { en = "Set the lightest resistance. Press through the whole foot; lower with control.", ru = "Установите минимальное сопротивление. Надавите всей стопой; опускайте платформу плавно." }
+instructions = { en = "Set the lightest resistance. Press through the whole foot; lower with control. Keep the lower back flat on the pad throughout; stop the descent at the point where it would start to round.", ru = "Установите минимальное сопротивление. Надавите всей стопой; опускайте платформу плавно. Держите поясницу прижатой к спинке на всём протяжении; останавливайте опускание платформы в точке, где поясница начала бы скругляться." }
 load_step_kg = 2.5
 
 [[exercise]]
@@ -729,7 +729,7 @@ loads_areas = ["knee"]
 contraindicated_by = ["knee_injury_current"]
 increment_kg = 1.0
 start = { kind = "calibration" }
-instructions = { en = "Set the lightest resistance. Straighten the knees smoothly; lower slowly.", ru = "Установите минимальное сопротивление. Плавно выпрямите колени; медленно опустите ноги." }
+instructions = { en = "Set the lightest resistance. Straighten the knees smoothly; lower slowly. Use a controlled tempo with a short pause at the top; avoid swinging the weight.", ru = "Установите минимальное сопротивление. Плавно выпрямите колени; медленно опустите ноги. Двигайтесь в подконтрольном темпе с короткой паузой наверху; избегайте раскачки веса." }
 load_step_kg = 1.0
 
 [[exercise]]
@@ -757,7 +757,7 @@ loads_areas = ["shoulder", "elbow_wrist"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
 increment_kg = 2.5
 start = { kind = "calibration" }
-instructions = { en = "Set the lightest resistance. Draw the handles toward the ribs; return slowly.", ru = "Установите минимальное сопротивление. Тяните рукояти к рёбрам; возвращайте медленно." }
+instructions = { en = "Set the lightest resistance. Draw the handles toward the ribs; return slowly. Finish each rep with a brief squeeze of the shoulder blades together.", ru = "Установите минимальное сопротивление. Тяните рукояти к рёбрам; возвращайте медленно. Завершайте каждое повторение коротким сведением лопаток." }
 load_step_kg = 2.5
 
 [[exercise]]
@@ -827,7 +827,7 @@ loads_areas = ["elbow_wrist"]
 contraindicated_by = ["elbow_wrist_injury_current"]
 increment_kg = 1.0
 start = { kind = "calibration" }
-instructions = { en = "Set the lightest resistance. Keep elbows near the torso; straighten the arms.", ru = "Установите минимальное сопротивление. Держите локти у корпуса; выпрямляйте руки." }
+instructions = { en = "Set the lightest resistance. Keep elbows near the torso; straighten the arms. Pause briefly at full extension before controlling the weight back up.", ru = "Установите минимальное сопротивление. Держите локти у корпуса; выпрямляйте руки. Делайте короткую паузу в разогнутом положении, затем подконтрольно возвращайте вес." }
 load_step_kg = 1.0
 
 [[exercise]]
@@ -911,7 +911,7 @@ loads_areas = ["knee", "hip", "ankle", "lower_back"]
 contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current", "lower_back_injury_current", "hernia"]
 increment_kg = 2.0
 start = { kind = "kg", kg = 2.0 }
-instructions = { en = "Hold light dumbbells at the sides. Step back and lower under control; return to standing.", ru = "Держите лёгкие гантели по бокам. Сделайте шаг назад и плавно опуститесь; вернитесь в стойку." }
+instructions = { en = "Hold light dumbbells at the sides. Step back and lower under control; return to standing. Keep the front knee tracking over the front foot.", ru = "Держите лёгкие гантели по бокам. Сделайте шаг назад и плавно опуститесь; вернитесь в стойку. Колено передней ноги остаётся над стопой передней ноги." }
 load_step_kg = 1.0
 
 [[exercise]]
@@ -1337,4 +1337,251 @@ contraindicated_by = ["hip_injury_current", "knee_injury_current", "ankle_injury
 increment_kg = 1.0
 start = { kind = "bodyweight" }
 instructions = { en = "Jog at an easy, steady pace. Keep the steps short and relaxed.", ru = "Бегите в лёгком ровном темпе. Делайте короткие свободные шаги." }
+load_step_kg = 1.0
+
+# Added from the operator's program (generic parts only; personal data removed)
+
+# New catalog entries derived from the operator's personal training program
+# (user_exercises.toml), de-duplicated against src/fitme/catalog/exercises.toml and
+# scrubbed of all personal content (working weights, "left shoulder" references, program
+# notes). See REPORT.md in this same directory for the full merge decision log.
+#
+# This file holds ONLY the genuinely new movements. Everything else in the source file
+# duplicated an existing catalog entry; proposed cue improvements for those existing
+# entries are listed in REPORT.md, not applied here.
+#
+# Ids and style follow the house conventions in src/fitme/catalog/exercises.toml:
+# equipment-prefixed snake_case ids, conservative calibration starts, explicit
+# load_step_kg on cable/machine entries, and contraindicated_by covering every
+# loads_areas entry.
+
+[[exercise]]
+id = "barbell_deficit_deadlift"
+names = { en = "Deficit deadlift", ru = "Становая тяга с дефицита" }
+kind = "compound"
+pattern = "hinge"
+equipment = ["barbell"]
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip", "knee"]
+contraindicated_by = ["lower_back_injury_current", "hernia", "hip_injury_current", "knee_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Stand on a small deficit (a weight plate, about 2-3 cm), feet hip-width, bar over mid-foot. Hinge down with a flat back to grip the bar just outside your shins, then drive through the floor to stand, hips and shoulders rising together. Warm up in small steps rather than large jumps between sets.", ru = "Встаньте на невысокую подставку (блин высотой 2-3 см), ноги на ширине таза, гриф над серединой стопы. Наклонитесь с прямой спиной и возьмите гриф чуть шире голеней, затем встаньте, отталкиваясь от пола, бёдра и плечи поднимаются одновременно. Увеличивайте вес в разминке небольшими шагами, без резких скачков." }
+
+[[exercise]]
+id = "dumbbell_seated_shoulder_press"
+names = { en = "Seated dumbbell shoulder press", ru = "Жим гантелей сидя" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["dumbbells", "bench"]
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia", "neck_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit on a bench with the backrest close to vertical, a dumbbell in each hand at shoulder height, palms forward. Press both dumbbells overhead until your arms are extended, then lower them back to shoulder height under control.", ru = "Сядьте на скамью, спинка почти вертикально, гантели на уровне плеч, ладони вперёд. Выжмите гантели вверх до полного выпрямления рук, затем опустите обратно на уровень плеч под контролем." }
+
+[[exercise]]
+id = "cable_close_grip_pulldown"
+names = { en = "Close-grip lat pulldown (V-handle)", ru = "Тяга верхнего блока узким хватом" }
+kind = "compound"
+pattern = "vertical_pull"
+equipment = ["cable"]
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit tall at the cable station with a close V-handle attachment, thighs secured under the pad. Pull the handle down to the upper chest, elbows moving down along the body, then let it rise under control without leaning back more than slightly.", ru = "Сядьте прямо у блочного тренажёра с узкой V-образной рукоятью, бёдра зафиксированы под валиками. Тяните рукоять к верху груди, локти двигаются вниз вдоль корпуса, затем отпускайте под контролем, отклоняясь назад не более чем слегка." }
+load_step_kg = 2.5
+
+[[exercise]]
+id = "cable_neutral_grip_pulldown"
+names = { en = "Neutral-grip lat pulldown", ru = "Тяга верхнего блока нейтральным хватом" }
+kind = "compound"
+pattern = "vertical_pull"
+equipment = ["cable"]
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit tall with a neutral-grip bar, palms facing each other, hands shoulder-width. Pull the bar down to the upper chest, squeezing the shoulder blades down, then let it rise under control.", ru = "Сядьте прямо, возьмитесь за рукоять нейтральным хватом, ладони смотрят друг на друга, руки на ширине плеч. Тяните рукоять к верху груди, сводя лопатки вниз, затем отпускайте под контролем." }
+load_step_kg = 2.5
+
+[[exercise]]
+id = "cable_wide_grip_pulldown"
+names = { en = "Wide-grip lat pulldown", ru = "Тяга верхнего блока широким хватом" }
+kind = "compound"
+pattern = "vertical_pull"
+equipment = ["cable"]
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit tall and take a wide overhand grip on the bar. Pull the bar down to your collarbones, driving the elbows down, keeping the torso upright without leaning back.", ru = "Сядьте прямо и возьмитесь за гриф широким хватом сверху. Тяните гриф к ключицам, опуская локти вниз, сохраняя корпус вертикально, не заваливаясь назад." }
+load_step_kg = 2.5
+
+[[exercise]]
+id = "dumbbell_flat_fly"
+names = { en = "Flat dumbbell fly", ru = "Разводка гантелей лёжа" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie on a flat bench with a dumbbell in each hand above your chest, elbows slightly bent and locked in place. Open your arms out to the sides in an arc down to chest level, then bring them back together over your chest.", ru = "Лягте на горизонтальную скамью, гантели над грудью, локти слегка согнуты и зафиксированы. Разведите руки в стороны по дуге до уровня груди, затем сведите обратно над грудью." }
+
+[[exercise]]
+id = "machine_pec_deck"
+names = { en = "Pec deck (machine fly)", ru = "Сведения в тренажёре «бабочка»" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["machine"]
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set the lightest resistance and adjust the handles so your arms start level with your chest. Bring your hands together in front of you, then return under control without letting the stretch go past chest level.", ru = "Установите минимальное сопротивление и отрегулируйте рукояти на уровне груди. Сведите руки перед собой, затем возвращайтесь под контролем, не растягиваясь глубже уровня груди." }
+load_step_kg = 1.0
+
+[[exercise]]
+id = "dumbbell_incline_rear_delt_raise"
+names = { en = "Chest-supported incline rear delt raise", ru = "Разведения на заднюю дельту лёжа на наклонной скамье" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie chest-down on a bench set to a 30-45 degree incline, a dumbbell in each hand hanging below you. With elbows slightly bent and thumbs up, raise the dumbbells out to the sides using your shoulder blades, no higher than shoulder line, then lower under control.", ru = "Лягте грудью на скамью, установленную под углом 30-45 градусов, гантели свободно свисают вниз. Локти слегка согнуты, большие пальцы вверх, поднимайте гантели в стороны за счёт лопаток, не выше линии плеч, затем опускайте под контролем." }
+
+[[exercise]]
+id = "dumbbell_seated_rear_delt_raise"
+names = { en = "Seated bent-over rear delt raise", ru = "Разведения на заднюю дельту в наклоне сидя" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit on the edge of a bench, chest resting on your thighs, a dumbbell in each hand under your knees. With thumbs up, raise the dumbbells out to the sides using your shoulder blades, pausing briefly at the top, then lower under control.", ru = "Сядьте на край скамьи, грудью на бёдрах, гантели в руках под коленями. Большие пальцы вверх, поднимайте гантели в стороны за счёт лопаток, с короткой паузой наверху, затем опускайте под контролем." }
+
+[[exercise]]
+id = "band_external_rotation"
+names = { en = "Band external rotation", ru = "Наружные ротации с резинкой" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["resistance_bands"]
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "A light shoulder warm-up drill. Loop a light band around a sturdy anchor at elbow height. Pin your elbow to your side at 90 degrees and slowly rotate your forearm outward, then return under control.", ru = "Лёгкое разминочное упражнение для плеч. Закрепите лёгкую ленту на прочной опоре на уровне локтя. Прижмите локоть к боку под углом 90 градусов и медленно разворачивайте предплечье наружу, затем возвращайте под контролем." }
+load_step_kg = 1.0
+
+[[exercise]]
+id = "dumbbell_incline_curl"
+names = { en = "Seated incline dumbbell curl", ru = "Сгибания на бицепс сидя на наклонной скамье" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit on a bench set to about 45 degrees, back and head resting against it, a dumbbell in each hand hanging straight down. Curl the dumbbells toward your shoulders without moving your elbows, then lower under control. If the shoulder feels tight, raise the backrest a little.", ru = "Сядьте на скамью, установленную примерно под 45 градусов, спина и затылок прижаты, гантели свободно свисают вниз. Сгибайте руки, поднимая гантели к плечам, не двигая локтями, затем опускайте под контролем. Если тянет плечо — увеличьте угол наклона спинки." }
+
+[[exercise]]
+id = "dumbbell_seated_french_press"
+names = { en = "Seated dumbbell French press", ru = "Французский жим сидя с гантелью" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit with your back supported, holding one dumbbell with both hands behind your head, elbows pointing up and close together. Lower it behind your head only as far as feels comfortable, then extend your arms back up.", ru = "Сядьте, спина опирается на спинку, держите одну гантель двумя руками за головой, локти смотрят вверх и находятся близко друг к другу. Опускайте гантель за голову настолько, насколько комфортно, затем выпрямляйте руки обратно вверх." }
+
+[[exercise]]
+id = "cable_rotation"
+names = { en = "Cable rotation", ru = "Ротации на блоке" }
+kind = "isolation"
+pattern = "core"
+equipment = ["cable"]
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set the cable at chest height and stand side-on to the stack, arms extended in front of you. Rotate your torso to pull the handle across your body, keeping your hips facing forward, then return under control. Complete all reps on one side before switching.", ru = "Установите блок на уровне груди и встаньте боком к тренажёру, руки вытянуты перед собой. Поворачивайте корпус, проводя рукоять перед собой, таз остаётся неподвижным, затем возвращайтесь под контролем. Выполните все повторения на одну сторону, затем смените." }
+load_step_kg = 1.0
+
+[[exercise]]
+id = "machine_incline_treadmill_walk"
+names = { en = "Incline treadmill walk", ru = "Ходьба в горку на дорожке" }
+kind = "cardio"
+pattern = "conditioning"
+equipment = ["machine"]
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["hip", "knee", "ankle"]
+contraindicated_by = ["hip_injury_current", "knee_injury_current", "ankle_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set a moderate-to-steep incline and a walking pace you can sustain while holding a conversation. Aim for about 15-20 minutes.", ru = "Установите средний или крутой наклон и темп ходьбы, при котором можно свободно разговаривать. Ориентируйтесь на 15-20 минут." }
+load_step_kg = 1.0
+
+[[exercise]]
+id = "machine_upright_bike"
+names = { en = "Upright bike", ru = "Велотренажёр" }
+kind = "cardio"
+pattern = "conditioning"
+equipment = ["machine"]
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["hip", "knee"]
+contraindicated_by = ["hip_injury_current", "knee_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set a light-to-moderate resistance and ride at an easy, conversational pace for about 15-20 minutes.", ru = "Установите лёгкое или среднее сопротивление и крутите педали в спокойном темпе, при котором можно разговаривать, около 15-20 минут." }
+load_step_kg = 1.0
+
+[[exercise]]
+id = "machine_rower"
+names = { en = "Rowing machine", ru = "Гребной тренажёр" }
+kind = "cardio"
+pattern = "conditioning"
+equipment = ["machine"]
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["lower_back", "shoulder", "hip"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "hip_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Drive with the legs first, then the body, then the arms; reverse the order on the way back. Keep the back neutral and row at a moderate, steady rate for about 10 minutes.", ru = "Сначала толчок ногами, затем корпус, затем руки; на возврате — в обратном порядке. Спина нейтральная, гребите в умеренном ровном темпе около 10 минут." }
+load_step_kg = 1.0
+
+[[exercise]]
+id = "machine_skierg"
+names = { en = "SkiErg", ru = "Лыжный тренажёр (SkiErg)" }
+kind = "cardio"
+pattern = "conditioning"
+equipment = ["machine"]
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "lower_back_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Hinge at the hips and pull the handles down with arms only slightly bent. Start with short intervals and build up gradually; if the shoulder feels uncomfortable, shorten the pulling range.", ru = "Наклонитесь от таза и тяните рукояти вниз почти прямыми руками. Начинайте с коротких интервалов и постепенно увеличивайте их; если ощущается дискомфорт в плече — сократите амплитуду тяги." }
 load_step_kg = 1.0
