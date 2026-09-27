@@ -212,3 +212,36 @@ settings test.
   `fitme serve`).
 
 **Accept:** A fresh clone reaches a working bot by following only the README.
+
+## M11 — Import plans and training history (last)
+
+Lets the operator start from their real training history instead of calibration.
+
+- `fitme history import PATH` (plus `--dry-run`). It reads a local file of past trainings
+  and plans. The format is documented in `docs/import-format.md`: TOML or JSON, with
+  weights as in the catalog (barbell = total including the bar, dumbbells = per dumbbell,
+  machines = the stack number). The file is personal health data: it stays outside the
+  repo, and `*.import.toml`/`*.import.json` are gitignored.
+- Exercises are matched to catalog ids through an explicit alias table in the import file.
+  Unknown exercises are reported and skipped. Nothing is guessed.
+- Imported trainings become `workout_sessions` (status `completed`) and `set_logs` with
+  `source = 'import'`. Imported plans become `plans` + `plan_versions` with
+  `origin = 'import'`. Each import writes one `decision(kind = history_import)` that
+  summarises what was imported. This needs a new migration; do not edit an applied one.
+- Imported loads are real history. They set the historical max and the current working
+  load used by the guards. The weekly cap and the check-in rules apply from the first
+  generated session onward. The import itself is not a load increase and writes no
+  `load_changes`.
+- The import is idempotent: re-importing the same file doesn't duplicate rows (use a
+  content hash per session). Export includes the imported rows, and delete removes them.
+
+**Accept:**
+
+- A sample fixture imports cleanly.
+- A dry run writes nothing.
+- A re-import is a no-op.
+- An unknown exercise is reported.
+- After import, `next_load` for a squat with an imported 75 kg history proposes from 75 kg
+  (hold or +increment per A§7.3), not calibration.
+- The ceiling uses the imported max.
+- The import file pattern is gitignored, and no import fixture contains real personal data.

@@ -37,3 +37,7 @@ htmlcov/
 .vscode/
 *.swp
 .DS_Store
+
+# Personal history imports (health data)
+*.import.toml
+*.import.json
