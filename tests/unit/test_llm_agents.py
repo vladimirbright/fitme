@@ -28,6 +28,7 @@ def test_every_factory_is_registered_in_agent_factories() -> None:
         "session_adjust",
         "result_parse",
         "recap",
+        "plan_import",
     }
 
 

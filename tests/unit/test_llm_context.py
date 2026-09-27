@@ -476,3 +476,21 @@ def test_render_user_prompt_carries_the_recap_input_with_only_language() -> None
     assert rendered.payload == {"language": "ru", "recap": recap}
     assert json.loads(rendered.text) == rendered.payload
     assert "allowed_exercise_ids" not in rendered.text and "history" not in rendered.text
+
+
+def test_render_user_prompt_scrubs_the_imported_text_like_a_request() -> None:
+    """M8b `plan_import`: the pasted program travels as `imported_text`, scrubbed of contact
+    details, next to the full context (allowed ids + history); absent when not given."""
+    from fitme.llm.context import render_user_prompt
+
+    context = _sample_context()
+    pasted = "Пн: присед 3×5 @ 80 кг\nвопросы — @ivan_petrov, +7 916 123-45-67, t.me/ivan"
+    rendered = render_user_prompt(context, imported_text=pasted)
+
+    assert rendered.payload["imported_text"] == (
+        "Пн: присед 3×5 @ 80 кг\nвопросы — [redacted], [redacted], [redacted]"
+    )
+    assert "allowed_exercise_ids" in rendered.payload["context"]
+    assert "user_request" not in rendered.payload
+    assert json.loads(rendered.text) == rendered.payload
+    assert "imported_text" not in render_user_prompt(context).payload

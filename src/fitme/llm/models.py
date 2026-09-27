@@ -51,6 +51,9 @@ AGENT_DEFAULT_TIER: dict[str, str] = {
     "session_adjust": "medium",
     "result_parse": "small",
     "recap": "small",
+    # M8b: transcribing a pasted program is a targeted edit-shaped job (map names to allowed
+    # ids, keep numbers as written), not whole-program design — medium, like `plan_revise`.
+    "plan_import": "medium",
 }
 
 # A§8.5 rule 6: per-agent ModelSettings, in code. Kept to cross-provider `ModelSettings` keys
@@ -65,6 +68,9 @@ AGENT_MODEL_SETTINGS: dict[str, ModelSettings] = {
     "session_adjust": ModelSettings(max_tokens=1024, timeout=60),
     "result_parse": ModelSettings(max_tokens=512, timeout=30),
     "recap": ModelSettings(max_tokens=512, timeout=30),
+    # A pasted program is transcribed whole (every day, every exercise), so the output is as
+    # long as a generated plan's, not a revision's.
+    "plan_import": ModelSettings(max_tokens=4096, timeout=120),
 }
 
 # Bug fix (plan_revise output-validation failures): per-agent output-retry budgets, passed to
@@ -85,6 +91,9 @@ AGENT_OUTPUT_RETRIES: dict[str, int] = {
     "session_adjust": 3,
     "result_parse": 2,
     "recap": 2,
+    # M8b: the same budget as the other structural-output agents — a pasted program is exactly
+    # the long, transliterated input that motivated the budget in the first place.
+    "plan_import": 3,
 }
 
 

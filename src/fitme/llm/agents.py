@@ -27,7 +27,7 @@ from typing import Any
 from pydantic_ai import Agent
 from pydantic_ai.models import Model
 
-from fitme.domain.models import PlanProposal, SessionAdjustProposal
+from fitme.domain.models import PlanImportProposal, PlanProposal, SessionAdjustProposal
 from fitme.domain.results import ParsedResults, Recap
 from fitme.llm.models import model_settings_for, output_retries_for
 from fitme.llm.prompts import render_prompt
@@ -107,6 +107,13 @@ def recap_agent(model: AgentModel) -> BuiltAgent[Recap]:
     return _built("recap", model, Recap)
 
 
+def plan_import_agent(model: AgentModel) -> BuiltAgent[PlanImportProposal]:
+    """M8b: context + the user's pasted program (`imported_text`) in, `PlanImportProposal`
+    (`PlanImport{plan, unmatched} | Refusal`) out. Transcribes, never designs. Default tier:
+    medium; routed through `llm/escalation.py` like `plan_revise`."""
+    return _built("plan_import", model, PlanImportProposal)
+
+
 # Every factory above, keyed by agent name — the single source of truth `llm/escalation.py`
 # and `cli`'s `llm eval` use to go from an agent name (a plain string, e.g. from
 # `--agent plan_revise`) to the right factory, instead of each maintaining their own copy of
@@ -117,4 +124,5 @@ AGENT_FACTORIES: dict[str, Callable[[AgentModel], BuiltAgent[Any]]] = {
     "session_adjust": session_adjust_agent,
     "result_parse": result_parse_agent,
     "recap": recap_agent,
+    "plan_import": plan_import_agent,
 }

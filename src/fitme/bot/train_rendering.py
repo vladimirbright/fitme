@@ -12,7 +12,12 @@ from collections.abc import Sequence
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from fitme.bot.callback_data import CheckinReply, TrainAction, TrainPick
-from fitme.bot.plan_rendering import exercise_name, load_label, prescription_line
+from fitme.bot.plan_rendering import (
+    exercise_name,
+    load_label,
+    prescription_line,
+    prescription_load_label,
+)
 from fitme.db.records import CheckinRecord, PlanRecord
 from fitme.domain.catalog import Catalog
 from fitme.domain.enums import CheckinAnswer
@@ -168,7 +173,7 @@ def block_text(view: BlockView, *, catalog: Catalog, lang: str) -> str:
         exercise = catalog.by_id(item.exercise_id)
         lines.append("")
         lines.append(exercise_name(exercise, item.exercise_id, lang))
-        load = load_label(item.load, exercise, lang)
+        load = prescription_load_label(item, exercise, lang)  # M8b: the declared hint, if any
         for set_index in range(1, item.sets + 1):
             lines.append(
                 t(

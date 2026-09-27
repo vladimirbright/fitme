@@ -235,6 +235,7 @@ def render_user_prompt(
     *,
     language: str | None = None,
     request: str | None = None,
+    imported_text: str | None = None,
     current_plan: Plan | None = None,
     workout: Workout | None = None,
     planned_block: Block | None = None,
@@ -254,9 +255,9 @@ def render_user_prompt(
     `render_user_prompt(language=lang, planned_block=block, result_text=text)`). Every other
     agent passes its full `context`, which already carries `language`.
 
-    Every free-text field (`request`, `result_text`) is passed through `scrub()` here,
-    unconditionally — a caller can never forget to scrub, because there is no way to reach
-    the model with this function without going through it.
+    Every free-text field (`request`, `imported_text`, `result_text`) is passed through
+    `scrub()` here, unconditionally — a caller can never forget to scrub, because there is no
+    way to reach the model with this function without going through it.
 
     `guard_feedback` (A§6.4 step 4: "re-prompt once with the list of violations") is the
     previous attempt's failing guard details, verbatim — they are machine-built strings
@@ -269,6 +270,10 @@ def render_user_prompt(
     `recap` (A§8.1 `recap` agent, M8) is the finished workout's planned-vs-actual numbers and
     the load engine's decisions, already JSON-safe; like `result_parse`, its caller passes
     `language` and no `context`.
+
+    `imported_text` (M8b `plan_import` agent) is the program the user pasted, in their own
+    words — scrubbed like `request`, and sent with the full `context` (the allowed ids to map
+    exercises onto, the history the guards will judge the loads against).
     """
     payload: dict[str, object] = {}
     if context is not None:
@@ -285,6 +290,8 @@ def render_user_prompt(
         payload["planned_block"] = planned_block.model_dump(mode="json")
     if request is not None:
         payload["user_request"] = scrub(request)
+    if imported_text is not None:
+        payload["imported_text"] = scrub(imported_text)
     if result_text is not None:
         payload["result_text"] = scrub(result_text)
     if guard_feedback is not None:

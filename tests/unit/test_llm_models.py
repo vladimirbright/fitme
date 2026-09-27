@@ -200,7 +200,7 @@ def test_every_agent_has_an_output_retry_budget() -> None:
 def test_escalating_agents_get_the_largest_output_retry_budget() -> None:
     """`plan_generate`/`plan_revise`/`session_adjust` (large/medium-tier, structural output)
     get 3; `result_parse`/`recap` (small-tier, frequent, short output) get 2."""
-    for agent in ("plan_generate", "plan_revise", "session_adjust"):
+    for agent in ("plan_generate", "plan_revise", "session_adjust", "plan_import"):
         assert models.output_retries_for(agent) == 3
     for agent in ("result_parse", "recap"):
         assert models.output_retries_for(agent) == 2

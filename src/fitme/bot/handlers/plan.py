@@ -1,15 +1,17 @@
-"""`/plan` (A§6.2, A§6.4): list plans with actions, generate a draft, show it with Confirm /
-Change something / Cancel, loop through revisions, and confirm.
+"""`/plan` (A§6.2, A§6.4): list plans with actions, generate a draft — or paste an existing
+program (M8b "Paste my plan") — show it with Confirm / Change something / Cancel, loop
+through revisions, and confirm.
 
 Everything that decides anything lives in `services.planning` (the bot and, in M9, the web
 share it). This module only routes buttons and text, renders through `bot.plan_rendering`
 and i18n, and keeps one piece of transient UI state: `pending_plan_revisions` (per user,
-which draft or plan a "what should change?" prompt is waiting on). It's in-memory dispatcher
-data like `pending_deletes` — a restart just forgets the prompt, and the user taps again.
+which draft or plan a "what should change?" prompt is waiting on, or that a "paste your
+program" prompt is). It's in-memory dispatcher data like `pending_deletes` — a restart just
+forgets the prompt, and the user taps again.
 
-Free text for a pending revision arrives through `bot/handlers/free_text.py`, which saves it
-and runs the stop-word guard first (A§6.3); only then does `handle_revise_text` here call the
-service. A stop-word hit halts and drops the pending revision.
+Free text for a pending revision or import arrives through `bot/handlers/free_text.py`, which
+saves it and runs the stop-word guard first (A§6.3); only then does `handle_plan_text` here
+call the service. A stop-word hit halts and drops the pending prompt.
 
 Stale buttons (A§6.3): Confirm/Change/Cancel carry the draft's decision id, which must be the
 user's *current* draft (`services.planning.current_draft_id`); anything else gets a toast.
@@ -19,6 +21,7 @@ the guard.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 from aiogram import Router
@@ -42,7 +45,13 @@ class PendingRevision:
     base: planning.RevisionBase
 
 
-PendingRevisions = dict[int, PendingRevision]
+@dataclass(frozen=True, slots=True)
+class PendingImport:
+    """M8b: the next free text is the program to paste."""
+
+
+PendingPlanText = PendingRevision | PendingImport
+PendingRevisions = dict[int, PendingPlanText]
 
 
 async def _lang(db: Database, user_id: int) -> str:
@@ -56,16 +65,30 @@ def _message_of(query: CallbackQuery) -> Message:
 
 
 async def _send_plan(
-    message: Message, plan: Plan, *, title: str, lang: str, markup: InlineKeyboardMarkup
+    message: Message,
+    plan: Plan,
+    *,
+    title: str,
+    lang: str,
+    markup: InlineKeyboardMarkup,
+    unmatched: Sequence[str] = (),
 ) -> None:
-    text = rendering.render_plan_text(plan, catalog=load_catalog(), lang=lang, title=title)
+    text = rendering.render_plan_text(
+        plan, catalog=load_catalog(), lang=lang, title=title, unmatched=unmatched
+    )
     chunks = rendering.split_message(text)
     for chunk in chunks[:-1]:
         await message.answer(chunk)
     await message.answer(chunks[-1], reply_markup=markup)
 
 
-async def _show_round(message: Message, result: planning.PlanRoundResult, lang: str) -> None:
+async def _show_round(
+    message: Message,
+    result: planning.PlanRoundResult,
+    lang: str,
+    *,
+    title_key: str = "plan.draft_title",
+) -> None:
     refusal = result.refusal
     if refusal is not None:
         # AGENTS.md §2: a refusal is a valid output. Shown via the per-code i18n copy, never
@@ -77,9 +100,10 @@ async def _show_round(message: Message, result: planning.PlanRoundResult, lang: 
     await _send_plan(
         message,
         plan,
-        title=t("plan.draft_title", lang),
+        title=t(title_key, lang),
         lang=lang,
         markup=rendering.draft_markup(result.decision_id, lang),
+        unmatched=result.unmatched,
     )
 
 
@@ -123,6 +147,15 @@ async def on_plan_menu(
     if action == "new":
         await query.answer()
         await _generate(message, db, llm, user_id, lang)
+        return
+    if action == "paste":
+        # M8b: the next free text is the program; it goes through the stop-word guard first
+        # (`free_text.py`), then `handle_plan_text` -> `planning.import_plan`.
+        await query.answer()
+        pending_plan_revisions[user_id] = PendingImport()
+        await message.answer(
+            t("plan.paste_prompt", lang), reply_markup=rendering.cancel_revision_markup(0, lang)
+        )
         return
     if action == "list":
         await query.answer()
@@ -195,9 +228,12 @@ async def on_plan_draft(
 
     if action == "cancel":
         await query.answer()
-        had_pending = pending_plan_revisions.pop(user_id, None) is not None
+        pending = pending_plan_revisions.pop(user_id, None)
+        if isinstance(pending, PendingImport):
+            await message.answer(t("plan.paste_cancelled", lang))
+            return
         current = await planning.current_draft_id(db, user_id)
-        if had_pending or (decision_id and current == decision_id):
+        if pending is not None or (decision_id and current == decision_id):
             await message.answer(t("plan.change_cancelled", lang))
         else:
             await message.answer(t("plan.nothing_to_cancel", lang))
@@ -257,7 +293,7 @@ async def _show_confirm(
         await query.answer(t("plan.stale_draft", lang), show_alert=True)
 
 
-async def handle_revise_text(
+async def handle_plan_text(
     message: Message,
     db: Database,
     llm: LlmRuntime,
@@ -266,11 +302,16 @@ async def handle_revise_text(
     pending_plan_revisions: PendingRevisions,
 ) -> bool:
     """Called by the free-text handler *after* the stop-word scan (A§6.3). Returns `True`
-    if a revision was pending and the text was consumed by it."""
+    if a revision or an import (M8b) was pending and the text was consumed by it."""
     pending = pending_plan_revisions.pop(user_id, None)
     if pending is None:
         return False
     lang = await _lang(db, user_id)
+    if isinstance(pending, PendingImport):
+        await message.answer(t("plan.importing", lang))
+        result = await planning.import_plan(db, llm, user_id, text)
+        await _show_round(message, result, lang, title_key="plan.import_title")
+        return True
     await message.answer(t("plan.revising", lang))
     try:
         result = await planning.revise_plan(db, llm, user_id, pending.base, text)

@@ -42,6 +42,19 @@ never nest; never await network inside a unit):
 accounting over a workout as `/plan` runs over a plan (A§2.1: one code path, one set of
 guards).
 
+**Import (M8b, `import_plan`).** "Paste my plan": the `plan_import` agent *transcribes* the
+user's own program into a `Plan` (exercises mapped to allowed ids, unmatched ones listed back,
+never invented) and it is judged by `judge_import`: the same structural rules and A§7.3 load
+substitution as any plan, plus the M8b load rule — a kg load on an exercise with **no history**
+becomes `calibration` (AGENTS.md §2: the first session is data collection) and the user's
+declared kg is kept as a display-only hint (`Prescription.declared_kg`, "your plan says 80 kg;
+start at or below it"). The guards and the load engine never read `declared_kg`: it is set only
+here, from the pasted plan's own numbers, bounded like a parsed load, and stripped from every
+`plan_generate` output / restored from the base plan on `plan_revise`, so a model can never
+invent one. The draft is a `decision(kind=plan_import)` whose `proposal` also records
+`declared_loads` and `unmatched`; confirming it is the ordinary revalidating `confirm_plan`,
+writing `plan_versions.origin = 'import'`.
+
 **Drafts.** An unconfirmed draft is never a `plans` row: it *is* the `Plan` stored in its
 decision's `proposal`. Confirm references the decision id, re-validates the plan against a
 fresh `GuardContext` (state may have changed: a new hold, new history), and only then writes
@@ -54,10 +67,11 @@ becomes `version n+1` of that plan.
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import timedelta
 from enum import StrEnum
+from typing import Any
 
 from fitme import clock, i18n
 from fitme.catalog import load_catalog
@@ -112,7 +126,15 @@ from fitme.domain.enums import (
     WeightBucket,
 )
 from fitme.domain.guard_types import GuardVerdict
-from fitme.domain.models import Load, LoadChange, Plan, Refusal, Workout
+from fitme.domain.models import (
+    Load,
+    LoadChange,
+    Plan,
+    PlanImport,
+    Refusal,
+    Workout,
+    plausible_declared_kg,
+)
 from fitme.domain.screening import ScreeningFlagState
 from fitme.guards.context import GuardContext
 from fitme.guards.plan import (
@@ -133,7 +155,7 @@ from fitme.llm.context import (
 )
 from fitme.llm.escalation import run_with_escalation
 from fitme.llm.models import model_for
-from fitme.llm.usage import AgentRunOutcome, record_llm_call, run_agent
+from fitme.llm.usage import CAUSE_OUTPUT_VALIDATION, AgentRunOutcome, record_llm_call, run_agent
 from fitme.services.catalog import available_exercises
 from fitme.services.llm_runtime import LlmRuntime
 from fitme.services.loads import ExerciseHistory, LoadDecision, next_load
@@ -141,15 +163,19 @@ from fitme.services.loads import ExerciseHistory, LoadDecision, next_load
 _logger = logging.getLogger(__name__)
 
 _GENERATE_ATTEMPTS = 2  # A§6.4 step 4: one attempt plus one guard-feedback retry
-_DRAFT_KINDS = frozenset({DecisionKind.PLAN_GENERATE, DecisionKind.PLAN_REVISE})
+_DRAFT_KINDS = frozenset(
+    {DecisionKind.PLAN_GENERATE, DecisionKind.PLAN_REVISE, DecisionKind.PLAN_IMPORT}
+)
 _SCREENING_INCOMPLETE_RULE = "screening.incomplete"  # guards.screening's own rule name
 _PROFILE_RULE = "plan.profile_complete"
 _ALLOWED_EXERCISES_RULE = "plan.allowed_exercises"
 _SUBSTITUTION_RULE = "loads.substituted"
+_IMPORT_CALIBRATION_RULE = "loads.import_calibration"  # M8b: no history -> calibration + hint
 _WORDING_RULE = "wording.forbidden_term"
 _PLAN_STATUS_ACTIVE = "active"
 _PLAN_STATUS_ARCHIVED = "archived"
 _ORIGIN_LLM = "llm"
+_ORIGIN_IMPORT = "import"  # M8b: `plan_versions.origin` of a confirmed pasted plan
 _MAX_SUMMARY_REPS = 100  # `llm.context.ExerciseHistorySummary.last_reps` upper bound
 
 
@@ -161,7 +187,9 @@ class PlanRoundResult:
     """One `/plan` round's outcome: a draft `Plan` (confirm it by `decision_id`) or a
     `Refusal` (AGENTS.md §2: a valid output). `plan_id` is set when the draft revises an
     existing plan (confirm then adds a version to it). `proposed_load_changes` is what the
-    draft *would* apply; it is not in `decisions.load_changes` until confirmed (A§4.3)."""
+    draft *would* apply; it is not in `decisions.load_changes` until confirmed (A§4.3).
+    `unmatched` (M8b import only) is the pasted plan's exercise names that map to no allowed
+    catalog id — reported, never invented."""
 
     decision_id: int
     output: Plan | Refusal
@@ -169,6 +197,7 @@ class PlanRoundResult:
     proposed_load_changes: list[LoadChange]
     plan_id: int | None
     language: str
+    unmatched: tuple[str, ...] = ()
 
     @property
     def plan(self) -> Plan | None:
@@ -610,6 +639,88 @@ def _judge_with(
     return Judgement(verdicts=verdicts, fired=fired)
 
 
+# --- M8b: declared loads (display-only hints) ---------------------------------------------------
+
+
+def _declared_hint(exercise: Exercise, load: Load) -> float | None:
+    """What the pasted plan declared for this prescription, if it is a usable display value:
+    a kg load on a kg-loadable exercise, within the absolute bounds for its `load_unit`
+    (A§6.5.1; `MAX_IMPLEMENT_KG` for a per-implement or single-implement load). Anything else
+    is dropped — it is untrusted display data, never a prescription."""
+    if load.kind != "kg" or load.kg is None or not exercise.kg_loadable:
+        return None
+    return plausible_declared_kg(load.kg, per_implement=exercise.load_unit != "total")
+
+
+def declared_loads_of(plan: Plan) -> dict[str, float]:
+    """`{exercise_id: declared kg}` over a plan's prescriptions (the lowest, if an exercise
+    appears more than once) — the draft proposal's `declared_loads` record, and the source a
+    revision restores hints from."""
+    declared: dict[str, float] = {}
+    for workout in plan.workouts:
+        for block in workout.blocks:
+            for prescription in block.items:
+                kg = prescription.declared_kg
+                if kg is None:
+                    continue
+                known = declared.get(prescription.exercise_id)
+                declared[prescription.exercise_id] = kg if known is None else min(known, kg)
+    return declared
+
+
+def restore_declared(plan: Plan, declared: Mapping[str, float]) -> None:
+    """Overwrite every prescription's `declared_kg` with the base plan's value for that
+    exercise (`None` when it has none), in place. A model's own `declared_kg` output is thus
+    never kept: `plan_generate` gets an empty mapping (nothing was pasted), `plan_revise` the
+    base draft's/plan's hints, so a hint can only ever trace back to a pasted plan."""
+    for workout in plan.workouts:
+        for block in workout.blocks:
+            for prescription in block.items:
+                prescription.declared_kg = declared.get(prescription.exercise_id)
+
+
+def judge_import(plan: Plan, inputs: Inputs) -> Judgement:
+    """M8b judging of a transcribed plan, in place like `judge`: first the declared hints are
+    set from the transcription's own kg loads (`_declared_hint`; the model's `declared_kg`
+    output is ignored), then the M8b load rule — a kg load on a kg-loadable exercise with
+    **no logged history** becomes `Load(kind="calibration")` (AGENTS.md §2: the first session
+    is data collection; the ceiling guard would reject the kg anyway) with the declared kg
+    kept as the hint — then the ordinary `judge` (wording, every structural rule, engine
+    substitution for an exercise *with* history whose declared load breaks the cap, ceiling
+    or check-in rules)."""
+    fired: list[GuardVerdict] = []
+    for workout in plan.workouts:
+        for block in workout.blocks:
+            for prescription in block.items:
+                exercise = inputs.catalog.by_id(prescription.exercise_id)
+                if exercise is None:
+                    prescription.declared_kg = None
+                    continue  # a structural failure `judge` reports below
+                prescription.declared_kg = _declared_hint(exercise, prescription.load)
+                kg = prescription.load.kg
+                if (
+                    kg is None
+                    or not exercise.kg_loadable
+                    or inputs.ctx.history_max_kg.get(exercise.id) is not None
+                ):
+                    continue
+                prescription.load = Load(kind="calibration")
+                fired.append(
+                    GuardVerdict(
+                        rule=_IMPORT_CALIBRATION_RULE,
+                        ok=True,
+                        detail=(
+                            f"{exercise.id}: no logged history, so the declared {kg:g} kg "
+                            "becomes a calibration load; the declared value is kept as a "
+                            "display hint only"
+                        ),
+                    )
+                )
+    judgement = judge(plan, inputs)
+    judgement.fired = [*fired, *judgement.fired]
+    return judgement
+
+
 def _reference_kg(ctx: GuardContext, exercise_id: str) -> float | None:
     """The guard's own reference (A§7, incl. the applied-this-week lift), so a kept confirmed
     load writes no `LoadChange`."""
@@ -639,15 +750,28 @@ def load_changes_for(plan: Plan, ctx: GuardContext) -> list[LoadChange]:
 # --- Decision logging --------------------------------------------------------------------------
 
 
-def draft_proposal(plan: Plan, proposed_load_changes: Sequence[LoadChange]) -> dict[str, object]:
+def draft_proposal(
+    plan: Plan,
+    proposed_load_changes: Sequence[LoadChange],
+    *,
+    declared_loads: Mapping[str, float] | None = None,
+    unmatched: Sequence[str] | None = None,
+) -> dict[str, object]:
     """`decisions.proposal` for a draft: the plan, plus the load changes confirming it would
-    apply (A§4.3: shown here, counted only by the `plan_confirm` decision)."""
-    return {
+    apply (A§4.3: shown here, counted only by the `plan_confirm` decision). An import draft
+    (M8b) also records `declared_loads` (what the pasted plan said per exercise) and
+    `unmatched` (its exercise names that map to no allowed id)."""
+    proposal: dict[str, object] = {
         "plan": plan.model_dump(mode="json"),
         "proposed_load_changes": [
             change.model_dump(mode="json") for change in proposed_load_changes
         ],
     }
+    if declared_loads is not None:
+        proposal["declared_loads"] = dict(declared_loads)
+    if unmatched is not None:
+        proposal["unmatched"] = list(unmatched)
+    return proposal
 
 
 def refusal_proposal(
@@ -729,12 +853,30 @@ async def _record_refusal(
 @dataclass(frozen=True, slots=True)
 class _Attempt:
     """One LLM attempt, judged and logged as its own decision (A§6.4: "every attempt is
-    logged"). `judgement` is `None` when the model itself returned a `Refusal`."""
+    logged"). `output` is the judged plan (an import's inner plan), or the refusal — the
+    model's own, or the `LLM_UNAVAILABLE` one `run_agent` synthesizes on a failure, in which
+    case `error_cause` says why (`judgement` is `None` for either refusal)."""
 
     decision_id: int
-    outcome: AgentRunOutcome[Plan | Refusal]
+    output: Plan | Refusal
     judgement: Judgement | None
     proposed_load_changes: list[LoadChange]
+    error_cause: str | None = None
+
+    @property
+    def output_validation_failed(self) -> bool:
+        """The model's structured output never parsed (bug fix, A§8.5 rule 6): treated like a
+        guard failure by the retry loops — worth one more attempt, never a final answer."""
+        return isinstance(self.output, Refusal) and self.error_cause == CAUSE_OUTPUT_VALIDATION
+
+
+def _unwrap(output: object) -> Plan | Refusal:
+    """The judged `Plan` behind an agent output (`PlanImport.plan` for the import agent), or
+    the `Refusal`."""
+    if isinstance(output, PlanImport):
+        return output.plan
+    assert isinstance(output, Plan | Refusal)
+    return output
 
 
 async def _log_attempt(
@@ -742,7 +884,7 @@ async def _log_attempt(
     *,
     user_id: int,
     kind: DecisionKind,
-    outcome: AgentRunOutcome[Plan | Refusal],
+    outcome: AgentRunOutcome[Any],
     llm_input: dict[str, object] | None,
     judgement: Judgement | None,
     user_report: dict[str, object] | None,
@@ -751,8 +893,9 @@ async def _log_attempt(
     """Write the attempt's `decisions` row: model/template from the run outcome, `llm_input`
     verbatim, the proposal (the judged — possibly load-substituted — plan with its proposed
     load changes, or the model's refusal) and `guards_fired`. `load_changes` stays `[]` on a
-    draft (A§4.3: counted once, by the `plan_confirm` decision)."""
-    output = outcome.output
+    draft (A§4.3: counted once, by the `plan_confirm` decision). An import attempt's proposal
+    also carries `declared_loads` and `unmatched` (M8b)."""
+    output = _unwrap(outcome.output)
     proposed: list[LoadChange] = []
     if isinstance(output, Refusal):
         proposal = refusal_proposal(output, cause=outcome.record.error_cause)
@@ -762,7 +905,15 @@ async def _log_attempt(
         guards_fired = judgement.fired
         if judgement.ok:
             proposed = load_changes_for(output, ctx)
-        proposal = draft_proposal(output, proposed)
+        if isinstance(outcome.output, PlanImport):
+            proposal = draft_proposal(
+                output,
+                proposed,
+                declared_loads=declared_loads_of(output),
+                unmatched=outcome.output.unmatched,
+            )
+        else:
+            proposal = draft_proposal(output, proposed)
     prompt = outcome.prompt
     async with db.transaction() as conn:
         decision_id = await insert_decision(
@@ -781,9 +932,10 @@ async def _log_attempt(
         )
     return _Attempt(
         decision_id=decision_id,
-        outcome=outcome,
+        output=output,
         judgement=judgement,
         proposed_load_changes=proposed,
+        error_cause=outcome.record.error_cause,
     )
 
 
@@ -852,7 +1004,11 @@ async def propose_new_plan(db: Database, llm: LlmRuntime, user_id: int) -> PlanR
             prices=llm.prices,
             language=lang,
         )
-        judgement = None if isinstance(outcome.output, Refusal) else judge(outcome.output, inputs)
+        output = outcome.output
+        judgement = None
+        if isinstance(output, Plan):
+            restore_declared(output, {})  # nothing was pasted: no hints (M8b)
+            judgement = judge(output, inputs)
         last = await _log_attempt(
             db,
             user_id=user_id,
@@ -864,10 +1020,15 @@ async def propose_new_plan(db: Database, llm: LlmRuntime, user_id: int) -> PlanR
             ctx=inputs.ctx,
         )
         await record_llm_call(db, decision_id=last.decision_id, record=outcome.record)
+        if last.output_validation_failed:
+            # Bug fix: the model's output never parsed. Like a guard failure, this spends the
+            # retry (there is no feedback to add: nothing was parsed) rather than ending the
+            # round on the first attempt's `LLM_UNAVAILABLE` refusal.
+            continue
         if judgement is None or judgement.ok:
             return PlanRoundResult(
                 decision_id=last.decision_id,
-                output=outcome.output,
+                output=output,
                 guards_fired=[] if judgement is None else judgement.fired,
                 proposed_load_changes=last.proposed_load_changes,
                 plan_id=None,
@@ -875,8 +1036,19 @@ async def propose_new_plan(db: Database, llm: LlmRuntime, user_id: int) -> PlanR
             )
         feedback = [verdict.detail for verdict in judgement.failures]
 
-    assert last is not None and last.judgement is not None
-    rejected = last.outcome.output
+    assert last is not None
+    if last.judgement is None:
+        # Both attempts failed output validation: the retry's own refusal (already logged with
+        # its cause) is the round's answer — a refusal, never a guess (A§8.5 rule 4).
+        assert isinstance(last.output, Refusal)
+        return PlanRoundResult(
+            decision_id=last.decision_id,
+            output=last.output,
+            guards_fired=[],
+            proposed_load_changes=[],
+            plan_id=None,
+            language=lang,
+        )
     return await _record_refusal(
         db,
         user_id=user_id,
@@ -885,7 +1057,7 @@ async def propose_new_plan(db: Database, llm: LlmRuntime, user_id: int) -> PlanR
         user_report=None,
         plan_id=None,
         lang=lang,
-        rejected_plan=rejected if isinstance(rejected, Plan) else None,
+        rejected_plan=last.output if isinstance(last.output, Plan) else None,
     )
 
 
@@ -989,6 +1161,7 @@ async def revise_plan(
     payload_by_text: dict[str, dict[str, object]] = {}
     judgements: dict[int, Judgement] = {}
     attempts: list[_Attempt] = []
+    base_declared = declared_loads_of(resolved.plan)  # M8b: hints survive a revision
 
     def build_prompt(verdicts: Sequence[GuardVerdict] | None) -> str:
         feedback = (
@@ -1004,6 +1177,7 @@ async def revise_plan(
         return rendered.text
 
     def guard_check(plan: Plan) -> Sequence[GuardVerdict]:
+        restore_declared(plan, base_declared)
         judgement = judge(plan, inputs)
         judgements[id(plan)] = judgement
         return judgement.verdicts
@@ -1036,32 +1210,154 @@ async def revise_plan(
         language=lang,
         on_attempt=on_attempt,
     )
-    last = attempts[-1]
-    if isinstance(escalation.output, Plan) or isinstance(last.outcome.output, Refusal):
-        # A draft, or the model's own refusal: the last attempt's decision is the round's.
-        judgement = last.judgement
-        return PlanRoundResult(
-            decision_id=last.decision_id,
-            output=escalation.output,
-            guards_fired=[] if judgement is None else judgement.fired,
-            proposed_load_changes=last.proposed_load_changes,
-            plan_id=resolved.plan_id,
-            language=lang,
-        )
-
-    # Every attempt failed the guards: the escalation's own refusal, logged as its own
-    # decision with the final failures (the attempts above each hold their rejected plan).
-    assert last.judgement is not None
-    rejected = last.outcome.output
-    return await _record_refusal(
+    return await _round_from_escalation(
         db,
         user_id=user_id,
-        refusal=escalation.output,
-        guards_fired=last.judgement.failures,
+        final=escalation.output,
+        last=attempts[-1],
         user_report=resolved.report,
         plan_id=resolved.plan_id,
         lang=lang,
-        rejected_plan=rejected if isinstance(rejected, Plan) else None,
+    )
+
+
+async def _round_from_escalation(
+    db: Database,
+    *,
+    user_id: int,
+    final: Plan | Refusal,
+    last: _Attempt,
+    user_report: dict[str, object] | None,
+    plan_id: int | None,
+    lang: str,
+    unmatched: Sequence[str] = (),
+) -> PlanRoundResult:
+    """The round's result after `run_with_escalation`: a draft or the model's own refusal is
+    the last attempt's decision; when every attempt failed the guards, the escalation's own
+    refusal is logged as one more decision with the final failures (the attempts each hold
+    their rejected plan)."""
+    if isinstance(final, Plan) or isinstance(last.output, Refusal):
+        judgement = last.judgement
+        return PlanRoundResult(
+            decision_id=last.decision_id,
+            output=final,
+            guards_fired=[] if judgement is None else judgement.fired,
+            proposed_load_changes=last.proposed_load_changes,
+            plan_id=plan_id,
+            language=lang,
+            unmatched=tuple(unmatched),
+        )
+    assert last.judgement is not None
+    return await _record_refusal(
+        db,
+        user_id=user_id,
+        refusal=final,
+        guards_fired=last.judgement.failures,
+        user_report=user_report,
+        plan_id=plan_id,
+        lang=lang,
+        rejected_plan=last.output,
+    )
+
+
+# --- Import (M8b) -----------------------------------------------------------------------------
+
+
+async def import_plan(db: Database, llm: LlmRuntime, user_id: int, text: str) -> PlanRoundResult:
+    """ "Paste my plan" (M8b): gates → context → `plan_import` (transcribe, don't design) →
+    `judge_import` → a draft or a `Refusal`, with the same A§8.5 rule 3 escalation as a
+    revision (a guard-feedback retry; one large-tier attempt after two guard failures or an
+    output-validation failure; then refusal). `text` is the user's pasted program; it reaches
+    the model only through `render_user_prompt(imported_text=...)`, which scrubs it, and the
+    stop-word scan of it is the caller's job *before* this is called (A§6.3) — a hit halts and
+    never gets here. Every attempt is a `decision(kind=plan_import)` with `llm_input` verbatim
+    and `load_changes = []` (A§4.3)."""
+    snapshot, gate_failure = await _gated_snapshot(db, user_id)
+    lang = snapshot.language
+    report: dict[str, object] = {"base": "import"}
+    if gate_failure is not None:
+        code, verdict = gate_failure
+        return await _record_refusal(
+            db,
+            user_id=user_id,
+            refusal=refusal_for(code, lang),
+            guards_fired=[verdict],
+            user_report=report,
+            plan_id=None,
+            lang=lang,
+        )
+
+    inputs = build_inputs(load_catalog(), snapshot, llm.settings, user_id)
+    empty = _no_allowed_exercises(inputs)
+    if empty is not None:
+        return await _record_refusal(
+            db,
+            user_id=user_id,
+            refusal=refusal_for(RefusalCode.NO_SAFE_EXERCISES, lang),
+            guards_fired=[empty],
+            user_report=report,
+            plan_id=None,
+            lang=lang,
+        )
+
+    payload_by_text: dict[str, dict[str, object]] = {}
+    judgements: dict[int, Judgement] = {}
+    attempts: list[_Attempt] = []
+    unmatched: list[str] = []
+
+    def build_prompt(verdicts: Sequence[GuardVerdict] | None) -> str:
+        feedback = (
+            None if verdicts is None else [verdict.detail for verdict in verdicts if not verdict.ok]
+        )
+        rendered = render_user_prompt(
+            inputs.user_context, imported_text=text, guard_feedback=feedback
+        )
+        payload_by_text[rendered.text] = rendered.payload
+        return rendered.text
+
+    def guard_check(output: PlanImport) -> Sequence[GuardVerdict]:
+        judgement = judge_import(output.plan, inputs)
+        judgements[id(output)] = judgement
+        return judgement.verdicts
+
+    async def on_attempt(
+        outcome: AgentRunOutcome[PlanImport | Refusal], _verdicts: Sequence[GuardVerdict]
+    ) -> int:
+        prompt_text = None if outcome.prompt is None else outcome.prompt.user_prompt
+        attempt = await _log_attempt(
+            db,
+            user_id=user_id,
+            kind=DecisionKind.PLAN_IMPORT,
+            outcome=outcome,
+            llm_input=None if prompt_text is None else payload_by_text.get(prompt_text),
+            judgement=judgements.get(id(outcome.output)),
+            user_report=report,
+            ctx=inputs.ctx,
+        )
+        attempts.append(attempt)
+        unmatched[:] = [] if isinstance(outcome.output, Refusal) else list(outcome.output.unmatched)
+        return attempt.decision_id
+
+    escalation = await run_with_escalation(
+        agent_name="plan_import",
+        agent_factory=llm.factory("plan_import"),
+        build_prompt=build_prompt,
+        guard_check=guard_check,
+        settings=llm.settings,
+        db=db,
+        prices=llm.prices,
+        language=lang,
+        on_attempt=on_attempt,
+    )
+    return await _round_from_escalation(
+        db,
+        user_id=user_id,
+        final=_unwrap(escalation.output),
+        last=attempts[-1],
+        user_report=report,
+        plan_id=None,
+        lang=lang,
+        unmatched=unmatched,
     )
 
 
@@ -1191,7 +1487,7 @@ async def confirm_plan(
             plan_id=plan_id,
             version=version,
             body=plan.model_dump(mode="json"),
-            origin=_ORIGIN_LLM,
+            origin=_ORIGIN_IMPORT if decision.kind == DecisionKind.PLAN_IMPORT else _ORIGIN_LLM,
             decision_id=confirm_decision_id,
         )
         outcome: dict[str, object] = {
@@ -1293,12 +1589,15 @@ __all__ = [
     "build_inputs",
     "confirm_plan",
     "current_draft_id",
+    "declared_loads_of",
     "draft_proposal",
     "engine_decision",
     "engine_load",
     "gate",
     "get_plan_detail",
+    "import_plan",
     "judge",
+    "judge_import",
     "judge_workout",
     "list_plans",
     "load_changes_for",
@@ -1306,6 +1605,7 @@ __all__ = [
     "read_snapshot",
     "refusal_for",
     "refusal_proposal",
+    "restore_declared",
     "revise_plan",
     "set_default",
     "write_refusal_decision",

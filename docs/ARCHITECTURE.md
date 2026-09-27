@@ -214,16 +214,16 @@ never accept free-form strings from callers.
 | Table | Columns | Notes |
 |---|---|---|
 | `plans` | `id`, `user_id`, `name`, `is_default`, `status` (`draft`,`active`,`archived`), `created_at` | At most one `is_default` per user. |
-| `plan_versions` | `id`, `plan_id`, `version`, `body` (JSON, `domain.Plan`), `origin` (`llm`,`progression`,`user_edit`), `decision_id`, `created_at` | **Immutable.** Every change creates a new version. |
+| `plan_versions` | `id`, `plan_id`, `version`, `body` (JSON, `domain.Plan`), `origin` (`llm`,`progression`,`user_edit`,`import`), `decision_id`, `created_at` | **Immutable.** Every change creates a new version. |
 | `decisions` | `id`, `user_id`, `kind`, `prompt_template`, `prompt_version`, `model`, `content_version` (§4.8), `llm_input` (JSON, pseudonymized, exactly as sent), `user_report` (JSON), `proposal` (JSON), `load_changes` (JSON array of `domain.LoadChange {exercise_id, from_kg, to_kg}`, default `[]`), `guards_fired` (JSON list of `{rule, verdict, detail}`), `created_at` | **Append-only.** AGENTS.md §6. |
 | `decision_outcomes` | `id`, `decision_id`, `outcome` (JSON: what the user actually did), `created_at` | Append-only. Lets the log stay immutable when the outcome arrives later. |
 | `llm_calls` | `id`, `decision_id` nullable, `purpose`, `model`, `input_tokens`, `output_tokens`, `cost_estimate_usd` nullable, `latency_ms`, `ok`, `created_at` | Feeds `/system`. No prompt content here. |
 
 `decisions.kind` values: `plan_generate`, `plan_revise`, `session_adjust`,
 `result_parse`, `progression`, `session_halt`, `hold_clear`, `refusal`, `user_edit`,
-`session_delete`, `history_import`, `plan_confirm`.
+`session_delete`, `history_import`, `plan_confirm`, `plan_import`.
 
-**Load changes count once, when applied.** Draft decisions (`plan_generate`/`plan_revise`)
+**Load changes count once, when applied.** Draft decisions (`plan_generate`/`plan_revise`/`plan_import`)
 show their proposed changes inside `proposal`, but their `load_changes` column is `[]`.
 The `plan_confirm` decision written inside the confirm transaction carries the
 `load_changes`, computed against the **confirm-time** reference. The same holds for every
@@ -384,9 +384,9 @@ The rules:
   each file in one transaction and rejects files that do.
 - Foreign keys are switched off while a migration runs, and `PRAGMA foreign_key_check`
   must be clean before COMMIT. Table rebuilds would otherwise cascade-delete child rows.
-- Never edit an applied migration. Write a new one. **Pre-release exception:** until the first real deployment (M10), no
-  database exists outside tests, so `0001_init.sql` may still be edited in place, e.g. to extend
-  an enum CHECK. After M10, new migrations only. For SQLite table rebuilds (changing a
+- Never edit an applied migration. Write a new one. **The pre-release exception has ended** (2026-09-27): the operator runs a real database,
+  created from `0001` as of commit 2e0905c. Every schema change is now a new numbered
+  migration, and enum CHECK changes use the SQLite table-rebuild procedure. For SQLite table rebuilds (changing a
   column), follow the documented 12-step procedure inside the migration file.
 - `fitme db upgrade` runs pending migrations. `fitme serve` refuses to start while any are
   pending.
@@ -778,6 +778,9 @@ double progression:
 - **Every kg value the engine emits, on every path (increase, hold, decrease), must pass
   `check_ceiling`.** A hold above the ceiling is clamped down to the ceiling, floored to
   the step (decreases are always allowed), or falls back to calibration.
+- **Pasted plans (M8b).** A kg load on an exercise with no history becomes `calibration`.
+  The user's number is kept as `Prescription.declared_kg`, which is display-only, bounded
+  and untrusted. The guards and the engine never read it.
 - Every decision that applies a load records it in `decisions.load_changes`.
 - Otherwise → hold.
 
@@ -812,6 +815,7 @@ One pydantic-ai `Agent` per purpose. Each has a typed output, and its prompt is 
 | `plan_revise` | context + current plan + user request | `PlanProposal` | medium |
 | `session_adjust` | context + today's workout + user request | `Workout \| Refusal` | medium |
 | `result_parse` | planned block + user text | `ParsedResults { sets: list[SetResult], safety_signal: bool, unclear: bool }` | small |
+| `plan_import` | context + `imported_text` (scrubbed) | `PlanImport{plan, unmatched} \| Refusal` | medium |
 | `recap` | planned vs actual + engine decisions | `Recap { text: str, suggestions: list[PlanChange] }` | small |
 
 - The prompt loader returns `(template_name, version, rendered_text)`. Template name and

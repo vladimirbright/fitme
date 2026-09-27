@@ -1,0 +1,380 @@
+{
+  "plan": {
+    "name": "Сентябрьский блок, финальная неделя",
+    "schedule": [
+      {
+        "weekday": 0,
+        "workout_key": "A"
+      },
+      {
+        "weekday": 2,
+        "workout_key": "B"
+      },
+      {
+        "weekday": 4,
+        "workout_key": "C"
+      }
+    ],
+    "workouts": [
+      {
+        "key": "A",
+        "title": "Присед + жим сидя",
+        "blocks": [
+          {
+            "kind": "single",
+            "items": [
+              {
+                "exercise_id": "barbell_back_squat",
+                "sets": 3,
+                "reps_min": 5,
+                "reps_max": 5,
+                "load": {
+                  "kind": "kg",
+                  "kg": 80.0
+                },
+                "rest_seconds": 90,
+                "note": "Если первый рабочий идёт тяжело или плывёт глубина — 75",
+                "declared_kg": null
+              }
+            ]
+          },
+          {
+            "kind": "single",
+            "items": [
+              {
+                "exercise_id": "dumbbell_seated_shoulder_press",
+                "sets": 3,
+                "reps_min": 8,
+                "reps_max": 8,
+                "load": {
+                  "kind": "kg",
+                  "kg": 20.0
+                },
+                "rest_seconds": 90,
+                "note": "Спинка ~80–85°, нейтральный хват, гантели до уровня ушей",
+                "declared_kg": null
+              }
+            ]
+          },
+          {
+            "kind": "single",
+            "items": [
+              {
+                "exercise_id": "cable_close_grip_pulldown",
+                "sets": 3,
+                "reps_min": 10,
+                "reps_max": 10,
+                "load": {
+                  "kind": "kg",
+                  "kg": 73.0
+                },
+                "rest_seconds": 90,
+                "note": "Все три по 10, потом добавляем вес; корпус без раскачки",
+                "declared_kg": null
+              }
+            ]
+          },
+          {
+            "kind": "superset",
+            "items": [
+              {
+                "exercise_id": "dumbbell_seated_french_press",
+                "sets": 3,
+                "reps_min": 12,
+                "reps_max": 12,
+                "load": {
+                  "kind": "kg",
+                  "kg": 25.0
+                },
+                "rest_seconds": 90,
+                "note": "Одна гантель двумя руками из-за головы",
+                "declared_kg": null
+              },
+              {
+                "exercise_id": "cable_rotation",
+                "sets": 3,
+                "reps_min": 8,
+                "reps_max": 8,
+                "load": {
+                  "kind": "kg",
+                  "kg": 35.0
+                },
+                "rest_seconds": 90,
+                "note": "35–40 кг, на сторону; блок на уровне груди, прямые руки",
+                "declared_kg": null
+              }
+            ]
+          },
+          {
+            "kind": "single",
+            "items": [
+              {
+                "exercise_id": "machine_incline_treadmill_walk",
+                "sets": 1,
+                "reps_min": 12,
+                "reps_max": 15,
+                "load": {
+                  "kind": "calibration",
+                  "kg": null
+                },
+                "rest_seconds": 0,
+                "note": "минуты",
+                "declared_kg": null
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "B",
+        "title": "Румынская тяга + жим лёжа",
+        "blocks": [
+          {
+            "kind": "single",
+            "items": [
+              {
+                "exercise_id": "barbell_romanian_deadlift",
+                "sets": 3,
+                "reps_min": 8,
+                "reps_max": 8,
+                "load": {
+                  "kind": "kg",
+                  "kg": 67.5
+                },
+                "rest_seconds": 90,
+                "note": "2–3 повтора в запасе, спина нейтральная",
+                "declared_kg": null
+              }
+            ]
+          },
+          {
+            "kind": "single",
+            "items": [
+              {
+                "exercise_id": "dumbbell_bench_press",
+                "sets": 3,
+                "reps_min": 8,
+                "reps_max": 8,
+                "load": {
+                  "kind": "kg",
+                  "kg": 32.5
+                },
+                "rest_seconds": 90,
+                "note": "Внизу без глубокого растяжения, локти 45–60°",
+                "declared_kg": null
+              }
+            ]
+          },
+          {
+            "kind": "single",
+            "items": [
+              {
+                "exercise_id": "cable_neutral_grip_pulldown",
+                "sets": 3,
+                "reps_min": 10,
+                "reps_max": 10,
+                "load": {
+                  "kind": "kg",
+                  "kg": 61.0
+                },
+                "rest_seconds": 90,
+                "note": "Держим вес, пока не появится запас 1–2",
+                "declared_kg": null
+              }
+            ]
+          },
+          {
+            "kind": "single",
+            "items": [
+              {
+                "exercise_id": "dumbbell_incline_curl",
+                "sets": 3,
+                "reps_min": 10,
+                "reps_max": 10,
+                "load": {
+                  "kind": "kg",
+                  "kg": 10.0
+                },
+                "rest_seconds": 90,
+                "note": "По подходам: 10 / 10 / 12 кг",
+                "declared_kg": null
+              }
+            ]
+          },
+          {
+            "kind": "single",
+            "items": [
+              {
+                "exercise_id": "dumbbell_lateral_raise",
+                "sets": 3,
+                "reps_min": 15,
+                "reps_max": 15,
+                "load": {
+                  "kind": "kg",
+                  "kg": 5.0
+                },
+                "rest_seconds": 90,
+                "note": "Корпус неподвижен; к 7,5 после чистых 3×15",
+                "declared_kg": null
+              }
+            ]
+          },
+          {
+            "kind": "single",
+            "items": [
+              {
+                "exercise_id": "plank",
+                "sets": 3,
+                "reps_min": 30,
+                "reps_max": 45,
+                "load": {
+                  "kind": "bodyweight",
+                  "kg": null
+                },
+                "rest_seconds": 60,
+                "note": "секунды",
+                "declared_kg": null
+              }
+            ]
+          },
+          {
+            "kind": "single",
+            "items": [
+              {
+                "exercise_id": "machine_incline_treadmill_walk",
+                "sets": 1,
+                "reps_min": 12,
+                "reps_max": 15,
+                "load": {
+                  "kind": "calibration",
+                  "kg": null
+                },
+                "rest_seconds": 0,
+                "note": "минуты",
+                "declared_kg": null
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "C",
+        "title": "Жим штанги + выпады",
+        "blocks": [
+          {
+            "kind": "single",
+            "items": [
+              {
+                "exercise_id": "barbell_bench_press",
+                "sets": 3,
+                "reps_min": 8,
+                "reps_max": 8,
+                "load": {
+                  "kind": "kg",
+                  "kg": 85.0
+                },
+                "rest_seconds": 90,
+                "note": "Лопатки сведены, пауза внизу, без отбива",
+                "declared_kg": null
+              }
+            ]
+          },
+          {
+            "kind": "single",
+            "items": [
+              {
+                "exercise_id": "dumbbell_reverse_lunge",
+                "sets": 3,
+                "reps_min": 8,
+                "reps_max": 8,
+                "load": {
+                  "kind": "kg",
+                  "kg": 17.5
+                },
+                "rest_seconds": 90,
+                "note": "На ногу; уверенный третий подход — переход на 20",
+                "declared_kg": null
+              }
+            ]
+          },
+          {
+            "kind": "single",
+            "items": [
+              {
+                "exercise_id": "barbell_bent_over_row",
+                "sets": 3,
+                "reps_min": 8,
+                "reps_max": 8,
+                "load": {
+                  "kind": "kg",
+                  "kg": 52.5
+                },
+                "rest_seconds": 90,
+                "note": "Корпус ~45°, к низу живота, нейтральная спина",
+                "declared_kg": null
+              }
+            ]
+          },
+          {
+            "kind": "single",
+            "items": [
+              {
+                "exercise_id": "dumbbell_incline_rear_delt_raise",
+                "sets": 3,
+                "reps_min": 12,
+                "reps_max": 12,
+                "load": {
+                  "kind": "kg",
+                  "kg": 7.5
+                },
+                "rest_seconds": 90,
+                "note": "Если тренажёр занят; лёжа грудью на наклонной скамье",
+                "declared_kg": null
+              }
+            ]
+          },
+          {
+            "kind": "single",
+            "items": [
+              {
+                "exercise_id": "machine_rower",
+                "sets": 1,
+                "reps_min": 6,
+                "reps_max": 8,
+                "load": {
+                  "kind": "calibration",
+                  "kg": null
+                },
+                "rest_seconds": 0,
+                "note": "минуты; сопротивление 3–4, сначала толчок ногами",
+                "declared_kg": null
+              }
+            ]
+          },
+          {
+            "kind": "single",
+            "items": [
+              {
+                "exercise_id": "machine_incline_treadmill_walk",
+                "sets": 1,
+                "reps_min": 8,
+                "reps_max": 10,
+                "load": {
+                  "kind": "calibration",
+                  "kg": null
+                },
+                "rest_seconds": 0,
+                "note": "минуты; ходьба в горку",
+                "declared_kg": null
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "unmatched": [
+    "Тренажёр для задней дельты (обратная бабочка)",
+    "Повороты стоя с блином 10 кг"
+  ]
+}

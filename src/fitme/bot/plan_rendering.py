@@ -55,6 +55,20 @@ def load_label(load: Load, exercise: Exercise | None, lang: str) -> str:
     return t("plan.load_calibration", lang)
 
 
+def prescription_load_label(
+    prescription: Prescription, exercise: Exercise | None, lang: str
+) -> str:
+    """`load_label` for a prescription, with the M8b declared hint when the shown load is
+    `calibration` and the user's pasted plan declared a kg for it ("calibration — your plan
+    says 80 kg; start at or below it and log what you used"; "each" per `load_unit`). The
+    hint is display only: the prescribed load is still calibration."""
+    load = prescription.load
+    if load.kind == "calibration" and prescription.declared_kg is not None:
+        declared = load_label(Load(kind="kg", kg=prescription.declared_kg), exercise, lang)
+        return t("plan.load_calibration_declared", lang, declared=declared)
+    return load_label(load, exercise, lang)
+
+
 def prescription_line(prescription: Prescription, catalog: Catalog, lang: str) -> str:
     exercise = catalog.by_id(prescription.exercise_id)
     sets_reps = t(
@@ -69,7 +83,7 @@ def prescription_line(prescription: Prescription, catalog: Catalog, lang: str) -
         lang,
         name=exercise_name(exercise, prescription.exercise_id, lang),
         sets_reps=sets_reps,
-        load=load_label(prescription.load, exercise, lang),
+        load=prescription_load_label(prescription, exercise, lang),
         rest=prescription.rest_seconds,
     )
     if prescription.note:
@@ -77,9 +91,12 @@ def prescription_line(prescription: Prescription, catalog: Catalog, lang: str) -
     return line
 
 
-def render_plan_text(plan: Plan, *, catalog: Catalog, lang: str, title: str) -> str:
+def render_plan_text(
+    plan: Plan, *, catalog: Catalog, lang: str, title: str, unmatched: Sequence[str] = ()
+) -> str:
     """The whole plan as one text (split with `split_message` before sending): `title`, the
-    schedule, every workout with supersets grouped, and the AI disclosure footer."""
+    schedule, every workout with supersets grouped, the "Not matched:" list of a pasted plan's
+    exercises that map to no catalog id (M8b, when any), and the AI disclosure footer."""
     lines: list[str] = [title, "", t("plan.schedule_title", lang)]
     workouts_by_key = {workout.key: workout for workout in plan.workouts}
     for day in sorted(plan.schedule, key=lambda item: item.weekday):
@@ -99,6 +116,9 @@ def render_plan_text(plan: Plan, *, catalog: Catalog, lang: str, title: str) -> 
                 )
             else:
                 lines.append(f"• {prescription_line(block.items[0], catalog, lang)}")
+    if unmatched:
+        lines.extend(["", t("plan.unmatched_title", lang)])
+        lines.extend(f"• {name}" for name in unmatched)
     lines.append("")
     lines.append(t("disclosure.ai", lang))
     return "\n".join(lines)
@@ -138,8 +158,17 @@ def _new_plan_button(lang: str) -> InlineKeyboardButton:
     )
 
 
+def _paste_plan_button(lang: str) -> InlineKeyboardButton:
+    """M8b "Paste my plan": the second entry point next to "New plan"."""
+    return InlineKeyboardButton(
+        text=t("plan.paste_button", lang), callback_data=PlanMenu(action="paste", plan_id=0).pack()
+    )
+
+
 def new_plan_markup(lang: str) -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(inline_keyboard=[[_new_plan_button(lang)]])
+    return InlineKeyboardMarkup(
+        inline_keyboard=[[_new_plan_button(lang)], [_paste_plan_button(lang)]]
+    )
 
 
 def plan_status_text(record: PlanRecord, lang: str) -> str:
@@ -164,7 +193,7 @@ def plan_list_markup(plans: Sequence[PlanRecord], lang: str) -> InlineKeyboardMa
                 text=label, callback_data=PlanMenu(action="view", plan_id=record.id).pack()
             )
         )
-    builder.add(_new_plan_button(lang))
+    builder.add(_new_plan_button(lang), _paste_plan_button(lang))
     builder.adjust(1)
     return builder.as_markup()
 
@@ -192,6 +221,7 @@ def plan_actions_markup(record: PlanRecord, lang: str) -> InlineKeyboardMarkup:
         )
     builder.add(
         _new_plan_button(lang),
+        _paste_plan_button(lang),
         InlineKeyboardButton(
             text=t("plan.back_to_list_button", lang),
             callback_data=PlanMenu(action="list", plan_id=0).pack(),

@@ -18,7 +18,7 @@ from collections.abc import Sequence
 
 from fitme.domain.catalog import Exercise
 from fitme.domain.guard_types import GuardVerdict
-from fitme.domain.models import Load
+from fitme.domain.models import MAX_IMPLEMENT_KG, MAX_TOTAL_KG, Load
 from fitme.domain.results import SetResult
 
 _RULE = "plausibility.parsed_load"
@@ -30,9 +30,9 @@ _MAX_INCREMENTS_ABOVE = 3
 # Float tolerance for "exactly twice the prescribed load" (a combined two-implement total).
 _TOTAL_PATTERN_TOLERANCE = 1e-6
 # A§6.5.1 absolute bounds, applied always (calibration included): no catalog exercise is
-# realistically loaded beyond these, so a larger number is a typo, never a lift.
-MAX_TOTAL_KG = 300.0
-MAX_IMPLEMENT_KG = 60.0  # per dumbbell / kettlebell
+# realistically loaded beyond these, so a larger number is a typo, never a lift. The values
+# live in `domain.models` (`MAX_TOTAL_KG`/`MAX_IMPLEMENT_KG`, re-exported here) so the domain
+# model can bound a display-only hint with the same numbers.
 
 
 def _absolute_bound_kg(exercise: Exercise) -> float:

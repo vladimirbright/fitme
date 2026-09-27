@@ -179,7 +179,14 @@ def test_the_allowed_prompt_disclaimer_sentence_actually_appears_in_every_real_p
     `_ALLOWED_PROMPT_DISCLAIMER_SENTENCES` to match deliberately — never weaken the lint."""
     from fitme.llm.prompts import render_prompt
 
-    for name in ("plan_generate", "plan_revise", "session_adjust", "result_parse", "recap"):
+    for name in (
+        "plan_generate",
+        "plan_revise",
+        "session_adjust",
+        "result_parse",
+        "recap",
+        "plan_import",
+    ):
         text = render_prompt(name).text.casefold()
         assert any(sentence in text for sentence in _ALLOWED_PROMPT_DISCLAIMER_SENTENCES), name
 

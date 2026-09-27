@@ -5,11 +5,11 @@ so every `Command(...)`-filtered handler gets first refusal; this only ever sees
 Order (A§6.3, A§6.6): save to `chat_messages` (tied to the active workout session, if
 any), then the stop-word guard *before anything else* — including a pending `/delete`
 confirmation, a pending `/train` prompt (an adjustment request or a block's results, M7), a
-pending `/plan` revision request (the paths where free text reaches the LLM) or an active
-setup step — **except** for the `screening_other` step (B2): that note must be persisted
-first, because it may set `other_unlisted = yes` (needing clearance) regardless of whether
-it also halts. A hit halts (and halts the active workout session, `services.safety.halt`)
-and nothing below it runs.
+pending `/plan` revision request or pasted program (M8b) — the paths where free text reaches
+the LLM — or an active setup step — **except** for the `screening_other` step (B2): that note
+must be persisted first, because it may set `other_unlisted = yes` (needing clearance)
+regardless of whether it also halts. A hit halts (and halts the active workout session,
+`services.safety.halt`) and nothing below it runs.
 
 Also handles the owner's *edited* messages (`on_edited_message`): a stop word there halts
 too, since editing a message is just as much "the owner reporting a symptom" as sending a new
@@ -21,7 +21,7 @@ from __future__ import annotations
 from aiogram import F, Router
 from aiogram.types import Message
 
-from fitme.bot.handlers.plan import PendingRevisions, handle_revise_text
+from fitme.bot.handlers.plan import PendingRevisions, handle_plan_text
 from fitme.bot.handlers.setup import handle_setup_free_text, show_step
 from fitme.bot.handlers.train import PendingTrains, handle_train_text
 from fitme.db.connection import Database
@@ -94,7 +94,7 @@ async def on_free_text(
     if await handle_train_text(message, db, llm, user_id, text, pending_train):
         return
 
-    if await handle_revise_text(message, db, llm, user_id, text, pending_plan_revisions):
+    if await handle_plan_text(message, db, llm, user_id, text, pending_plan_revisions):
         return
 
     if await handle_setup_free_text(message, db, user_id, text):

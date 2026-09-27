@@ -3,18 +3,23 @@
 from __future__ import annotations
 
 import pytest
-from pydantic import ValidationError
+from pydantic import TypeAdapter, ValidationError
 
 from fitme.domain.enums import RefusalCode
 from fitme.domain.models import (
+    UNMATCHED_MAX_COUNT,
+    UNMATCHED_NAME_MAX_LENGTH,
     Block,
     Load,
     LoadChange,
     Plan,
+    PlanImport,
+    PlanImportProposal,
     Prescription,
     Refusal,
     ScheduledDay,
     Workout,
+    plausible_declared_kg,
 )
 
 
@@ -231,3 +236,60 @@ def test_prescription_note_may_still_be_omitted() -> None:
         rest_seconds=60,
     )
     assert prescription.note is None
+
+
+# --- M8b: declared loads and the import wrapper ----------------------------------------------
+
+
+def _prescription_with_declared(declared: object) -> Prescription:
+    return Prescription.model_validate(
+        {
+            "exercise_id": "barbell_back_squat",
+            "sets": 3,
+            "reps_min": 5,
+            "reps_max": 5,
+            "load": {"kind": "calibration"},
+            "rest_seconds": 90,
+            "declared_kg": declared,
+        }
+    )
+
+
+def test_declared_kg_defaults_to_none_and_keeps_a_plausible_value() -> None:
+    assert _prescription_with_declared(None).declared_kg is None
+    assert _prescription_with_declared(80).declared_kg == 80.0
+    assert _prescription_with_declared(300.0).declared_kg == 300.0
+
+
+@pytest.mark.parametrize("bad", [0, -5, 300.5, 1e6, float("nan"), float("inf"), "80", True])
+def test_out_of_range_declared_kg_is_dropped_not_rejected(bad: object) -> None:
+    assert _prescription_with_declared(bad).declared_kg is None
+
+
+def test_plausible_declared_kg_applies_the_per_implement_bound() -> None:
+    assert plausible_declared_kg(60.0, per_implement=True) == 60.0
+    assert plausible_declared_kg(62.5, per_implement=True) is None
+    assert plausible_declared_kg(62.5, per_implement=False) == 62.5
+    assert plausible_declared_kg(float("nan"), per_implement=False) is None
+    assert plausible_declared_kg(None) is None
+
+
+def test_plan_import_trims_and_caps_unmatched_and_forbids_extras() -> None:
+    plan = Plan(name="P", schedule=[], workouts=[])
+    imported = PlanImport.model_validate(
+        {"plan": plan.model_dump(), "unmatched": [" x" * 80] + ["y"] * 40}
+    )
+    assert len(imported.unmatched) == UNMATCHED_MAX_COUNT
+    assert len(imported.unmatched[0]) == UNMATCHED_NAME_MAX_LENGTH
+    assert imported.unmatched[0].endswith("…")
+    assert PlanImport.model_validate({"plan": plan.model_dump()}).unmatched == []
+    with pytest.raises(ValidationError):
+        PlanImport.model_validate({"plan": plan.model_dump(), "unmatched": [], "extra": 1})
+    with pytest.raises(ValidationError):
+        PlanImport.model_validate({"plan": plan.model_dump(), "unmatched": "a, b"})
+
+
+def test_plan_import_proposal_accepts_a_refusal() -> None:
+    adapter = TypeAdapter(PlanImportProposal)
+    refusal = adapter.validate_python({"code": "out_of_scope", "message": "no"})
+    assert isinstance(refusal, Refusal)

@@ -13,7 +13,14 @@ import pytest
 from fitme.llm.prompts import PromptNotFoundError, render_prompt
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
-_REAL_PROMPT_NAMES = ("plan_generate", "plan_revise", "session_adjust", "result_parse", "recap")
+_REAL_PROMPT_NAMES = (
+    "plan_generate",
+    "plan_revise",
+    "session_adjust",
+    "result_parse",
+    "recap",
+    "plan_import",
+)
 
 
 @pytest.mark.parametrize("name", _REAL_PROMPT_NAMES)

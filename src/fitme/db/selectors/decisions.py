@@ -254,16 +254,17 @@ async def applied_to_kg_by_exercise(
 # The decision kinds a `/plan` round writes (A§6.4), plus the confirm itself: the current
 # draft is the latest of these, so a Confirm/Change for an older one — or for a draft that
 # was already confirmed — is stale (A§6.3 "ignore stale callbacks").
-_PLAN_ROUND_KINDS = ("plan_generate", "plan_revise", "refusal", "plan_confirm")
+_PLAN_ROUND_KINDS = ("plan_generate", "plan_revise", "plan_import", "refusal", "plan_confirm")
 _PLAN_ROUND_KINDS_SQL = ", ".join("?" for _ in _PLAN_ROUND_KINDS)
 
 
 async def get_latest_plan_round_decision(
     conn: aiosqlite.Connection, user_id: int
 ) -> DecisionRecord | None:
-    """The newest `plan_generate`/`plan_revise`/`refusal`/`plan_confirm` decision for this
-    user, or `None`. `services.planning.confirm_plan` compares a draft's id against this to
-    reject a stale Confirm (a draft superseded by a newer round or already confirmed)."""
+    """The newest `plan_generate`/`plan_revise`/`plan_import`/`refusal`/`plan_confirm`
+    decision for this user, or `None`. `services.planning.confirm_plan` compares a draft's id
+    against this to reject a stale Confirm (a draft superseded by a newer round or already
+    confirmed)."""
     async with conn.execute(
         f"SELECT {_DECISION_COLUMNS} FROM decisions WHERE user_id = ? "
         f"AND kind IN ({_PLAN_ROUND_KINDS_SQL}) ORDER BY id DESC LIMIT 1",

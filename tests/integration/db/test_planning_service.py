@@ -962,3 +962,99 @@ async def test_set_default_and_archive_semantics(db: Database, user_id: int) -> 
     assert detail is not None and detail.plan.name == "One" and detail.version.version == 1
     assert not await planning.set_default(db, user_id, 999)
     assert not await planning.archive(db, user_id, 999)
+
+
+# --- Output-validation retry (bug fix, M8b) --------------------------------------------------
+
+
+def _generate_runtime(outputs: list[Plan | str]) -> LlmRuntime:
+    """A `plan_generate` runtime answering each *run* from `outputs`: a `Plan`, or `"invalid"`
+    to make every output retry of that run fail pydantic validation (an out-of-range weekday),
+    so the run ends in `run_agent`'s `LLM_UNAVAILABLE` refusal with `CAUSE_OUTPUT_VALIDATION`."""
+    runs: list[Plan | str] = list(outputs)
+    current: list[Plan | str] = []
+
+    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        request = messages[-1]
+        assert isinstance(request, ModelRequest)
+        if any(part.part_kind == "user-prompt" for part in request.parts):
+            current[:] = [runs.pop(0)]  # a new run (not an output retry within one)
+        output = current[0]
+        tool = next(
+            t.name for t in info.output_tools if "Plan" in t.name and "Refusal" not in t.name
+        )
+        if output == "invalid":
+            args: dict[str, object] = {
+                "name": "Bad",
+                "schedule": [{"weekday": 9, "workout_key": "A"}],
+                "workouts": [],
+            }
+        else:
+            assert isinstance(output, Plan)
+            args = output.model_dump(mode="json")
+        return ModelResponse(parts=[ToolCallPart(tool_name=tool, args=args)])
+
+    return LlmRuntime(
+        settings=_settings(),
+        prices={},
+        agent_factories={
+            "plan_generate": lambda model: plan_generate_agent(
+                FunctionModel(respond, model_name=str(model))
+            )
+        },
+    )
+
+
+async def test_generate_retries_once_after_an_output_validation_failure(
+    db: Database, user_id: int
+) -> None:
+    """Bug fix: `propose_new_plan`'s own retry loop used to end the round on the first
+    output-validation refusal. It now spends the second attempt on it, like a guard failure,
+    and every attempt is still its own decision with the cause recorded."""
+    await seed_profile(db, user_id)
+
+    result = await planning.propose_new_plan(
+        db, _generate_runtime(["invalid", make_plan()]), user_id
+    )
+
+    assert result.plan is not None
+    rounds = await decisions(db, user_id)
+    assert [d.kind for d in rounds] == ["plan_generate", "plan_generate"]
+    assert rounds[0].proposal is not None
+    assert rounds[0].proposal["refusal"]["code"] == "llm_unavailable"
+    assert rounds[0].proposal["cause"] == "output_validation"
+    assert rounds[1].id == result.decision_id
+    calls = await llm_calls(db)
+    assert [c.ok for c in calls] == [False, True]
+
+
+async def test_generate_refuses_after_two_output_validation_failures(
+    db: Database, user_id: int
+) -> None:
+    await seed_profile(db, user_id)
+
+    result = await planning.propose_new_plan(db, _generate_runtime(["invalid", "invalid"]), user_id)
+
+    assert result.refusal is not None
+    assert result.refusal.code == RefusalCode.LLM_UNAVAILABLE
+    rounds = await decisions(db, user_id)
+    assert [d.kind for d in rounds] == ["plan_generate", "plan_generate"]
+    assert rounds[-1].id == result.decision_id  # the retry's own logged refusal is the answer
+    assert all(d.proposal and d.proposal["cause"] == "output_validation" for d in rounds)
+    assert [c.ok for c in await llm_calls(db)] == [False, False]
+    assert await planning.current_draft_id(db, user_id) is None
+
+
+async def test_generate_never_keeps_a_models_declared_kg(db: Database, user_id: int) -> None:
+    """M8b: nothing was pasted, so a `declared_kg` the model emits is stripped."""
+    await seed_profile(db, user_id)
+    plan = make_plan()
+    plan.workouts[0].blocks[0].items[0].declared_kg = 80.0
+    result = await planning.propose_new_plan(db, FakeLlm([plan]).runtime(), user_id)
+    assert result.plan is not None
+    assert all(
+        item.declared_kg is None
+        for workout in result.plan.workouts
+        for block in workout.blocks
+        for item in block.items
+    )

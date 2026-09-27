@@ -237,6 +237,10 @@ class DecisionKind(StrEnum):
     # A§4.3 "load changes count once, when applied": written inside the confirm transaction,
     # carrying the `load_changes` of the plan version it created; drafts carry none.
     PLAN_CONFIRM = "plan_confirm"
+    # M8b: one `plan_import` agent attempt over a pasted program (a draft, like
+    # `plan_generate`/`plan_revise`: `load_changes` stays `[]`; confirming it writes a
+    # `plan_versions.origin = 'import'` version through the usual `plan_confirm`).
+    PLAN_IMPORT = "plan_import"
 
 
 class RefusalCode(StrEnum):
