@@ -138,6 +138,7 @@ uvicorn for TLS. Backups use `sqlite3 fitme.db ".backup ..."` from cron, with an
 | `FITME_MAX_WEEKLY_INCREMENT_KG` | no | default 2.5, compound lifts (catalog can set lower) |
 | `FITME_PRICES_FILE` | no | TOML of per-model token prices for `/system` cost estimates |
 | `FITME_DEV` | no | Allows a non-TLS base URL on localhost |
+| `FITME_SOURCE_URL` | no | Source repository link shown in the private-instance reply (§6.1). Default `https://github.com/vladimirbright/fitme`. Forks set their own. |
 
 No secrets are committed. The reference deployment works with env vars only.
 
@@ -408,8 +409,14 @@ screening answer re-runs the screening gate.
 - `OwnerGateMiddleware` runs first on every update. If `from_user.id` is not the bound
   `telegram_accounts.telegram_user_id`:
   - `/activate <code>` is allowed only while **no** account is bound;
-  - everything else gets one fixed reply ("This is a private instance.") and **nothing is
-    stored**. Do not log the unknown user's id or message text.
+  - everything else gets one fixed, localized reply, and **nothing is stored**. Do not log
+    the unknown user's id or message text. The reply:
+
+    > This is a private Fitme instance. Fitme is open source: you can run your own
+    > instance. Source code: {FITME_SOURCE_URL}
+
+    The reply states facts only. There is no sign-up, waiting list or "contact the owner"
+    call to action (ADR 0002).
 - Activation flow:
   1. The operator runs `uv run fitme activate` on the server. It prints a one-time code
      (random, 8+ characters, 15-minute TTL, stored hashed).
