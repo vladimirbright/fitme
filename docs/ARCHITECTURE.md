@@ -648,7 +648,7 @@ now free of pain, dizziness, numbness and chest discomfort?" → **Yes, clear**.
 logged as a `hold_clear` decision. Holds cannot be cleared on the same day. "Same day"
 is evaluated in the timezone in effect **when the hold was created**, which is recorded in
 the halt decision's `user_report`. At least 12 hours must also have passed, so changing the
-timezone can't shorten a hold. Do not implement any bypass.
+timezone can't shorten a hold. The only bypass is on the operator's server shell: `fitme hold clear --yes` asks for a typed confirmation and writes a `hold_clear` decision with `source=operator_cli`. It exists for false positives. The bot has no bypass.
 
 ### 6.7 `/stats` (short)
 
@@ -680,7 +680,7 @@ class GuardVerdict(BaseModel):
 | `checkins.py` | `increase_allowed(exercise, checkins, flagged_areas) -> GuardVerdict` | Check-ins are asked for **flagged** areas only (§6.5). For every area the exercise loads **that the user flagged**, the latest check-in must be `fine`. A missing, `unknown`, `worse` or `pain` answer blocks the increase (silence is not consent). Areas the user did not flag need no check-in. An exercise with empty `loads_areas` fails closed. Because the catalog contraindicates every exercise that loads a flagged area, this gate only matters for exercises with a reviewed `contraindication_exceptions` entry. It is kept as defense in depth. |
 | `stop_words.py` | `scan(text, lang) -> StopHit \| None` | Normalizes the text (casefold, strip punctuation) and matches the per-language lists in `stop_words/*.txt` (pain, dizzy, numb, chest, popped, ... and inflections). **Any match halts.** Runs before the LLM. |
 | `screening.py` | `plan_allowed(flags, holds) -> GuardVerdict`; `exercise_allowed(exercise, flags) -> GuardVerdict` | Every red flag must have an explicit `yes`/`no` answer. Missing or `unknown` → `Refusal(SCREENING_INCOMPLETE)` (silence is not consent). Red flags answered `yes` need clearance. Open holds refuse. Contraindications remove exercises. |
-| `plan.py` | `validate_plan(plan, ctx) -> list[GuardVerdict]` | Runs all the checks above (including `plan_allowed`) over every prescription, plus: catalog ids only, location and equipment fit, schedule matches frequency, reps_min ≤ reps_max, superset size. **Reference load:** an increase is measured against the exercise's **current working load**, not the historical max. When both are known, the reference is `min(current, history_max)`. **An increase already applied in the trailing 7 days is not counted twice.** If a `to_kg` from an applied `load_changes` entry for the exercise is above that reference, the reference becomes the highest such applied `to_kg`. Keeping a confirmed load is therefore not a new increase, and only the part above it counts toward the cap. The earlier change was guarded when it was applied, and `check_ceiling` still runs as the absolute backstop. The current working load is the prescribed load of the last completed session, falling back to the active plan version's prescription. If there is history but no current load, the historical max is the reference, and the increase checks still run. Any `proposed > current` must pass `check_weekly_increment` and `increase_allowed`. `check_ceiling` always runs as an absolute backstop. |
+| `plan.py` | `validate_plan(plan, ctx) -> list[GuardVerdict]` | Runs all the checks above (including `plan_allowed`) over every prescription, plus: catalog ids only, location and equipment fit, schedule matches frequency, reps_min ≤ reps_max, superset size. **Reference load:** an increase is measured against the exercise's **current working load**, not the historical max. When both are known, the reference is `min(current, history_max)`. **An increase already applied in the trailing 7 days is not counted twice.** If a `to_kg` from an applied `load_changes` entry for the exercise, **applied after that exercise's last completed session**, is above that reference, the reference becomes the highest such applied `to_kg`. Once a session on the exercise is completed, its prescription is the reference, so a load the user just failed at cannot be restored through the lift. The engine's decrease rule also has priority over holding at an applied load. Keeping a confirmed load is therefore not a new increase, and only the part above it counts toward the cap. The earlier change was guarded when it was applied, and `check_ceiling` still runs as the absolute backstop. The current working load is the prescribed load of the last completed session, falling back to the active plan version's prescription. If there is history but no current load, the historical max is the reference, and the increase checks still run. Any `proposed > current` must pass `check_weekly_increment` and `increase_allowed`. `check_ceiling` always runs as an absolute backstop. |
 
 All load inputs must be finite and positive. Guards **fail closed** on NaN, infinity or non-positive values.
 
@@ -688,27 +688,20 @@ All load inputs must be finite and positive. Guards **fail closed** on NaN, infi
 
 Matching is deliberately broad. "No pain today" halts too.
 
-- **Chest is deny-by-default in both languages.**
-  1. Any chest or heart token (`chest`, `heart`, `груд*` incl. `грудин*`, `сердц*`)
-     halts.
-  2. **Allowlist:** exercise and training phrases are removed before the check. EN:
-     `chest press`, `chest fly`, `chest day`, `chest and triceps/biceps`, `chest workout`,
-     `chest session`, `did chest`, `upper/lower chest`, `heart rate`. RU: `жим груди`,
-     `день груди`, `тренировка груди`, `качал(а)/тренировал(а)/сделал(а) грудь`,
-     `грудь и трицепс/бицепс`, `грудные мышцы`, `грудных`, `мышцы груди`, `на грудь`,
-     `грудак`, `верх/низ груди`. A chest token followed only by a sets/reps/weight pattern ("chest 4x10", "грудь 3 по 8") also counts as a log line.
-  3. **Co-occurrence override:** a chest or heart token together with a **symptom**
-     descriptor halts **even if** the token is inside an allowlisted phrase.
-     - EN symptom descriptors: tight*, pressure, pain*, hurt*, squeez*, ache/aching,
-       discomfort, pounding, racing, flutter*, palpitat*.
-     - RU symptom descriptors: давит/давлен*, сжим*/сдавл*, колет/кольн*, ноет, щем*,
-       стеснен*, the pain forms of боль (not bare `бол*`), дискомфорт, колотит*, перебои.
-     - **Effort** words (heavy, burn*, тяжело/тяжест*, жж*) do **not** override an
-       allowlisted mention. A non-allowlisted chest token still halts by default, so
-       "тяжесть в груди" and "my chest burned" still halt, while "день груди, тяжело но
-       сделал" does not.
-  Tokens: EN `chest`, `heart*` (heartbeat and heartburn halt; "heart rate" is
-  allowlisted), `sternum`, `arrhythm*`; RU `груд*`, `сердц*`, `аритми*`.
+- **Chest and heart need a symptom** (operator decision, 2026-09-27). Chest is extremely
+  common in training text ("к верху груди", "на уровне груди", "грудью на скамье", "chest
+  day"), so a bare mention never halts. A chest or heart token (`chest`, `heart*`, `sternum`,
+  `груд*` incl. `грудин*`, `сердц*`) halts only when a **symptom descriptor** appears in the
+  same clause (the same sentence fragment, within a few words):
+  - EN descriptors: tight*, pressure, pain*, hurt*, squeez*, ache/aching, discomfort,
+    pounding, racing, flutter*, burning, heavy/heaviness;
+  - RU descriptors: давит/давлен*, сжим*/сдавл*, колет/кольн*, ноет, щем*, стеснен*,
+    жж*/жжение, тяжест*/тяжело, the pain forms of боль, дискомфорт, колотит*, перебои.
+
+  Explicit cardiac terms halt on their own: palpitations, arrhythmia/аритмия, "irregular
+  heartbeat", "heart racing/pounding", "за грудиной".
+  Exercise wording ("жим груди", "chest press 3x8", "heart rate 150") never halts, even
+  next to effort words.
 - **Something popped:** bare `popped`, plus "went pop", "heard/felt it pop", "felt a pop",
   RU `щелк*`/`щелч*`/`хруст*`/`лопн*`. False positives like "popped a PR" are accepted.
 - **Prefer phrases over stems when a stem collides with plan-editing language.** For

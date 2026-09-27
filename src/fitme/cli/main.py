@@ -2,8 +2,9 @@
 
 Subcommands mirror docs/ARCHITECTURE.md §11. `db upgrade`, `export`, `delete`, `purge`,
 `catalog check`, `activate` and `serve` are implemented (M1, M3, M5); `llm eval` is
-implemented too (M4). `db <other>` and `catalog <other>` subcommands remain stubs, since no
-other subcommand under those groups exists yet.
+implemented too (M4), and `hold clear` is the operator's hold bypass (A§6.6). `db <other>`
+and `catalog <other>` subcommands remain stubs, since no other subcommand under those groups
+exists yet.
 """
 
 from __future__ import annotations
@@ -58,6 +59,16 @@ def _build_parser() -> argparse.ArgumentParser:
     )
 
     subparsers.add_parser("purge", help="Run the retention job now.")
+
+    hold_parser = subparsers.add_parser("hold", help="Health hold maintenance (operator).")
+    hold_subparsers = hold_parser.add_subparsers(dest="hold_command", required=True)
+    hold_clear_parser = hold_subparsers.add_parser(
+        "clear",
+        help="Clear every open health hold (the operator bypass for false positives).",
+    )
+    hold_clear_parser.add_argument(
+        "--yes", action="store_true", help="Skip the typed confirmation."
+    )
 
     catalog_parser = subparsers.add_parser("catalog", help="Exercise catalog maintenance.")
     catalog_subparsers = catalog_parser.add_subparsers(dest="catalog_command", required=True)
@@ -115,6 +126,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     if args.command == "purge":
         return _with_settings(parser, commands.purge_now)
+    if args.command == "hold":
+        if args.hold_command == "clear":
+            return _with_settings(
+                parser, lambda settings: commands.hold_clear(settings, confirmed=args.yes)
+            )
+        return _stub(f"hold {args.hold_command}")
     if args.command == "catalog":
         if args.catalog_command == "check":
             return catalog_check()

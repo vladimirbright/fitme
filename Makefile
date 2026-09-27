@@ -4,9 +4,12 @@
 # independent of .env, so this is applied only to $(FITME), never to `test`.
 FITME := uv run $(if $(wildcard .env),--env-file .env) fitme
 OUT ?= fitme-export.json
+# macOS: keep the machine awake while serving. Empty on Linux (no caffeinate), so the
+# command runs unchanged there.
+CAFFEINATE := $(shell command -v caffeinate >/dev/null 2>&1 && echo caffeinate -s)
 
 .DEFAULT_GOAL := help
-.PHONY: help install lock migrate serve activate test lint fmt typecheck catalog check export delete purge llm-eval clean
+.PHONY: help install lock migrate serve activate test lint fmt typecheck catalog check export delete purge unhold hold-clear llm-eval clean
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -20,8 +23,8 @@ lock: ## Update uv.lock
 migrate: ## Apply pending SQL migrations
 	$(FITME) db upgrade
 
-serve: ## Run bot + web + retention job
-	$(FITME) serve
+serve: ## Run bot + web + retention job (kept awake with caffeinate on macOS)
+	$(CAFFEINATE) $(FITME) serve
 
 activate: ## Print a one-time Telegram activation code
 	$(FITME) activate
@@ -52,6 +55,11 @@ delete: ## DELETE the user and ALL data permanently (no undo; run 'make export' 
 
 purge: ## Run retention now
 	$(FITME) purge
+
+unhold: ## Clear open health holds (operator; asks you to type CLEAR)
+	$(FITME) hold clear
+
+hold-clear: unhold ## Alias for unhold
 
 llm-eval: ## Run LLM eval fixtures (spends money; AGENT=, MODEL= optional; add YES=1 to confirm)
 	$(FITME) llm eval $(if $(AGENT),--agent $(AGENT)) $(if $(MODEL),--model $(MODEL)) $(if $(YES),--yes)

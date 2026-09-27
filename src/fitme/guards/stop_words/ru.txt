@@ -15,12 +15,11 @@
 # "болото", a swamp, or "болтать", to chat) — those are covered by listing inflected forms
 # explicitly instead.
 #
-# Chest/heart (`груд*` incl. `грудин*`, `сердц*`) is deny-by-default in code, not here
-# (A§7.1): an allowlist of chest-day phrases ("день груди", "жим груди", "грудные мышцы",
-# "на грудь", "грудак") is removed first, and a chest/heart token plus a discomfort
-# descriptor ("давит", "жжет", "сжимает", "тяжело", ...) halts even next to an allowlisted
-# phrase ("после жима груди давит в груди"). So "в груди давит", "за грудиной давит" and
-# "сердце колотится" halt without needing a line here.
+# Chest/heart co-occurrence is handled in code, not here (A§7.1): `груд*`/`сердц*` halt only
+# together with a symptom descriptor in the same clause ("в груди давит", "сердце колотится"),
+# never on their own ("к верху груди", "на уровне груди", "лежа грудью на скамье", "день
+# груди"). Only explicit cardiac terms that halt on their own belong in the chest_or_heart
+# category below.
 #
 # Ordinary soreness ("крепатура", "забитые мышцы") and exertional breathlessness ("одышка")
 # are intentionally excluded; only pain/dizziness/numbness/chest-or-heart/"something popped"/
@@ -124,6 +123,14 @@
 слабость в ногах
 ватные ноги
 ноги ватные
+
+# category: chest_or_heart
+# Explicit cardiac terms that halt on their own (A§7.1).
+аритми*
+за грудиной
+перебои в сердце
+бьется неровно
+неровное сердцебиение
 
 # category: breathing
 # Inability to breathe halts; ordinary exertional breathlessness ("одышка") does not (A§7.1)

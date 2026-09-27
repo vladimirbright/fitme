@@ -17,6 +17,7 @@ import json
 import logging
 import os
 import sys
+from collections.abc import Callable
 
 from aiogram import Bot
 
@@ -28,9 +29,11 @@ from fitme.db.migrate import migrate, pending_migrations
 from fitme.services.account import delete_user, export_user, get_single_user
 from fitme.services.identity import issue_activation_code
 from fitme.services.llm_runtime import LlmRuntime
+from fitme.services.operator import clear_holds_from_cli, open_holds_for_cli
 from fitme.services.retention import purge as run_retention
 
 _RETENTION_INTERVAL_SECONDS = 24 * 60 * 60
+HOLD_CLEAR_CONFIRMATION = "CLEAR"
 
 _logger = logging.getLogger(__name__)
 
@@ -156,6 +159,58 @@ async def activate(settings: Settings, *, rebind: bool) -> int:
         await db.close()
     print(f"Activation code (valid 15 minutes): {code}")
     print(f"Send it to the bot: /activate {code}")
+    return 0
+
+
+def _prompt_on_tty(prompt: str) -> str | None:
+    """Read one line from an interactive terminal, or return None when stdin isn't one
+    (a cron job or a pipe can't type a confirmation)."""
+    if not sys.stdin.isatty():
+        return None
+    try:
+        return input(prompt)
+    except EOFError:
+        return None
+
+
+async def hold_clear(
+    settings: Settings,
+    *,
+    confirmed: bool,
+    prompt: Callable[[str], str | None] = _prompt_on_tty,
+) -> int:
+    """`fitme hold clear [--yes]` (A§6.6): the operator's only bypass for a health hold, meant
+    for stop-word false positives. Lists the open holds, then clears them all, each logged as
+    a `hold_clear` decision with `source=operator_cli`. Without `--yes` it asks the operator
+    to type `CLEAR`; non-interactive without `--yes` refuses."""
+    db = await _try_open_database(settings)
+    if db is None:
+        return 1
+    try:
+        holds = await open_holds_for_cli(db)
+        if not holds:
+            print("No open holds; nothing to clear.")
+            return 0
+        print(f"{len(holds)} open hold(s):")
+        for hold in holds:
+            print(f"  hold {hold.id}: reason={hold.reason}, created {hold.created_at}")
+        if not confirmed:
+            answer = prompt(f"Type {HOLD_CLEAR_CONFIRMATION} to clear them all: ")
+            if answer is None:
+                print(
+                    "Refusing to clear holds: not an interactive terminal and no --yes.",
+                    file=sys.stderr,
+                )
+                return 1
+            if answer.strip() != HOLD_CLEAR_CONFIRMATION:
+                print("Refusing to clear holds: confirmation did not match.", file=sys.stderr)
+                return 1
+        cleared = await clear_holds_from_cli(db)
+    finally:
+        await db.close()
+    for item in cleared:
+        print(f"Cleared hold {item.hold_id} (decision {item.decision_id}, source=operator_cli).")
+    print(f"Cleared {len(cleared)} hold(s).")
     return 0
 
 

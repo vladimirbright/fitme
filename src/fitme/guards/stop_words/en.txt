@@ -5,11 +5,11 @@
 # it, until the next such header. A line ending in `*` is a *stem*: it matches as a prefix of
 # any word in the text, not as an exact phrase.
 #
-# Chest/heart is handled in code, not here (`guards/stop_words/__init__.py`,
-# `_chest_or_heart_hit`, A§7.1): deny-by-default with an allowlist of exercise/training
-# phrases ("chest press", "chest day", "heart rate 150") and a co-occurrence override (a
-# chest/heart token plus a discomfort descriptor halts even next to an allowlisted phrase).
-# Only chest/heart phrases *without* a chest/heart token belong in this file.
+# Chest/heart co-occurrence is handled in code, not here (`guards/stop_words/__init__.py`,
+# `_chest_or_heart_hit`, A§7.1): a chest/heart token halts only together with a symptom
+# descriptor in the same clause ("my chest feels tight"), never on its own ("chest day",
+# "chest press 3x8"). Only explicit cardiac terms that halt on their own belong in this file's
+# chest_or_heart category.
 #
 # Matching is deliberately broad (A§7.1): "no pain today" MUST halt. That is an accepted
 # cost, not a bug — the guard has to be deterministic and impossible to argue around, and the
@@ -126,9 +126,21 @@ knee gave way
 knees gave way
 
 # category: chest_or_heart
-# (Phrases without a chest/heart token; the token itself is deny-by-default in code.)
+# Explicit cardiac terms that halt on their own (A§7.1). Anything else chest/heart-related
+# needs a symptom descriptor next to the token (handled in code).
 burning sensation
 palpitat*
+arrhythm*
+irregular heartbeat
+heart racing
+heart is racing
+heart was racing
+heartbeat racing
+heart pounding
+heart is pounding
+heart was pounding
+heart skipping
+skipped a beat
 
 # category: breathing
 # Inability to breathe halts; ordinary exertional breathlessness ("out of breath", "short of

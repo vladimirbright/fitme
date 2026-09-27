@@ -1,15 +1,17 @@
 """`guards.stop_words.scan` (A§7, AGENTS.md §2 "Stop words halt the session"; A§7.4: "each
 stop-word category in each language"; A§7.1: "no pain today" MUST halt; soreness words must
-NOT halt on their own; chest/heart deny-by-default with an allowlist and a co-occurrence
-override in both languages; curated stems with negative tests; everyday-logging false
-positives that must NOT halt; and the normalization pass (Cf stripping, "can't"/"couldn't"
-folding, emoji, Latin transliteration)).
+NOT halt on their own; chest/heart halts only with a symptom descriptor in the same clause
+(operator decision 2026-09-27: a bare chest mention never halts); curated stems with
+negative tests; everyday-logging false positives that must NOT halt; and the normalization
+pass (Cf stripping, "can't"/"couldn't" folding, emoji, Latin transliteration)).
 
 The four corpora below are the regression suite: every phrase from the reviewer's probe
 scripts (stop.py, stop2.py, stop3.py) and from the A§7.1 rulings is here, on the side the
 ruling puts it."""
 
 from __future__ import annotations
+
+from pathlib import Path
 
 import pytest
 
@@ -29,19 +31,18 @@ _EN_MUST_HALT = (
     "tightness in my chest",
     "tightness across my chest",
     "chest hurts",
+    "chest pain",
+    "my chest hurts",
     "chest feels heavy",
     "burning in my chest",
-    "my chest!!",
     "I have some chest discomfort",
     "heart racing",
     "my heart is pounding",
-    "something's wrong with my heart",
     "palpitations",
     "my chest burned",
     "my chest feels heavy",
     "irregular heartbeat",
     "heartbeat racing",
-    "heartbeat weird",
     "pressure behind my sternum",
     "arrhythmia",
     # chest/heart: co-occurrence override beats the allowlist
@@ -211,6 +212,15 @@ _EN_MUST_NOT_HALT = (
     "HR 150",
     "resting HR 55",
     "chest day chest day",
+    # a bare chest/heart mention never halts (operator decision); a symptom must be in the
+    # same clause and within a few words
+    "chest",
+    "my chest",
+    "chest was fine today",
+    "chest day done. hamstrings tight",
+    "chest was fine but later the left hamstring felt really tight",
+    "heart",
+    "resting heart rate 55; hamstrings tight",
     # effort words next to an allowlisted mention are training talk, not symptoms
     "chest day, bench felt heavy",
     "chest day done, heavy session",
@@ -430,6 +440,19 @@ _RU_MUST_NOT_HALT = (
     "грудных",
     "грудак",
     "сердечно легочная выносливость",
+    # a bare chest/heart mention never halts (operator decision): plan wording
+    "грудь",
+    "грудь 3х10",
+    "к верху груди",
+    "на уровне груди",
+    "грудью на скамье",
+    "грудь вперёд",
+    "грудь вперед",
+    "тянуть к верху груди, корпус без раскачки",
+    "блок на уровне груди, прямые руки, 3×8 на сторону @ 35–40 кг",
+    "разведения с гантелями лёжа грудью на наклонной скамье (30–45°), 7,5 кг",
+    "сердце",
+    "жим груди. тяжело шло",
     # effort words next to an allowlisted mention are training talk, not symptoms
     "день груди, тяжело но сделал",
     "жим груди, тяжело",
@@ -709,19 +732,76 @@ def test_scan_never_raises_on_empty_text() -> None:
     assert scan("!!!", "en") is None
 
 
-# --- Chest/heart deny-by-default: the three-part A§7.1 design, spelled out. ---
+# --- Chest/heart needs a symptom (A§7.1, operator decision 2026-09-27). ---
+
+_PLAN_FIXTURE = Path(__file__).resolve().parents[1] / "fixtures" / "user_plan.txt"
 
 
-def test_bare_chest_or_heart_token_halts() -> None:
+def test_bare_chest_or_heart_token_does_not_halt() -> None:
+    """The operator's real plan ("к верху груди", "на уровне груди", "грудью на скамье")
+    locked them out under the old deny-by-default rule. A bare mention never halts now."""
     for phrase, lang in (("my chest", "en"), ("my heart", "en"), ("грудь", "ru"), ("сердце", "ru")):
+        assert scan(phrase, lang) is None, phrase
+
+
+def test_operator_plan_does_not_halt_whole_or_line_by_line() -> None:
+    plan = _PLAN_FIXTURE.read_text(encoding="utf-8")
+    for lang in ("ru", "en"):
+        assert scan(plan, lang) is None, lang
+        for line in plan.splitlines():
+            assert scan(line, lang) is None, (lang, line)
+
+
+def test_chest_token_with_a_symptom_in_the_same_clause_halts() -> None:
+    for phrase, lang in (
+        ("chest feels tight", "en"),
+        ("pressure in my chest", "en"),
+        ("chest pain", "en"),
+        ("my chest hurts", "en"),
+        ("в груди давит", "ru"),
+        ("давит в груди", "ru"),
+        ("грудь сжимает", "ru"),
+        ("колет в груди", "ru"),
+        ("жжёт в груди", "ru"),
+        ("тяжесть в груди", "ru"),
+        ("в груди тяжело", "ru"),
+        ("за грудиной давит", "ru"),
+    ):
         hit = scan(phrase, lang)
         assert hit is not None, phrase
         assert hit.category == "chest_or_heart", phrase
 
 
-def test_allowlisted_phrases_suppress_the_deny_by_default_rule() -> None:
-    """A bare "chest" would halt every mention of the "chest press" exercise; the allowlist
-    exempts it, so only an actual discomfort phrase halts."""
+def test_symptom_in_a_different_clause_does_not_pair_with_the_chest_token() -> None:
+    """Clauses are split on `.;!?` and newlines before the co-occurrence check."""
+    assert scan("chest was fine. hamstrings tight", "en") is None
+    assert scan("chest was fine\nhamstrings tight", "en") is None
+    assert scan("грудь ок; давит только время", "ru") is None
+    assert scan("chest was fine, hamstrings tight", "en") is not None  # a comma isn't a split
+
+
+def test_symptom_outside_the_word_window_does_not_pair_with_the_chest_token() -> None:
+    assert scan("chest was fine but later the left hamstring felt really tight", "en") is None
+    assert scan("chest was a bit tight", "en") is not None
+
+
+def test_explicit_cardiac_terms_halt_on_their_own() -> None:
+    for phrase, lang in (
+        ("palpitations", "en"),
+        ("arrhythmia", "en"),
+        ("irregular heartbeat", "en"),
+        ("heart racing", "en"),
+        ("my heart is pounding", "en"),
+        ("аритмия", "ru"),
+        ("за грудиной", "ru"),
+        ("перебои в сердце", "ru"),
+    ):
+        hit = scan(phrase, lang)
+        assert hit is not None, phrase
+        assert hit.category == "chest_or_heart", phrase
+
+
+def test_exercise_wording_does_not_halt() -> None:
     assert scan("time for some chest press supersets", "en") is None
     assert scan("chest day done", "en") is None
     assert scan("heart rate 150", "en") is None
@@ -729,17 +809,16 @@ def test_allowlisted_phrases_suppress_the_deny_by_default_rule() -> None:
     assert scan("жим груди 3 по 8", "ru") is None
 
 
-def test_chest_token_followed_by_a_set_log_is_allowlisted() -> None:
-    """ "chest 4x10" is a bare exercise log, not a symptom (A§7.1 ruling)."""
+def test_chest_set_log_lines_do_not_halt() -> None:
     assert scan("chest 4x10", "en") is None
     assert scan("chest 3 x 12", "en") is None
     assert scan("грудь 3 по 8", "ru") is None
     assert scan("грудь 4х10", "ru") is None
 
 
-def test_co_occurrence_override_halts_despite_an_allowlisted_phrase() -> None:
-    """A chest/heart token plus a discomfort descriptor halts even when an allowlisted phrase
-    is present (A§7.1 part 3)."""
+def test_symptom_next_to_the_chest_token_halts_even_after_exercise_wording() -> None:
+    """The allowlist only protects the exercise phrase itself: "after chest press my chest
+    feels tight" still has a bare "chest" next to "tight"."""
     en = scan("after chest press my chest feels tight", "en")
     assert en is not None
     assert en.category == "chest_or_heart"
@@ -749,15 +828,17 @@ def test_co_occurrence_override_halts_despite_an_allowlisted_phrase() -> None:
 
 
 def test_repeated_allowlisted_phrases_are_all_stripped() -> None:
-    """Back-to-back repeats share a space; a naive replace would leave the second one."""
-    assert scan("chest day chest day", "en") is None
-    assert scan("chest press chest press chest press", "en") is None
-    assert scan("день груди день груди", "ru") is None
+    """Back-to-back repeats share a space; a naive replace would leave the second one, and
+    that one would then pair with the effort word."""
+    assert scan("chest day chest day heavy", "en") is None
+    assert scan("chest press chest press chest press burned", "en") is None
+    assert scan("день груди день груди тяжело", "ru") is None
 
 
-def test_effort_words_do_not_override_the_allowlist_but_symptom_words_do() -> None:
-    """A§7.1: "heavy"/"burn"/"тяжело"/"жж*" are effort talk next to an allowlisted mention;
-    they still halt next to a non-allowlisted token, since that token halts by itself."""
+def test_effort_words_next_to_exercise_wording_do_not_halt_but_symptom_reports_do() -> None:
+    """A§7.1: "жим груди, тяжело"/"chest day, bench felt heavy" are training talk (the
+    allowlist strip removes the exercise phrase before the co-occurrence check); the same
+    effort words next to a bare chest token are a symptom report."""
     assert scan("chest day, bench felt heavy", "en") is None
     assert scan("жим груди, тяжело", "ru") is None
     assert scan("chest day but chest feels tight", "en") is not None
@@ -767,14 +848,11 @@ def test_effort_words_do_not_override_the_allowlist_but_symptom_words_do() -> No
     assert scan("тяжесть в груди", "ru") is not None
 
 
-def test_heart_stem_and_sternum_tokens_halt_but_heart_rate_stays_allowlisted() -> None:
+def test_heart_stem_and_sternum_tokens_halt_with_a_symptom_but_heart_rate_never_does() -> None:
     for phrase in ("irregular heartbeat", "heartbeat racing", "pressure behind my sternum"):
         hit = scan(phrase, "en")
         assert hit is not None, phrase
         assert hit.category == "chest_or_heart"
-    ru = scan("аритмия", "ru")
-    assert ru is not None
-    assert ru.category == "chest_or_heart"
     assert scan("heart rate 150", "en") is None
     assert scan("resting heart rate 55", "en") is None
     assert scan("did heart rate zone 2", "en") is None
@@ -851,8 +929,8 @@ def test_killing_me_halts() -> None:
         ("надорвал", "надоел"),  # надорв*: "annoyed/bored" is unrelated
         ("прихватило", "привет"),  # прихватило*: "hello" is unrelated
         ("прихватывает", "привет"),  # прихватыва*: "hello" is unrelated
-        ("сердце", "серебро"),  # сердц* (chest/heart deny-default): "silver" is unrelated
-        ("грудина", "груз"),  # груд* (chest/heart deny-default): "cargo/load" is unrelated
+        ("сердце колет", "серебро"),  # сердц* (with a symptom): "silver" is unrelated
+        ("грудина давит", "груз"),  # груд* (with a symptom): "cargo/load" is unrelated
         ("побаливает", "побаловать"),  # побалива*: "to indulge/spoil" is unrelated
         ("заболело", "забота"),  # заболе*: "care/concern" is unrelated
         ("разболелась", "разбор"),  # разболе*: "an analysis/breakdown" is unrelated

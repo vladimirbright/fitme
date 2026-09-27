@@ -13,17 +13,20 @@ One scan of one language runs in four stages, in this order:
    spaces, soft hyphens) *before* punctuation, so an invisible character can neither fuse two
    words nor split one; fold `ё` -> `е`; casefold; fold every "can't"/"couldn't" spelling to
    one token (apostrophe stripping alone would leave "can t" vs "cant" as different token
-   sequences); strip punctuation to spaces; collapse whitespace.
-2. **allowlist strip** (`_strip_allowlisted`): remove the exercise/training phrases that
-   legitimately mention the chest or heart ("chest press", "день груди", "heart rate", and a
-   bare chest token followed by a sets x reps pattern such as "chest 4x10").
-3. **chest/heart deny-by-default with a co-occurrence override** (`_chest_or_heart_hit`,
-   A§7.1): any chest/heart token (`chest`, `heart*`, `sternum`, `arrhythm*`, `груд*`,
-   `сердц*`, `аритми*`) left after the allowlist strip halts; and a chest/heart token
-   *anywhere* in the text (allowlisted or not) plus a *symptom* descriptor ("tight",
-   "давит", ...) halts too, so "after chest press my chest feels tight" can't hide behind the
-   allowlist. Effort words ("heavy", "тяжело") are not symptom descriptors: "chest day, bench
-   felt heavy" passes.
+   sequences); strip punctuation to spaces; collapse whitespace. The text is also split into
+   **clauses** on sentence punctuation (`.;!?` and newlines) *before* that punctuation is
+   stripped, for stage 3.
+2. **allowlist strip** (`_strip_allowlisted`): remove exercise/training phrases that mention
+   the chest or heart ("chest press", "жим груди", "heart rate") from each clause, so an
+   effort word next to exercise wording ("жим груди, тяжело", "chest day, bench felt heavy")
+   can't pair with the token in stage 3.
+3. **chest/heart + symptom co-occurrence** (`_chest_or_heart_hit`, A§7.1, operator decision
+   2026-09-27): a bare chest/heart mention never halts — chest is everyday training text ("к
+   верху груди", "на уровне груди", "chest day"). A chest/heart token (`chest`, `heart*`,
+   `sternum`, `груд*`, `сердц*`) halts only together with a *symptom descriptor* ("tight",
+   "давит", "тяжело", ...) in the same clause and within a few words of it. Explicit cardiac
+   terms ("palpitations", "аритмия", "irregular heartbeat", "за грудиной") halt on their own
+   through the ordinary lists in stage 4.
 4. **list matching** (`_list_hit`): the per-language term lists (`en.txt`, `ru.txt`),
    shipped as package data and read through `importlib.resources` (A§4.8), so they're found
    the same way from a checkout or an installed wheel. A line ending in `*` is a *stem* that
@@ -58,27 +61,32 @@ _RULE = "stop_words.scan"
 SUPPORTED_LANGS: tuple[str, ...] = ("en", "ru")
 
 _CHEST_OR_HEART_CATEGORY = "chest_or_heart"
+# Stage 3: how far apart (in words) a chest/heart token and a symptom descriptor may be within
+# one clause and still count as the same mention.
+_CO_OCCURRENCE_WINDOW = 5
 
 _CATEGORY_HEADER_RE = re.compile(r"^#\s*category:\s*(?P<category>\S+)\s*$")
 _PUNCTUATION_RE = re.compile(r"[^\w\s]", re.UNICODE)
 _WHITESPACE_RE = re.compile(r"\s+")
+_CLAUSE_SPLIT_RE = re.compile(r"[.;!?\n]+")
 # Folds every common "can't"/"couldn't" spelling (with or without an apostrophe, straight or
 # curly, with or without a space) to the single token "cant", applied after casefold but
 # before punctuation stripping. Past tense folds to the same token on purpose: "couldn't
 # breathe" must halt exactly like "can't breathe" (A§7.1).
 _CANT_RE = re.compile(r"\b(?:can|couldn?)\s*['’]?\s*(?:not|t)\b")
 
-# --- Stage 2/3 data: chest/heart deny-by-default (A§7.1) -------------------------------------
+# --- Stage 2/3 data: chest/heart + symptom (A§7.1) ------------------------------------------
 #
-# Tokens (A§7.1): an exact word or a word prefix (`*`-terminated, same notation as the list
-# files). `heart*` covers heartbeat/heartburn; Russian is inflected (груди, грудью, грудина,
-# грудиной; сердце, сердцем, сердцебиение; аритмия, аритмией).
+# Tokens: an exact word or a word prefix (`*`-terminated, same notation as the list files).
+# `heart*` covers heartbeat/heartburn; Russian is inflected (груди, грудью, грудина,
+# грудиной; сердце, сердцем, сердцебиение). Single words only: stage 3 matches word by word.
 _CHEST_OR_HEART_TOKENS: dict[str, tuple[str, ...]] = {
-    "en": ("chest", "heart*", "sternum", "arrhythm*"),
-    "ru": ("груд*", "сердц*", "аритми*"),
+    "en": ("chest", "heart*", "sternum"),
+    "ru": ("груд*", "сердц*"),
 }
-# Exercise and training phrases that mention the chest/heart without describing a symptom.
-# Removed from the text before the deny-by-default check. Every phrase here must contain a
+# Exercise and training phrases that mention the chest/heart. Removed from each clause before
+# stage 3, so effort words next to exercise wording ("chest press 3x10, last set burned",
+# "жим груди, тяжело") don't pair with the token. Every phrase here must contain a
 # chest/heart token, otherwise it does nothing.
 _CHEST_OR_HEART_ALLOWLIST: dict[str, tuple[str, ...]] = {
     "en": (
@@ -136,19 +144,11 @@ _CHEST_OR_HEART_ALLOWLIST: dict[str, tuple[str, ...]] = {
         "низ груди",
     ),
 }
-# A bare chest token followed by a sets x reps pattern is a set log ("chest 4x10",
-# "грудь 3 по 8"), not a symptom. Only the token is removed; the numbers stay.
-_CHEST_LOG_LINE_RE: dict[str, re.Pattern[str]] = {
-    "en": re.compile(r"\bchest(?= \d+ ?[x×х] ?\d)"),
-    "ru": re.compile(r"\bгруд\w*(?= \d+ ?(?:[x×х] ?\d|по \d))"),
-}
-# Symptom descriptors for the co-occurrence override (A§7.1), same `*`-stem notation. Only
-# *symptom* words are here: effort words ("heavy", "burn", "тяжело", "жжение") are ordinary
-# training talk next to an allowlisted mention ("chest day, bench felt heavy", "жим груди,
-# тяжело") and must not override the allowlist. They need no entry to halt next to a
-# non-allowlisted token: "my chest burned"/"тяжесть в груди" halt on the bare token alone.
+# Symptom descriptors (A§7.1), same `*`-stem notation, single words only. Effort words
+# ("heavy", "тяжело", "burn") are here too: "в груди тяжело" and "my chest burned" are
+# symptom reports, while "жим груди, тяжело" is protected by the allowlist strip in stage 2.
 # Russian lists the pain forms instead of a bare `бол*` stem: "большой вес" is everyday
-# logging and must not turn "жим груди, большой вес" into a halt.
+# logging and must not turn "грудь, большой вес" into a halt.
 _SYMPTOM_DESCRIPTORS: dict[str, tuple[str, ...]] = {
     "en": (
         "tight*",
@@ -162,7 +162,9 @@ _SYMPTOM_DESCRIPTORS: dict[str, tuple[str, ...]] = {
         "pounding",
         "racing",
         "flutter*",
-        "palpitat*",
+        "burn*",
+        "heavy",
+        "heaviness",
     ),
     "ru": (
         "давит",
@@ -174,6 +176,9 @@ _SYMPTOM_DESCRIPTORS: dict[str, tuple[str, ...]] = {
         "ноет",
         "щем*",
         "стеснен*",
+        "жж*",
+        "тяжест*",
+        "тяжело",
         "боль",
         "болит",
         "больно",
@@ -270,6 +275,10 @@ class _Term:
             return any(word.startswith(self.text) for word in words)
         return f" {self.text} " in padded
 
+    def matches_word(self, word: str) -> bool:
+        """Single-word variant for stage 3's word-window matching."""
+        return word.startswith(self.text) if self.is_stem else word == self.text
+
 
 @dataclass(frozen=True, slots=True)
 class _CategorizedTerm:
@@ -284,9 +293,17 @@ class _LangRules:
     lang: str
     chest_or_heart_tokens: tuple[_Term, ...]
     chest_or_heart_allowlist: re.Pattern[str] | None  # every allowlisted phrase, whole-word
-    chest_log_line: re.Pattern[str] | None
     symptom_descriptors: tuple[_Term, ...]
     terms: tuple[_CategorizedTerm, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class _NormalizedText:
+    """Stage 1's output: the whole text (for stages 2/4's phrase matching) and its clauses
+    (for stage 3's co-occurrence check), all normalized the same way."""
+
+    whole: str
+    clauses: tuple[str, ...]
 
 
 # --- Stage 1: normalization --------------------------------------------------------------
@@ -310,6 +327,18 @@ def normalize(text: str) -> str:
     text = _CANT_RE.sub("cant", text)
     text = _PUNCTUATION_RE.sub(" ", text)
     return _WHITESPACE_RE.sub(" ", text).strip()
+
+
+def _normalize_with_clauses(text: str) -> _NormalizedText:
+    """`normalize` the whole text, and separately each clause of it (split on sentence
+    punctuation and newlines *before* normalization strips that punctuation)."""
+    stripped = _strip_format_characters(text)
+    clauses = tuple(
+        clause
+        for clause in (normalize(part) for part in _CLAUSE_SPLIT_RE.split(stripped))
+        if clause
+    )
+    return _NormalizedText(whole=normalize(stripped), clauses=clauses)
 
 
 def _strip_soft_hard_signs(text: str) -> str:
@@ -377,6 +406,16 @@ def _load_list_terms(lang: str, *, fold_signs: bool) -> tuple[_CategorizedTerm, 
     return tuple(entries)
 
 
+def _allowlist_pattern(phrases: tuple[str, ...]) -> re.Pattern[str] | None:
+    """One regex matching any allowlisted phrase as whole words. Lookarounds (not consumed
+    spaces) mean back-to-back repeats ("chest day chest day") are all stripped in one `sub`;
+    longer phrases go first so "chest press" can't pre-empt "chest presses"."""
+    if not phrases:
+        return None
+    alternatives = "|".join(re.escape(p) for p in sorted(phrases, key=len, reverse=True))
+    return re.compile(rf"(?<= )(?:{alternatives})(?= )")
+
+
 @cache
 def _rules(lang: str, *, fold_signs: bool) -> _LangRules:
     """One language's rules. `fold_signs=True` is the variant for scanning transliterated
@@ -393,7 +432,6 @@ def _rules(lang: str, *, fold_signs: bool) -> _LangRules:
         chest_or_heart_allowlist=_allowlist_pattern(
             tuple(fold(phrase) for phrase in _CHEST_OR_HEART_ALLOWLIST.get(lang, ()))
         ),
-        chest_log_line=_CHEST_LOG_LINE_RE.get(lang),
         symptom_descriptors=tuple(
             _parse_term(raw, fold_signs=fold_signs) for raw in _SYMPTOM_DESCRIPTORS.get(lang, ())
         ),
@@ -404,52 +442,42 @@ def _rules(lang: str, *, fold_signs: bool) -> _LangRules:
 # --- Stages 2-4: one language's scan -----------------------------------------------------
 
 
-def _allowlist_pattern(phrases: tuple[str, ...]) -> re.Pattern[str] | None:
-    """One regex matching any allowlisted phrase as whole words. Lookarounds (not consumed
-    spaces) mean back-to-back repeats ("chest day chest day") are all stripped in one `sub`;
-    longer phrases go first so "chest press" can't pre-empt "chest presses"."""
-    if not phrases:
-        return None
-    alternatives = "|".join(re.escape(p) for p in sorted(phrases, key=len, reverse=True))
-    return re.compile(rf"(?<= )(?:{alternatives})(?= )")
-
-
 def _strip_allowlisted(padded: str, rules: _LangRules) -> str:
-    """Stage 2: remove every allowlisted phrase (and the token of a "chest 4x10"-style set
-    log) so a chest/heart token that only appears inside one doesn't reach stage 3."""
-    result = padded
-    if rules.chest_or_heart_allowlist is not None:
-        result = rules.chest_or_heart_allowlist.sub("", result)
-    if rules.chest_log_line is not None:
-        result = rules.chest_log_line.sub(" ", result)
-    return result
+    """Stage 2: remove every allowlisted exercise/training phrase, so the chest/heart token
+    inside it can't pair with a nearby effort word in stage 3."""
+    if rules.chest_or_heart_allowlist is None:
+        return padded
+    return rules.chest_or_heart_allowlist.sub("", padded)
 
 
-def _first_match(terms: tuple[_Term, ...], padded: str) -> _Term | None:
-    words = tuple(padded.split())
-    return next((term for term in terms if term.matches(padded, words)), None)
+def _positions(terms: tuple[_Term, ...], words: tuple[str, ...]) -> list[tuple[int, _Term]]:
+    """Index and matching term of every word in `words` that one of `terms` matches."""
+    found: list[tuple[int, _Term]] = []
+    for index, word in enumerate(words):
+        for term in terms:
+            if term.matches_word(word):
+                found.append((index, term))
+                break
+    return found
 
 
-def _chest_or_heart_hit(padded: str, rules: _LangRules) -> StopHit | None:
-    """Stage 3: deny-by-default. A chest/heart token halts unless the allowlist removed it;
-    a token plus a *symptom* descriptor halts regardless of the allowlist (A§7.1's
-    co-occurrence override: "after chest press my chest feels tight"). Effort words are not
-    descriptors, so "chest day, bench felt heavy" passes while "my chest feels heavy" still
-    halts on its non-allowlisted token."""
-    token = _first_match(rules.chest_or_heart_tokens, padded)
-    if token is None:
-        return None
-    descriptor = _first_match(rules.symptom_descriptors, padded)
-    if descriptor is not None:
-        return StopHit(
-            category=_CHEST_OR_HEART_CATEGORY,
-            term=f"{token.text} + {descriptor.text}",
-            lang=rules.lang,
-        )
-    remaining = _first_match(rules.chest_or_heart_tokens, _strip_allowlisted(padded, rules))
-    if remaining is None:
-        return None
-    return StopHit(category=_CHEST_OR_HEART_CATEGORY, term=remaining.text, lang=rules.lang)
+def _chest_or_heart_hit(clauses: tuple[str, ...], rules: _LangRules) -> StopHit | None:
+    """Stage 3: a chest/heart token halts only with a symptom descriptor in the same clause
+    and within `_CO_OCCURRENCE_WINDOW` words of it (A§7.1). A bare mention never halts."""
+    for clause in clauses:
+        words = tuple(_strip_allowlisted(f" {clause} ", rules).split())
+        tokens = _positions(rules.chest_or_heart_tokens, words)
+        if not tokens:
+            continue
+        for token_index, token in tokens:
+            for descriptor_index, descriptor in _positions(rules.symptom_descriptors, words):
+                if abs(token_index - descriptor_index) <= _CO_OCCURRENCE_WINDOW:
+                    return StopHit(
+                        category=_CHEST_OR_HEART_CATEGORY,
+                        term=f"{token.text} + {descriptor.text}",
+                        lang=rules.lang,
+                    )
+    return None
 
 
 def _list_hit(padded: str, rules: _LangRules) -> StopHit | None:
@@ -461,19 +489,25 @@ def _list_hit(padded: str, rules: _LangRules) -> StopHit | None:
     return None
 
 
-def _scan_language(normalized: str, lang: str, *, fold_signs: bool = False) -> StopHit | None:
-    padded = f" {normalized} "
+def _scan_language(text: _NormalizedText, lang: str, *, fold_signs: bool = False) -> StopHit | None:
     rules = _rules(lang, fold_signs=fold_signs)
-    return _chest_or_heart_hit(padded, rules) or _list_hit(padded, rules)
+    return _chest_or_heart_hit(text.clauses, rules) or _list_hit(f" {text.whole} ", rules)
 
 
-def _scan_transliterated_russian(normalized: str) -> StopHit | None:
+def _scan_transliterated_russian(text: _NormalizedText) -> StopHit | None:
     """The Latin-keyboard reading of the text, checked against the Russian rules with the
     soft/hard signs ignored on both sides."""
-    translit = _transliterate_latin_to_cyrillic(normalized)
-    if not translit or translit == normalized:
+    translit_whole = _transliterate_latin_to_cyrillic(text.whole)
+    if not translit_whole or translit_whole == text.whole:
         return None
-    return _scan_language(_strip_soft_hard_signs(translit), "ru", fold_signs=True)
+    translit = _NormalizedText(
+        whole=_strip_soft_hard_signs(translit_whole),
+        clauses=tuple(
+            _strip_soft_hard_signs(_transliterate_latin_to_cyrillic(clause))
+            for clause in text.clauses
+        ),
+    )
+    return _scan_language(translit, "ru", fold_signs=True)
 
 
 def _emoji_hit(raw_text: str, lang: str) -> StopHit | None:
@@ -502,8 +536,8 @@ def scan(text: str, lang: str) -> StopHit | None:
     if emoji_hit is not None:
         return emoji_hit
 
-    normalized = normalize(text)
-    if not normalized:
+    normalized = _normalize_with_clauses(text)
+    if not normalized.whole:
         return None
 
     for candidate_lang in _languages_to_scan(lang):
