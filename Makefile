@@ -1,5 +1,8 @@
 # Thin wrappers around uv / fitme. Run `make` for the list.
-FITME := uv run fitme
+# Fitme reads real environment variables only (A§1); it never loads .env itself. When a
+# .env file exists in the repo root, load it for these dev commands via uv. Tests must stay
+# independent of .env, so this is applied only to $(FITME), never to `test`.
+FITME := uv run $(if $(wildcard .env),--env-file .env) fitme
 OUT ?= fitme-export.json
 
 .DEFAULT_GOAL := help

@@ -1,0 +1,65 @@
+[project]
+name = "fitme"
+version = "0.1.0"
+description = "Self-hosted, single-user training plan generator and training log."
+readme = "README.md"
+requires-python = ">=3.13"
+license = { file = "LICENSE" }
+dependencies = [
+    "aiogram>=3.15,<4",
+    "fastapi>=0.115,<1",
+    "jinja2>=3.1,<4",
+    "uvicorn>=0.32,<1",
+    "aiosqlite>=0.20,<1",
+    "pydantic>=2.9,<3",
+    "pydantic-settings>=2.6,<3",
+    "pydantic-ai-slim[anthropic]>=2.51,<3",
+]
+
+[project.scripts]
+fitme = "fitme.cli.main:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3,<9",
+    "pytest-asyncio>=1,<2",
+    "ruff>=0.7,<1",
+    "mypy>=1.13,<2",
+    "httpx>=0.27,<1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fitme"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+target-version = "py313"
+# Ruff's markdown code-block formatting would otherwise rewrite the Python snippets embedded
+# as examples in the design docs; those are illustrations, not source to reformat.
+extend-exclude = ["docs"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+plugins = ["pydantic.mypy"]
+python_version = "3.13"
+mypy_path = "src"
+namespace_packages = true
+explicit_package_bases = true
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = ["fitme.domain.*", "fitme.guards.*"]
+strict = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

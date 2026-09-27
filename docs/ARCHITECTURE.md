@@ -53,7 +53,7 @@ Everything else needs a reason. Prefer boring dependencies (AGENTS.md §9).
 fitme/
 ├── AGENTS.md                  # operating rules (overrides everything)
 ├── README.md
-├── pyproject.toml             # uv project; console script `fitme = fitme.cli.main:app`
+├── pyproject.toml             # uv project; console script `fitme = fitme.cli.main:main`
 ├── .env.example
 ├── docs/
 │   ├── ARCHITECTURE.md        # this file
@@ -832,7 +832,7 @@ session's recap, using the same service.
 | `fitme llm eval [--agent NAME] [--model STR]` | Run the LLM eval fixtures against a model; prints guard-pass rate, refusals, tokens, cost (§8.5). Spends money. |
 | `fitme catalog check` | Validate `exercises.toml` and locales (all keys present in all languages); print `content_version`. |
 
-Use `argparse` or `typer`. Pick one and keep it.
+Uses stdlib `argparse`.
 
 ## 12. Language & copy rules (summary of AGENTS.md §3)
 
