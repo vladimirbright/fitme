@@ -116,9 +116,10 @@ One process: `uv run fitme serve`.
 - Workout state lives in the DB, not in memory, so a restart during a workout resumes where
   it stopped (§6.5).
 
-Reference deployment: one small VM or home server, a systemd unit, and Caddy in front of
-uvicorn for TLS. Backups use `sqlite3 fitme.db ".backup ..."` from cron, with an example in
-`deploy/`.
+Reference deployment: **Docker Compose** with a small `python:3.13-alpine` image, running as
+non-root with a read-only root filesystem and the SQLite file on a named volume. An optional
+Caddy service provides TLS. Backups use `fitme backup` (the sqlite3 online backup API) from
+host cron. See M10.
 
 ### 3.1 Configuration (env vars)
 

@@ -240,15 +240,55 @@ The operator asked for this during M8. It adds a second entry point to `/plan` n
   - training delete writes a `session_delete` decision.
 - A test asserts that templates contain no external URLs.
 
-## M10 — Deployment & docs
+## M10 — Deployment (Docker Compose) & docs
 
-- `deploy/`: a systemd unit, a Caddyfile example, `backup.sh` (`sqlite3 .backup` plus
-  rotation) and a restore note.
-- README: what it is, the AI disclosure, the not-medical-advice note, which data goes to the
-  LLM provider, and setup steps (`uv sync`, env, `fitme db upgrade`, `fitme activate`,
-  `fitme serve`).
+The reference deployment is **Docker Compose** on a small host, with the smallest
+practical Linux image.
 
-**Accept:** A fresh clone reaches a working bot by following only the README.
+- A multi-stage `Dockerfile`:
+  - **Builder:** `python:3.13-alpine` with `uv` (copied from the official
+    `ghcr.io/astral-sh/uv` image). It runs `uv sync --frozen --no-dev`, installing into
+    `/app/.venv`.
+  - **Runtime:** `python:3.13-alpine` with only the venv and the app, and no build tools.
+    It runs as a non-root user (uid 10001) with `PYTHONDONTWRITEBYTECODE=1`,
+    `PYTHONUNBUFFERED=1` and `PYDANTIC_AI_NO_BANNER=1`.
+  - The entrypoint runs `fitme db upgrade`, then `fitme serve`. Migrations are idempotent,
+    and serve refuses to start while any are pending.
+  - Keep it small: no compilers, no pip cache. Check that every dependency installs from
+    musllinux wheels; if one doesn't, document it and switch that stage to
+    `python:3.13-slim`.
+  - A `.dockerignore` excludes `.venv`, `.git`, the DB, exports, backups, `.env*`, tests,
+    docs and caches.
+- `compose.yaml`:
+  - **`fitme` service:** `env_file: .env`; a named volume `fitme-data` mounted at `/data`
+    with `FITME_DB_PATH=/data/fitme.db`; `restart: unless-stopped`; `read_only: true`
+    with a `tmpfs` for `/tmp`; `cap_drop: [ALL]`; `security_opt: [no-new-privileges:true]`.
+  - **Healthcheck:** `fitme health`, a new CLI command that checks the DB opens,
+    migrations are applied and settings are valid. It uses no network.
+  - The web port binds to `127.0.0.1` only by default.
+  - **Optional `caddy` service** under a compose profile `tls` (`caddy:2-alpine`), with a
+    `Caddyfile` that reverse-proxies to `fitme:8080` using automatic HTTPS for
+    `FITME_WEB_BASE_URL`'s host.
+- **Backups:** `fitme backup --out PATH` uses Python's `sqlite3` online backup API, so the
+  image needs no `sqlite3` binary. It writes mode 0600 and rotates to keep the last N
+  (`--keep`). Provide `deploy/backup.sh`, which calls
+  `docker compose exec fitme fitme backup` for host cron, plus a restore note.
+- **Make targets:** `docker-build`, `up`, `down`, `logs`, `backup`, and
+  `activate-docker` (`docker compose exec fitme fitme activate`).
+- **README:** what it is; the AI disclosure; the not-medical-advice note; which data goes
+  to the LLM provider; setup (`.env` from `.env.example`, `docker compose up -d`,
+  `docker compose exec fitme fitme activate`, message the bot); backups and restore;
+  local dev with `uv`.
+
+**Accept:**
+
+- `docker compose build` succeeds, and the runtime image is under ~120 MB (report the
+  actual size).
+- `docker compose up` starts with a valid `.env`, and the healthcheck passes.
+- The container runs as non-root on a read-only root filesystem.
+- The DB persists across `down`/`up`.
+- `fitme backup` produces a restorable copy (tested in pytest without Docker).
+- A fresh clone reaches a working bot by following only the README.
 
 ## M11 — Import plans and training history (last)
 
