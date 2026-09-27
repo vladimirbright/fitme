@@ -69,7 +69,7 @@ settings test.
 
 ## M3 — Catalog & i18n
 
-- `catalog/exercises.toml` with 40–60 exercises covering every location and equipment
+- `catalog/exercises.toml` with roughly 100 exercises covering every location and equipment
   option (A§4.4). Use conservative calibration starts.
 - `i18n/`: a loader and `t(key, lang, **params)`, plus `locales/en.toml` and `ru.toml`.
 - `fitme catalog check` (A§11).

@@ -1,0 +1,16 @@
+# A deliberately invalid catalog fixture for tests/unit/test_cli_catalog_check.py:
+# `loads_areas` names an area outside `fitme.domain.enums.VALID_LOADS_AREAS`, which
+# `domain.catalog.Exercise` rejects at validation time.
+
+[[exercise]]
+id = "broken_exercise"
+names = { en = "Broken exercise", ru = "Некорректное упражнение" }
+kind = "compound"
+pattern = "squat"
+equipment = []
+locations = ["apartment_no_equipment"]
+loads_areas = ["not_a_real_area"]
+contraindicated_by = []
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "n/a", ru = "n/a" }

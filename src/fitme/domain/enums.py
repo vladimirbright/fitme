@@ -93,6 +93,11 @@ class Equipment(StrEnum):
     PULL_UP_BAR = "pull_up_bar"
     KETTLEBELL = "kettlebell"
     RESISTANCE_BANDS = "resistance_bands"
+    # A§4.2: gym-only. Gym locations have them by default
+    # (`domain.catalog.LOCATION_DEFAULT_EQUIPMENT`); the home-equipment questionnaire step
+    # doesn't offer them (`domain.catalog.HOME_SELECTABLE_EQUIPMENT`).
+    MACHINE = "machine"
+    CABLE = "cable"
 
 
 class ScreeningFlag(StrEnum):
@@ -174,6 +179,14 @@ AREA_FLAG_TO_LOADS_AREA: dict[ScreeningFlag, str] = {
 # against this set.
 VALID_LOADS_AREAS: frozenset[str] = frozenset(AREA_FLAG_TO_LOADS_AREA.values())
 
+# The inverse of `AREA_FLAG_TO_LOADS_AREA`: a catalog `loads_areas` short name -> the
+# screening flag that must be in `contraindicated_by` for any exercise that loads it (A§4.4
+# catalog invariant "contraindications cover loaded areas", enforced by
+# `domain.catalog.missing_contraindication_coverage` and `fitme catalog check`).
+LOADS_AREA_TO_AREA_FLAG: dict[str, ScreeningFlag] = {
+    area: flag for flag, area in AREA_FLAG_TO_LOADS_AREA.items()
+}
+
 
 class CheckinAnswer(StrEnum):
     """A§4.2 `checkins.answer`. A check-in row starts `unknown` and is only ever updated by
@@ -243,3 +256,22 @@ class ExerciseKind(StrEnum):
     BODYWEIGHT = "bodyweight"
     CARDIO = "cardio"
     MOBILITY = "mobility"
+
+
+class ExercisePattern(StrEnum):
+    """M3 addition: the movement pattern one catalog exercise trains. Drives the "every
+    location has a workable full-body set" check (IMPLEMENTATION_PLAN M3): a full-body plan
+    needs one of each of the first seven, plus at least one mobility and one conditioning
+    option. `ACCESSORY` is the catch-all for isolation/accessory work (curls, raises, calf
+    work, ...) that supports a workout without being one of the primary compound patterns."""
+
+    SQUAT = "squat"  # knee-dominant: squat variants, lunges, step-ups
+    HINGE = "hinge"  # hip-dominant: deadlifts, hip thrusts, good mornings
+    HORIZONTAL_PUSH = "horizontal_push"  # bench/floor press, push-ups
+    HORIZONTAL_PULL = "horizontal_pull"  # rows
+    VERTICAL_PUSH = "vertical_push"  # overhead press, pike push-up
+    VERTICAL_PULL = "vertical_pull"  # pull-ups, or a bodyweight substitute (A§4.4)
+    CORE = "core"
+    MOBILITY = "mobility"
+    CONDITIONING = "conditioning"
+    ACCESSORY = "accessory"

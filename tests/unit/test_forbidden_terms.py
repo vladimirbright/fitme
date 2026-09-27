@@ -1,0 +1,230 @@
+"""AGENTS.md §3 language rules, enforced as a lint-style test over every user-visible locale
+string, every catalog exercise name, and every catalog instruction: never
+"trainer/coach/physio/therapist/your personal X", never a diagnosis/treatment/cure/therapy/
+rehab claim, no weight-loss claims. "training" and "health" themselves are fine — only
+"trainer" and (English) bare "heal*" (not "health*") are banned.
+
+Also checks A§4.4's "no internal references" catalog invariant (no "A§"/"AGENTS" citation
+leaking into user-visible copy), sharing the same scanner `fitme catalog check` uses.
+"""
+
+from __future__ import annotations
+
+import re
+
+import pytest
+
+from fitme import i18n
+from fitme.catalog import load_catalog
+from fitme.cli.catalog_check import forbidden_reference_problems
+
+# Case-insensitive bans. Kept short and specific (AGENTS.md §3's own words plus the M3-round-2
+# review), rather than stemming everything, to avoid banning legitimate uses:
+# - "diagnosed"/"diagnose" is deliberately NOT banned in English: A§5.1's own screening
+#   copy asks about "diagnosed high blood pressure" (self-reported history), which is not the
+#   system making a diagnosis claim. Russian "диагноз" is banned and doesn't collide with the
+#   verb form "диагностировано" used the same way (different letter after "диагно").
+# - Every term in `_WORD_START_TERMS` is matched at a word boundary (`\bterm`, no boundary
+#   required at the end, so it still catches an inflected form: "trainers", "cures") rather
+#   than as a plain substring anywhere in the text. Plain substring matching is too broad for
+#   these specific short words once the catalog is a few thousand words of prose: "cure"
+#   plainly matches inside "se-CURE" ("a secure bar", a real M3-round-3 false positive on the
+#   band lat pulldown instructions), and "heal" matches inside "health" (used constantly —
+#   this is a health screening flow). None of the terms below happen to prefix-match any
+#   other word actually used in this project's copy (verified by the tests further down).
+#   Multi-word phrases stay plain-substring: a phrase is specific enough that this risk
+#   doesn't apply in practice.
+_WORD_START_TERMS: frozenset[str] = frozenset(
+    {
+        "trainer",
+        "coach",
+        "physio",
+        "nutritionist",
+        "therapy",
+        "therapeutic",
+        "rehab",
+        "cure",
+        "treat",
+    }
+)
+_FORBIDDEN_EN: tuple[str, ...] = (
+    "trainer",
+    "coach",
+    "physio",
+    "personal trainer",
+    "your personal",
+    "nutritionist",
+    "therapy",
+    "therapeutic",
+    "rehab",
+    "heal",
+    "treat",
+    "cure",
+    "prevent injury",
+    "weight loss",
+    "fat loss",
+    "lose weight",
+    "burn fat",
+)
+_FORBIDDEN_RU: tuple[str, ...] = (
+    "тренер",
+    "коуч",
+    "персональн",
+    "физиотерапевт",
+    "терапи",
+    "реабилит",
+    "диагноз",
+    "лечит",
+    "лечение",
+    "похудение",
+    "похуде",
+    "сбросить вес",
+    "жиросжиг",
+)
+
+_HEAL_PATTERN = re.compile(r"\bheal(?!th)\w*")
+
+
+def _term_present(text: str, term: str) -> bool:
+    if term == "heal":
+        return _HEAL_PATTERN.search(text) is not None
+    if term in _WORD_START_TERMS:
+        return re.search(rf"\b{re.escape(term)}", text) is not None
+    return term in text
+
+
+def _locale_text(lang: str) -> str:
+    """Every *user-visible* string value for `lang`, joined — deliberately not the raw TOML
+    file text, which would also scan this file's own explanatory comments (containing the
+    very words being banned) as if they were copy."""
+    return "\n".join(i18n.t(key, lang) for key in sorted(i18n.keys(lang))).casefold()
+
+
+def _catalog_instructions_text(lang: str) -> str:
+    catalog = load_catalog()
+    texts = (exercise.instructions.get(lang, "") for exercise in catalog.exercise)
+    return "\n".join(texts).casefold()
+
+
+def _catalog_names_text(lang: str) -> str:
+    catalog = load_catalog()
+    texts = (exercise.names.get(lang, "") for exercise in catalog.exercise)
+    return "\n".join(texts).casefold()
+
+
+@pytest.mark.parametrize("term", _FORBIDDEN_EN)
+def test_english_locale_has_no_forbidden_terms(term: str) -> None:
+    assert not _term_present(_locale_text("en"), term), f"forbidden term {term!r} found in en.toml"
+
+
+@pytest.mark.parametrize("term", _FORBIDDEN_RU)
+def test_russian_locale_has_no_forbidden_terms(term: str) -> None:
+    assert not _term_present(_locale_text("ru"), term), f"forbidden term {term!r} found in ru.toml"
+
+
+@pytest.mark.parametrize("term", _FORBIDDEN_EN)
+def test_catalog_english_instructions_have_no_forbidden_terms(term: str) -> None:
+    text = _catalog_instructions_text("en")
+    assert not _term_present(text, term), (
+        f"forbidden term {term!r} found in an English catalog instruction"
+    )
+
+
+@pytest.mark.parametrize("term", _FORBIDDEN_RU)
+def test_catalog_russian_instructions_have_no_forbidden_terms(term: str) -> None:
+    text = _catalog_instructions_text("ru")
+    assert not _term_present(text, term), (
+        f"forbidden term {term!r} found in a Russian catalog instruction"
+    )
+
+
+@pytest.mark.parametrize("term", _FORBIDDEN_EN)
+def test_catalog_english_names_have_no_forbidden_terms(term: str) -> None:
+    text = _catalog_names_text("en")
+    assert not _term_present(text, term), (
+        f"forbidden term {term!r} found in an English exercise name"
+    )
+
+
+@pytest.mark.parametrize("term", _FORBIDDEN_RU)
+def test_catalog_russian_names_have_no_forbidden_terms(term: str) -> None:
+    text = _catalog_names_text("ru")
+    assert not _term_present(text, term), (
+        f"forbidden term {term!r} found in a Russian exercise name"
+    )
+
+
+def test_training_is_allowed_even_though_trainer_is_not() -> None:
+    text = _locale_text("en")
+    assert "training" in text  # sanity: we do use the word "training" throughout
+    assert not _term_present(text, "trainer")
+
+
+def test_trenirovka_is_allowed_even_though_trener_is_not() -> None:
+    text = _locale_text("ru")
+    assert "тренировк" in text  # "training"/"workout" in Russian
+    assert not _term_present(text, "тренер")
+
+
+def test_health_is_allowed_even_though_heal_is_not() -> None:
+    text = _locale_text("en")
+    assert "health" in text  # sanity: the screening flow talks about "health" a lot
+    assert not _term_present(text, "heal")
+
+
+def test_heal_pattern_still_catches_inflected_forms() -> None:
+    assert _HEAL_PATTERN.search("this heals the back") is not None
+    assert _HEAL_PATTERN.search("a healing exercise") is not None
+    assert _HEAL_PATTERN.search("your health matters") is None
+    assert _HEAL_PATTERN.search("a healthy habit") is None
+
+
+def test_secure_is_allowed_even_though_cure_is_not() -> None:
+    """M3-round-3: a plain substring check for "cure" false-positived on "a secure bar" in
+    the band lat pulldown instructions. `_WORD_START_TERMS` matches at a word boundary
+    instead, so it still catches "cure"/"cures"/"cured"/"curing" without matching a word that
+    merely ends in those letters."""
+    assert not _term_present("loop a band over a secure bar", "cure")
+    assert _term_present("there is no cure for this", "cure")
+    assert _term_present("this cures everything", "cure")
+
+
+def test_diagnosed_question_wording_is_present_and_not_flagged() -> None:
+    """A§5.1 explicitly asks about "diagnosed high blood pressure" as a self-report
+    screening question — this is intentional, not a system diagnosis claim, and confirms the
+    forbidden-term list above doesn't accidentally ban it."""
+    assert "diagnosed with high blood pressure" in _locale_text("en")
+    assert "diagnose" not in _FORBIDDEN_EN
+
+
+def test_no_internal_doc_references_in_the_real_catalog_and_locales() -> None:
+    """A§4.4 "no internal references": no catalog name/instruction and no locale string may
+    contain "A§" or "AGENTS"."""
+    problems = forbidden_reference_problems(load_catalog())
+    assert problems == [], problems
+
+
+def test_forbidden_reference_scanner_catches_a_planted_reference() -> None:
+    from fitme.domain.catalog import Catalog
+
+    catalog = Catalog.model_validate(
+        {
+            "exercise": [
+                {
+                    "id": "planted",
+                    "names": {"en": "Planted exercise (see A§4.4)", "ru": "n/a"},
+                    "kind": "mobility",
+                    "pattern": "mobility",
+                    "equipment": [],
+                    "locations": ["outdoor"],
+                    "loads_areas": [],
+                    "contraindicated_by": [],
+                    "increment_kg": 1.0,
+                    "start": {"kind": "bodyweight"},
+                    "instructions": {"en": "n/a", "ru": "n/a"},
+                }
+            ]
+        }
+    )
+    problems = forbidden_reference_problems(catalog)
+    assert any("planted" in p for p in problems)

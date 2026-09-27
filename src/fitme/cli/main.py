@@ -1,8 +1,8 @@
 """The `fitme` command.
 
-Subcommands mirror docs/ARCHITECTURE.md §11. `db upgrade`, `export`, `delete` and `purge`
-are implemented (M1); `activate`, `catalog check` and `llm eval` are still stubs, reporting
-that they aren't implemented yet, until the milestones that build them (M5, M3, M4).
+Subcommands mirror docs/ARCHITECTURE.md §11. `db upgrade`, `export`, `delete`, `purge` and
+`catalog check` are implemented (M1, M3); `activate` and `llm eval` are still stubs,
+reporting that they aren't implemented yet, until the milestones that build them (M5, M4).
 """
 
 from __future__ import annotations
@@ -14,6 +14,7 @@ from collections.abc import Callable, Coroutine, Sequence
 from typing import Any
 
 from fitme.cli import commands
+from fitme.cli.catalog_check import catalog_check
 from fitme.config.settings import Settings, SettingsError, load_settings
 from fitme.log import configure_logging
 
@@ -96,6 +97,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "purge":
         return _with_settings(parser, commands.purge_now)
     if args.command == "catalog":
+        if args.catalog_command == "check":
+            return catalog_check()
         return _stub(f"catalog {args.catalog_command}")
     if args.command == "llm":
         return _stub(f"llm {args.llm_command}")

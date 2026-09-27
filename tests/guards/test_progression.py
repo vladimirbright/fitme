@@ -16,6 +16,7 @@ def _squat() -> Exercise:
             "id": "barbell_back_squat",
             "names": {"en": "Barbell back squat"},
             "kind": "compound",
+            "pattern": "squat",
             "equipment": ["barbell", "rack"],
             "locations": ["public_gym"],
             "loads_areas": ["knee", "lower_back"],

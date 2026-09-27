@@ -190,7 +190,10 @@ exact strings:
 - `location`: `public_gym`, `studio_gym`, `home_equipment`, `apartment_no_equipment`,
   `outdoor`.
 - `equipment`: `dumbbells`, `barbell`, `rack`, `bench`, `pull_up_bar`, `kettlebell`,
-  `resistance_bands`.
+  `resistance_bands`, `machine`, `cable`. `machine` and `cable` are gym-only: gym
+  locations have them by default, and the home-equipment question doesn't offer them.
+- `pattern` (catalog): `squat`, `hinge`, `horizontal_push`, `horizontal_pull`,
+  `vertical_push`, `vertical_pull`, `core`, `mobility`, `conditioning`, `accessory`.
 - `screening_flags.flag`:
   - Red flags: `heart_condition`, `chest_discomfort`, `dizziness_fainting`,
     `high_blood_pressure`, `recent_surgery`, `pregnant`, `other_condition_limits`.
@@ -240,7 +243,23 @@ start = { kind = "kg", kg = 20.0 }   # conservative calibration start: empty bar
 instructions = { en = "...", ru = "..." }  # vetted text; shown during training
 ```
 
-The executor seeds about 40–60 common exercises covering every location in §5.1. Pick
+Catalog invariants, enforced by `fitme catalog check` and tests:
+
+- **Contraindications cover loaded areas:** `contraindicated_by ⊇ {<area>_injury_current
+  for a in loads_areas}` for every exercise. Any exception is an explicit, commented
+  `contraindication_exceptions` entry that has been reviewed.
+- **Honest patterns:** an exercise's `pattern` is what it actually is. Coverage rules adapt
+  per location; the data is never mislabeled to satisfy them. Required patterns per
+  location: all primary patterns, except `apartment_no_equipment`, which does not require
+  `vertical_pull` (that needs a bar; plans compensate with horizontal pulls).
+- **Loads are per implement:** for two-dumbbell exercises `kg` is per dumbbell. Prompts and
+  UI copy must say so.
+- **Implement steps are real:** e.g. kettlebells step 2 or 4 kg.
+- **Safety cues:** barbell rack and bench exercises include a cue to set safety arms. The
+  barbell deadlift starts at `calibration`, with the bar at standard height.
+- **No internal references** ("A§", "AGENTS") in user-visible names or instructions.
+
+The catalog holds roughly 100 exercises covering every location in §5.1 (hand-written plus reviewed generated candidates). Pick
 calibration start loads conservatively: an empty bar, the lightest dumbbell/machine stack, or
 bodyweight.
 
@@ -378,8 +397,11 @@ The reasons:
 - Every instance gets the same vetted content without a seeding step.
 
 **Content version.** At startup, `config/content.py` computes a SHA-256 over the
-**guard-relevant** files: `exercises.toml`, `guards/stop_words/*.txt` and
-`prompts/*.md`, in sorted path order. The first 12 hex characters are stored as
+**guard-relevant** content, in sorted path order: `exercises.toml`,
+`guards/stop_words/*.txt`, `prompts/*.md`, **and the guard and catalog-logic source files**
+(`guards/**/*.py`, `domain/catalog.py`, `domain/enums.py`, `domain/models.py`,
+`services/loads.py`). Each file contributes
+`path + length + bytes`, so moving content between files changes the hash. The first 12 hex characters are stored as
 `content_version`. It is:
 
 - written to every `decisions` row;

@@ -15,6 +15,7 @@ def _exercise(**overrides: object) -> dict[str, object]:
         "id": "barbell_back_squat",
         "names": {"en": "Barbell back squat", "ru": "Приседания со штангой на спине"},
         "kind": "compound",
+        "pattern": "squat",
         "equipment": ["barbell", "rack"],
         "locations": ["public_gym", "studio_gym"],
         "loads_areas": ["knee", "lower_back", "hip"],

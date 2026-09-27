@@ -1,6 +1,7 @@
 """CLI smoke tests: --help works, and still-stubbed subcommands say they aren't implemented
 yet. `db upgrade`, `export`, `delete`, `purge` and the `serve` migration check are real as of
-M1 and are covered in tests/integration/test_cli_commands.py instead."""
+M1 and are covered in tests/integration/test_cli_commands.py instead. `catalog check` is real
+as of M3 and is covered in tests/unit/test_cli_catalog_check.py instead."""
 
 from __future__ import annotations
 
@@ -27,7 +28,14 @@ def test_unimplemented_subcommand_reports_clearly(capsys: pytest.CaptureFixture[
 
 
 def test_nested_subcommand_stub(capsys: pytest.CaptureFixture[str]) -> None:
-    exit_code = main(["catalog", "check"])
+    exit_code = main(["llm", "eval"])
 
     assert exit_code != 0
-    assert "catalog check" in capsys.readouterr().err
+    assert "llm eval" in capsys.readouterr().err
+
+
+def test_catalog_check_is_no_longer_a_stub(capsys: pytest.CaptureFixture[str]) -> None:
+    exit_code = main(["catalog", "check"])
+
+    assert exit_code == 0
+    assert "content_version" in capsys.readouterr().out
