@@ -71,12 +71,15 @@ settings test.
   option (A§4.4). Use conservative calibration starts.
 - `i18n/`: a loader and `t(key, lang, **params)`, plus `locales/en.toml` and `ru.toml`.
 - `fitme catalog check` (A§11).
+- `config/content.py`: `content_version` hash (A§4.8).
 
 **Accept:**
 
 - `fitme catalog check` passes.
 - A test asserts that every location has at least one workable full-body set of exercises.
 - A test asserts that every locale has the same keys.
+- A test asserts that `content_version` changes when a catalog or stop-word file changes
+  and does not change when a locale changes.
 
 ## M4 — LLM layer
 
