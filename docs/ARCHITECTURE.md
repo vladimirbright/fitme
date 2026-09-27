@@ -36,8 +36,8 @@ One instance serves **exactly one person: the operator**. See `docs/adr/0002-sin
 | Async runtime | asyncio | Bot and web run in one process and one event loop. |
 | Telegram | `aiogram` 3.x | Long polling by default. Inline keyboards and callback queries. |
 | Web | `FastAPI` + `Jinja2` + `uvicorn` | Server-rendered HTML with vanilla JS. No SPA and no build step. |
-| DB | SQLite (WAL mode) via `SQLAlchemy` 2.x async + `aiosqlite` | One file, `FITME_DB_PATH`. |
-| Migrations | `alembic` | `migrations/` at repo root. |
+| DB | SQLite (WAL mode) via `aiosqlite` | One file, `FITME_DB_PATH`. **No ORM and no query builder.** Hand-written SQL, only in `db/controllers/` and `db/selectors/` (§4.6). |
+| Migrations | Plain `.sql` files + a ~50-line runner | `src/fitme/db/migrations/NNNN_name.sql`. No migration library (§4.7). |
 | Config | `pydantic-settings` | Environment variables only. `.env.example` is committed and `.env` is not. |
 | LLM harness | `pydantic-ai` (slim, one provider extra) | See `docs/adr/0001-llm-harness.md`. |
 | Data files | TOML (stdlib `tomllib`) | Exercise catalog, locales, model prices. Needs no YAML dependency. |
@@ -59,14 +59,18 @@ fitme/
 │   ├── ARCHITECTURE.md        # this file
 │   ├── IMPLEMENTATION_PLAN.md # milestones + acceptance criteria
 │   └── adr/                   # architecture decision records
-├── migrations/                # alembic env + versions/
 ├── deploy/                    # systemd unit, Caddyfile example, backup script
 ├── src/fitme/
 │   ├── config/                # Settings (pydantic-settings), model price table loader
 │   ├── domain/                # pure pydantic models + enums; NO I/O, NO framework imports
 │   ├── guards/                # safety invariants (AGENTS.md §2); pure functions; 100% tested
 │   │   └── stop_words/        # per-language stop-word lists (en.txt, ru.txt, ...)
-│   ├── db/                    # SQLAlchemy models, session factory, repositories
+│   ├── db/                    # the ONLY place SQL exists (§4.6)
+│   │   ├── connection.py      # open/configure aiosqlite, transaction() context manager
+│   │   ├── migrate.py         # applies migrations/*.sql in order
+│   │   ├── migrations/        # 0001_init.sql, 0002_....sql — plain SQL, forward-only
+│   │   ├── controllers/       # C/U/D: one module per aggregate (users.py, plans.py, training.py, ...)
+│   │   └── selectors/         # R: one module per aggregate/read model (plans.py, stats.py, export.py, ...)
 │   ├── llm/                   # pydantic-ai agents, prompt loader, pseudonymizer, usage accounting
 │   ├── prompts/               # versioned prompt templates (*.v1.md)
 │   ├── catalog/               # exercises.toml — the only exercises the system may prescribe
@@ -96,6 +100,8 @@ bot, web, cli  ──►  services  ──►  guards, llm, db  ──►  domai
 - `guards/` imports **only** `domain/` and the stdlib. It never imports `llm/`, `db/`,
   pydantic-ai, aiogram or FastAPI.
 - `bot/` and `web/` never call `llm/` or `db/` directly. They call `services/`.
+- SQL text exists only in `db/controllers/`, `db/selectors/` and `db/migrations/*.sql`
+  (§4.6).
 - Both front-ends use the same services. A plan generated on the web and one generated in
   the bot go through the same code path and the same guards.
 
@@ -182,7 +188,7 @@ Bucket enums:
 `decisions.kind` values: `plan_generate`, `plan_revise`, `session_adjust`,
 `result_parse`, `progression`, `session_halt`, `refusal`, `user_edit`.
 
-Enforce immutability in the repository layer: `plan_versions`, `decisions` and
+Enforce immutability in the controller layer: `plan_versions`, `decisions` and
 `decision_outcomes` have no update or delete methods, except the full-account delete (§8.3).
 
 ### 4.4 Exercise catalog (`src/fitme/catalog/exercises.toml`)
@@ -251,6 +257,65 @@ class Refusal(BaseModel):
 
 PlanProposal = Plan | Refusal   # refusal is a first-class output (AGENTS.md §2)
 ```
+
+### 4.6 Data access: controllers and selectors
+
+No ORM. SQL is written by hand and kept in two places:
+
+| Folder | Allowed statements | Returns |
+|---|---|---|
+| `db/controllers/` | `INSERT`, `UPDATE`, `DELETE` (create/update/delete) | `None`, or the new row id |
+| `db/selectors/` | `SELECT` only | `domain` models or small frozen dataclasses. **Never** raw `Row` or tuples. |
+
+The rules:
+
+1. **SQL never leaves these files.** No SQL strings, `execute()` calls or row objects in
+   `services/`, `bot/`, `web/`, `cli/` or anywhere else. A test enforces this: it scans
+   `src/fitme` for `execute(`, `executemany(`, and SQL keywords at the start of string
+   literals, and fails on any hit outside `db/`.
+2. **One function = one operation**, with a descriptive name and typed arguments:
+   `controllers.plans.insert_plan_version(conn, plan_id, version, body, origin, decision_id) -> int`,
+   `selectors.training.historical_max_kg(conn, user_id, exercise_id) -> float | None`.
+3. **Parameters only.** Use `?` or `:name` placeholders. Never format values into SQL with
+   f-strings, `%` or `.format`. Dynamic identifiers (a table name in export/delete) come only
+   from a hard-coded tuple in the same module.
+4. **The first argument is always the connection.** Controllers and selectors never open
+   connections or commit. Services own transactions:
+
+   ```python
+   async with db.transaction() as conn:          # BEGIN IMMEDIATE ... COMMIT / ROLLBACK
+       plan_id = await controllers.plans.insert_plan(conn, ...)
+       await controllers.plans.insert_plan_version(conn, plan_id, ...)
+   ```
+
+   Read-only paths use `async with db.read() as conn:`.
+5. **Append-only tables** (`plan_versions`, `decisions`, `decision_outcomes`) have insert
+   functions only. The one exception is `controllers.account.delete_user`.
+6. **JSON columns** are serialized and deserialized inside controllers and selectors, with
+   the domain model's `model_dump_json()` / `model_validate_json()`. Callers never see JSON
+   strings.
+7. Selectors may join across tables for read models (stats, export). Controllers write to
+   one aggregate per function.
+8. **Tests:** every controller and selector function has a test against a real temporary
+   SQLite file with all migrations applied. SQL is not mocked.
+
+### 4.7 Migrations
+
+- The files are `src/fitme/db/migrations/NNNN_short_name.sql`: plain SQLite SQL, numbered,
+  forward-only. There are no down migrations: restore a backup instead.
+- `db/migrate.py` does the following:
+  - creates `schema_migrations(version INTEGER PRIMARY KEY, name TEXT, applied_at TEXT)`;
+  - applies each missing file in order inside a transaction, with `executescript` wrapped
+    in `BEGIN`/`COMMIT`;
+  - records the file in `schema_migrations`;
+  - refuses to run if an applied file's checksum changed (store `sha256` as a column).
+- Never edit an applied migration. Write a new one. For SQLite table rebuilds (changing a
+  column), follow the documented 12-step procedure inside the migration file.
+- `fitme db upgrade` runs pending migrations. `fitme serve` refuses to start while any are
+  pending.
+- `0001_init.sql` creates every table in §4.1–4.3 with `STRICT` tables, `CHECK`
+  constraints for enums, foreign keys with `ON DELETE CASCADE` from `users`, and indexes
+  for the selector queries.
 
 ## 5. Setup questionnaire (`/start` for a bound user without a profile)
 
@@ -625,7 +690,7 @@ A shared footer shows: "Plans are generated by AI. This is not medical advice."
 | Command | Purpose |
 |---|---|
 | `fitme serve` | Run bot + web + retention job. |
-| `fitme db upgrade` | Run alembic migrations. |
+| `fitme db upgrade` | Apply pending `.sql` migrations. |
 | `fitme activate [--rebind]` | Print a one-time activation code. |
 | `fitme export --out PATH` | Dump all user data as JSON. |
 | `fitme delete --yes` | Delete the user and all data. |

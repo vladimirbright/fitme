@@ -31,18 +31,23 @@ settings test.
 
 ## M1 — Database & account lifecycle
 
-- Write the SQLAlchemy models for every table in A§4.1–4.3, and the alembic initial
-  migration.
-- Configure the engine with WAL, `foreign_keys=ON` and `busy_timeout`.
-- Write the repositories. `plan_versions`, `decisions` and `decision_outcomes` get no update
-  or delete methods.
-- Enforce "at most one user" in the user repository.
+- `db/connection.py`: aiosqlite connection with WAL, `foreign_keys=ON` and `busy_timeout`,
+  plus the `transaction()` and `read()` context managers (A§4.6).
+- `db/migrate.py` and `db/migrations/0001_init.sql` covering every table in A§4.1–4.3
+  (A§4.7).
+- `db/controllers/` and `db/selectors/` modules for each aggregate. `plan_versions`,
+  `decisions` and `decision_outcomes` get insert functions only.
+- Enforce "at most one user" in `controllers/users.py` and with a DB constraint (for example
+  a `CHECK (id = 1)` on `users`).
 - `services/account.py`: `export_user` and `delete_user` (A§8.3). Wire up the CLI commands
   `db upgrade`, `export`, `delete` and `purge` (A§8.4).
 
 **Accept:**
 
-- Migrations run on an empty file.
+- Migrations run on an empty file and are no-ops on a second run. A changed checksum
+  refuses to run.
+- The SQL-containment test (A§4.6 rule 1) passes.
+- Every controller and selector function has a test against a temporary DB.
 - The export/delete integration test seeds every table and asserts that zero rows remain.
 - A second user insert is rejected.
 - The retention test purges old `chat_messages` and keeps `set_logs`.
