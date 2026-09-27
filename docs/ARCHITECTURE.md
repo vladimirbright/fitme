@@ -138,7 +138,7 @@ uvicorn for TLS. Backups use `sqlite3 fitme.db ".backup ..."` from cron, with an
 | `FITME_MAX_WEEKLY_INCREMENT_KG` | no | default 2.5, compound lifts (catalog can set lower) |
 | `FITME_PRICES_FILE` | no | TOML of per-model token prices for `/system` cost estimates |
 | `FITME_DEV` | no | Allows a non-TLS base URL on localhost |
-| `FITME_SOURCE_URL` | no | Source repository link shown in the private-instance reply (§6.1). Default `https://github.com/vladimirbright/fitme`. Forks set their own. |
+| `FITME_SOURCE_URL` | no | Source repository link shown in the private-instance reply (§6.1). Default `https://github.com/vladimirbright/fitme`. Forks set their own. Also shown on the web login page (§9.1). |
 
 No secrets are committed. The reference deployment works with env vars only.
 
@@ -734,7 +734,7 @@ data).
 
 | Route | Content |
 |---|---|
-| `GET /` | Login page: product name, one-line description, AI disclosure, **Send login code to Telegram** button, code input. Not a marketing page, and it has no invite form. |
+| `GET /` | Login page: product name, one-line description, AI disclosure, **Send login code to Telegram** button, code input. Not a marketing page, and it has no invite form. Below the form: "Fitme is open source. Run your own instance: {FITME_SOURCE_URL}" (a plain link with `rel="noopener"`; same wording rules as §6.1). |
 | `POST /auth/request-code` | Sends a 6-digit code to the bound Telegram chat. Rate limit: 1 per 60 s, 5 per hour. The response is identical whether or not an account is bound. |
 | `POST /auth/verify` | Checks the code (5-minute TTL, 5 attempts, then invalid). Creates `web_sessions` and sets the cookie. |
 | `POST /auth/logout` | Deletes the session row and clears the cookie. |
