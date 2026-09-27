@@ -1,8 +1,8 @@
 # Fitme — Implementation Plan
 
 This plan is for an AI executor. Work through the milestones **in order**. Do not start a
-milestone until the acceptance criteria of the previous one pass (`uv run pytest`,
-`uv run ruff check`, `uv run mypy src`).
+milestone until the acceptance criteria of the previous one pass (`make check`: ruff, mypy, catalog check and pytest.
+Before M3, when the catalog doesn't exist yet, run `make lint typecheck test`).
 
 Every milestone ends with its own commit. The design lives in `docs/ARCHITECTURE.md`
 (referenced below as `A§n`). `AGENTS.md` overrides both documents.
@@ -24,6 +24,8 @@ Standing rules for every milestone:
 - Implement `config/settings.py` (pydantic-settings, `FITME_` prefix). It must fail fast
   with a clear error when a required variable is missing.
 - Add a `fitme` CLI stub with `--help`. Set up JSON logging.
+- Keep the root `Makefile` working. Every target wraps a `uv` or `fitme` command, and when you
+  add a CLI command, add a target for it too.
 - Add a `.gitignore` for `.env`, `*.db`, `.venv` and `__pycache__`.
 
 **Accept:** `uv sync && uv run fitme --help` works. `uv run pytest` passes; it contains a

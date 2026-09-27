@@ -15,4 +15,6 @@ Status: design phase. See:
   criteria
 - [`docs/adr/`](docs/adr): decision records
 
+Common commands are in the `Makefile`. Run `make` to list them.
+
 Each instance serves one person. To use Fitme, run your own instance.
