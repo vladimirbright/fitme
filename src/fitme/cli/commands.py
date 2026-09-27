@@ -1,23 +1,37 @@
-"""Real implementations for the CLI subcommands wired up in M1 (A§11): `db upgrade`,
-`export`, `delete`, `purge`, and the pending-migrations check `serve` uses before it starts.
+"""Real implementations for the CLI subcommands: `db upgrade`, `export`, `delete`, `purge`
+(M1), `activate` and `serve` (M5), and the pending-migrations check `serve` uses before it
+starts.
 
-`activate`, `catalog check` and `llm eval` stay stubs in `cli/main.py`; they belong to later
-milestones. This module never imports `db/selectors/` or `db/controllers/` directly (A§2.1:
-bot/web/cli call into `services/`, not `db/`) — `db/migrate.py` and
-`db/connection.py::open_database` are the sanctioned exceptions the plan calls out.
+`catalog check` and `llm eval` live in their own modules (`cli/catalog_check.py`,
+`cli/llm_eval.py`); the web app (M9) is still to come. This module never imports
+`db/selectors/` or `db/controllers/` directly (A§2.1: bot/web/cli call into `services/`, not
+`db/`) — `db/migrate.py` and `db/connection.py::open_database` are the sanctioned exceptions
+the plan calls out.
 """
 
 from __future__ import annotations
 
+import asyncio
+import contextlib
 import json
+import logging
 import os
 import sys
 
+from aiogram import Bot
+
+from fitme.bot.app import build_dispatcher
+from fitme.bot.commands import register_commands
 from fitme.config.settings import Settings
 from fitme.db.connection import Database, DatabaseUnavailableError, open_database
 from fitme.db.migrate import migrate, pending_migrations
 from fitme.services.account import delete_user, export_user, get_single_user
+from fitme.services.identity import issue_activation_code
 from fitme.services.retention import purge as run_retention
+
+_RETENTION_INTERVAL_SECONDS = 24 * 60 * 60
+
+_logger = logging.getLogger(__name__)
 
 
 async def _try_open_database(settings: Settings) -> Database | None:
@@ -126,4 +140,66 @@ async def purge_now(settings: Settings) -> int:
         f"{result.login_codes_deleted} login code(s), "
         f"{result.web_sessions_deleted} web session(s)."
     )
+    return 0
+
+
+async def activate(settings: Settings, *, rebind: bool) -> int:
+    """`fitme activate [--rebind]` (A§6.1, A§11): prints a one-time activation code, valid
+    for 15 minutes. `--rebind` unlinks the currently bound Telegram account first."""
+    db = await _try_open_database(settings)
+    if db is None:
+        return 1
+    try:
+        code = await issue_activation_code(db, rebind=rebind)
+    finally:
+        await db.close()
+    print(f"Activation code (valid 15 minutes): {code}")
+    print(f"Send it to the bot: /activate {code}")
+    return 0
+
+
+async def _retention_once(db: Database, *, chat_retention_days: int) -> None:
+    """One retention pass. A failure is logged (event name only, never row content — A§10)
+    and swallowed rather than propagated: a single bad run (e.g. a transient DB error) must
+    not stop the daily job for good."""
+    try:
+        await run_retention(db, chat_retention_days=chat_retention_days)
+    except Exception:
+        _logger.exception("retention run failed")
+
+
+async def _retention_loop(db: Database, *, chat_retention_days: int) -> None:
+    """Runs immediately, then every 24 hours (A§3, A§8.4), until cancelled by `serve_async`'s
+    shutdown."""
+    while True:
+        await _retention_once(db, chat_retention_days=chat_retention_days)
+        await asyncio.sleep(_RETENTION_INTERVAL_SECONDS)
+
+
+async def serve_async(settings: Settings) -> int:
+    """`fitme serve` (A§3, A§11): opens the database once (closed in `finally`, so the
+    process exits cleanly on error), runs the bot (long polling) and the daily retention job
+    in this one event loop, and stops gracefully on SIGINT/SIGTERM (aiogram's
+    `start_polling` installs its own handlers for these by default)."""
+    db = await _try_open_database(settings)
+    if db is None:
+        return 1
+    try:
+        bot = Bot(token=settings.telegram_bot_token.get_secret_value())
+        try:
+            dispatcher = build_dispatcher(db, settings)
+            await register_commands(bot)
+            retention_task = asyncio.create_task(
+                _retention_loop(db, chat_retention_days=settings.chat_retention_days)
+            )
+            try:
+                await dispatcher.start_polling(bot)
+            finally:
+                retention_task.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await retention_task
+        finally:
+            await bot.session.close()
+    finally:
+        await db.close()
     return 0

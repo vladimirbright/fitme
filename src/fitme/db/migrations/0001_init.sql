@@ -15,8 +15,10 @@
 -- (`tests/integration/db/test_timestamp_format.py`) asserts every stored timestamp matches
 -- it instead.
 --
--- Never edit this file after it has been applied anywhere: write a new migration instead
--- (A§4.7). db/migrate.py refuses to run if this file's checksum changes.
+-- Never edit this file after it has been applied anywhere real: write a new migration
+-- instead (A§4.7). db/migrate.py refuses to run if an applied file's checksum changes.
+-- Pre-release exception (A§4.7): until the first real deployment (M10), no database exists
+-- outside tests, so this file may still be edited in place to extend an enum CHECK.
 
 -- ============================================================================
 -- Identity & auth (A§4.1)
@@ -156,7 +158,8 @@ CREATE TABLE decisions (
     user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     kind TEXT NOT NULL CHECK (kind IN (
         'plan_generate', 'plan_revise', 'session_adjust', 'result_parse', 'progression',
-        'session_halt', 'refusal', 'user_edit', 'session_delete'
+        'session_halt', 'hold_clear', 'refusal', 'user_edit', 'session_delete',
+        'history_import'
     )),
     -- Nullable: not every decision involves an LLM call (e.g. a deterministic halt/refusal).
     prompt_template TEXT,

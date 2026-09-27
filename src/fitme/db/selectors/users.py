@@ -35,6 +35,15 @@ async def count_users(conn: aiosqlite.Connection) -> int:
     return int(row[0])
 
 
+async def any_telegram_account_bound(conn: aiosqlite.Connection) -> bool:
+    """Whether *any* Telegram account is currently linked (A§6.1): `/activate <code>` is only
+    allowed while this is false. Distinct from `count_users`: a user row can outlive its
+    Telegram link across a `--rebind` (the old link is deleted first, A§6.1)."""
+    async with conn.execute("SELECT 1 FROM telegram_accounts LIMIT 1") as cursor:
+        row = await cursor.fetchone()
+    return row is not None
+
+
 async def get_telegram_account_by_telegram_user_id(
     conn: aiosqlite.Connection, telegram_user_id: int
 ) -> TelegramAccountRecord | None:

@@ -98,3 +98,25 @@ async def insert_screening_note(conn: aiosqlite.Connection, *, user_id: int, tex
     )
     assert cursor.lastrowid is not None
     return cursor.lastrowid
+
+
+async def upsert_setup_progress(
+    conn: aiosqlite.Connection, *, user_id: int, step: str, data: dict[str, object]
+) -> None:
+    """Durable marker for where the setup questionnaire is (A§5.1, M5): so a bot restart
+    mid-setup resumes at the same step instead of relying on in-memory FSM state."""
+    await conn.execute(
+        """
+        INSERT INTO setup_progress (user_id, step, data, updated_at) VALUES (?, ?, ?, ?)
+        ON CONFLICT (user_id) DO UPDATE SET
+            step = excluded.step,
+            data = excluded.data,
+            updated_at = excluded.updated_at
+        """,
+        (user_id, step, json.dumps(data), clock.utc_now()),
+    )
+
+
+async def delete_setup_progress(conn: aiosqlite.Connection, user_id: int) -> None:
+    """Called once the questionnaire is confirmed: there is nothing left to resume."""
+    await conn.execute("DELETE FROM setup_progress WHERE user_id = ?", (user_id,))

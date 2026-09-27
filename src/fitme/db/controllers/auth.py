@@ -75,3 +75,26 @@ async def touch_web_session(conn: aiosqlite.Connection, id_hash: str) -> None:
 
 async def delete_web_session(conn: aiosqlite.Connection, id_hash: str) -> None:
     await conn.execute("DELETE FROM web_sessions WHERE id_hash = ?", (id_hash,))
+
+
+async def invalidate_pending_activation_codes(conn: aiosqlite.Connection) -> None:
+    """Mark every not-yet-used activation code as used, so it can never be redeemed again
+    (A§6.1: a wrong-code attempt limit invalidates the pending codes; the operator reruns
+    `fitme activate` for a fresh one)."""
+    await conn.execute(
+        "UPDATE activation_codes SET used_at = ? WHERE used_at IS NULL", (clock.utc_now(),)
+    )
+
+
+async def upsert_activation_failed_attempts(conn: aiosqlite.Connection, count: int) -> None:
+    """The single activation-attempt counter row (A§6.1, M5). `count = 0` resets it, e.g. when
+    a fresh code is issued or activation succeeds."""
+    await conn.execute(
+        """
+        INSERT INTO activation_state (id, failed_attempts, updated_at) VALUES (1, ?, ?)
+        ON CONFLICT (id) DO UPDATE SET
+            failed_attempts = excluded.failed_attempts,
+            updated_at = excluded.updated_at
+        """,
+        (count, clock.utc_now()),
+    )

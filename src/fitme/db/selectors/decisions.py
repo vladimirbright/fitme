@@ -40,6 +40,22 @@ async def get_decision(conn: aiosqlite.Connection, decision_id: int) -> Decision
     return None if row is None else _decision_from_row(row)
 
 
+async def get_session_halt_decision_for_hold(
+    conn: aiosqlite.Connection, hold_id: int
+) -> DecisionRecord | None:
+    """The `kind=session_halt` decision that created `hold_id` (A§6.6): `services.safety.halt`
+    embeds `hold_id` into `user_report` at creation time, so the timezone in effect back then
+    can be read back later for the "same day" check, without a schema change (`user_report`
+    is the sanctioned free-form JSON column, A§4.3)."""
+    async with conn.execute(
+        f"SELECT {_DECISION_COLUMNS} FROM decisions WHERE kind = 'session_halt' "
+        "AND json_extract(user_report, '$.hold_id') = ? ORDER BY id DESC LIMIT 1",
+        (hold_id,),
+    ) as cursor:
+        row = await cursor.fetchone()
+    return None if row is None else _decision_from_row(row)
+
+
 async def list_decisions_for_user(
     conn: aiosqlite.Connection, user_id: int, *, limit: int = 100
 ) -> list[DecisionRecord]:

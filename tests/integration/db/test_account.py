@@ -8,7 +8,12 @@ from pathlib import Path
 
 from fitme.clock import now
 from fitme.db.connection import Database, open_database
-from fitme.db.controllers.auth import insert_activation_code, insert_login_code, insert_web_session
+from fitme.db.controllers.auth import (
+    insert_activation_code,
+    insert_login_code,
+    insert_web_session,
+    upsert_activation_failed_attempts,
+)
 from fitme.db.controllers.chat import insert_chat_message
 from fitme.db.controllers.decisions import insert_decision, insert_decision_outcome, insert_llm_call
 from fitme.db.controllers.plans import insert_plan, insert_plan_version
@@ -16,6 +21,7 @@ from fitme.db.controllers.profile import (
     insert_screening_note,
     upsert_profile,
     upsert_screening_flag,
+    upsert_setup_progress,
 )
 from fitme.db.controllers.training import (
     insert_checkin,
@@ -37,8 +43,10 @@ _EXPECTED_TABLES = {
     "login_codes",
     "web_sessions",
     "profiles",
+    "setup_progress",
     "screening_flags",
     "screening_notes",
+    "activation_state",
     "plans",
     "decisions",
     "plan_versions",
@@ -81,6 +89,8 @@ async def _seed_every_table(db: Database, user_id: int) -> int:
     async with db.transaction() as conn:
         await insert_telegram_account(conn, user_id=user_id, telegram_user_id=1, chat_id=1)
         await insert_activation_code(conn, code_hash="activation-hash", expires_at=expires_at)
+        await upsert_activation_failed_attempts(conn, 1)
+        await upsert_setup_progress(conn, user_id=user_id, step="age", data={})
         await insert_login_code(
             conn, user_id=user_id, code_hash="login-hash", expires_at=expires_at
         )

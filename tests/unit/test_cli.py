@@ -1,9 +1,11 @@
-"""CLI smoke tests: --help works, and still-stubbed subcommands say they aren't implemented
-yet. `db upgrade`, `export`, `delete`, `purge` and the `serve` migration check are real as of
-M1 and are covered in tests/integration/test_cli_commands.py instead. `catalog check` is real
-as of M3 and is covered in tests/unit/test_cli_catalog_check.py instead. `llm eval` is real as
-of M4 and is covered in tests/integration/test_cli_commands.py (it needs `Settings`, so it
-can't run env-free the way the tests in this file do)."""
+"""CLI smoke tests: --help works, and an unknown subcommand under a group (`db`, `catalog`,
+`llm`) is rejected by argparse itself, since every group now has exactly one real subcommand
+registered (M1, M3, M4, M5) and no `_stub()` path is reachable through normal parsing any
+more. `db upgrade`, `export`, `delete`, `purge`, `activate` and the `serve` migration check
+are real as of M1/M5 and are covered in tests/integration/test_cli_commands.py instead.
+`catalog check` is real as of M3 and is covered in tests/unit/test_cli_catalog_check.py
+instead. `llm eval` is real as of M4 and is covered in tests/integration/test_cli_commands.py
+(it needs `Settings`, so it can't run env-free the way the tests in this file do)."""
 
 from __future__ import annotations
 
@@ -22,11 +24,11 @@ def test_help_lists_subcommands(capsys: pytest.CaptureFixture[str]) -> None:
         assert subcommand in output
 
 
-def test_unimplemented_subcommand_reports_clearly(capsys: pytest.CaptureFixture[str]) -> None:
-    exit_code = main(["activate"])
+def test_unknown_db_subcommand_is_rejected_by_argparse() -> None:
+    with pytest.raises(SystemExit) as exc_info:
+        main(["db", "not-a-real-subcommand"])
 
-    assert exit_code != 0
-    assert "not implemented yet" in capsys.readouterr().err
+    assert exc_info.value.code == 2
 
 
 def test_catalog_check_is_no_longer_a_stub(capsys: pytest.CaptureFixture[str]) -> None:

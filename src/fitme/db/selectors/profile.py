@@ -6,7 +6,12 @@ import json
 
 import aiosqlite
 
-from fitme.db.records import ProfileRecord, ScreeningFlagRecord, ScreeningNoteRecord
+from fitme.db.records import (
+    ProfileRecord,
+    ScreeningFlagRecord,
+    ScreeningNoteRecord,
+    SetupProgressRecord,
+)
 
 _PROFILE_COLUMNS = (
     "user_id, age_bucket, weight_bucket, experience, barbell_experience, preferences, "
@@ -93,3 +98,18 @@ async def list_screening_notes(
         ScreeningNoteRecord(id=row[0], user_id=row[1], text=row[2], created_at=row[3])
         for row in rows
     ]
+
+
+async def get_setup_progress(
+    conn: aiosqlite.Connection, user_id: int
+) -> SetupProgressRecord | None:
+    async with conn.execute(
+        "SELECT user_id, step, data, updated_at FROM setup_progress WHERE user_id = ?",
+        (user_id,),
+    ) as cursor:
+        row = await cursor.fetchone()
+    if row is None:
+        return None
+    return SetupProgressRecord(
+        user_id=row[0], step=row[1], data=json.loads(row[2]), updated_at=row[3]
+    )

@@ -40,6 +40,8 @@ change_button = "Change"
 [setup.timezone]
 prompt = "What's your timezone? Pick one, or type it (e.g. Europe/Berlin)."
 manual_button = "Type it myself"
+manual_prompt = "Send your timezone as an IANA name, e.g. Europe/Berlin."
+invalid = "That doesn't look like a valid timezone. Try again (e.g. Europe/Berlin), or pick one from the list."
 
 [setup.age]
 prompt = "What's your age range?"
@@ -76,6 +78,7 @@ prompt = "How many sessions per week?"
 
 [setup.session_length]
 prompt = "How long should each session be?"
+minutes_suffix = "{n} min"
 
 [setup.summary]
 title = "Here's what you told us:"
@@ -85,6 +88,9 @@ confirm_button = "Looks good"
 [setup.common]
 back_button = "Back"
 cancel_hint = "Send /cancel at any time to leave this."
+yes_button = "Yes"
+no_button = "No"
+next_button = "Next"
 
 [enum.age_bucket]
 18_29 = "18–29"
@@ -218,6 +224,66 @@ answer_pain = "Pain"
 [hold_clear]
 question = "Are you now free of pain, dizziness, numbness and chest discomfort?"
 button = "Yes, clear"
+
+[hold]
+still_open = "Training is on hold from an earlier session."
+cleared = "The hold is cleared. You can use /plan and /train again."
+too_soon = "A hold can't be cleared the same day it started. Try again tomorrow."
+
+[activation]
+usage = "Send /activate <code> using the code printed by `fitme activate` on the server."
+success = "Account linked. Let's set up your profile."
+already_bound = "This bot is already linked to an account. To link a different Telegram account, run `fitme activate --rebind` on the server, then send the new code here."
+invalid = "That code is invalid or has expired."
+too_many_attempts = "Too many wrong codes. Ask the operator to run `fitme activate` again for a fresh code."
+rate_limited = "Please wait a few seconds before trying again."
+
+[cancel]
+nothing_active = "Nothing to cancel."
+done = "Cancelled."
+setup_paused = "Setup is paused. Resume anytime with /start."
+
+[stub]
+not_available_yet = "Not available yet."
+
+[unknown]
+free_text_hint = "Use the menu, or send /help."
+
+[profile]
+empty = "No profile yet. Send /start to set one up."
+title = "Your profile:"
+fix_hint = "Tap a field below to change it."
+not_set = "Not set yet"
+frequency_value = "{n} per week"
+session_length_value = "{n} min"
+screening_status = "{answered}/{total} red-flag questions answered"
+
+[profile.field]
+language = "Language"
+timezone = "Timezone"
+age = "Age range"
+weight = "Weight range"
+experience = "Training experience"
+barbell_experience = "Barbell technique"
+screening = "Health screening"
+preferences = "Training preferences"
+focus = "Focus"
+location = "Location"
+equipment = "Home equipment"
+frequency = "Sessions per week"
+session_length = "Session length"
+
+[delete]
+button = "Delete my account"
+cancel_button = "Cancel"
+prompt = "This permanently deletes your account and all data. This can't be undone."
+type_confirm = "Type DELETE (all capital letters) to confirm, or /cancel."
+wrong_confirmation = "That didn't match. Type DELETE (all capital letters) exactly, or /cancel."
+cancelled = "Delete cancelled."
+done = "Your account and all data have been deleted."
+
+[export]
+caption = "All your data, as JSON."
 
 [workout]
 according_to_plan_button = "✅ According to plan"

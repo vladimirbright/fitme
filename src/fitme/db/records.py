@@ -72,6 +72,14 @@ class ProfileRecord:
 
 
 @dataclass(frozen=True, slots=True)
+class SetupProgressRecord:
+    user_id: int
+    step: str
+    data: dict[str, object]
+    updated_at: str
+
+
+@dataclass(frozen=True, slots=True)
 class ScreeningFlagRecord:
     id: int
     user_id: int

@@ -18,7 +18,7 @@ async def test_migrate_applies_on_an_empty_file(tmp_path: Path) -> None:
     db = await open_database(tmp_path / "fresh.db")
     try:
         applied = await migrate(db)
-        assert applied == ["0001_init.sql"]
+        assert applied == ["0001_init.sql", "0002_setup_and_activation.sql"]
 
         async with (
             db.read() as conn,

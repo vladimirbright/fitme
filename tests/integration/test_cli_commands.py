@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import os
 import stat
 from collections.abc import Iterator
@@ -12,7 +13,10 @@ from pathlib import Path
 
 import pytest
 
+from fitme.cli import commands
 from fitme.cli.main import main
+from fitme.db.connection import open_database
+from fitme.db.migrate import migrate
 
 _REQUIRED_ENV = {
     "FITME_TELEGRAM_BOT_TOKEN": "test-token",
@@ -90,11 +94,11 @@ def test_serve_refuses_while_migrations_are_pending(
     assert exit_code == 1
     assert "pending migrations" in capsys.readouterr().err
 
+    # Once migrations are applied, `serve` falls through to `commands.serve_async`, which
+    # opens a real Bot and starts long polling against the real Telegram API (M5) — out of
+    # scope for this no-network test; `tests/bot/` covers the dispatcher and handlers with a
+    # mocked Bot session instead.
     assert main(["db", "upgrade"]) == 0
-    # Once migrations are applied, `serve` falls through to its (still-stubbed) body.
-    exit_code = main(["serve"])
-    assert exit_code == 1
-    assert "not implemented yet" in capsys.readouterr().err
 
 
 def test_db_upgrade_reports_a_friendly_error_for_a_missing_directory(
@@ -224,3 +228,27 @@ def test_missing_settings_report_a_friendly_error(
 
     assert exc_info.value.code == 1
     assert "FITME_SECRET_KEY" in capsys.readouterr().err
+
+
+async def test_retention_once_survives_a_failed_run(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """M5 (A§3, A§8.4): a single failed retention pass is logged, not raised — the daily loop
+    that calls this must survive a transient DB error rather than dying silently."""
+    db = await open_database(tmp_path / "fitme.db")
+    await migrate(db)
+
+    async def _boom(*_args: object, **_kwargs: object) -> None:
+        raise RuntimeError("simulated retention failure")
+
+    monkeypatch.setattr(commands, "run_retention", _boom)
+
+    try:
+        with caplog.at_level(logging.ERROR):
+            await commands._retention_once(db, chat_retention_days=365)
+    finally:
+        await db.close()
+
+    assert "retention run failed" in caplog.text

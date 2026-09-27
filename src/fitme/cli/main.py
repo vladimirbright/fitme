@@ -1,8 +1,9 @@
 """The `fitme` command.
 
-Subcommands mirror docs/ARCHITECTURE.md §11. `db upgrade`, `export`, `delete`, `purge` and
-`catalog check` are implemented (M1, M3); `activate` and `llm eval` are still stubs,
-reporting that they aren't implemented yet, until the milestones that build them (M5, M4).
+Subcommands mirror docs/ARCHITECTURE.md §11. `db upgrade`, `export`, `delete`, `purge`,
+`catalog check`, `activate` and `serve` are implemented (M1, M3, M5); `llm eval` is
+implemented too (M4). `db <other>` and `catalog <other>` subcommands remain stubs, since no
+other subcommand under those groups exists yet.
 """
 
 from __future__ import annotations
@@ -91,7 +92,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _with_settings(parser, commands.db_upgrade)
         return _stub(f"db {args.db_command}")
     if args.command == "activate":
-        return _stub("activate")
+        return _with_settings(
+            parser, lambda settings: commands.activate(settings, rebind=args.rebind)
+        )
     if args.command == "export":
         return _with_settings(parser, lambda settings: commands.export_data(settings, args.out))
     if args.command == "delete":
@@ -132,8 +135,8 @@ def _with_settings(
 
 def _serve(parser: argparse.ArgumentParser) -> int:
     """`fitme serve` refuses to start while any migration is pending (A§4.7) or the LLM model
-    configuration is invalid (A§8.5 rule 1); the rest of `serve` (running the bot and web app)
-    is still a stub until later milestones."""
+    configuration is invalid (A§8.5 rule 1). Once those checks pass, `commands.serve_async`
+    runs the bot (the web app is still to come, M9)."""
     try:
         settings = load_settings()
     except SettingsError as exc:
@@ -166,7 +169,7 @@ def _serve(parser: argparse.ArgumentParser) -> int:
             file=sys.stderr,
         )
         return 1
-    return _stub("serve")
+    return asyncio.run(commands.serve_async(settings))
 
 
 if __name__ == "__main__":

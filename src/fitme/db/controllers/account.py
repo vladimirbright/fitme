@@ -23,6 +23,7 @@ async def delete_user_data(conn: aiosqlite.Connection, user_id: int) -> None:
     await conn.execute("DELETE FROM llm_calls")
     await conn.execute("DELETE FROM decision_outcomes")
     await conn.execute("DELETE FROM activation_codes")
+    await conn.execute("DELETE FROM activation_state")
 
     # workout_sessions has nothing RESTRICTing against it (health_holds/checkins are
     # SET NULL, chat_messages is CASCADE), so it can go next, before plan_versions.
@@ -38,6 +39,7 @@ async def delete_user_data(conn: aiosqlite.Connection, user_id: int) -> None:
     await conn.execute("DELETE FROM plans WHERE user_id = ?", (user_id,))
     await conn.execute("DELETE FROM decisions WHERE user_id = ?", (user_id,))
 
+    await conn.execute("DELETE FROM setup_progress WHERE user_id = ?", (user_id,))
     await conn.execute("DELETE FROM screening_notes WHERE user_id = ?", (user_id,))
     await conn.execute("DELETE FROM screening_flags WHERE user_id = ?", (user_id,))
     await conn.execute("DELETE FROM profiles WHERE user_id = ?", (user_id,))

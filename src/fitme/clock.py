@@ -35,3 +35,11 @@ def utc_now() -> str:
 def days_ago(days: int) -> datetime:
     """A point `days` in the past. Used for retention cutoffs."""
     return now() - timedelta(days=days)
+
+
+def parse_timestamp(value: str) -> datetime:
+    """The inverse of `format_timestamp`: parse the canonical UTC string back into a
+    timezone-aware `datetime`. Used where a stored timestamp needs to be compared or
+    converted (e.g. to the user's own timezone for the hold-clearing "not before tomorrow"
+    check, A§6.6), not just compared lexically."""
+    return datetime.strptime(value, _FORMAT).replace(tzinfo=UTC)

@@ -22,6 +22,7 @@ _TABLES_BY_USER_ID: tuple[str, ...] = (
     "login_codes",
     "web_sessions",
     "profiles",
+    "setup_progress",
     "screening_flags",
     "screening_notes",
     "health_holds",
@@ -41,7 +42,7 @@ _TABLES_WITHOUT_USER_ID_SINGLE_USER_ONLY: tuple[str, ...] = (
     "llm_calls",
 )
 
-_INSTANCE_WIDE_TABLES: tuple[str, ...] = ("activation_codes",)
+_INSTANCE_WIDE_TABLES: tuple[str, ...] = ("activation_codes", "activation_state")
 
 
 async def export_all(conn: aiosqlite.Connection, user_id: int) -> dict[str, list[ExportedRow]]:

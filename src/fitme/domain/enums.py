@@ -227,9 +227,11 @@ class DecisionKind(StrEnum):
     RESULT_PARSE = "result_parse"
     PROGRESSION = "progression"
     SESSION_HALT = "session_halt"
+    HOLD_CLEAR = "hold_clear"
     REFUSAL = "refusal"
     USER_EDIT = "user_edit"
     SESSION_DELETE = "session_delete"
+    HISTORY_IMPORT = "history_import"
 
 
 class RefusalCode(StrEnum):

@@ -20,6 +20,27 @@ async def get_activation_code_by_hash(
     return ActivationCodeRecord(id=row[0], code_hash=row[1], expires_at=row[2], used_at=row[3])
 
 
+async def list_pending_activation_codes(conn: aiosqlite.Connection) -> list[ActivationCodeRecord]:
+    """Every activation code not yet used (expired or not). Used for a constant-time compare
+    against a submitted `/activate` code (A§6.1): comparing against every pending hash with
+    `hmac.compare_digest`, rather than an equality `WHERE code_hash = ?` lookup, avoids a
+    timing side channel on which prefix of the hash matched."""
+    async with conn.execute(
+        "SELECT id, code_hash, expires_at, used_at FROM activation_codes WHERE used_at IS NULL"
+    ) as cursor:
+        rows = await cursor.fetchall()
+    return [
+        ActivationCodeRecord(id=row[0], code_hash=row[1], expires_at=row[2], used_at=row[3])
+        for row in rows
+    ]
+
+
+async def get_activation_failed_attempts(conn: aiosqlite.Connection) -> int:
+    async with conn.execute("SELECT failed_attempts FROM activation_state WHERE id = 1") as cursor:
+        row = await cursor.fetchone()
+    return 0 if row is None else int(row[0])
+
+
 async def get_login_code_by_hash(
     conn: aiosqlite.Connection, code_hash: str
 ) -> LoginCodeRecord | None:

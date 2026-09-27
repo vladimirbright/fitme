@@ -219,7 +219,8 @@ never accept free-form strings from callers.
 | `llm_calls` | `id`, `decision_id` nullable, `purpose`, `model`, `input_tokens`, `output_tokens`, `cost_estimate_usd` nullable, `latency_ms`, `ok`, `created_at` | Feeds `/system`. No prompt content here. |
 
 `decisions.kind` values: `plan_generate`, `plan_revise`, `session_adjust`,
-`result_parse`, `progression`, `session_halt`, `refusal`, `user_edit`, `session_delete`.
+`result_parse`, `progression`, `session_halt`, `hold_clear`, `refusal`, `user_edit`,
+`session_delete`, `history_import`.
 
 Enforce immutability in the controller layer: `plan_versions`, `decisions` and
 `decision_outcomes` have no update or delete methods, except the full-account delete (§8.3).
@@ -370,7 +371,9 @@ The rules:
   each file in one transaction and rejects files that do.
 - Foreign keys are switched off while a migration runs, and `PRAGMA foreign_key_check`
   must be clean before COMMIT. Table rebuilds would otherwise cascade-delete child rows.
-- Never edit an applied migration. Write a new one. For SQLite table rebuilds (changing a
+- Never edit an applied migration. Write a new one. **Pre-release exception:** until the first real deployment (M10), no
+  database exists outside tests, so `0001_init.sql` may still be edited in place, e.g. to extend
+  an enum CHECK. After M10, new migrations only. For SQLite table rebuilds (changing a
   column), follow the documented 12-step procedure inside the migration file.
 - `fitme db upgrade` runs pending migrations. `fitme serve` refuses to start while any are
   pending.
@@ -601,7 +604,10 @@ select_plan ─► select_workout ─► precheck ─► review ─► in_progre
 While a hold is open, `/plan` and `/train` refuse. To clear the hold the next day (in the
 user's timezone) or later, the user has to answer a direct question with a button: "Are you
 now free of pain, dizziness, numbness and chest discomfort?" → **Yes, clear**. Clearing is
-logged as a decision. Holds cannot be cleared on the same day. Do not implement any bypass.
+logged as a `hold_clear` decision. Holds cannot be cleared on the same day. "Same day"
+is evaluated in the timezone in effect **when the hold was created**, which is recorded in
+the halt decision's `user_report`. At least 12 hours must also have passed, so changing the
+timezone can't shorten a hold. Do not implement any bypass.
 
 ### 6.7 `/stats` (short)
 
