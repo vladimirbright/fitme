@@ -1,16 +1,20 @@
 """The `fitme` command.
 
-Subcommands mirror docs/ARCHITECTURE.md §11. Every subcommand is a stub in M0: it parses its
-arguments and reports that it isn't implemented yet. Later milestones replace each stub body
-with real behavior; the argument parser shape is meant to stay stable.
+Subcommands mirror docs/ARCHITECTURE.md §11. `db upgrade`, `export`, `delete` and `purge`
+are implemented (M1); `activate`, `catalog check` and `llm eval` are still stubs, reporting
+that they aren't implemented yet, until the milestones that build them (M5, M3, M4).
 """
 
 from __future__ import annotations
 
 import argparse
+import asyncio
 import sys
-from collections.abc import Sequence
+from collections.abc import Callable, Coroutine, Sequence
+from typing import Any
 
+from fitme.cli import commands
+from fitme.config.settings import Settings, SettingsError, load_settings
 from fitme.log import configure_logging
 
 _NOT_IMPLEMENTED = "not implemented yet"
@@ -70,23 +74,27 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    """Parse arguments and dispatch to a (currently stubbed) subcommand."""
+    """Parse arguments and dispatch to a subcommand."""
     configure_logging()
     parser = _build_parser()
     args = parser.parse_args(argv)
 
     if args.command == "serve":
-        return _stub("serve")
+        return _serve(parser)
     if args.command == "db":
+        if args.db_command == "upgrade":
+            return _with_settings(parser, commands.db_upgrade)
         return _stub(f"db {args.db_command}")
     if args.command == "activate":
         return _stub("activate")
     if args.command == "export":
-        return _stub("export")
+        return _with_settings(parser, lambda settings: commands.export_data(settings, args.out))
     if args.command == "delete":
-        return _stub("delete")
+        return _with_settings(
+            parser, lambda settings: commands.delete_account(settings, confirmed=args.yes)
+        )
     if args.command == "purge":
-        return _stub("purge")
+        return _with_settings(parser, commands.purge_now)
     if args.command == "catalog":
         return _stub(f"catalog {args.catalog_command}")
     if args.command == "llm":
@@ -94,6 +102,50 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     parser.error(f"unknown command: {args.command}")
     return 2  # unreachable: parser.error() raises SystemExit
+
+
+def _with_settings(
+    parser: argparse.ArgumentParser, coro_factory: Callable[[Settings], Coroutine[Any, Any, int]]
+) -> int:
+    """Load settings, failing fast with a readable message, then run an async subcommand."""
+    try:
+        settings = load_settings()
+    except SettingsError as exc:
+        parser.exit(1, f"{exc}\n")
+        raise AssertionError("unreachable") from exc  # parser.exit() always raises SystemExit
+    return asyncio.run(coro_factory(settings))
+
+
+def _serve(parser: argparse.ArgumentParser) -> int:
+    """`fitme serve` refuses to start while any migration is pending (A§4.7); the rest of
+    `serve` (running the bot and web app) is still a stub until later milestones."""
+    try:
+        settings = load_settings()
+    except SettingsError as exc:
+        parser.exit(1, f"{exc}\n")
+        raise AssertionError("unreachable") from exc  # parser.exit() always raises SystemExit
+
+    # Don't create a database file just to answer "are migrations pending?" — open_database
+    # would do exactly that. If the file is missing, there's nothing to check yet.
+    if not settings.db_path.exists():
+        print(
+            "Refusing to start: database not initialized, run `fitme db upgrade`.",
+            file=sys.stderr,
+        )
+        return 1
+
+    pending = asyncio.run(commands.pending_migration_names(settings))
+    if pending is None:
+        return 1  # commands.pending_migration_names already printed a friendly error
+    if pending:
+        print(
+            "Refusing to start: pending migrations: "
+            + ", ".join(pending)
+            + ". Run `fitme db upgrade` first.",
+            file=sys.stderr,
+        )
+        return 1
+    return _stub("serve")
 
 
 if __name__ == "__main__":

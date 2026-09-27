@@ -179,6 +179,32 @@ Bucket enums:
   under-18 option (AGENTS.md §4).
 - `weight_bucket`: `30_39` … `190_200` in 10 kg steps (17 values).
 
+Canonical enum values. Schema CHECKs, domain enums, the catalog and locales all use these
+exact strings:
+
+- `experience`: `none`, `lt_6m`, `6m_2y`, `2y_5y`, `gt_5y`.
+- `barbell_experience`: `yes`, `some`, `no`.
+- `preferences`: `weight_training`, `full_body`, `split`, `bodyweight`, `conditioning`,
+  `mobility`.
+- `focus`: `strength`, `muscle`, `general_fitness`, `conditioning`.
+- `location`: `public_gym`, `studio_gym`, `home_equipment`, `apartment_no_equipment`,
+  `outdoor`.
+- `equipment`: `dumbbells`, `barbell`, `rack`, `bench`, `pull_up_bar`, `kettlebell`,
+  `resistance_bands`.
+- `screening_flags.flag`:
+  - Red flags: `heart_condition`, `chest_discomfort`, `dizziness_fainting`,
+    `high_blood_pressure`, `recent_surgery`, `pregnant`, `other_condition_limits`.
+  - Areas: `neck_injury_current`, `shoulder_injury_current`, `elbow_wrist_injury_current`,
+    `lower_back_injury_current`, `hip_injury_current`, `knee_injury_current`,
+    `ankle_injury_current`, `hernia`.
+  - Free text: `other_unlisted`.
+- `chat_messages.direction`: `in`, `out`.
+
+**Timestamps.** All timestamp columns are TEXT in one format: UTC
+`YYYY-MM-DDTHH:MM:SS.ffffffZ`, always with 6 fractional digits, so lexical order equals
+time order. Only `fitme.clock` produces them. Controllers default to `clock.utc_now()` and
+never accept free-form strings from callers.
+
 ### 4.3 Derived output
 
 | Table | Columns | Notes |
@@ -293,6 +319,13 @@ The rules:
    ```
 
    Read-only paths use `async with db.read() as conn:`.
+
+   One lock serializes all units of work on the shared connection (§3), and it is **not
+   reentrant**. Services therefore:
+   - never nest `transaction()`/`read()` (nesting deadlocks, and the connection raises on
+     re-entry);
+   - never await an LLM, Telegram or any other network call inside a unit of work. The
+     pattern is: read → close → call the LLM → open a transaction → write.
 5. **Append-only tables** (`plan_versions`, `decisions`, `decision_outcomes`) have insert
    functions only. The one exception is `controllers.account.delete_user`.
 6. **JSON columns** are serialized and deserialized inside controllers and selectors, with
@@ -313,6 +346,10 @@ The rules:
     in `BEGIN`/`COMMIT`;
   - records the file in `schema_migrations`;
   - refuses to run if an applied file's checksum changed (store `sha256` as a column).
+- Migration files must not contain their own `BEGIN`/`COMMIT`/`END`. The runner wraps
+  each file in one transaction and rejects files that do.
+- Foreign keys are switched off while a migration runs, and `PRAGMA foreign_key_check`
+  must be clean before COMMIT. Table rebuilds would otherwise cascade-delete child rows.
 - Never edit an applied migration. Write a new one. For SQLite table rebuilds (changing a
   column), follow the documented 12-step procedure inside the migration file.
 - `fitme db upgrade` runs pending migrations. `fitme serve` refuses to start while any are

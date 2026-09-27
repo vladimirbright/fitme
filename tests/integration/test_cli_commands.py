@@ -1,0 +1,162 @@
+"""End-to-end CLI acceptance for M1: `db upgrade`, `export`, `delete`, `purge`, and the
+`serve` pending-migrations refusal, all against a temporary DB path."""
+
+from __future__ import annotations
+
+import asyncio
+import json
+import os
+import stat
+from collections.abc import Iterator
+from pathlib import Path
+
+import pytest
+
+from fitme.cli.main import main
+
+_REQUIRED_ENV = {
+    "FITME_TELEGRAM_BOT_TOKEN": "test-token",
+    "FITME_WEB_BASE_URL": "https://fit.example.org",
+    "FITME_SECRET_KEY": "test-secret-key-0123456789abcdef",
+}
+
+
+@pytest.fixture(autouse=True)
+def _clean_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Iterator[None]:
+    monkeypatch.chdir(tmp_path)
+    for key in list(os.environ):
+        if key.startswith("FITME_"):
+            monkeypatch.delenv(key, raising=False)
+    for key, value in _REQUIRED_ENV.items():
+        monkeypatch.setenv(key, value)
+    yield
+
+
+async def _seed_a_user(db_path: Path) -> None:
+    from fitme.db.connection import open_database
+    from fitme.db.controllers.users import insert_user
+
+    db = await open_database(db_path)
+    try:
+        async with db.transaction() as conn:
+            await insert_user(conn, language="en", timezone=None)
+    finally:
+        await db.close()
+
+
+def test_db_upgrade_works_against_a_temporary_db_path(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    db_path = tmp_path / "fitme.db"
+    monkeypatch.setenv("FITME_DB_PATH", str(db_path))
+
+    exit_code = main(["db", "upgrade"])
+
+    assert exit_code == 0
+    assert db_path.exists()
+
+    # A second run is a no-op, not an error.
+    assert main(["db", "upgrade"]) == 0
+
+
+def test_serve_refuses_when_database_is_not_initialized(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    db_path = tmp_path / "fitme.db"
+    monkeypatch.setenv("FITME_DB_PATH", str(db_path))
+
+    exit_code = main(["serve"])
+
+    assert exit_code == 1
+    assert "not initialized" in capsys.readouterr().err
+    assert not db_path.exists()  # must not create a db file just to say this
+
+
+def test_serve_refuses_while_migrations_are_pending(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    db_path = tmp_path / "fitme.db"
+    monkeypatch.setenv("FITME_DB_PATH", str(db_path))
+    # Create the file, but don't apply any migration, so it exists but is pending.
+    db_path.touch()
+
+    exit_code = main(["serve"])
+
+    assert exit_code == 1
+    assert "pending migrations" in capsys.readouterr().err
+
+    assert main(["db", "upgrade"]) == 0
+    # Once migrations are applied, `serve` falls through to its (still-stubbed) body.
+    exit_code = main(["serve"])
+    assert exit_code == 1
+    assert "not implemented yet" in capsys.readouterr().err
+
+
+def test_db_upgrade_reports_a_friendly_error_for_a_missing_directory(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setenv("FITME_DB_PATH", str(tmp_path / "no-such-directory" / "fitme.db"))
+
+    exit_code = main(["db", "upgrade"])
+
+    assert exit_code == 1
+    assert "directory exists" in capsys.readouterr().err
+
+
+def test_export_reports_no_user_before_activation(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setenv("FITME_DB_PATH", str(tmp_path / "fitme.db"))
+    assert main(["db", "upgrade"]) == 0
+
+    exit_code = main(["export", "--out", str(tmp_path / "export.json")])
+
+    assert exit_code == 1
+    assert "No user configured" in capsys.readouterr().err
+
+
+def test_export_writes_every_table_once_a_user_exists(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    db_path = tmp_path / "fitme.db"
+    monkeypatch.setenv("FITME_DB_PATH", str(db_path))
+    assert main(["db", "upgrade"]) == 0
+
+    asyncio.run(_seed_a_user(db_path))
+
+    out_path = tmp_path / "export.json"
+    exit_code = main(["export", "--out", str(out_path)])
+
+    assert exit_code == 0
+    data = json.loads(out_path.read_text(encoding="utf-8"))
+    assert len(data["users"]) == 1
+
+    # The export file holds health data (A§5): it must not be world/group readable.
+    mode = stat.S_IMODE(out_path.stat().st_mode)
+    assert mode == 0o600
+
+
+def test_delete_refuses_without_yes(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setenv("FITME_DB_PATH", str(tmp_path / "fitme.db"))
+    assert main(["db", "upgrade"]) == 0
+
+    assert main(["delete"]) == 1
+
+
+def test_purge_runs_against_an_upgraded_db(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setenv("FITME_DB_PATH", str(tmp_path / "fitme.db"))
+    assert main(["db", "upgrade"]) == 0
+
+    assert main(["purge"]) == 0
+
+
+def test_missing_settings_report_a_friendly_error(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.delenv("FITME_SECRET_KEY", raising=False)
+
+    with pytest.raises(SystemExit) as exc_info:
+        main(["purge"])
+
+    assert exc_info.value.code == 1
+    assert "FITME_SECRET_KEY" in capsys.readouterr().err
