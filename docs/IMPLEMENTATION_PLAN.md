@@ -190,7 +190,15 @@ settings test.
   - `/app/*` redirects without a session;
   - plan edit over the cap needs confirmation and is logged as `user_edit`;
   - export download;
-  - delete wipes everything.
+  - delete wipes everything;
+  - plan detail lists only this plan's sessions from the last 14 days, across plan
+    versions;
+  - training delete (single and bulk) removes sessions and set_logs;
+  - training delete rejects the whole batch if one id is foreign or unknown;
+  - training delete keeps an open health hold, and keeps non-`fine` check-ins detached;
+  - after deleting a session that contained this week's increase, the weekly cap still
+    blocks a second increase;
+  - training delete writes a `session_delete` decision.
 - A test asserts that templates contain no external URLs.
 
 ## M10 — Deployment & docs

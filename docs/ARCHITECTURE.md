@@ -166,10 +166,10 @@ plaintext.
 | `profiles` | `user_id` PK, `age_bucket`, `weight_bucket`, `experience`, `barbell_experience`, `preferences` (JSON list of enum), `location`, `equipment` (JSON list of enum), `sessions_per_week`, `session_minutes`, `focus`, `completed_at`, `updated_at` | Enums only. Buckets, not exact values. |
 | `screening_flags` | `user_id`, `flag` (enum), `value` (`yes`/`no`/`unknown`), `clearance` (`yes`/`no`/null), `answered_at` | One row per flag. **These gate exercise selection.** |
 | `screening_notes` | `user_id`, `text`, `created_at` | Optional free text for "other". **Never sent to the LLM.** Shown back to the user only. |
-| `health_holds` | `id`, `user_id`, `reason` (enum: `stop_word`, `checkin_pain`, `llm_safety_signal`, `precheck_yes`), `source_session_id`, `created_at`, `cleared_at` | An open hold blocks `/plan` and `/train` until cleared (§6.6). |
+| `health_holds` | `id`, `user_id`, `reason` (enum: `stop_word`, `checkin_pain`, `llm_safety_signal`, `precheck_yes`), `source_session_id` (nullable, `ON DELETE SET NULL`), `created_at`, `cleared_at` | An open hold blocks `/plan` and `/train` until cleared (§6.6). |
 | `workout_sessions` | `id`, `user_id`, `plan_version_id`, `workout_key`, `status` (`draft`,`confirmed`,`in_progress`,`completed`,`aborted`,`halted`), `current_block`, `started_at`, `finished_at`, `halt_reason` | Performed trainings. |
 | `set_logs` | `id`, `session_id`, `exercise_id`, `set_index`, `planned_load_kg`, `planned_reps`, `actual_load_kg`, `actual_reps`, `rpe` (nullable), `source` (`button`,`free_text`,`web`), `created_at` | **Source of truth for history and historical max.** |
-| `checkins` | `id`, `user_id`, `session_id`, `question_key` (e.g. `area:lower_back`), `answer` (`fine`,`worse`,`pain`,`unknown`), `asked_at`, `answered_at` | Rows are created as `unknown` and updated only by an explicit answer. |
+| `checkins` | `id`, `user_id`, `session_id` (nullable, `ON DELETE SET NULL`), `question_key` (e.g. `area:lower_back`), `answer` (`fine`,`worse`,`pain`,`unknown`), `asked_at`, `answered_at` | Rows are created as `unknown` and updated only by an explicit answer. |
 | `chat_messages` | `id`, `user_id`, `session_id` nullable, `direction`, `text`, `created_at` | Raw text. **Deleted after `FITME_CHAT_RETENTION_DAYS`.** |
 
 Bucket enums:
@@ -189,7 +189,7 @@ Bucket enums:
 | `llm_calls` | `id`, `decision_id` nullable, `purpose`, `model`, `input_tokens`, `output_tokens`, `cost_estimate_usd` nullable, `latency_ms`, `ok`, `created_at` | Feeds `/system`. No prompt content here. |
 
 `decisions.kind` values: `plan_generate`, `plan_revise`, `session_adjust`,
-`result_parse`, `progression`, `session_halt`, `refusal`, `user_edit`.
+`result_parse`, `progression`, `session_halt`, `refusal`, `user_edit`, `session_delete`.
 
 Enforce immutability in the controller layer: `plan_versions`, `decisions` and
 `decision_outcomes` have no update or delete methods, except the full-account delete (§8.3).
@@ -561,7 +561,7 @@ class GuardVerdict(BaseModel):
 
 | Module | Function | Rule (AGENTS.md §2) |
 |---|---|---|
-| `progression.py` | `check_weekly_increment(exercise, prev_loads_7d, proposed_kg, cap_kg) -> GuardVerdict` | The sum of increases over a trailing 7 days must be ≤ the per-exercise cap (default 2.5 kg for compounds, catalog may set lower). Proposals above it are **rejected**, not clamped. |
+| `progression.py` | `check_weekly_increment(exercise, increases_7d, proposed_kg, cap_kg) -> GuardVerdict` | The sum of increases over a trailing 7 days must be ≤ the per-exercise cap (default 2.5 kg for compounds, catalog may set lower). Proposals above it are **rejected**, not clamped. `increases_7d` is read from `decisions` (append-only), **not** from `set_logs`, so deleting a training log cannot reset the cap (§9.4). |
 | `ceiling.py` | `check_ceiling(history_max_kg, proposed_kg, increment_kg) -> GuardVerdict` | proposed ≤ historical max + one increment. With no history, only a `calibration` load (the catalog start) is allowed. |
 | `checkins.py` | `increase_allowed(exercise, checkins) -> GuardVerdict` | Any `unknown`, `worse` or `pain` check-in for an area the exercise loads blocks an increase. |
 | `stop_words.py` | `scan(text, lang) -> StopHit \| None` | Normalizes the text (casefold, strip punctuation) and matches the per-language lists in `stop_words/*.txt` (pain, dizzy, numb, chest, popped, ... and inflections). **Any match halts.** Runs before the LLM. |
@@ -733,11 +733,13 @@ data).
 | `POST /auth/logout` | Deletes the session row and clears the cookie. |
 | `GET /app` | Redirects to `/app/plans`. |
 | `GET /app/plans` | Plan list with default marker, status, **Generate new**. |
-| `GET /app/plans/{id}` | Plan detail with version history (a diff between versions is nice-to-have). |
+| `GET /app/plans/{id}` | Plan detail with version history (a diff between versions is nice-to-have), plus **recent trainings on this plan**: sessions from the last 14 days (in the user's timezone), newest first. Each row shows date, workout key and title, status, sets done/planned, volume, a link to `/app/trainings/{id}` and a delete action (§9.4). The empty state is "No trainings in the last 2 weeks". Selector: `selectors.training.recent_sessions_for_plan(conn, user_id, plan_id, since)`, which joins through `plan_versions`, so sessions on any version of the plan are included. |
 | `GET/POST /app/plans/{id}/edit` | Structured form editing (sets, reps, loads, swap exercise from the allowed catalog list). Loads above the guard caps show a warning and need an explicit confirm checkbox; the edit is saved as `origin=user_edit` and logged. The system itself never progresses past the caps. |
 | `GET/POST /app/plans/new`, `/app/plans/{id}/revise` | Same `services.planning` flow as the bot: a textarea request → proposal → Confirm / Revise. |
-| `GET /app/trainings` | Past sessions (date, workout, status, volume), paginated. |
-| `GET /app/trainings/{id}` | Planned vs actual per set, check-ins, recap. |
+| `GET /app/trainings` | Past sessions (date, workout, status, volume), paginated. Each row has a checkbox for bulk delete (§9.4). |
+| `GET /app/trainings/{id}` | Planned vs actual per set, check-ins, recap. Delete button (§9.4). |
+| `POST /app/trainings/delete/confirm` | Takes `ids[]` and renders a confirm page listing the selected sessions (date, workout, set count). Works without JS. |
+| `POST /app/trainings/delete` | Takes `ids[]` + CSRF token and hard-deletes (§9.4). Redirects back to the `next` URL (whitelisted to `/app/...`) with a flash message "Deleted N trainings". |
 | `GET /app/stats` | Charts: working load per exercise over time, weekly volume, sessions per week. Data from `GET /api/stats/*.json`. |
 | `GET /app/account` | Export (download JSON), delete (typed confirmation), active sessions list with revoke. |
 
@@ -763,6 +765,45 @@ A shared footer shows: "Plans are generated by AI. This is not medical advice."
 - JS only where it helps: charts, form conveniences, confirm dialogs. Use ES modules with
   no bundler.
 - Pages must work without JS, except charts, which fall back to a table.
+
+### 9.4 Deleting training logs
+
+This exists to remove test runs and mistakes. It is a **hard delete** with no undo. The
+confirm page says so and links to the export.
+
+What is deleted, in one transaction (`services/training.py::delete_sessions` →
+`controllers.training.delete_sessions(conn, user_id, session_ids)`):
+
+- the `workout_sessions` rows (only the user's own; any id that is not theirs aborts the
+  whole request);
+- their `set_logs` (`ON DELETE CASCADE`);
+- `chat_messages` tied to those sessions.
+
+What is **kept**, because the safety guards rely on it:
+
+- **`health_holds`**: they are detached (`source_session_id → NULL`), not deleted. Deleting
+  a halted session does **not** clear the hold. Holds clear only through their own flow
+  (§6.6).
+- **`checkins` with an answer other than `fine`**: they are detached, not deleted, so an
+  unknown/worse/pain check-in keeps blocking increases until a newer check-in replaces it.
+  `fine` check-ins for those sessions are deleted.
+- **`decisions` / `decision_outcomes`**: append-only. The weekly increment cap reads from
+  here (§7), so deleting logs can't unlock a second increase in the same week. They are
+  removed only by a full account delete (§8.3).
+
+Effects to expect:
+
+- The historical max and load-engine history are recalculated from the remaining
+  `set_logs`. Deleting a session can only **lower** the ceiling, which is the conservative
+  direction. If every session for an exercise is deleted, the next session is calibration
+  again.
+- An `in_progress` session can be deleted. It is treated as aborted first.
+- Each delete writes one `decision(kind=session_delete)`. Its `user_report` holds the
+  deleted session ids, dates, workout keys and set counts. It does not hold a copy of the
+  set data.
+
+Bot: out of scope for v1. It can be added later as a **Delete** button on a finished
+session's recap, using the same service.
 
 ## 10. Observability
 
