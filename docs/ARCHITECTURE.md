@@ -169,7 +169,7 @@ plaintext.
 | `screening_notes` | `user_id`, `text`, `created_at` | Optional free text for "other". **Never sent to the LLM.** Shown back to the user only. |
 | `health_holds` | `id`, `user_id`, `reason` (enum: `stop_word`, `checkin_pain`, `llm_safety_signal`, `precheck_yes`), `source_session_id` (nullable, `ON DELETE SET NULL`), `created_at`, `cleared_at` | An open hold blocks `/plan` and `/train` until cleared (§6.6). |
 | `workout_sessions` | `id`, `user_id`, `plan_version_id`, `workout_key`, `status` (`draft`,`confirmed`,`in_progress`,`completed`,`aborted`,`halted`), `current_block`, `started_at`, `finished_at`, `halt_reason` | Performed trainings. |
-| `set_logs` | `id`, `session_id`, `exercise_id`, `set_index`, `planned_load_kg`, `planned_reps`, `actual_load_kg`, `actual_reps`, `rpe` (nullable), `source` (`button`,`free_text`,`web`), `created_at` | **Source of truth for history and historical max.** |
+| `set_logs` | `id`, `session_id`, `exercise_id`, `set_index`, `planned_load_kg`, `planned_reps_min`, `planned_reps_max`, `actual_load_kg`, `actual_reps` (nullable), `skipped` (0/1), `rpe` (nullable), `source` (`button`,`free_text`,`web`), `created_at` | **Source of truth for history and historical max.** One row per **prescribed** set, created when the block is sent. A set not performed is `skipped=1` with `actual_*` NULL, so missing sets are visible. |
 | `checkins` | `id`, `user_id`, `session_id` (nullable, `ON DELETE SET NULL`), `question_key` (e.g. `area:lower_back`), `answer` (`fine`,`worse`,`pain`,`unknown`), `asked_at`, `answered_at` | Rows are created as `unknown` and updated only by an explicit answer. |
 | `chat_messages` | `id`, `user_id`, `session_id` nullable, `direction`, `text`, `created_at` | Raw text. **Deleted after `FITME_CHAT_RETENTION_DAYS`.** |
 
@@ -211,7 +211,7 @@ never accept free-form strings from callers.
 |---|---|---|
 | `plans` | `id`, `user_id`, `name`, `is_default`, `status` (`draft`,`active`,`archived`), `created_at` | At most one `is_default` per user. |
 | `plan_versions` | `id`, `plan_id`, `version`, `body` (JSON, `domain.Plan`), `origin` (`llm`,`progression`,`user_edit`), `decision_id`, `created_at` | **Immutable.** Every change creates a new version. |
-| `decisions` | `id`, `user_id`, `kind`, `prompt_template`, `prompt_version`, `model`, `content_version` (§4.8), `llm_input` (JSON, pseudonymized, exactly as sent), `user_report` (JSON), `proposal` (JSON), `guards_fired` (JSON list of `{rule, verdict, detail}`), `created_at` | **Append-only.** AGENTS.md §6. |
+| `decisions` | `id`, `user_id`, `kind`, `prompt_template`, `prompt_version`, `model`, `content_version` (§4.8), `llm_input` (JSON, pseudonymized, exactly as sent), `user_report` (JSON), `proposal` (JSON), `load_changes` (JSON array of `domain.LoadChange {exercise_id, from_kg, to_kg}`, default `[]`), `guards_fired` (JSON list of `{rule, verdict, detail}`), `created_at` | **Append-only.** AGENTS.md §6. |
 | `decision_outcomes` | `id`, `decision_id`, `outcome` (JSON: what the user actually did), `created_at` | Append-only. Lets the log stay immutable when the outcome arrives later. |
 | `llm_calls` | `id`, `decision_id` nullable, `purpose`, `model`, `input_tokens`, `output_tokens`, `cost_estimate_usd` nullable, `latency_ms`, `ok`, `created_at` | Feeds `/system`. No prompt content here. |
 
@@ -346,6 +346,7 @@ The rules:
     in `BEGIN`/`COMMIT`;
   - records the file in `schema_migrations`;
   - refuses to run if an applied file's checksum changed (store `sha256` as a column).
+- One SQL statement per line-group. Never put two statements on one line.
 - Migration files must not contain their own `BEGIN`/`COMMIT`/`END`. The runner wraps
   each file in one transaction and rejects files that do.
 - Foreign keys are switched off while a migration runs, and `PRAGMA foreign_key_check`
@@ -605,16 +606,76 @@ class GuardVerdict(BaseModel):
 
 | Module | Function | Rule (AGENTS.md §2) |
 |---|---|---|
-| `progression.py` | `check_weekly_increment(exercise, increases_7d, proposed_kg, cap_kg) -> GuardVerdict` | The sum of increases over a trailing 7 days must be ≤ the per-exercise cap (default 2.5 kg for compounds, catalog may set lower). Proposals above it are **rejected**, not clamped. `increases_7d` is read from `decisions` (append-only), **not** from `set_logs`, so deleting a training log cannot reset the cap (§9.4). |
-| `ceiling.py` | `check_ceiling(history_max_kg, proposed_kg, increment_kg) -> GuardVerdict` | proposed ≤ historical max + one increment. With no history, only a `calibration` load (the catalog start) is allowed. |
+| `progression.py` | `check_weekly_increment(exercise, *, increases_7d, proposed_increase_kg, cap_kg) -> GuardVerdict` | The sum of **positive** increases over a trailing 7 days, plus the proposed increase, must be ≤ the per-exercise cap (default 2.5 kg for compounds, catalog may set lower). Proposals above it are **rejected**, not clamped. `increases_7d` is the positive `to_kg − from_kg` of every `load_changes` entry for that exercise in `decisions` of **any** kind (progression, revise, adjust, user_edit). It is read from the append-only log, **not** from `set_logs`, so deleting a training log cannot reset the cap (§9.4). |
+| `ceiling.py` | `check_ceiling(*, history_max_kg, proposed_load_kg, increment_kg) -> GuardVerdict` | proposed ≤ historical max + one increment. With no history, only a `calibration` load (the catalog start) is allowed. |
 | `checkins.py` | `increase_allowed(exercise, checkins) -> GuardVerdict` | Any `unknown`, `worse` or `pain` check-in for an area the exercise loads blocks an increase. |
 | `stop_words.py` | `scan(text, lang) -> StopHit \| None` | Normalizes the text (casefold, strip punctuation) and matches the per-language lists in `stop_words/*.txt` (pain, dizzy, numb, chest, popped, ... and inflections). **Any match halts.** Runs before the LLM. |
-| `screening.py` | `plan_allowed(flags, holds) -> GuardVerdict`; `exercise_allowed(exercise, flags) -> GuardVerdict` | Clearance for red flags; open holds; contraindications. |
-| `plan.py` | `validate_plan(plan, ctx) -> list[GuardVerdict]` | Runs all the checks above over every prescription, plus: catalog ids only, location and equipment fit, schedule matches frequency, reps_min ≤ reps_max, superset size. |
+| `screening.py` | `plan_allowed(flags, holds) -> GuardVerdict`; `exercise_allowed(exercise, flags) -> GuardVerdict` | Every red flag must have an explicit `yes`/`no` answer. Missing or `unknown` → `Refusal(SCREENING_INCOMPLETE)` (silence is not consent). Red flags answered `yes` need clearance. Open holds refuse. Contraindications remove exercises. |
+| `plan.py` | `validate_plan(plan, ctx) -> list[GuardVerdict]` | Runs all the checks above (including `plan_allowed`) over every prescription, plus: catalog ids only, location and equipment fit, schedule matches frequency, reps_min ≤ reps_max, superset size. **Reference load:** an increase is measured against the exercise's **current working load**, not the historical max. When both are known, the reference is `min(current, history_max)`. The current working load is the prescribed load of the last completed session, falling back to the active plan version's prescription. If there is history but no current load, the historical max is the reference, and the increase checks still run. Any `proposed > current` must pass `check_weekly_increment` and `increase_allowed`. `check_ceiling` always runs as an absolute backstop. |
+
+All load inputs must be finite and positive. Guards **fail closed** on NaN, infinity or non-positive values.
 
 ### 7.1 Stop-word false positives
 
-Matching is deliberately broad. "No pain today" halts too. That is the accepted cost: the
+Matching is deliberately broad. "No pain today" halts too.
+
+- **Chest is deny-by-default in both languages.**
+  1. Any chest or heart token (`chest`, `heart`, `груд*` incl. `грудин*`, `сердц*`)
+     halts.
+  2. **Allowlist:** exercise and training phrases are removed before the check. EN:
+     `chest press`, `chest fly`, `chest day`, `chest and triceps/biceps`, `chest workout`,
+     `chest session`, `did chest`, `upper/lower chest`, `heart rate`. RU: `жим груди`,
+     `день груди`, `тренировка груди`, `качал(а)/тренировал(а)/сделал(а) грудь`,
+     `грудь и трицепс/бицепс`, `грудные мышцы`, `грудных`, `мышцы груди`, `на грудь`,
+     `грудак`, `верх/низ груди`. A chest token followed only by a sets/reps/weight pattern ("chest 4x10", "грудь 3 по 8") also counts as a log line.
+  3. **Co-occurrence override:** a chest or heart token together with a **symptom**
+     descriptor halts **even if** the token is inside an allowlisted phrase.
+     - EN symptom descriptors: tight*, pressure, pain*, hurt*, squeez*, ache/aching,
+       discomfort, pounding, racing, flutter*, palpitat*.
+     - RU symptom descriptors: давит/давлен*, сжим*/сдавл*, колет/кольн*, ноет, щем*,
+       стеснен*, the pain forms of боль (not bare `бол*`), дискомфорт, колотит*, перебои.
+     - **Effort** words (heavy, burn*, тяжело/тяжест*, жж*) do **not** override an
+       allowlisted mention. A non-allowlisted chest token still halts by default, so
+       "тяжесть в груди" and "my chest burned" still halt, while "день груди, тяжело но
+       сделал" does not.
+  Tokens: EN `chest`, `heart*` (heartbeat and heartburn halt; "heart rate" is
+  allowlisted), `sternum`, `arrhythm*`; RU `груд*`, `сердц*`, `аритми*`.
+- **Something popped:** bare `popped`, plus "went pop", "heard/felt it pop", "felt a pop",
+  RU `щелк*`/`щелч*`/`хруст*`/`лопн*`. False positives like "popped a PR" are accepted.
+- **Prefer phrases over stems when a stem collides with plan-editing language.** For
+  example: "tweaked my" (not `tweak*`, because of "tweak the plan"); "heard a crack" (not
+  `crack*`, because of "cracked the plateau"). Free text in revise/adjust also passes
+  this guard.
+- **Weakness:** only limb-specific phrases halt ("arm went weak", "слабость в руке/ноге").
+  Bare "weak" or "tired" does not. Cramps do not halt.
+- **Russian uses a curated stem list.** Each stem (`онеме`, `головокруж`, `обморок`,
+  `покалыва`, `прихват`, `растян`, `надорв`, …) has a negative test against common
+  innocent words.
+- **Breathing:** inability to breathe halts, in present and past tense and with or
+  without an apostrophe ("can't/cant/couldn't/could not breathe", "hard/struggling to
+  breathe", "trouble breathing", "не могу дышать", "задыхаюсь", "не хватает воздуха",
+  "нечем дышать"). Ordinary exertional breathlessness does not halt ("out of breath",
+  "can't catch my breath", "одышка" after conditioning).
+- **Nausea:** only unambiguous terms halt ("threw up", "vomited", "nauseous", "рвота",
+  "тошнит", "тошнота", "мутит", "вырвало", "стошнило"). Vague phrases like "felt sick" do not.
+- **Everyday logging must not halt.** Examples: heart-rate logging ("heart rate 150",
+  "zone 2"), chest-day slang ("день груди", "грудь и трицепс", "грудные мышцы"), and set
+  results.
+- **Normalization before matching:**
+  - strip Unicode `Cf` characters (soft hyphen, zero-width space) **before** punctuation;
+  - fold apostrophe variants ("can't", "cant", "can t", "cannot" → one form);
+  - map a small emoji table to categories (🤕 😵‍💫 🫀 💔 …);
+  - for a Russian-interface user, transliterate Latin-script Russian ("bolit", "golova
+    kruzhitsya") to Cyrillic and scan both forms. It is not applied for an English
+    interface, where Latin text is English. Cyrillic text is scanned under every interface
+    language.
+- **Residual risk:** mixed-script homoglyphs ("бoлит" with a Latin o) under an English
+  interface are not caught.
+- **Residual risk:** typos ("pian", "dizy") are not caught. Buttons (precheck, check-ins,
+  the ⚠ button) are the primary path; free text is the secondary one.
+- A parametrized regression corpus of realistic reports in each language lives in
+  `tests/guards/`. Every phrase added to it must halt, and every innocent phrase in it must
+  not. That is the accepted cost: the
 guard must be deterministic, and it must not be possible to argue around it. The halt
 message says that if this was a misunderstanding, the user can clear the hold tomorrow.
 Precheck and check-ins use buttons, not free text, so false positives stay rare.
@@ -632,11 +693,27 @@ double progression:
 - **No history** for an exercise → `calibration` at the catalog start. The user logs what
   they actually used. There is no progression until one session is completed (AGENTS.md:
   the first session is data collection).
-- **All sets hit reps_max** at the prescribed load, **and** `increase_allowed` passes →
+- Only `completed` sessions count. A session with any prescribed set `skipped`, unlogged,
+  or performed below the prescribed load is **not** a success.
+- Progression is computed from the **prescribed** load of the last successful session, not
+  from what the user logged. Logging a heavier weight than prescribed does not jump the
+  next prescription. It only raises the historical max used by the ceiling.
+- **All prescribed sets hit reps_max** at the prescribed load, **and** `increase_allowed`
+  passes →
   propose + `increment_kg`, then check `check_weekly_increment` and `check_ceiling`. If
   either fails, keep the load.
 - **Any set below reps_min** → hold. Two sessions in a row below reps_min → propose −10%,
-  rounded to the implement step. Decreases are always allowed.
+  floored to the implement step, and always at least one step down. If that would reach
+  ≤ 0, fall back to a `calibration` load (log what you used). Never fall back to the
+  catalog's kg start, and a decrease can never return a load above the current one. Decreases are always allowed.
+- **After a calibration session**, the next session is prescribed at the load the user
+  logged (a hold, not an increase). If nothing usable was logged, it is calibration again.
+  It never uses the catalog kg start. Progression starts from the first prescribed
+  session.
+- **Every kg value the engine emits, on every path (increase, hold, decrease), must pass
+  `check_ceiling`.** A hold above the ceiling is clamped down to the ceiling, floored to
+  the step (decreases are always allowed), or falls back to calibration.
+- Every decision that applies a load records it in `decisions.load_changes`.
 - Otherwise → hold.
 
 When an LLM proposes a load (revise, adjust), the same guards judge it. A violating proposal

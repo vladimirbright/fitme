@@ -78,3 +78,28 @@ async def test_read_never_observes_an_uncommitted_write(db: Database, user_id: i
     # The reader was forced to wait for the writer's transaction to finish, so it only ever
     # sees the fully-committed state — never the row mid-transaction.
     assert count == 1
+
+
+async def test_nested_transaction_raises_instead_of_deadlocking(db: Database) -> None:
+    async with db.transaction() as _outer:
+        with pytest.raises(RuntimeError, match="nested unit of work"):
+            async with db.transaction():
+                pass
+
+
+async def test_nested_read_inside_transaction_raises_instead_of_deadlocking(
+    db: Database,
+) -> None:
+    async with db.transaction() as _outer:
+        with pytest.raises(RuntimeError, match="nested unit of work"):
+            async with db.read():
+                pass
+
+
+async def test_a_new_unit_of_work_works_after_the_previous_one_exits(db: Database) -> None:
+    async with db.transaction():
+        pass
+    # The owner is cleared on exit, so a fresh unit of work on the same task is not treated
+    # as nested.
+    async with db.read():
+        pass

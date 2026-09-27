@@ -50,6 +50,12 @@ _SQL_MARKER_WORDS = (
     "JOIN",
 )
 
+# A literal containing a `?` or a `:name` placeholder (A§4.6 rule 3: "Parameters only. Use
+# `?` or `:name` placeholders") is unambiguously SQL, however it's cased: no English sentence
+# contains one of these. So when a placeholder is present, the leading-keyword check below
+# also matches case-insensitively, on top of the project's usual exact-case style.
+_PLACEHOLDER_RE = re.compile(r":[A-Za-z_][A-Za-z0-9_]*\b")
+
 
 def _iter_source_files() -> list[Path]:
     return [path for path in _SRC_ROOT.rglob("*.py") if _DB_ROOT not in path.parents]
@@ -77,10 +83,12 @@ def _looks_like_sql(text: str) -> bool:
     if not stripped:
         return False
     first_word = stripped.split(None, 1)[0].rstrip(";")
+    has_placeholder = "?" in stripped or _PLACEHOLDER_RE.search(stripped) is not None
+    if has_placeholder:
+        # See _PLACEHOLDER_RE comment above: unambiguous, so match case-insensitively too.
+        return first_word.upper() in _SQL_KEYWORDS
     if first_word not in _SQL_KEYWORDS:  # exact case: see _SQL_MARKER_WORDS comment above
         return False
-    if "?" in stripped:
-        return True
     return any(re.search(rf"\b{marker}\b", stripped) for marker in _SQL_MARKER_WORDS)
 
 
@@ -190,3 +198,27 @@ def test_checker_does_not_flag_other_common_prose_starters() -> None:
 
 def test_checker_does_not_flag_ordinary_non_db_imports() -> None:
     assert not _violations_in_source("import json\nimport asyncio", "<good-import>")
+
+
+def test_checker_catches_a_lowercase_sql_literal_with_a_question_mark_placeholder() -> None:
+    # Lowercase, unlike this project's own SQL style, but the `?` placeholder is unambiguous
+    # (A§4.6 rule 3): no English sentence contains one.
+    violations = _violations_in_source(
+        'query = "select id from users where id = ?"', "<bad-literal-lowercase-qmark>"
+    )
+    assert violations
+
+
+def test_checker_catches_a_lowercase_sql_literal_with_a_named_placeholder() -> None:
+    violations = _violations_in_source(
+        'query = "update users set name = :name where id = :id"',
+        "<bad-literal-lowercase-named>",
+    )
+    assert violations
+
+
+def test_checker_does_not_flag_prose_containing_a_question_mark() -> None:
+    # A question mark alone isn't a placeholder signal without a leading SQL keyword.
+    assert not _violations_in_source(
+        'help_text = "what do you want to do?"', "<good-prose-question>"
+    )

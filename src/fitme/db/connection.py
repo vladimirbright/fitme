@@ -41,6 +41,12 @@ class Database:
         self._path = str(path)
         self._conn: aiosqlite.Connection | None = None
         self._lock = asyncio.Lock()
+        # The task currently holding `_lock` through transaction()/read()/exclusive(), or
+        # None. `asyncio.Lock` is not reentrant: a task that calls one of these again while
+        # it already holds the lock would await its own release forever (a silent deadlock),
+        # since nothing else runs on that task to ever call `release()`. Tracking the owner
+        # lets us detect that *before* awaiting the lock and raise instead of hanging.
+        self._owner: asyncio.Task[object] | None = None
 
     async def connect(self) -> None:
         """Open the connection and apply the required PRAGMAs."""
@@ -68,49 +74,78 @@ class Database:
             raise RuntimeError("Database.connect() has not been called yet")
         return self._conn
 
+    def _enter_unit_of_work(self) -> asyncio.Task[object] | None:
+        """Return the current task, after checking it isn't the one already holding the
+        lock. Called *before* `async with self._lock`, so a same-task re-entry raises
+        instead of awaiting a lock it can never release itself (see `__init__`).
+        """
+        current = asyncio.current_task()
+        if current is not None and current is self._owner:
+            raise RuntimeError("nested unit of work")
+        return current
+
     @asynccontextmanager
     async def transaction(self) -> AsyncIterator[aiosqlite.Connection]:
         """A read/write unit of work: BEGIN IMMEDIATE, then COMMIT, or ROLLBACK on error.
 
-        Serialized against every other transaction() and read() on this Database.
+        Serialized against every other transaction() and read() on this Database. Raises
+        `RuntimeError` instead of deadlocking if the same task calls transaction()/read()/
+        exclusive() again while already inside one of them.
         """
         conn = self.raw
+        current = self._enter_unit_of_work()
         async with self._lock:
-            await conn.execute("BEGIN IMMEDIATE")
+            self._owner = current
             try:
-                yield conn
-            except BaseException:
-                await conn.execute("ROLLBACK")
-                raise
-            else:
-                await conn.execute("COMMIT")
+                await conn.execute("BEGIN IMMEDIATE")
+                try:
+                    yield conn
+                except BaseException:
+                    await conn.execute("ROLLBACK")
+                    raise
+                else:
+                    await conn.execute("COMMIT")
+            finally:
+                self._owner = None
 
     @asynccontextmanager
     async def read(self) -> AsyncIterator[aiosqlite.Connection]:
         """A read-only unit of work: BEGIN DEFERRED, so the whole block sees one consistent
         snapshot, then COMMIT (or ROLLBACK on error; equivalent here, since nothing is
         written). Serialized against every other transaction() and read() on this Database,
-        so a read can never observe another task's uncommitted writes.
+        so a read can never observe another task's uncommitted writes. Raises `RuntimeError`
+        instead of deadlocking on same-task re-entry (see `transaction()`).
         """
         conn = self.raw
+        current = self._enter_unit_of_work()
         async with self._lock:
-            await conn.execute("BEGIN DEFERRED")
+            self._owner = current
             try:
-                yield conn
-            except BaseException:
-                await conn.execute("ROLLBACK")
-                raise
-            else:
-                await conn.execute("COMMIT")
+                await conn.execute("BEGIN DEFERRED")
+                try:
+                    yield conn
+                except BaseException:
+                    await conn.execute("ROLLBACK")
+                    raise
+                else:
+                    await conn.execute("COMMIT")
+            finally:
+                self._owner = None
 
     @asynccontextmanager
     async def exclusive(self) -> AsyncIterator[aiosqlite.Connection]:
         """Exclusive access to the connection for a statement that must run outside any
         transaction (`VACUUM`, `PRAGMA wal_checkpoint`), but still needs to be serialized
         against `transaction()`/`read()` rather than racing them on the shared connection.
+        Same same-task re-entry check as `transaction()`/`read()`.
         """
+        current = self._enter_unit_of_work()
         async with self._lock:
-            yield self.raw
+            self._owner = current
+            try:
+                yield self.raw
+            finally:
+                self._owner = None
 
 
 async def open_database(path: str | Path) -> Database:

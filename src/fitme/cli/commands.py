@@ -78,6 +78,10 @@ async def export_data(settings: Settings, out_path: str) -> int:
 
     payload = json.dumps(data, indent=2, default=str)
     fd = os.open(out_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    # The mode passed to os.open() only applies when the file is newly created; overwriting
+    # an existing file (e.g. left over at 0644 from outside this command) keeps its old
+    # permissions, so fchmod it explicitly. The file holds health data (A§5).
+    os.fchmod(fd, 0o600)
     with os.fdopen(fd, "w", encoding="utf-8") as handle:
         handle.write(payload)
 

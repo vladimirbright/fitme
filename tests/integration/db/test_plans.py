@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import sqlite3
+
 import pytest
 
 from fitme.db.connection import Database
@@ -105,6 +107,29 @@ async def test_set_default_plan_rejects_an_unowned_plan_id(db: Database, user_id
         plans = {p.id: p for p in await list_plans_for_user(conn, user_id)}
     # The existing default must not have been cleared by the rejected call.
     assert plans[own_plan].is_default is True
+
+
+async def test_plan_versions_table_rejects_update(db: Database, user_id: int) -> None:
+    """0001_init.sql's BEFORE UPDATE trigger makes plan_versions append-only a DB invariant,
+    not just a controller-layer convention (A§4.6 rule 5)."""
+    decision_id = await _insert_decision(db, user_id)
+    async with db.transaction() as conn:
+        plan_id = await insert_plan(
+            conn, user_id=user_id, name="Plan A", is_default=True, status="draft"
+        )
+        version_id = await insert_plan_version(
+            conn,
+            plan_id=plan_id,
+            version=1,
+            body={"name": "Plan A", "workouts": []},
+            origin="llm",
+            decision_id=decision_id,
+        )
+
+    with pytest.raises(sqlite3.IntegrityError, match="append-only"):
+        await db.raw.execute(
+            "UPDATE plan_versions SET origin = 'user_edit' WHERE id = ?", (version_id,)
+        )
 
 
 async def test_update_plan_status(db: Database, user_id: int) -> None:

@@ -113,15 +113,36 @@ class WorkoutSessionRecord:
 
 
 @dataclass(frozen=True, slots=True)
+class SessionOutcome:
+    """One past session's outcome for one exercise, as `services.loads` (A§7.3) needs it.
+
+    `load_kg` is the *actual* load logged (`None` when the session's sets for this exercise
+    weren't logged with a kg number, e.g. still calibration) — used only for the historical
+    max feeding the ceiling guard. `planned_load_kg` is the *prescribed* load; the engine
+    progresses from this, not from `load_kg` (A§7.3: logging a heavier weight than prescribed
+    must not jump the next prescription, it only raises the ceiling's historical max). See
+    `selectors.training.recent_session_outcomes` for how `hit_reps_max`/`below_reps_min` are
+    derived from `set_logs`.
+    """
+
+    load_kg: float | None
+    planned_load_kg: float | None
+    hit_reps_max: bool
+    below_reps_min: bool
+
+
+@dataclass(frozen=True, slots=True)
 class SetLogRecord:
     id: int
     session_id: int
     exercise_id: str
     set_index: int
     planned_load_kg: float | None
-    planned_reps: int | None
+    planned_reps_min: int | None
+    planned_reps_max: int | None
     actual_load_kg: float | None
     actual_reps: int | None
+    skipped: bool
     rpe: float | None
     source: str
     created_at: str
@@ -181,6 +202,7 @@ class DecisionRecord:
     llm_input: dict[str, object] | None
     user_report: dict[str, object] | None
     proposal: dict[str, object] | None
+    load_changes: list[dict[str, object]]
     guards_fired: list[dict[str, object]]
     created_at: str
 

@@ -58,24 +58,31 @@ async def insert_set_log(
     exercise_id: str,
     set_index: int,
     planned_load_kg: float | None,
-    planned_reps: int | None,
+    planned_reps_min: int | None,
+    planned_reps_max: int | None,
     actual_load_kg: float | None,
     actual_reps: int | None,
+    skipped: bool = False,
     rpe: float | None,
     source: str,
 ) -> int:
+    """One row per *prescribed* set (A§4.2), created when the block is sent. A set the user
+    didn't perform is logged with `skipped=True` and `actual_load_kg`/`actual_reps` left
+    `None`, so a partial or halted session stays visible in the data (A§7.3)."""
     cursor = await conn.execute(
         "INSERT INTO set_logs (session_id, exercise_id, set_index, planned_load_kg, "
-        "planned_reps, actual_load_kg, actual_reps, rpe, source, created_at) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "planned_reps_min, planned_reps_max, actual_load_kg, actual_reps, skipped, rpe, "
+        "source, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (
             session_id,
             exercise_id,
             set_index,
             planned_load_kg,
-            planned_reps,
+            planned_reps_min,
+            planned_reps_max,
             actual_load_kg,
             actual_reps,
+            int(skipped),
             rpe,
             source,
             clock.utc_now(),

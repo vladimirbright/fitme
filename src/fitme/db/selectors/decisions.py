@@ -10,7 +10,7 @@ from fitme.db.records import DecisionOutcomeRecord, DecisionRecord, LlmCallRecor
 
 _DECISION_COLUMNS = (
     "id, user_id, kind, prompt_template, prompt_version, model, content_version, "
-    "llm_input, user_report, proposal, guards_fired, created_at"
+    "llm_input, user_report, proposal, load_changes, guards_fired, created_at"
 )
 
 
@@ -26,8 +26,9 @@ def _decision_from_row(row: aiosqlite.Row) -> DecisionRecord:
         llm_input=None if row[7] is None else json.loads(row[7]),
         user_report=None if row[8] is None else json.loads(row[8]),
         proposal=None if row[9] is None else json.loads(row[9]),
-        guards_fired=json.loads(row[10]),
-        created_at=row[11],
+        load_changes=json.loads(row[10]),
+        guards_fired=json.loads(row[11]),
+        created_at=row[12],
     )
 
 
@@ -65,6 +66,37 @@ async def list_decision_outcomes(
         )
         for row in rows
     ]
+
+
+async def recent_increase_deltas(
+    conn: aiosqlite.Connection, user_id: int, exercise_id: str, *, since: str
+) -> list[float]:
+    """Positive load-change deltas (kg) applied to `exercise_id` at or after `since`, read
+    from `decisions.load_changes` (A§9.4: never from `set_logs`, so deleting training logs
+    can't reset the weekly cap; A§7 `progression.check_weekly_increment`'s `increases_7d`).
+
+    Every decision kind is summed (progression, plan_revise, session_adjust, user_edit, ...):
+    a load change is a load change regardless of what produced it (A§7 table). Only entries
+    with `to_kg > from_kg` are returned — a decrease isn't an "increase" for cap purposes, and
+    `check_weekly_increment` also filters defensively, but filtering here too means a caller
+    never has to guess whether a negative value might be mixed in.
+    """
+    async with conn.execute(
+        "SELECT load_changes FROM decisions "
+        "WHERE user_id = ? AND created_at >= ? AND load_changes != '[]'",
+        (user_id, since),
+    ) as cursor:
+        rows = await cursor.fetchall()
+
+    deltas: list[float] = []
+    for (load_changes_json,) in rows:
+        for change in json.loads(load_changes_json):
+            if change.get("exercise_id") != exercise_id:
+                continue
+            delta = float(change["to_kg"]) - float(change["from_kg"])
+            if delta > 0:
+                deltas.append(delta)
+    return deltas
 
 
 async def list_llm_calls_since(conn: aiosqlite.Connection, since: str) -> list[LlmCallRecord]:

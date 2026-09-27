@@ -166,6 +166,11 @@ CREATE TABLE decisions (
     llm_input TEXT CHECK (llm_input IS NULL OR json_valid(llm_input)),
     user_report TEXT CHECK (user_report IS NULL OR json_valid(user_report)),
     proposal TEXT CHECK (proposal IS NULL OR json_valid(proposal)),
+    -- JSON array of `domain.LoadChange {exercise_id, from_kg, to_kg}` (A§4.3). Every decision
+    -- that applies a load records it here, of any kind (progression, plan_revise,
+    -- session_adjust, user_edit, ...): `progression.check_weekly_increment`'s `increases_7d`
+    -- sums the positive deltas across every kind, read from this column (A§7, A§9.4).
+    load_changes TEXT NOT NULL DEFAULT '[]' CHECK (json_type(load_changes) = 'array'),
     guards_fired TEXT NOT NULL DEFAULT '[]' CHECK (json_type(guards_fired) = 'array'),
     created_at TEXT NOT NULL
 ) STRICT;
@@ -230,15 +235,29 @@ CREATE INDEX idx_workout_sessions_user_status ON workout_sessions (user_id, stat
 
 -- No user_id column: a set belongs to a session, which belongs to a user (A§4.2). Source of
 -- truth for history and the historical max (A§7); cascades from workout_sessions (A§4.6).
+-- One row per *prescribed* set, created when the block is sent (A§4.2): a set that isn't
+-- performed is `skipped = 1` with `actual_*` NULL, so a partial or halted session is visible
+-- in the data, not silently absent. `planned_reps_min`/`planned_reps_max` (not a single
+-- `planned_reps`) so the load engine's full double-progression rule (A§7.3: hit the top of
+-- the range, fall below the bottom, or hold) can be read back from this table alone.
 CREATE TABLE set_logs (
     id INTEGER PRIMARY KEY,
     session_id INTEGER NOT NULL REFERENCES workout_sessions (id) ON DELETE CASCADE,
     exercise_id TEXT NOT NULL,
     set_index INTEGER NOT NULL,
     planned_load_kg REAL,
-    planned_reps INTEGER,
+    planned_reps_min INTEGER,
+    planned_reps_max INTEGER,
     actual_load_kg REAL,
     actual_reps INTEGER,
+    -- A skipped set has no actual result at all: the schema, not just application code,
+    -- enforces that `skipped = 1` always pairs with both actual_* columns NULL, so a set
+    -- can never be simultaneously "skipped" and "logged" (which the load engine's
+    -- hit_reps_max/below_reps_min computation depends on, A§7.3).
+    skipped INTEGER NOT NULL DEFAULT 0 CHECK (
+        skipped IN (0, 1)
+        AND (skipped = 0 OR (actual_reps IS NULL AND actual_load_kg IS NULL))
+    ),
     rpe REAL,
     source TEXT NOT NULL CHECK (source IN ('button', 'free_text', 'web')),
     created_at TEXT NOT NULL

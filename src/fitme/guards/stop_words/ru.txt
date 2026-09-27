@@ -1,0 +1,159 @@
+# Fitme stop-word list: Russian (A§7, AGENTS.md §2 "Stop words halt the session").
+#
+# Same format and same "deliberately broad" rule as en.txt (see that file's header comment).
+# `ё`/`е` are normalized to the same letter before matching (guards/stop_words/__init__.py),
+# so a term spelled with either letter matches typing with the other one. This list is also
+# checked against a Latin-transliterated reading of the input ("bolit" -> "болит"), so a
+# lifter typing on a Latin keyboard is still caught.
+#
+# A line ending in `*` is a *stem*: it matches any word that starts with it, not just the
+# exact phrase. Russian is heavily inflected (a pain/injury word appears in many forms:
+# болит/больно/болел/...), so a curated set of stems covers this properly (A§7.1). Every stem
+# below has a negative test in tests/guards/test_stop_words.py against a common, unrelated
+# Russian word that happens to share the same first letters, proving the stem doesn't
+# over-match. Stems are deliberately not used for *every* pain word (e.g. "бол-" is also
+# "болото", a swamp, or "болтать", to chat) — those are covered by listing inflected forms
+# explicitly instead.
+#
+# Chest/heart (`груд*` incl. `грудин*`, `сердц*`) is deny-by-default in code, not here
+# (A§7.1): an allowlist of chest-day phrases ("день груди", "жим груди", "грудные мышцы",
+# "на грудь", "грудак") is removed first, and a chest/heart token plus a discomfort
+# descriptor ("давит", "жжет", "сжимает", "тяжело", ...) halts even next to an allowlisted
+# phrase ("после жима груди давит в груди"). So "в груди давит", "за грудиной давит" and
+# "сердце колотится" halt without needing a line here.
+#
+# Ordinary soreness ("крепатура", "забитые мышцы") and exertional breathlessness ("одышка")
+# are intentionally excluded; only pain/dizziness/numbness/chest-or-heart/"something popped"/
+# breathing-distress language halts. ("болит"/"больно" are still listed: they describe pain
+# in the moment, which must halt, unlike a bare mention of expected next-day soreness.)
+
+# category: pain
+боль
+больно
+болит
+болел
+болела
+болели
+болят
+боли
+болью
+боляче
+болить
+болезненно
+острая боль
+резкая боль
+ноет
+стреляет
+колет
+кольн*
+побалива*
+заболе*
+разболе*
+потянул спину
+потянула спину
+потянул мышцу
+потянула мышцу
+подвернул ногу
+подвернула ногу
+тянет в пояснице
+прихватыва*
+прихватило*
+
+# category: dizziness
+кружится голова
+голова кружится
+закружилась голова
+головокружение
+головокружения
+предобморочное состояние
+теряю сознание
+потерял сознание
+потеряла сознание
+в глазах потемнело
+потемнело в глазах
+темнеет в глазах
+голова поплыла
+поплыла голова
+штормит
+повело
+вырубился
+вырубилась
+головокруж*
+обморок*
+кружил*
+
+# category: nausea
+# Only unambiguous terms (A§7.1).
+мутит
+тошнит
+тошнило
+тошнота
+подташнивает
+рвота
+вырвало
+стошнило
+
+# category: numbness
+онемел
+онемела
+онемели
+немеет
+немеют
+онемение
+немота
+покалывание
+потеря чувствительности
+мурашки
+не чувствую пальцы
+не чувствую руку
+не чувствую ногу
+рука не чувствует
+нога не чувствует
+свело ногу
+онеме*
+покалыва*
+занеме*
+затек*
+отнял*
+
+# category: weakness
+# Only limb-specific phrases (A§7.1): bare "слабость"/"устал" is ordinary fatigue talk.
+слабость в руке
+слабость в руках
+слабость в ноге
+слабость в ногах
+ватные ноги
+ноги ватные
+
+# category: breathing
+# Inability to breathe halts; ordinary exertional breathlessness ("одышка") does not (A§7.1)
+# — conditioning work causes that.
+не могу дышать
+задыхаюсь
+трудно дышать
+тяжело дышать
+не хватает воздуха
+нечем дышать
+задыха*
+задохн*
+
+# category: something_popped
+# `щелк*` covers both the event ("щелкнуло") and the present tense ("щелкает колено").
+хрустнуло
+щелкнуло
+порвал
+порвала
+порвалось
+надрыв
+разрыв
+растяжение
+треснуло
+что то хрустнуло
+лопнуло
+хруст*
+щелч*
+щелк*
+лопн*
+травм*
+растян*
+надорв*

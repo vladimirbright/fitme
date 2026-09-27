@@ -1,0 +1,186 @@
+# Fitme stop-word list: English (A§7, AGENTS.md §2 "Stop words halt the session").
+#
+# One term per line. Blank lines are ignored. A line starting with `#` is a comment; a line
+# of the exact form `# category: <name>` starts a new category for every term that follows
+# it, until the next such header. A line ending in `*` is a *stem*: it matches as a prefix of
+# any word in the text, not as an exact phrase.
+#
+# Chest/heart is handled in code, not here (`guards/stop_words/__init__.py`,
+# `_chest_or_heart_hit`, A§7.1): deny-by-default with an allowlist of exercise/training
+# phrases ("chest press", "chest day", "heart rate 150") and a co-occurrence override (a
+# chest/heart token plus a discomfort descriptor halts even next to an allowlisted phrase).
+# Only chest/heart phrases *without* a chest/heart token belong in this file.
+#
+# Matching is deliberately broad (A§7.1): "no pain today" MUST halt. That is an accepted
+# cost, not a bug — the guard has to be deterministic and impossible to argue around, and the
+# precheck/check-in flows use buttons rather than free text, which keeps false positives rare
+# in practice.
+#
+# Ordinary muscle soreness/fatigue words are intentionally excluded: normal DOMS after a hard
+# session ("sore", "stiff", "tight hamstrings") must not halt training, and neither do
+# cramps, bare "weak"/"tired", or exertional breathlessness ("out of breath", "can't catch my
+# breath").
+#
+# Where a stem collides with plan-editing language, a phrase is used instead (A§7.1):
+# "tweaked my" rather than `tweak*` ("tweak the plan"), "heard a crack" rather than `crack*`
+# ("cracked the plateau"). `strain*` and `tender` are kept as they are: "strain gauge" and
+# "tender loving care" halting is an accepted cost.
+
+# category: pain
+pain
+pains
+painful
+hurts
+hurt
+hurting
+pian
+hurst
+ache
+aches
+aching
+sharp pain
+stabbing pain
+stabbing
+shooting pain
+it hurts
+killing me
+strained
+sprained
+tender
+tweaked my
+tweaked it
+just tweaked
+tweak in my
+twing*
+sprain*
+strain*
+throb*
+
+# category: injury
+injur*
+aggravated
+swollen
+swelling
+
+# category: dizziness
+dizzy
+dizziness
+dizy
+lightheaded
+light headed
+faint
+faintness
+fainting
+fainted
+about to pass out
+passed out
+passing out
+feel like passing out
+went black
+woozy
+vertigo
+room spinning
+room is spinning
+seeing stars
+blacked out
+vision went blurry
+blurry vision
+
+# category: numbness
+numb
+numbness
+numbing
+numbb
+tingling
+tingly
+pins and needles
+loss of feeling
+lost feeling
+lost sensation
+no sensation
+cant feel my fingers
+cant feel my
+heavy and weird
+arm went dead
+arms went dead
+hand went dead
+hands went dead
+leg went dead
+legs went dead
+foot went dead
+arm fell asleep
+hand fell asleep
+leg fell asleep
+foot fell asleep
+
+# category: weakness
+# Only limb-specific phrases (A§7.1): bare "weak"/"tired" is ordinary fatigue talk.
+arm went weak
+arms went weak
+leg went weak
+legs went weak
+arm gave way
+leg gave way
+legs gave way
+knee gave way
+knees gave way
+
+# category: chest_or_heart
+# (Phrases without a chest/heart token; the token itself is deny-by-default in code.)
+burning sensation
+palpitat*
+
+# category: breathing
+# Inability to breathe halts; ordinary exertional breathlessness ("out of breath", "short of
+# breath", "can't catch my breath") does not (A§7.1) — conditioning work causes that.
+# "cant"/"cannot"/"can not"/"can't"/"couldn't"/"could not" all fold to "cant" before matching
+# (guards/stop_words/__init__.py normalize()), so one line covers every spelling and tense.
+cant breathe
+hard to breathe
+struggling to breathe
+trouble breathing
+
+# category: something_popped
+# Bare "popped" halts (A§7.1: "popped a PR" halting is an accepted false positive). Bare
+# present-tense "pop"/"snap"/"tore"/"ripped" are excluded: "pop the cap off", "tore through
+# the workout", "ripped (felt ripped lol)" are common outside any health context.
+popped
+went pop
+heard it pop
+felt it pop
+felt a pop
+heard a pop
+felt a snap
+heard a snap
+snapped
+torn
+tearing
+something popped
+something snapped
+knee popped
+popped out
+something went in my back
+my back went
+pulled a muscle
+pulled my hamstring
+felt a pull in
+rolled my ankle
+gave out
+buckled
+back spasm
+clicked in my
+heard a crack
+felt a crack
+something cracked
+cracked my
+dislocat*
+
+# category: nausea
+# Only unambiguous terms (A§7.1): "felt sick" is dropped — "sick of lunges" is ordinary
+# complaining, not a symptom report.
+threw up
+vomited
+vomiting
+nauseous
+nauseated
+nausea

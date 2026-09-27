@@ -136,6 +136,27 @@ def test_export_writes_every_table_once_a_user_exists(
     assert mode == 0o600
 
 
+def test_export_fixes_permissions_on_an_existing_world_readable_file(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """os.open()'s mode only applies when it creates the file; overwriting a pre-existing
+    0644 file must still end up 0600 (A§5)."""
+    db_path = tmp_path / "fitme.db"
+    monkeypatch.setenv("FITME_DB_PATH", str(db_path))
+    assert main(["db", "upgrade"]) == 0
+    asyncio.run(_seed_a_user(db_path))
+
+    out_path = tmp_path / "export.json"
+    out_path.write_text("stale", encoding="utf-8")
+    out_path.chmod(0o644)
+
+    exit_code = main(["export", "--out", str(out_path)])
+
+    assert exit_code == 0
+    mode = stat.S_IMODE(out_path.stat().st_mode)
+    assert mode == 0o600
+
+
 def test_delete_refuses_without_yes(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setenv("FITME_DB_PATH", str(tmp_path / "fitme.db"))
     assert main(["db", "upgrade"]) == 0
