@@ -241,6 +241,7 @@ def render_user_prompt(
     result_text: str | None = None,
     guard_feedback: Sequence[str] | None = None,
     load_units: Mapping[str, str] | None = None,
+    recap: Mapping[str, object] | None = None,
 ) -> RenderedInput:
     """Build the one `user_prompt` every agent factory's caller sends (B2: "one rendering
     path"), so `plan_generate`/`plan_revise`/`session_adjust`/`result_parse` never each grow
@@ -264,6 +265,10 @@ def render_user_prompt(
     `load_units` (A§4.4 "loads are per implement") maps each exercise id in `planned_block`
     to its catalog `load_unit`, so `result_parse` knows whether a reported kg is a total, per
     implement (each dumbbell/kettlebell), or a single implement.
+
+    `recap` (A§8.1 `recap` agent, M8) is the finished workout's planned-vs-actual numbers and
+    the load engine's decisions, already JSON-safe; like `result_parse`, its caller passes
+    `language` and no `context`.
     """
     payload: dict[str, object] = {}
     if context is not None:
@@ -286,5 +291,9 @@ def render_user_prompt(
         payload["guard_feedback"] = list(guard_feedback)
     if load_units is not None:
         payload["load_units"] = dict(load_units)
+    if recap is not None:
+        # A§8.1 `recap`: planned vs actual per exercise plus the engine's decisions (built by
+        # `services.recap`); catalog ids and numbers only — no history, no user ids.
+        payload["recap"] = dict(recap)
     text = json.dumps(payload, ensure_ascii=False)
     return RenderedInput(text=text, payload=payload)

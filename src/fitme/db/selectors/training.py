@@ -153,6 +153,23 @@ async def historical_max_by_exercise(conn: aiosqlite.Connection, user_id: int) -
     return {row[0]: float(row[1]) for row in rows if row[1] is not None}
 
 
+async def historical_max_by_exercise_before_session(
+    conn: aiosqlite.Connection, user_id: int, session_id: int
+) -> dict[str, float]:
+    """`historical_max_by_exercise` over every session *except* `session_id`: what the max
+    was before this session, so the recap (A§6.5 step 6, M8) can say whether it set a new
+    one."""
+    async with conn.execute(
+        "SELECT s.exercise_id, MAX(s.actual_load_kg) FROM set_logs s "
+        "JOIN workout_sessions w ON w.id = s.session_id "
+        "WHERE w.user_id = ? AND s.session_id != ? AND s.actual_load_kg IS NOT NULL "
+        "GROUP BY s.exercise_id",
+        (user_id, session_id),
+    ) as cursor:
+        rows = await cursor.fetchall()
+    return {row[0]: float(row[1]) for row in rows if row[1] is not None}
+
+
 async def recent_session_outcomes(
     conn: aiosqlite.Connection, user_id: int, exercise_id: str, *, limit: int = 2
 ) -> list[SessionOutcome]:

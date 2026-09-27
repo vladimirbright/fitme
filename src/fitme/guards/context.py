@@ -47,10 +47,13 @@ class GuardContext:
     # deleting logs can't reset the cap).
     increases_7d: Mapping[str, Sequence[float]] = field(default_factory=dict)
     # Per-exercise highest `to_kg` among the load changes *applied* in the trailing 7 days
-    # (`selectors.decisions.applied_to_kg_by_exercise`, every applying decision kind; drafts
-    # store no `load_changes`, so they never appear). A§7: an increase already applied this
-    # week is not counted twice — the reference is lifted to this value when it is above
-    # `min(current, history_max)`, so keeping a confirmed load is not a new increase.
+    # and after the exercise's last completed session (`selectors.decisions.
+    # applied_to_kg_by_exercise`, every applying decision kind; drafts store no
+    # `load_changes`, so they never appear). A§7: an increase already applied this week is
+    # not counted twice — the reference is lifted to this value when it is above
+    # `min(current, history_max)`, so keeping a confirmed load is not a new increase. Once a
+    # session is completed, its prescription is the reference again, so a load the user just
+    # failed at is never restored through this lift.
     applied_to_kg_7d: Mapping[str, float] = field(default_factory=dict)
     # Latest check-in answer per catalog `loads_areas` name (A§4.4); a *flagged* area with no
     # entry is treated as `unknown` (AGENTS.md §2: silence is not consent). Unflagged areas

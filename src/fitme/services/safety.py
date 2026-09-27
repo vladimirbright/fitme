@@ -59,12 +59,16 @@ async def halt(
     reason: HealthHoldReason,
     guards_fired: list[GuardVerdict],
     user_report: dict[str, object],
+    source_session_id: int | None = None,
 ) -> HaltResult:
     """A§6.6, steps 1-3, in one transaction (so a crash can never leave a halted session
     without its hold, or a hold without its decision): set the active workout session (if
     any) to `halted` with `halt_reason`, open a `health_hold` tied to it, and log
     `decision(kind=session_halt)`. The caller then sends the fixed halt message; no LLM call
     is ever made on this path.
+
+    `source_session_id` ties the hold to a session that is no longer active (M8: a post-workout
+    check-in answered "pain" belongs to the completed session); an active session always wins.
 
     The halt decision's `user_report` always carries `hold_id`, the halted `session_id` (or
     `None`) and the `timezone` in effect right now (A§6.6: "same day" is evaluated in the
@@ -75,10 +79,10 @@ async def halt(
     timezone = await _timezone_in_effect(db, user_id)
     async with db.transaction() as conn:
         active = await get_active_workout_session(conn, user_id)
-        session_id = None if active is None else active.id
-        if session_id is not None:
+        session_id = source_session_id if active is None else active.id
+        if active is not None:
             await finish_workout_session(
-                conn, session_id, status=_SESSION_HALTED, halt_reason=reason.value
+                conn, active.id, status=_SESSION_HALTED, halt_reason=reason.value
             )
         hold_id = await insert_health_hold(
             conn, user_id=user_id, reason=reason.value, source_session_id=session_id

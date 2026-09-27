@@ -9,15 +9,16 @@ from aiogram.types import Message
 
 from fitme.bot.commands import COMMAND_NAMES
 from fitme.bot.handlers.setup import show_step
-from fitme.bot.handlers.train import PendingTrains, handle_cancel
+from fitme.bot.handlers.train import PendingTrains, handle_cancel, show_pending_recap
 from fitme.bot.keyboards import hold_clear_markup
 from fitme.db.connection import Database
 from fitme.i18n import t
 from fitme.services import profile as profile_service
 from fitme.services import safety
+from fitme.services.llm_runtime import LlmRuntime
 
 
-async def cmd_start(message: Message, db: Database, user_id: int) -> None:
+async def cmd_start(message: Message, db: Database, llm: LlmRuntime, user_id: int) -> None:
     snapshot = await profile_service.get_snapshot(db, user_id)
     lang = snapshot.language
 
@@ -42,6 +43,7 @@ async def cmd_start(message: Message, db: Database, user_id: int) -> None:
         return
 
     await message.answer(t("start.bound_with_profile", lang))
+    await show_pending_recap(message, db, llm, user_id, lang)
 
 
 async def cmd_help(message: Message, db: Database, user_id: int) -> None:

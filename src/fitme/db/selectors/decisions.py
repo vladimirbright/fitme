@@ -74,6 +74,21 @@ async def get_latest_session_event_decision(
     return None if row is None else _decision_from_row(row)
 
 
+async def get_latest_decision_of_kind(
+    conn: aiosqlite.Connection, user_id: int, kind: str
+) -> DecisionRecord | None:
+    """The user's newest decision of `kind`, or `None`. M8: a recap's Apply buttons are
+    current only while their `progression` decision is the newest one (a later session's
+    recap supersedes older suggestions)."""
+    async with conn.execute(
+        f"SELECT {_DECISION_COLUMNS} FROM decisions WHERE user_id = ? AND kind = ? "
+        "ORDER BY id DESC LIMIT 1",
+        (user_id, kind),
+    ) as cursor:
+        row = await cursor.fetchone()
+    return None if row is None else _decision_from_row(row)
+
+
 async def list_decisions_for_user(
     conn: aiosqlite.Connection, user_id: int, *, limit: int = 100
 ) -> list[DecisionRecord]:
@@ -189,19 +204,48 @@ async def applied_to_kg_by_exercise(
     `since` (A§7 / A§4.3: every applying decision kind — `plan_confirm`, `progression`,
     `session_adjust`, `user_edit`; drafts store `[]` and so never appear). Feeds
     `guards.context.GuardContext.applied_to_kg_7d`: an increase already applied this week is
-    not counted again."""
+    not counted again. A§7: an applied change is **discarded only when the exercise's last
+    completed session after the change was prescribed below its `to_kg`** — the user has
+    since trained at a lower prescription, so a load they just failed at can't be restored
+    through the lift. A session prescribed *at* `to_kg` (skipped, logged lighter, or failed
+    once) keeps the lift: holding that load is a hold, not a new increase. A completed session
+    without a `finished_at` (never written by the app; only a seeded row) is not "after"
+    anything and never discards."""
     async with conn.execute(
-        "SELECT load_changes FROM decisions "
+        "SELECT s.exercise_id, w.finished_at, MAX(s.planned_load_kg) FROM set_logs s "
+        "JOIN workout_sessions w ON w.id = s.session_id "
+        "WHERE w.user_id = ? AND w.status = 'completed' AND w.finished_at IS NOT NULL "
+        "GROUP BY w.id, s.exercise_id ORDER BY w.finished_at, w.id",
+        (user_id,),
+    ) as cursor:
+        completed_rows = await cursor.fetchall()
+    # Per exercise: every completed session's (finished_at, prescribed kg), oldest first.
+    completed: dict[str, list[tuple[str, float | None]]] = {}
+    for exercise_id, finished_at, planned_kg in completed_rows:
+        completed.setdefault(str(exercise_id), []).append(
+            (str(finished_at), None if planned_kg is None else float(planned_kg))
+        )
+    async with conn.execute(
+        "SELECT load_changes, created_at FROM decisions "
         "WHERE user_id = ? AND created_at >= ? AND load_changes != '[]'",
         (user_id, since),
     ) as cursor:
         rows = await cursor.fetchall()
 
     highest: dict[str, float] = {}
-    for (load_changes_json,) in rows:
+    for load_changes_json, created_at in rows:
         for change in json.loads(load_changes_json):
             exercise_id = str(change["exercise_id"])
             to_kg = float(change["to_kg"])
+            later = [
+                planned_kg
+                for finished_at, planned_kg in completed.get(exercise_id, [])
+                if finished_at > str(created_at)
+            ]
+            if later:
+                last_prescribed_kg = later[-1]
+                if last_prescribed_kg is not None and last_prescribed_kg < to_kg:
+                    continue  # trained at a lower prescription since: the lift is over
             known = highest.get(exercise_id)
             highest[exercise_id] = to_kg if known is None else max(known, to_kg)
     return highest

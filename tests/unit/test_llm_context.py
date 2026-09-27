@@ -461,3 +461,18 @@ def test_render_user_prompt_carries_load_units_for_result_parse() -> None:
     assert rendered.payload["load_units"] == {"dumbbell_bench_press": "per_implement"}
     assert json.loads(rendered.text) == rendered.payload
     assert "load_units" not in render_user_prompt(language="en", planned_block=block).payload
+
+
+def test_render_user_prompt_carries_the_recap_input_with_only_language() -> None:
+    """A§8.2 per-agent minimization for `recap` (M8): the language and the recap payload
+    (catalog ids and this session's numbers), no `context`, no allowed ids, no history."""
+    from fitme.llm.context import render_user_prompt
+
+    recap = {
+        "exercises": [{"exercise_id": "barbell_back_squat", "done_sets": 3}],
+        "next_session": [],
+    }
+    rendered = render_user_prompt(language="ru", recap=recap)
+    assert rendered.payload == {"language": "ru", "recap": recap}
+    assert json.loads(rendered.text) == rendered.payload
+    assert "allowed_exercise_ids" not in rendered.text and "history" not in rendered.text

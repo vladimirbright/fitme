@@ -16,6 +16,7 @@ from fitme.db.controllers.decisions import (
 from fitme.db.selectors.decisions import (
     applied_to_kg_by_exercise,
     get_decision,
+    get_latest_decision_of_kind,
     get_latest_plan_round_decision,
     get_latest_session_event_decision,
     list_decision_outcomes,
@@ -383,3 +384,105 @@ async def test_get_latest_session_event_decision_matches_session_and_event(
         )
     assert found is not None and found.id == newer
     assert missing is None
+
+
+async def test_applied_to_kg_by_exercise_drops_a_lift_only_after_a_lower_prescribed_session(
+    db: Database, user_id: int
+) -> None:
+    """A§7: a load applied by a session's Start (or a plan confirm) keeps lifting the
+    reference through a later completed session prescribed *at* `to_kg` (skipped, lighter
+    or failed once), and stops once a later session was prescribed *below* it."""
+    from fitme.db.controllers.plans import insert_plan, insert_plan_version
+    from fitme.db.controllers.training import (
+        finish_workout_session,
+        insert_set_log,
+        insert_workout_session,
+    )
+
+    await _insert_kind(
+        db,
+        user_id,
+        "session_adjust",
+        [LoadChange(exercise_id="barbell_back_squat", from_kg=40.0, to_kg=42.5)],
+    )
+    async with db.transaction() as conn:
+        decision_id = await insert_decision(
+            conn,
+            user_id=user_id,
+            kind="plan_confirm",
+            prompt_template=None,
+            prompt_version=None,
+            model=None,
+            content_version="abc123def456",
+            llm_input=None,
+            user_report=None,
+            proposal=None,
+            guards_fired=[],
+        )
+        plan_id = await insert_plan(
+            conn, user_id=user_id, name="P", is_default=True, status="active"
+        )
+        version_id = await insert_plan_version(
+            conn, plan_id=plan_id, version=1, body={}, origin="llm", decision_id=decision_id
+        )
+
+    async def complete_at(prescribed_kg: float, actual_kg: float | None) -> None:
+        async with db.transaction() as conn:
+            session_id = await insert_workout_session(
+                conn,
+                user_id=user_id,
+                plan_version_id=version_id,
+                workout_key="A",
+                status="in_progress",
+            )
+            await insert_set_log(
+                conn,
+                session_id=session_id,
+                exercise_id="barbell_back_squat",
+                set_index=1,
+                planned_load_kg=prescribed_kg,
+                planned_reps_min=5,
+                planned_reps_max=8,
+                actual_load_kg=actual_kg,
+                actual_reps=None if actual_kg is None else 3,
+                skipped=actual_kg is None,
+                rpe=None,
+                source="button",
+            )
+            await finish_workout_session(conn, session_id, status="completed")
+
+    since = "1970-01-01T00:00:00.000000Z"
+    # Prescribed at 42.5 and skipped, then logged lighter, then failed once: the lift stays.
+    await complete_at(42.5, None)
+    await complete_at(42.5, 40.0)
+    await complete_at(42.5, 42.5)
+    async with db.read() as conn:
+        assert await applied_to_kg_by_exercise(conn, user_id, since=since) == {
+            "barbell_back_squat": 42.5
+        }
+    # A later session prescribed below 42.5: the lift is over.
+    await complete_at(40.0, 40.0)
+    async with db.read() as conn:
+        assert await applied_to_kg_by_exercise(conn, user_id, since=since) == {}
+    # A change applied after that completed session lifts again.
+    await _insert_kind(
+        db,
+        user_id,
+        "plan_confirm",
+        [LoadChange(exercise_id="barbell_back_squat", from_kg=42.5, to_kg=45.0)],
+    )
+    async with db.read() as conn:
+        assert await applied_to_kg_by_exercise(conn, user_id, since=since) == {
+            "barbell_back_squat": 45.0
+        }
+
+
+async def test_get_latest_decision_of_kind(db: Database, user_id: int) -> None:
+    async with db.read() as conn:
+        assert await get_latest_decision_of_kind(conn, user_id, "progression") is None
+    await _insert_kind(db, user_id, "progression")
+    newest = await _insert_kind(db, user_id, "progression")
+    await _insert_kind(db, user_id, "plan_confirm")
+    async with db.read() as conn:
+        found = await get_latest_decision_of_kind(conn, user_id, "progression")
+    assert found is not None and found.id == newest

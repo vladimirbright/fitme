@@ -28,14 +28,15 @@ from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message
 
 from fitme.bot import plan_rendering
 from fitme.bot import train_rendering as rendering
-from fitme.bot.callback_data import TrainAction, TrainPick
+from fitme.bot.callback_data import CheckinReply, TrainAction, TrainPick
 from fitme.catalog import load_catalog
 from fitme.config.settings import Settings
 from fitme.db.connection import Database
-from fitme.domain.enums import WorkoutSessionStatus
+from fitme.domain.enums import CheckinAnswer, WorkoutSessionStatus
 from fitme.domain.models import Refusal
 from fitme.i18n import t
 from fitme.services import profile as profile_service
+from fitme.services import recap as recap_service
 from fitme.services import training
 from fitme.services.llm_runtime import LlmRuntime
 from fitme.services.safety import HaltResult
@@ -109,13 +110,21 @@ async def _show_block(message: Message, view: training.BlockView, lang: str) -> 
     )
 
 
-async def _show_advance(message: Message, advance: training.Advance, lang: str) -> None:
+async def _show_advance(
+    message: Message,
+    advance: training.Advance,
+    lang: str,
+    *,
+    db: Database,
+    llm: LlmRuntime,
+    user_id: int,
+    session_id: int,
+) -> None:
     if advance.next_block is not None:
         await _show_block(message, advance.next_block, lang)
         return
     completion = advance.completion
     assert completion is not None
-    # M8 hook: the recap, the check-ins and the progression follow this message.
     await message.answer(
         t(
             "train.completed",
@@ -124,6 +133,54 @@ async def _show_advance(message: Message, advance: training.Advance, lang: str) 
             planned=completion.sets_planned,
         )
     )
+    await _show_recap(message, db, llm, user_id, session_id, lang)
+
+
+async def _show_recap(
+    message: Message, db: Database, llm: LlmRuntime, user_id: int, session_id: int, lang: str
+) -> None:
+    """A§6.5 step 6 (M8): the deterministic recap with the engine's next loads (and the
+    model's text when it passed), then one check-in question per flagged area loaded today,
+    then the model's structural suggestions with Apply buttons."""
+    view = await recap_service.build_recap(db, llm, user_id, session_id)
+    if view is None:
+        return
+    catalog = load_catalog()
+    await _send_long(message, rendering.recap_text(view, catalog=catalog, lang=lang), None)
+    open_checkins = [c for c in view.checkins if c.answer == CheckinAnswer.UNKNOWN.value]
+    if open_checkins:
+        await message.answer(t("recap.checkins_intro", lang))
+        for checkin in open_checkins:
+            await message.answer(
+                rendering.checkin_question(checkin, lang),
+                reply_markup=rendering.checkin_markup(checkin, lang),
+            )
+    for index, change in enumerate(view.proposal.suggestions):
+        await message.answer(
+            rendering.plan_change_text(change, catalog=catalog, lang=lang),
+            reply_markup=rendering.plan_change_markup(view, index, lang),
+        )
+
+
+async def on_checkin_reply(
+    query: CallbackQuery, callback_data: CheckinReply, db: Database, user_id: int
+) -> None:
+    lang = await _lang(db, user_id)
+    message = _message_of(query)
+    try:
+        answer = CheckinAnswer(callback_data.answer)
+    except ValueError:
+        await query.answer(t("errors.stale_callback", lang))
+        return
+    result = await recap_service.answer_checkin(db, user_id, callback_data.checkin_id, answer)
+    if result.status == training.Status.OK:
+        await query.answer(t("recap.checkin_saved", lang))
+        if result.halt is not None:
+            await _send_halt(message, result.halt, lang)
+    elif result.status == training.Status.ALREADY:
+        await query.answer(t("recap.checkin_already", lang))
+    else:
+        await query.answer(t("recap.checkin_stale", lang), show_alert=True)
 
 
 async def _show_suggestion(
@@ -187,8 +244,21 @@ async def _ask_results(
 # --- /train -----------------------------------------------------------------------------------
 
 
-async def cmd_train(message: Message, db: Database, settings: Settings, user_id: int) -> None:
+async def show_pending_recap(
+    message: Message, db: Database, llm: LlmRuntime, user_id: int, lang: str
+) -> None:
+    """A completed session whose recap was never shown (no `progression` decision, e.g. a
+    crash mid-recap): show it now, with its check-in buttons (`/train`, `/start`)."""
+    session_id = await recap_service.pending_recap_session(db, user_id)
+    if session_id is not None:
+        await _show_recap(message, db, llm, user_id, session_id, lang)
+
+
+async def cmd_train(
+    message: Message, db: Database, settings: Settings, llm: LlmRuntime, user_id: int
+) -> None:
     lang = await _lang(db, user_id)
+    await show_pending_recap(message, db, llm, user_id, lang)
     result = await training.entry(db, user_id)
     if isinstance(result, training.Refused):
         await _send_refusal(message, result.refusal, lang)
@@ -266,6 +336,7 @@ async def on_train_action(
     callback_data: TrainAction,
     db: Database,
     settings: Settings,
+    llm: LlmRuntime,
     user_id: int,
     pending_train: PendingTrains,
 ) -> None:
@@ -366,13 +437,25 @@ async def on_train_action(
     if action == "done":
         pending_train.pop(user_id, None)
         advance = await training.complete_block_as_planned(db, user_id, session_id, block)
-        await _answer_advance(query, message, advance, lang)
+        await _answer_advance(
+            query, message, advance, lang, db=db, llm=llm, user_id=user_id, session_id=session_id
+        )
         return
 
     if action == "skip":
         pending_train.pop(user_id, None)
         advance = await training.skip_block(db, user_id, session_id, block)
-        await _answer_advance(query, message, advance, lang, toast_key="train.block_skipped")
+        await _answer_advance(
+            query,
+            message,
+            advance,
+            lang,
+            db=db,
+            llm=llm,
+            user_id=user_id,
+            session_id=session_id,
+            toast_key="train.block_skipped",
+        )
         return
 
     if action == "enter":
@@ -405,7 +488,32 @@ async def on_train_action(
         if confirmed.next_prompt is not None:
             await _ask_results(message, confirmed.next_prompt, lang, pending_train, user_id)
         elif confirmed.advance is not None:
-            await _show_advance(message, confirmed.advance, lang)
+            await _show_advance(
+                message,
+                confirmed.advance,
+                lang,
+                db=db,
+                llm=llm,
+                user_id=user_id,
+                session_id=session_id,
+            )
+        return
+
+    if action == "apply":
+        applied = await recap_service.apply_suggestion(
+            db, settings, user_id, session_id, callback_data.decision_id, callback_data.item
+        )
+        if applied.status == training.Status.OK:
+            await query.answer()
+            await message.answer(
+                t("recap.applied", lang, name=applied.plan_name, version=applied.version)
+            )
+        elif applied.status == training.Status.ALREADY:
+            await query.answer(t("recap.already_applied", lang))
+        elif applied.status == training.Status.REFUSED:
+            await query.answer(t("recap.apply_failed", lang), show_alert=True)
+        else:
+            await query.answer(t("recap.apply_stale", lang), show_alert=True)
         return
 
     await query.answer(t("errors.stale_callback", lang))
@@ -430,13 +538,19 @@ async def _answer_advance(
     advance: training.Advance,
     lang: str,
     *,
+    db: Database,
+    llm: LlmRuntime,
+    user_id: int,
+    session_id: int,
     toast_key: str = "train.block_logged",
 ) -> None:
     if advance.status != training.Status.OK:
         await query.answer(t("train.stale", lang), show_alert=True)
         return
     await query.answer(t(toast_key, lang))
-    await _show_advance(message, advance, lang)
+    await _show_advance(
+        message, advance, lang, db=db, llm=llm, user_id=user_id, session_id=session_id
+    )
 
 
 # --- Free text --------------------------------------------------------------------------------
@@ -540,4 +654,5 @@ def build_router() -> Router:
     router.message.register(cmd_train, Command("train", "t"))
     router.callback_query.register(on_train_pick, TrainPick.filter())
     router.callback_query.register(on_train_action, TrainAction.filter())
+    router.callback_query.register(on_checkin_reply, CheckinReply.filter())
     return router

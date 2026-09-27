@@ -44,9 +44,9 @@ from fitme.db.selectors.training import (
 from fitme.db.selectors.users import get_telegram_account_by_telegram_user_id
 from fitme.domain.enums import AREA_FLAGS, RED_FLAGS
 from fitme.domain.models import Block, Load, Plan, Prescription, Refusal, ScheduledDay, Workout
-from fitme.domain.results import ParsedResults, SetResult
+from fitme.domain.results import ParsedResults, Recap, SetResult
 from fitme.i18n import t
-from fitme.llm.agents import result_parse_agent, session_adjust_agent
+from fitme.llm.agents import recap_agent, result_parse_agent, session_adjust_agent
 from fitme.services import profile as profile_service
 from fitme.services import training
 from fitme.services.identity import issue_activation_code
@@ -70,6 +70,9 @@ class FakeLlm:
 
     adjust_responses: list[Workout | Refusal] = field(default_factory=list)
     parse_responses: list[ParsedResults] = field(default_factory=list)
+    # `recap` answers: a `Recap`, or an exception to raise (a provider failure). An empty
+    # queue answers with an empty recap, so workouts can complete in any test.
+    recap_responses: list[Recap | Exception] = field(default_factory=list)
     prompts: list[str] = field(default_factory=list)
     calls: int = 0
 
@@ -80,8 +83,14 @@ class FakeLlm:
         for part in request.parts:
             if part.part_kind == "user-prompt":
                 self.prompts.append(str(part.content))
-        output: Workout | Refusal | ParsedResults
-        if agent == "session_adjust":
+        output: Workout | Refusal | ParsedResults | Recap
+        if agent == "recap":
+            queued = self.recap_responses.pop(0) if self.recap_responses else Recap(text="")
+            if isinstance(queued, Exception):
+                raise queued
+            output = queued
+            tool = info.output_tools[0].name  # `Recap` is the agent's one output type
+        elif agent == "session_adjust":
             output = self.adjust_responses.pop(0)
             wanted = "Refusal" if isinstance(output, Refusal) else "Workout"
             tool = next(
@@ -110,6 +119,9 @@ class FakeLlm:
                     FunctionModel(
                         lambda m, i: self._respond("result_parse", m, i), model_name=str(model)
                     )
+                ),
+                "recap": lambda model: recap_agent(
+                    FunctionModel(lambda m, i: self._respond("recap", m, i), model_name=str(model))
                 ),
             },
         )
@@ -310,6 +322,10 @@ def _sent(session: FakeSession) -> list[SendMessage]:
 
 def _last_text(session: FakeSession) -> str:
     return _sent(session)[-1].text or ""
+
+
+def _texts(session: FakeSession) -> list[str]:
+    return [m.text or "" for m in _sent(session)]
 
 
 def _toasts(session: FakeSession) -> list[str]:
@@ -573,7 +589,7 @@ async def test_according_to_plan_logs_every_prescribed_set_and_completes(
     assert t("train.calibration_hint", "en") in block2
 
     await _click(dispatcher, bot, _last_action(session, "done"))
-    assert _last_text(session) == t("train.completed", "en", logged=9, planned=9)
+    assert t("train.completed", "en", logged=9, planned=9) in _texts(session)  # then the recap (M8)
     assert await _session_status(db, session_id) == "completed"
     rows = await _rows(db, session_id)
     assert rows[:3] == [(_SQUAT, i, 42.5, 10, False) for i in (1, 2, 3)]
@@ -605,7 +621,7 @@ async def test_skip_marks_the_blocks_sets_skipped(
     assert _toasts(session)[-1] == t("train.block_skipped", "en")
     assert (await _rows(db, session_id))[:3] == [(_SQUAT, i, None, None, True) for i in (1, 2, 3)]
     await _click(dispatcher, bot, _last_action(session, "done"))
-    assert _last_text(session) == t("train.completed", "en", logged=6, planned=9)
+    assert t("train.completed", "en", logged=6, planned=9) in _texts(session)  # then the recap (M8)
 
     # A session with a skipped set is never a success for the engine (A§7.3).
     async with db.read() as conn:
@@ -793,7 +809,7 @@ async def test_superset_results_are_entered_one_exercise_at_a_time(
     assert "Set 1: 12 reps" in _last_text(session)
     await _click(dispatcher, bot, _last_action(session, "parse_ok"))
 
-    assert _last_text(session) == t("train.completed", "en", logged=9, planned=9)
+    assert t("train.completed", "en", logged=9, planned=9) in _texts(session)  # then the recap (M8)
     rows = await _rows(db, session_id)
     assert rows[3:6] == [(_BENCH, i, 8.0, r, False) for i, r in ((1, 10), (2, 10), (3, 8))]
     assert rows[6:] == [(_PUSHUP, i, None, 12, False) for i in (1, 2, 3)]
@@ -1028,7 +1044,7 @@ async def test_a_restart_mid_workout_resumes_at_the_same_block(
     assert "Dumbbell bench press" in block and "Push-up" in block
     assert await _rows(db, session_id) == rows_before  # no duplicated rows
     await _click(restarted, bot, _last_action(session, "done"))
-    assert _last_text(session) == t("train.completed", "en", logged=9, planned=9)
+    assert t("train.completed", "en", logged=9, planned=9) in _texts(session)  # then the recap (M8)
 
 
 async def test_a_restart_in_review_shows_the_review_again(

@@ -337,6 +337,34 @@ block_logged = "Logged."
 completed = "Workout saved: {logged} of {planned} sets logged."
 stale = "That workout step isn't current anymore. Send /train to continue."
 
+[recap]
+# End-of-workout recap: neutral numbers, no streaks, no praise or shame (AGENTS.md §4).
+title = "Workout saved — {workout}"
+exercise_line = "{name}: {done}/{planned} sets, {reps} reps"
+exercise_volume = ", {volume} kg total"
+exercise_skipped = " ({skipped} skipped)"
+new_max = " — new best: {load}"
+next_title = "Next session:"
+next_increase = "• {name}: {load} (up from {current}: every set reached the top of the range)"
+next_hold = "• {name}: {load} (unchanged)"
+next_hold_blocked = "• {name}: {load} (unchanged: a safety check holds it for now)"
+next_hold_checkin = "• {name}: {load} for now — {if_fine} if the check-in is fine"
+next_clamped = "• {name}: {load} (adjusted to what you've logged so far)"
+next_decrease = "• {name}: {load} (down from {current}: two sessions under the rep range, so the next one is lighter)"
+next_calibration = "• {name}: calibration — log what you use"
+next_bodyweight = "• {name}: bodyweight"
+checkins_intro = "A quick check on the areas you flagged:"
+suggestion_swap = "Suggested change: swap {from_name} for {to_name}."
+suggestion_reps = "Suggested change: {name} at {reps_min}–{reps_max} reps."
+apply_button = "Apply to plan"
+applied = "Plan “{name}” updated to version {version}."
+already_applied = "This change is already applied."
+apply_stale = "That suggestion isn't current anymore."
+apply_failed = "That change doesn't pass the safety checks, so it wasn't applied."
+checkin_saved = "Noted."
+checkin_stale = "That check-in isn't open anymore."
+checkin_already = "Already answered."
+
 [load]
 # A two-implement exercise's (two dumbbells, two kettlebells) shown `kg` is the weight of
 # each one, not the combined total (A§4.4 "loads are per implement", `load_unit =

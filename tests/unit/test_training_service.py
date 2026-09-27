@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from fitme.db.records import SetLogRecord
 from fitme.domain.models import Block, Load, Plan, Prescription, ScheduledDay, Workout
-from fitme.services.training import _assign_rows, _block_rows_exist, _pick_workout
+from fitme.services.training import _block_rows_exist, _pick_workout, assign_rows
 
 
 def _prescription(exercise_id: str, sets: int) -> Prescription:
@@ -97,11 +97,11 @@ def test_assign_rows_maps_rows_onto_blocks_in_order_even_for_a_repeated_exercise
         _row(5, "pushup", 1),
         _row(6, "squat", 1),
     ]
-    assigned = _assign_rows(rows, workout)
+    assigned = assign_rows(rows, workout)
     assert [[r.id for r in item] for item in assigned[0]] == [[1, 2]]
     assert [[r.id for r in item] for item in assigned[1]] == [[3, 4], [5]]
     assert [[r.id for r in item] for item in assigned[2]] == [[6]]  # block 2 only half created
     assert _block_rows_exist(assigned, workout, 0)
     assert _block_rows_exist(assigned, workout, 1)
     assert not _block_rows_exist(assigned, workout, 2)
-    assert not _block_rows_exist(_assign_rows([], workout), workout, 0)
+    assert not _block_rows_exist(assign_rows([], workout), workout, 0)

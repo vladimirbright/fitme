@@ -136,7 +136,7 @@ from fitme.llm.models import model_for
 from fitme.llm.usage import AgentRunOutcome, record_llm_call, run_agent
 from fitme.services.catalog import available_exercises
 from fitme.services.llm_runtime import LlmRuntime
-from fitme.services.loads import ExerciseHistory, next_load
+from fitme.services.loads import ExerciseHistory, LoadDecision, next_load
 
 _logger = logging.getLogger(__name__)
 
@@ -497,6 +497,13 @@ def _load_text(load: Load) -> str:
 def engine_load(exercise: Exercise, inputs: Inputs) -> tuple[Load, str, list[GuardVerdict]]:
     """The load engine's value for `exercise` (A§7.3): `calibration` with no completed
     session, otherwise deterministic double progression from the last prescribed load."""
+    decision = engine_decision(exercise, inputs)
+    return decision.load, decision.reason, decision.guards_fired
+
+
+def engine_decision(exercise: Exercise, inputs: Inputs) -> LoadDecision:
+    """`engine_load` with the engine's full structured decision (M8: the recap reads `kind`
+    and `blocked_by`)."""
     history = ExerciseHistory(
         history_max_kg=inputs.snapshot.history_max.get(exercise.id),
         sessions=inputs.snapshot.outcomes.get(exercise.id, []),
@@ -510,7 +517,7 @@ def engine_load(exercise: Exercise, inputs: Inputs) -> tuple[Load, str, list[Gua
         flagged_areas=inputs.ctx.flagged_areas,
         applied_to_kg_7d=inputs.snapshot.applied_to_kg_7d.get(exercise.id),
     )
-    return decision.load, decision.reason, decision.guards_fired
+    return decision
 
 
 def _sanitize_wording(plan: Plan, lang: str) -> list[GuardVerdict]:
@@ -1275,6 +1282,7 @@ __all__ = [
     "confirm_plan",
     "current_draft_id",
     "draft_proposal",
+    "engine_decision",
     "engine_load",
     "gate",
     "get_plan_detail",

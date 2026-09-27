@@ -82,3 +82,11 @@ class TrainAction(CallbackData, prefix="tr"):
     # The `result_parse` decision a Correct button confirms: an older table's Correct must not
     # apply the newest parse.
     decision_id: int = 0
+
+
+class CheckinReply(CallbackData, prefix="ci"):
+    """A post-workout check-in answer (A§6.5 step 6): one `checkins` row, one explicit
+    answer (`fine`/`worse`/`pain`). Answerable later until the next session starts."""
+
+    checkin_id: int
+    answer: str

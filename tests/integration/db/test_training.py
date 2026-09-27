@@ -28,6 +28,7 @@ from fitme.db.selectors.training import (
     get_checkin,
     get_workout_session,
     historical_max_by_exercise,
+    historical_max_by_exercise_before_session,
     historical_max_kg,
     last_completed_workout_key_for_plan,
     latest_checkin_answers,
@@ -702,3 +703,45 @@ async def test_last_completed_workout_key_for_plan_joins_through_plan_versions(
     async with db.read() as conn:
         assert await last_completed_workout_key_for_plan(conn, user_id, plan_id) == "A"
         assert await last_completed_workout_key_for_plan(conn, user_id, plan_id + 999) is None
+
+
+async def test_historical_max_by_exercise_before_session_excludes_that_session(
+    db: Database, user_id: int
+) -> None:
+    plan_version_id = await _insert_plan_version(db, user_id)
+    async with db.transaction() as conn:
+        earlier = await insert_workout_session(
+            conn,
+            user_id=user_id,
+            plan_version_id=plan_version_id,
+            workout_key="A",
+            status="completed",
+        )
+        today = await insert_workout_session(
+            conn,
+            user_id=user_id,
+            plan_version_id=plan_version_id,
+            workout_key="A",
+            status="completed",
+        )
+        for session_id, kg in ((earlier, 40.0), (today, 45.0)):
+            await insert_set_log(
+                conn,
+                session_id=session_id,
+                exercise_id="barbell_back_squat",
+                set_index=1,
+                planned_load_kg=kg,
+                planned_reps_min=5,
+                planned_reps_max=8,
+                actual_load_kg=kg,
+                actual_reps=8,
+                rpe=None,
+                source="button",
+            )
+    async with db.read() as conn:
+        before = await historical_max_by_exercise_before_session(conn, user_id, today)
+        overall = await historical_max_by_exercise(conn, user_id)
+        nothing = await historical_max_by_exercise_before_session(conn, user_id, earlier)
+    assert before == {"barbell_back_squat": 40.0}
+    assert overall == {"barbell_back_squat": 45.0}
+    assert nothing == {"barbell_back_squat": 45.0}

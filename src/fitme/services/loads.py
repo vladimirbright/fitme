@@ -19,6 +19,7 @@ from __future__ import annotations
 import math
 from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass, field
+from enum import StrEnum
 
 from fitme.db.connection import Database
 from fitme.db.records import SessionOutcome
@@ -49,14 +50,43 @@ class ExerciseHistory:
     sessions: Sequence[SessionOutcome] = field(default_factory=tuple)
 
 
+class LoadKind(StrEnum):
+    """What the engine did (M8: the recap derives its wording from this, never from the
+    `reason` text)."""
+
+    INCREASE = "increase"
+    HOLD = "hold"
+    HOLD_BLOCKED = "hold_blocked"  # an earned increase held by a guard (`blocked_by`)
+    DECREASE = "decrease"
+    CLAMPED = "clamped"  # a hold/decrease above the ceiling, clamped down to it
+    CALIBRATION = "calibration"
+    BODYWEIGHT = "bodyweight"
+
+
+class BlockedBy(StrEnum):
+    CHECKIN = "checkin"
+    WEEKLY_CAP = "weekly_cap"
+    CEILING = "ceiling"
+
+
+_BLOCKED_BY_RULE: dict[str, BlockedBy] = {
+    "checkins.increase_allowed": BlockedBy.CHECKIN,
+    "progression.weekly_cap": BlockedBy.WEEKLY_CAP,
+    "ceiling.historical_max": BlockedBy.CEILING,
+}
+
+
 @dataclass(frozen=True, slots=True)
 class LoadDecision:
     """The engine's output: the load to show, why, and every guard verdict consulted while
-    deciding (logged verbatim to `decisions.guards_fired`, AGENTS.md §6)."""
+    deciding (logged verbatim to `decisions.guards_fired`, AGENTS.md §6). `kind` and
+    `blocked_by` are the structured form of `reason`."""
 
     load: Load
     reason: str
     guards_fired: list[GuardVerdict] = field(default_factory=list)
+    kind: LoadKind = LoadKind.HOLD
+    blocked_by: BlockedBy | None = None
 
 
 def _is_valid_kg(value: float) -> bool:
@@ -79,7 +109,12 @@ def _calibration(reason: str, guards_fired: list[GuardVerdict]) -> LoadDecision:
     """`Load(kind="calibration")` means "log what you actually use", which is always safe.
     It is the fallback whenever a kg value can't be justified — never the catalog kg start,
     which is unguarded and could sit above what the user can currently do."""
-    return LoadDecision(load=Load(kind="calibration"), reason=reason, guards_fired=guards_fired)
+    return LoadDecision(
+        load=Load(kind="calibration"),
+        reason=reason,
+        guards_fired=guards_fired,
+        kind=LoadKind.CALIBRATION,
+    )
 
 
 def _within_ceiling(
@@ -89,6 +124,8 @@ def _within_ceiling(
     *,
     exercise: Exercise,
     history: ExerciseHistory,
+    kind: LoadKind,
+    blocked_by: BlockedBy | None = None,
 ) -> LoadDecision:
     """Emit `kg` only if it passes `check_ceiling`; otherwise clamp it down to the ceiling
     (floored to the implement step) or fall back to calibration. Every hold and decrease
@@ -100,7 +137,13 @@ def _within_ceiling(
     )
     guards_fired = [*guards_fired, verdict]
     if verdict.ok:
-        return LoadDecision(load=Load(kind="kg", kg=kg), reason=reason, guards_fired=guards_fired)
+        return LoadDecision(
+            load=Load(kind="kg", kg=kg),
+            reason=reason,
+            guards_fired=guards_fired,
+            kind=kind,
+            blocked_by=blocked_by,
+        )
 
     fallback_reason = f"{reason}; {verdict.detail}; falling back to calibration — log what you use"
     history_max_kg = history.history_max_kg
@@ -114,6 +157,8 @@ def _within_ceiling(
         load=Load(kind="kg", kg=clamped_kg),
         reason=f"{reason}; clamped to the ceiling: {verdict.detail}",
         guards_fired=guards_fired,
+        kind=LoadKind.CLAMPED,
+        blocked_by=BlockedBy.CEILING,
     )
 
 
@@ -130,9 +175,11 @@ def next_load(
     """Deterministic double progression (A§7.3). `flagged_areas` is the set of loads-area
     names the user flagged (`guards.checkins.flagged_areas_from`): only those need a `fine`
     check-in before an increase. `applied_to_kg_7d` is the highest `to_kg` already applied
-    to this exercise in the trailing 7 days (`GuardContext.applied_to_kg_7d`), if any: a
-    plan confirmed at that load is the current prescription, so the engine holds there
-    rather than re-deriving (and re-capping) the same increase from the last session.
+    to this exercise in the trailing 7 days *and after its last completed session*
+    (`GuardContext.applied_to_kg_7d`, A§7), if any: a plan confirmed at that load is the
+    current prescription, so the engine holds there rather than re-deriving (and
+    re-capping) the same increase from the last session — unless the decrease rule fires,
+    which has priority (a load the user just failed at twice is never restored).
 
     - no history -> `calibration` (never a kg value; the catalog `start` is a display hint);
     - the last session was itself a calibration session (no prescribed load) -> anchor on
@@ -157,7 +204,11 @@ def next_load(
         # A§4.4 "non-kg exercises": bodyweight for a bodyweight move, calibration for the rest
         # (a cardio machine, a band). Never a kg number, whatever the history says.
         if exercise.start.kind == "bodyweight":
-            return LoadDecision(load=Load(kind="bodyweight"), reason="not kg-loadable: bodyweight")
+            return LoadDecision(
+                load=Load(kind="bodyweight"),
+                reason="not kg-loadable: bodyweight",
+                kind=LoadKind.BODYWEIGHT,
+            )
         return _calibration("not kg-loadable: calibration", [])
     if not history.sessions:
         return _calibration("no history: calibration", [])
@@ -171,18 +222,25 @@ def next_load(
             "closed to calibration — log what you use",
             [],
         )
+    two_below_in_a_row = (
+        last.below_reps_min and len(history.sessions) >= 2 and history.sessions[1].below_reps_min
+    )
     if (
         prescribed_kg is not None
         and applied_to_kg_7d is not None
         and applied_to_kg_7d > prescribed_kg
+        and not two_below_in_a_row
     ):
-        # A§7: the increase was already applied (and guarded) this week; hold at it.
+        # A§7: the increase was already applied (and guarded) after the last completed
+        # session; hold at it. The decrease rule below has priority: two sessions under
+        # `reps_min` never hold at an applied load, they decrease.
         return _within_ceiling(
             applied_to_kg_7d,
             "hold at the load applied this week",
             [],
             exercise=exercise,
             history=history,
+            kind=LoadKind.HOLD,
         )
 
     if prescribed_kg is None:
@@ -197,6 +255,7 @@ def next_load(
             [],
             exercise=exercise,
             history=history,
+            kind=LoadKind.HOLD,
         )
 
     if last.hit_reps_max:
@@ -219,6 +278,7 @@ def next_load(
                 load=Load(kind="kg", kg=proposed_kg),
                 reason="hit reps_max; increment applied",
                 guards_fired=fired,
+                kind=LoadKind.INCREASE,
             )
         first_failure = next(verdict for verdict in fired if not verdict.ok)
         return _within_ceiling(
@@ -227,11 +287,12 @@ def next_load(
             fired,
             exercise=exercise,
             history=history,
+            kind=LoadKind.HOLD_BLOCKED,
+            blocked_by=_BLOCKED_BY_RULE.get(first_failure.rule),
         )
 
     if last.below_reps_min:
-        two_in_a_row = len(history.sessions) >= 2 and history.sessions[1].below_reps_min
-        if two_in_a_row:
+        if two_below_in_a_row:
             step = exercise.load_step_kg or 1.0
             decreased_kg = _round_down_to_step(prescribed_kg * _DECREASE_FACTOR, step)
             # Always at least one full step down from the prescribed load, never a no-op or
@@ -252,13 +313,24 @@ def next_load(
                 [],
                 exercise=exercise,
                 history=history,
+                kind=LoadKind.DECREASE,
             )
         return _within_ceiling(
-            prescribed_kg, "below reps_min: hold", [], exercise=exercise, history=history
+            prescribed_kg,
+            "below reps_min: hold",
+            [],
+            exercise=exercise,
+            history=history,
+            kind=LoadKind.HOLD,
         )
 
     return _within_ceiling(
-        prescribed_kg, "hold: steady state", [], exercise=exercise, history=history
+        prescribed_kg,
+        "hold: steady state",
+        [],
+        exercise=exercise,
+        history=history,
+        kind=LoadKind.HOLD,
     )
 
 

@@ -687,3 +687,113 @@ def test_sweep_with_an_applied_load_this_week_stays_within_the_ceiling() -> None
         assert decision.load.kg <= bound + 1e-9, (case, decision)
         assert decision.load.kg <= case.history_max + _SWEEP_INCREMENT + 1e-9, (case, decision)
     assert checked > 1000
+
+
+def test_two_sessions_below_reps_min_decrease_even_with_a_load_applied_this_week() -> None:
+    """A§7: the engine's decrease rule beats holding at an applied load. Two completed
+    sessions under `reps_min` at 42.5 never come back as "hold at 45 applied this week"."""
+    exercise = _squat()
+    history = ExerciseHistory(
+        history_max_kg=45.0,
+        sessions=[
+            _outcome(load_kg=42.5, hit_reps_max=False, below_reps_min=True),
+            _outcome(load_kg=42.5, hit_reps_max=False, below_reps_min=True),
+        ],
+    )
+    decision = next_load(
+        exercise,
+        history,
+        _FINE_CHECKINS,
+        increases_7d=[2.5],
+        cap_kg=2.5,
+        flagged_areas=_ALL_AREAS,
+        applied_to_kg_7d=45.0,
+    )
+    assert decision.load == Load(kind="kg", kg=37.5)
+    assert "two sessions below reps_min" in decision.reason
+    # A single failed session still holds at the applied load (no decrease yet).
+    single = ExerciseHistory(
+        history_max_kg=45.0,
+        sessions=[
+            _outcome(load_kg=42.5, hit_reps_max=False, below_reps_min=True),
+            _outcome(load_kg=42.5, hit_reps_max=True, below_reps_min=False),
+        ],
+    )
+    held = next_load(
+        exercise,
+        single,
+        _FINE_CHECKINS,
+        increases_7d=[2.5],
+        cap_kg=2.5,
+        flagged_areas=_ALL_AREAS,
+        applied_to_kg_7d=45.0,
+    )
+    assert held.load == Load(kind="kg", kg=45.0)
+
+
+def test_sweep_after_two_failed_sessions_the_engine_never_restores_an_applied_load() -> None:
+    """The applied-load sweep restricted to histories with two sessions under `reps_min`:
+    whatever load was applied this week, every emitted kg is strictly below the prescribed
+    load (a decrease) or calibration, and within the ceiling."""
+    checked = 0
+    for case in _sweep_cases():
+        if case.prescribed is None or len(case.history.sessions) < 2:
+            continue
+        if not (
+            case.history.sessions[0].below_reps_min and case.history.sessions[1].below_reps_min
+        ):
+            continue
+        applied = case.prescribed + _SWEEP_INCREMENT
+        decision = next_load(
+            case.exercise,
+            case.history,
+            case.checkins,
+            increases_7d=[2.5],
+            cap_kg=2.5,
+            flagged_areas=_ALL_AREAS,
+            applied_to_kg_7d=applied,
+        )
+        checked += 1
+        if decision.load.kind != "kg":
+            assert decision.load.kind == "calibration"
+            continue
+        assert decision.load.kg is not None
+        assert decision.load.kg < case.prescribed, (case, decision)
+        assert decision.load.kg <= case.history_max + _SWEEP_INCREMENT + 1e-9, (case, decision)
+    assert checked > 100
+
+
+def test_decision_kind_is_structured() -> None:
+    """M8: the recap reads `LoadDecision.kind`/`blocked_by`, never the `reason` text."""
+    from fitme.services.loads import BlockedBy, LoadKind
+
+    exercise = _squat()
+    hit = ExerciseHistory(
+        history_max_kg=40.0,
+        sessions=[_outcome(load_kg=40.0, hit_reps_max=True, below_reps_min=False)],
+    )
+    increase = next_load(exercise, hit, _FINE_CHECKINS, [], 2.5, flagged_areas=_ALL_AREAS)
+    assert increase.kind == LoadKind.INCREASE and increase.blocked_by is None
+    capped = next_load(exercise, hit, _FINE_CHECKINS, [2.5], 2.5, flagged_areas=_ALL_AREAS)
+    assert (capped.kind, capped.blocked_by) == (LoadKind.HOLD_BLOCKED, BlockedBy.WEEKLY_CAP)
+    unknown = next_load(exercise, hit, {}, [], 2.5, flagged_areas=_ALL_AREAS)
+    assert (unknown.kind, unknown.blocked_by) == (LoadKind.HOLD_BLOCKED, BlockedBy.CHECKIN)
+    # A hold above the ceiling (prescribed 60, only 50 ever logged) is clamped.
+    stale = ExerciseHistory(
+        history_max_kg=50.0,
+        sessions=[_outcome(load_kg=60.0, hit_reps_max=False, below_reps_min=False)],
+    )
+    clamped = next_load(exercise, stale, _FINE_CHECKINS, [], 2.5, flagged_areas=_ALL_AREAS)
+    assert (clamped.kind, clamped.blocked_by) == (LoadKind.CLAMPED, BlockedBy.CEILING)
+    assert clamped.load.kg == 52.5
+    none = ExerciseHistory(history_max_kg=None)
+    assert next_load(exercise, none, {}, [], 2.5, flagged_areas=()).kind == LoadKind.CALIBRATION
+    failed_twice = ExerciseHistory(
+        history_max_kg=40.0,
+        sessions=[
+            _outcome(load_kg=40.0, hit_reps_max=False, below_reps_min=True),
+            _outcome(load_kg=40.0, hit_reps_max=False, below_reps_min=True),
+        ],
+    )
+    decrease = next_load(exercise, failed_twice, _FINE_CHECKINS, [], 2.5, flagged_areas=_ALL_AREAS)
+    assert decrease.kind == LoadKind.DECREASE

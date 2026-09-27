@@ -11,13 +11,15 @@ from collections.abc import Sequence
 
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-from fitme.bot.callback_data import TrainAction, TrainPick
+from fitme.bot.callback_data import CheckinReply, TrainAction, TrainPick
 from fitme.bot.plan_rendering import exercise_name, load_label, prescription_line
-from fitme.db.records import PlanRecord
+from fitme.db.records import CheckinRecord, PlanRecord
 from fitme.domain.catalog import Catalog
-from fitme.domain.models import Block, Workout
-from fitme.domain.results import ParsedResults
+from fitme.domain.enums import CheckinAnswer
+from fitme.domain.models import Block, Load, Workout
+from fitme.domain.results import ChangeReps, ParsedResults, PlanChange, SwapExercise
 from fitme.i18n import t
+from fitme.services.recap import NextKind, RecapView
 from fitme.services.training import BlockView, ResultPrompt, ReviewView
 
 
@@ -287,3 +289,115 @@ def parsed_markup(prompt: ResultPrompt, decision_id: int, lang: str) -> InlineKe
 def results_pending_markup(session_id: int, block: int, lang: str) -> InlineKeyboardMarkup:
     """Under the "send your results" prompt: the ⚠ button stays reachable."""
     return _rows(_action(t("workout.pain_button", lang), "pain", session_id, block=block))
+
+
+# --- Recap (M8) --------------------------------------------------------------------------------
+
+
+def _name(catalog: Catalog, exercise_id: str, lang: str) -> str:
+    return exercise_name(catalog.by_id(exercise_id), exercise_id, lang)
+
+
+def _load(catalog: Catalog, exercise_id: str, load: Load, lang: str) -> str:
+    return load_label(load, catalog.by_id(exercise_id), lang)
+
+
+def recap_text(view: RecapView, *, catalog: Catalog, lang: str) -> str:
+    """The deterministic recap (numbers from the engine's preview, never the model's), then
+    the model's text when it passed the wording check, then the disclosure."""
+    proposal = view.proposal
+    lines = [t("recap.title", lang, workout=workout_label(view.workout)), ""]
+    for item in proposal.summary:
+        name = _name(catalog, item.exercise_id, lang)
+        line = t(
+            "recap.exercise_line",
+            lang,
+            name=name,
+            done=item.done_sets,
+            planned=item.planned_sets,
+            reps=item.total_reps,
+        )
+        if item.volume_kg > 0:
+            line += t("recap.exercise_volume", lang, volume=f"{item.volume_kg:g}")
+        if item.skipped_sets:
+            line += t("recap.exercise_skipped", lang, skipped=item.skipped_sets)
+        if item.new_max_kg is not None:
+            line += t(
+                "recap.new_max",
+                lang,
+                load=_load(catalog, item.exercise_id, Load(kind="kg", kg=item.new_max_kg), lang),
+            )
+        lines.append(line)
+    if proposal.preview:
+        lines.extend(["", t("recap.next_title", lang)])
+    for step in proposal.preview:
+        name = _name(catalog, step.exercise_id, lang)
+        current = _load(catalog, step.exercise_id, step.current, lang)
+        nxt = _load(catalog, step.exercise_id, step.next, lang)
+        key = {
+            NextKind.INCREASE: "recap.next_increase",
+            NextKind.HOLD: "recap.next_hold",
+            NextKind.HOLD_BLOCKED: "recap.next_hold_blocked",
+            NextKind.HOLD_CHECKIN: "recap.next_hold_checkin",
+            NextKind.DECREASE: "recap.next_decrease",
+            NextKind.CLAMPED: "recap.next_clamped",
+            NextKind.CALIBRATION: "recap.next_calibration",
+            NextKind.BODYWEIGHT: "recap.next_bodyweight",
+        }[step.kind]
+        if_fine = (
+            "" if step.if_fine is None else _load(catalog, step.exercise_id, step.if_fine, lang)
+        )
+        lines.append(t(key, lang, name=name, load=nxt, current=current, if_fine=if_fine))
+    if proposal.recap_text:
+        lines.extend(["", proposal.recap_text])
+    lines.extend(["", t("disclosure.ai", lang)])
+    return "\n".join(lines)
+
+
+def checkin_question(checkin: CheckinRecord, lang: str) -> str:
+    area = checkin.question_key.removeprefix("area:")
+    return t("checkin.question", lang, area=t(f"enum.body_area.{area}", lang))
+
+
+def checkin_markup(checkin: CheckinRecord, lang: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text=t(f"checkin.answer_{answer.value}", lang),
+                    callback_data=CheckinReply(checkin_id=checkin.id, answer=answer.value).pack(),
+                )
+                for answer in (CheckinAnswer.FINE, CheckinAnswer.WORSE, CheckinAnswer.PAIN)
+            ]
+        ]
+    )
+
+
+def plan_change_text(change: PlanChange, *, catalog: Catalog, lang: str) -> str:
+    if isinstance(change, SwapExercise):
+        return t(
+            "recap.suggestion_swap",
+            lang,
+            from_name=_name(catalog, change.from_exercise_id, lang),
+            to_name=_name(catalog, change.to_exercise_id, lang),
+        )
+    assert isinstance(change, ChangeReps)
+    return t(
+        "recap.suggestion_reps",
+        lang,
+        name=_name(catalog, change.exercise_id, lang),
+        reps_min=change.reps_min,
+        reps_max=change.reps_max,
+    )
+
+
+def plan_change_markup(view: RecapView, index: int, lang: str) -> InlineKeyboardMarkup:
+    return _rows(
+        _action(
+            t("recap.apply_button", lang),
+            "apply",
+            view.session_id,
+            item=index,
+            decision_id=view.decision_id,
+        )
+    )

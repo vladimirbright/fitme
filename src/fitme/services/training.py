@@ -34,7 +34,7 @@ select_plan ─► select_workout ─► precheck ─► review ⇄ adjust ─�
 - **`in_progress`**: one block at a time. Sending block `i` creates its `set_logs` rows —
   one per prescribed set, planned load/reps filled, `actual_*` NULL — in the same
   transaction that advances `current_block`, so a resume finds the rows and never
-  duplicates them (`_assign_rows` maps existing rows back onto blocks in creation order).
+  duplicates them (`assign_rows` maps existing rows back onto blocks in creation order).
   "According to plan" writes actual = planned; "Skip" marks the block's sets `skipped=1`;
   "Enter results" goes stop-word scan → `result_parse` (per prescription, so `set_index`
   is unambiguous even in a superset) → `safety_signal` halts → `unclear` re-asks →
@@ -70,6 +70,7 @@ from fitme.db.controllers.decisions import insert_decision, insert_decision_outc
 from fitme.db.controllers.plans import insert_plan_version
 from fitme.db.controllers.training import (
     finish_workout_session,
+    insert_checkin,
     insert_set_log,
     insert_workout_session,
     mark_set_log_skipped,
@@ -95,19 +96,29 @@ from fitme.db.selectors.plans import (
     get_plan_version,
     list_plans_for_user,
 )
+from fitme.db.selectors.profile import list_screening_flags
 from fitme.db.selectors.training import (
     get_active_workout_session,
     get_workout_session,
     last_completed_workout_key_for_plan,
+    list_checkins_for_session,
     list_set_logs_for_session,
 )
 from fitme.db.selectors.users import get_user
 from fitme.domain.catalog import Catalog, Exercise
-from fitme.domain.enums import DecisionKind, HealthHoldReason, RefusalCode, WorkoutSessionStatus
+from fitme.domain.enums import (
+    DecisionKind,
+    HealthHoldReason,
+    RefusalCode,
+    ScreeningFlag,
+    WorkoutSessionStatus,
+)
 from fitme.domain.guard_types import GuardVerdict
 from fitme.domain.models import Block, LoadChange, Plan, Prescription, Refusal, Workout
 from fitme.domain.results import ParsedResults, SetResult
+from fitme.domain.screening import ScreeningFlagState
 from fitme.guards import stop_words
+from fitme.guards.checkins import flagged_areas_from
 from fitme.guards.layering import combine_with_llm_signal
 from fitme.guards.plausibility import check_parsed_results
 from fitme.llm.context import render_user_prompt
@@ -124,7 +135,7 @@ _SOURCE_BUTTON = "button"
 _SOURCE_FREE_TEXT = "free_text"
 _EVENT_ADJUST = "adjust"  # a guard-accepted adjustment: can be the current draft
 _EVENT_ADJUST_REJECTED = "adjust_rejected"  # a rejected attempt or a refusal: logged, never shown
-_EVENT_START = "start"
+EVENT_START = "start"
 _EVENT_PARSE = "parse"
 _PARSE_SHOWN = "shown"
 _ENGINE_RULE = "loads.engine"
@@ -298,7 +309,7 @@ class ConfirmResults:
 
 
 @dataclass(frozen=True, slots=True)
-class _SessionContext:
+class SessionContext:
     session: WorkoutSessionRecord
     plan_record: PlanRecord
     version: PlanVersionRecord
@@ -306,7 +317,7 @@ class _SessionContext:
     workout: Workout  # the plan's stored workout for this session's key
 
 
-async def _load_session(conn: Connection, user_id: int, session_id: int) -> _SessionContext | None:
+async def load_session(conn: Connection, user_id: int, session_id: int) -> SessionContext | None:
     session = await get_workout_session(conn, session_id)
     if session is None or session.user_id != user_id:
         return None
@@ -320,7 +331,7 @@ async def _load_session(conn: Connection, user_id: int, session_id: int) -> _Ses
     workout = _workout_by_key(plan, session.workout_key)
     if workout is None:
         return None
-    return _SessionContext(
+    return SessionContext(
         session=session, plan_record=plan_record, version=version, plan=plan, workout=workout
     )
 
@@ -350,10 +361,10 @@ async def _draft_workout(conn: Connection, session_id: int) -> tuple[Workout | N
     return workout, None if workout is None or decision is None else decision.id
 
 
-async def _started_workout(conn: Connection, session_id: int) -> Workout | None:
+async def started_workout(conn: Connection, session_id: int) -> Workout | None:
     """The workout fixed at Start (the applying `session_adjust`/`start` decision)."""
     decision = await get_latest_session_event_decision(
-        conn, session_id=session_id, kind=DecisionKind.SESSION_ADJUST.value, event=_EVENT_START
+        conn, session_id=session_id, kind=DecisionKind.SESSION_ADJUST.value, event=EVENT_START
     )
     return _decision_workout(decision)
 
@@ -494,10 +505,10 @@ async def active_session(db: Database, user_id: int) -> ActiveSession | None:
         session = await get_active_workout_session(conn, user_id)
         if session is None:
             return None
-        ctx = await _load_session(conn, user_id, session.id)
+        ctx = await load_session(conn, user_id, session.id)
         if ctx is None:
             return None
-        started = await _started_workout(conn, session.id)
+        started = await started_workout(conn, session.id)
     workout = started if started is not None else ctx.workout
     return ActiveSession(session=session, workout=workout, plan_name=ctx.plan_record.name)
 
@@ -580,7 +591,7 @@ async def _build_review(
     """The review workout: the newest LLM adjustment if there is one, else the plan's workout
     with the engine's loads, computed from a fresh snapshot (A§6.5 step 4)."""
     async with db.read() as conn:
-        ctx = await _load_session(conn, user_id, session_id)
+        ctx = await load_session(conn, user_id, session_id)
         if ctx is None:
             return None
         snapshot = await planning.read_snapshot(conn, user_id)
@@ -610,7 +621,7 @@ async def precheck_no(
 ) -> PrecheckResult:
     """The explicit **No** (A§6.5 step 3): `draft` → `confirmed`, then the review."""
     async with db.transaction() as conn:
-        ctx = await _load_session(conn, user_id, session_id)
+        ctx = await load_session(conn, user_id, session_id)
         if ctx is None:
             return PrecheckResult(status=Status.NOT_FOUND)
         if ctx.session.status != WorkoutSessionStatus.DRAFT.value:
@@ -630,7 +641,7 @@ async def precheck_yes(db: Database, user_id: int, session_id: int) -> PrecheckR
     """**Yes** → the halt path (A§6.6), tied to this session. A stale button still halts:
     the user just reported a symptom."""
     async with db.read() as conn:
-        ctx = await _load_session(conn, user_id, session_id)
+        ctx = await load_session(conn, user_id, session_id)
         active = await get_active_workout_session(conn, user_id)
     if ctx is None and (active is None or active.id != session_id):
         # A forged or unknown id: a safe no-op. The owner's own active session halts even
@@ -651,7 +662,7 @@ async def precheck_yes(db: Database, user_id: int, session_id: int) -> PrecheckR
 async def review(db: Database, settings: Settings, user_id: int, session_id: int) -> PrecheckResult:
     """Re-show the review of a `confirmed` session (after an adjustment, or on resume)."""
     async with db.read() as conn:
-        ctx = await _load_session(conn, user_id, session_id)
+        ctx = await load_session(conn, user_id, session_id)
     if ctx is None:
         return PrecheckResult(status=Status.NOT_FOUND)
     if ctx.session.status != WorkoutSessionStatus.CONFIRMED.value:
@@ -723,7 +734,7 @@ async def adjust(
     model is never invoked) → `session_adjust` with escalation (A§8.5 rule 3) →
     `planning.judge_workout` → the new draft, or a refusal (the last accepted draft stays)."""
     async with db.read() as conn:
-        ctx = await _load_session(conn, user_id, session_id)
+        ctx = await load_session(conn, user_id, session_id)
         if ctx is None:
             return AdjustResult(status=Status.NOT_FOUND)
         if ctx.session.status != WorkoutSessionStatus.CONFIRMED.value:
@@ -823,7 +834,7 @@ async def save_to_plan(
     `decision_outcomes`."""
     catalog = load_catalog()
     async with db.transaction() as conn:
-        ctx = await _load_session(conn, user_id, session_id)
+        ctx = await load_session(conn, user_id, session_id)
         if ctx is None:
             return SaveResult(status=Status.NOT_FOUND)
         if ctx.session.status in (
@@ -912,7 +923,7 @@ async def save_to_plan(
 # --- Set rows ---------------------------------------------------------------------------------
 
 
-def _assign_rows(rows: Sequence[SetLogRecord], workout: Workout) -> list[list[list[SetLogRecord]]]:
+def assign_rows(rows: Sequence[SetLogRecord], workout: Workout) -> list[list[list[SetLogRecord]]]:
     """Map a session's `set_logs` rows (creation order) back onto `workout`'s blocks and
     items: `[block][item] -> rows`. Rows are handed out per exercise in order, so an exercise
     that appears in two blocks gets its first rows on the earlier block. A block whose items
@@ -948,7 +959,7 @@ async def _ensure_block_rows(
     """Create block `index`'s rows if they aren't there yet (A§4.2: one per prescribed set,
     created when the block is sent; a resume must not duplicate them)."""
     rows = await list_set_logs_for_session(conn, session_id)
-    assigned = _assign_rows(rows, workout)
+    assigned = assign_rows(rows, workout)
     if _block_rows_exist(assigned, workout, index):
         return
     for item in workout.blocks[index].items:
@@ -979,7 +990,7 @@ def _block_view(session_id: int, workout: Workout, index: int) -> BlockView:
     )
 
 
-def _is_logged(row: SetLogRecord) -> bool:
+def is_logged(row: SetLogRecord) -> bool:
     return row.skipped or row.actual_reps is not None
 
 
@@ -994,11 +1005,11 @@ async def start(db: Database, settings: Settings, user_id: int, session_id: int)
     session returns `ALREADY` with the current block."""
     catalog = load_catalog()
     async with db.transaction() as conn:
-        ctx = await _load_session(conn, user_id, session_id)
+        ctx = await load_session(conn, user_id, session_id)
         if ctx is None:
             return StartResult(status=Status.NOT_FOUND)
         if ctx.session.status == WorkoutSessionStatus.IN_PROGRESS.value:
-            started = await _started_workout(conn, session_id)
+            started = await started_workout(conn, session_id)
             if started is None:
                 return StartResult(status=Status.STALE)
             await _ensure_block_rows(conn, session_id, started, ctx.session.current_block)
@@ -1042,7 +1053,7 @@ async def start(db: Database, settings: Settings, user_id: int, session_id: int)
         load_changes = _workout_load_changes(workout, inputs)
         report: dict[str, object] = {
             "session_id": session_id,
-            "event": _EVENT_START,
+            "event": EVENT_START,
             "adjusted": draft is not None,
         }
         if draft_id is not None:
@@ -1074,7 +1085,7 @@ async def start(db: Database, settings: Settings, user_id: int, session_id: int)
 
 @dataclass(frozen=True, slots=True)
 class _Progress:
-    ctx: _SessionContext
+    ctx: SessionContext
     workout: Workout  # the started workout
     assigned: list[list[list[SetLogRecord]]]
     rows: list[SetLogRecord]
@@ -1085,19 +1096,19 @@ async def _load_progress(
 ) -> tuple[Status, _Progress | None]:
     """The in-progress session, its started workout and its rows, or why not: `NOT_FOUND`,
     or `STALE` when the session isn't `in_progress` or `block` isn't the current block."""
-    ctx = await _load_session(conn, user_id, session_id)
+    ctx = await load_session(conn, user_id, session_id)
     if ctx is None:
         return Status.NOT_FOUND, None
     if ctx.session.status != WorkoutSessionStatus.IN_PROGRESS.value:
         return Status.STALE, None
     if block is not None and block != ctx.session.current_block:
         return Status.STALE, None
-    workout = await _started_workout(conn, session_id)
+    workout = await started_workout(conn, session_id)
     if workout is None or ctx.session.current_block >= len(workout.blocks):
         return Status.STALE, None
     rows = await list_set_logs_for_session(conn, session_id)
     return Status.OK, _Progress(
-        ctx=ctx, workout=workout, assigned=_assign_rows(rows, workout), rows=rows
+        ctx=ctx, workout=workout, assigned=assign_rows(rows, workout), rows=rows
     )
 
 
@@ -1120,18 +1131,76 @@ def _completion(rows: Sequence[SetLogRecord]) -> Completion:
     )
 
 
-async def _complete(conn: Connection, session_id: int) -> Completion:
-    """The last block is done: `completed`. M8 adds the recap, the check-ins and the
-    progression decision right here (A§6.5 step 6)."""
+async def _complete(conn: Connection, user_id: int, session_id: int) -> Completion:
+    """The last block is done, in the same transaction (A§6.5 step 6, M8): `completed`;
+    one `checkins` row (`unknown`) per **flagged** area that today's exercises load, so the
+    next increase for that area is blocked until an explicit answer (silence is not
+    consent); and the `start` decision's `decision_outcomes` row with planned vs actual per
+    set (AGENTS.md §6). The recap text (`services.recap`) follows outside the transaction."""
     await finish_workout_session(conn, session_id, status=WorkoutSessionStatus.COMPLETED.value)
-    return _completion(await list_set_logs_for_session(conn, session_id))
+    rows = await list_set_logs_for_session(conn, session_id)
+    workout = await started_workout(conn, session_id)
+    if workout is not None and not await list_checkins_for_session(conn, session_id):
+        flags = [
+            ScreeningFlagState(
+                flag=ScreeningFlag(record.flag), value=record.value, clearance=record.clearance
+            )
+            for record in await list_screening_flags(conn, user_id)
+        ]
+        for area in loaded_flagged_areas(workout, load_catalog(), flagged_areas_from(flags)):
+            await insert_checkin(
+                conn, user_id=user_id, session_id=session_id, question_key=f"area:{area}"
+            )
+    start_decision = await get_latest_session_event_decision(
+        conn, session_id=session_id, kind=DecisionKind.SESSION_ADJUST.value, event=EVENT_START
+    )
+    if start_decision is not None:
+        await insert_decision_outcome(
+            conn,
+            decision_id=start_decision.id,
+            outcome={"session_id": session_id, "completed": True, "sets": set_outcomes(rows)},
+        )
+    return _completion(rows)
+
+
+def loaded_flagged_areas(workout: Workout, catalog: Catalog, flagged: frozenset[str]) -> list[str]:
+    """The flagged areas (`guards.checkins.flagged_areas_from`) that `workout`'s exercises
+    load (catalog `loads_areas`), in workout order: the check-ins to ask after it."""
+    areas: list[str] = []
+    for block in workout.blocks:
+        for item in block.items:
+            exercise = catalog.by_id(item.exercise_id)
+            if exercise is None:
+                continue
+            for area in exercise.loads_areas:
+                if area in flagged and area not in areas:
+                    areas.append(area)
+    return areas
+
+
+def set_outcomes(rows: Sequence[SetLogRecord]) -> list[dict[str, object]]:
+    """Planned vs actual per set, as `decision_outcomes.outcome["sets"]` stores it."""
+    return [
+        {
+            "exercise_id": row.exercise_id,
+            "set_index": row.set_index,
+            "planned_load_kg": row.planned_load_kg,
+            "planned_reps_min": row.planned_reps_min,
+            "planned_reps_max": row.planned_reps_max,
+            "actual_load_kg": row.actual_load_kg,
+            "actual_reps": row.actual_reps,
+            "skipped": row.skipped,
+        }
+        for row in rows
+    ]
 
 
 async def _advance(conn: Connection, progress: _Progress) -> Advance:
     session_id = progress.ctx.session.id
     next_index = progress.ctx.session.current_block + 1
     if next_index >= len(progress.workout.blocks):
-        return Advance(status=Status.OK, completion=await _complete(conn, session_id))
+        completion = await _complete(conn, progress.ctx.session.user_id, session_id)
+        return Advance(status=Status.OK, completion=completion)
     await update_workout_session_progress(
         conn, session_id, status=WorkoutSessionStatus.IN_PROGRESS.value, current_block=next_index
     )
@@ -1159,7 +1228,7 @@ async def complete_block_as_planned(
             progress.workout.blocks[block].items, progress.assigned[block], strict=True
         ):
             for row in rows:
-                if _is_logged(row):
+                if is_logged(row):
                     continue
                 await update_set_log_actual(
                     conn,
@@ -1182,7 +1251,7 @@ async def skip_block(db: Database, user_id: int, session_id: int, block: int) ->
         assert progress is not None
         for rows in progress.assigned[block]:
             for row in rows:
-                if not _is_logged(row):
+                if not is_logged(row):
                     await mark_set_log_skipped(conn, row.id, source=_SOURCE_BUTTON)
         return await _advance(conn, progress)
 
@@ -1226,7 +1295,7 @@ def _next_item(progress: _Progress, block: int, catalog: Catalog) -> ResultPromp
     for item_index, (item, rows) in enumerate(
         zip(progress.workout.blocks[block].items, progress.assigned[block], strict=True)
     ):
-        if any(not _is_logged(row) for row in rows) or not rows:
+        if any(not is_logged(row) for row in rows) or not rows:
             return ResultPrompt(
                 session_id=progress.ctx.session.id,
                 block=block,
@@ -1442,7 +1511,7 @@ async def confirm_results(
         assert progress is not None
         prescription = progress.workout.blocks[block].items[item]
         rows = progress.assigned[block][item]
-        if not all(_is_logged(row) for row in rows):
+        if not all(is_logged(row) for row in rows):
             decision = await get_latest_session_event_decision(
                 conn,
                 session_id=session_id,
