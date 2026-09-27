@@ -775,7 +775,7 @@ One pydantic-ai `Agent` per purpose. Each has a typed output, and its prompt is 
   version go into `decisions`.
 - Each agent's model comes from its tier or override (§8.5). Nothing in the code is tied to
   one provider.
-- `llm/usage.py` wraps every run: records `llm_calls` from `result.usage()`, latency, and
+- `llm/usage.py` wraps every run: records `llm_calls` from `result.usage` (a property), latency, and
   the cost estimate from the price table.
 - Every prompt says, in the user's language: training plan generator, not a
   coach/doctor/physio; no medical claims; no weight-loss claims; use catalog exercises only;
@@ -787,6 +787,18 @@ One pydantic-ai `Agent` per purpose. Each has a typed output, and its prompt is 
   numbers from `set_logs`, and the user's in-flow free text (plan requests, result text).
 - Before free text is sent, `scrub()` removes @handles, emails, phone numbers and URLs.
 - **Never** sent: `telegram_user_id`, `chat_id`, names, `screening_notes`.
+- **Scrub scope:** the scrub removes handles, links, phone numbers and emails, including
+  the Russian domestic phone format, scheme-less domains with a known TLD, `[at]` emails
+  and `.рф` domains. It must not damage result text: rep lists, load ramps ("140 150
+  160"), "3x10.Next" and dates survive.
+- **Accepted residual risk:** some identifiers can't be caught without heavy false
+  positives on training text:
+  - bare handles without `@` ("my tg is ivan_petrov");
+  - deliberately spaced obfuscation ("t . me / ivan", "ivan at mail dot ru");
+  - personal names typed in free text.
+- **Per-agent minimization:** each agent receives only the context fields it needs. For
+  example, `result_parse` gets the planned block and the result text, not the allowed-ids
+  list or the history.
 - A unit test builds a context from a fixture and asserts that none of the forbidden values
   appear in the rendered prompt.
 

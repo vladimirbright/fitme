@@ -68,7 +68,14 @@ async def insert_set_log(
 ) -> int:
     """One row per *prescribed* set (A§4.2), created when the block is sent. A set the user
     didn't perform is logged with `skipped=True` and `actual_load_kg`/`actual_reps` left
-    `None`, so a partial or halted session stays visible in the data (A§7.3)."""
+    `None`, so a partial or halted session stays visible in the data (A§7.3).
+
+    `set_index` is 1-based (matches `domain.results.SetResult.set_index`, A§4.2's own
+    convention): the first set of a block is `1`, never `0`. Enforced here rather than in
+    `0001_init.sql` — the migration has no `CHECK` for it, and this project's migrations are
+    forward-only and never edited once applied (A§4.7)."""
+    if set_index < 1:
+        raise ValueError(f"set_index must be >= 1 (1-based), got {set_index}")
     cursor = await conn.execute(
         "INSERT INTO set_logs (session_id, exercise_id, set_index, planned_load_kg, "
         "planned_reps_min, planned_reps_max, actual_load_kg, actual_reps, skipped, rpe, "

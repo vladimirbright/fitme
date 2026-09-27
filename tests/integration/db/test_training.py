@@ -106,7 +106,7 @@ async def test_set_log_and_historical_max(db: Database, user_id: int) -> None:
             conn,
             session_id=session_id,
             exercise_id="barbell_back_squat",
-            set_index=0,
+            set_index=1,
             planned_load_kg=40.0,
             planned_reps_min=5,
             planned_reps_max=8,
@@ -119,7 +119,7 @@ async def test_set_log_and_historical_max(db: Database, user_id: int) -> None:
             conn,
             session_id=session_id,
             exercise_id="barbell_back_squat",
-            set_index=1,
+            set_index=2,
             planned_load_kg=40.0,
             planned_reps_min=5,
             planned_reps_max=8,
@@ -177,7 +177,7 @@ async def _log_session(
             defaults: dict[str, object] = {
                 "session_id": session_id,
                 "exercise_id": "barbell_back_squat",
-                "set_index": index,
+                "set_index": index + 1,  # A§4.2: set_index is 1-based
                 "planned_load_kg": 40.0,
                 "planned_reps_min": reps_min,
                 "planned_reps_max": reps_max,
@@ -310,6 +310,35 @@ async def test_recent_session_outcomes_skipped_set_is_not_a_success(
     assert outcomes[0].hit_reps_max is False
 
 
+async def test_insert_set_log_rejects_a_zero_set_index(db: Database, user_id: int) -> None:
+    """ALSO REQUIRED: set_index is 1-based everywhere (A§4.2) — `0001_init.sql` has no CHECK
+    for it (and migrations are never edited once applied, A§4.7), so `insert_set_log` itself
+    rejects a 0 (or negative) set_index before it ever reaches the database."""
+    plan_version_id = await _insert_plan_version(db, user_id)
+    async with db.transaction() as conn:
+        session_id = await insert_workout_session(
+            conn,
+            user_id=user_id,
+            plan_version_id=plan_version_id,
+            workout_key="A",
+            status="in_progress",
+        )
+        with pytest.raises(ValueError, match="set_index must be >= 1"):
+            await insert_set_log(
+                conn,
+                session_id=session_id,
+                exercise_id="barbell_back_squat",
+                set_index=0,
+                planned_load_kg=40.0,
+                planned_reps_min=5,
+                planned_reps_max=8,
+                actual_load_kg=None,
+                actual_reps=None,
+                rpe=None,
+                source="button",
+            )
+
+
 async def test_skipped_set_invariant_is_a_schema_check_not_just_convention(
     db: Database, user_id: int
 ) -> None:
@@ -330,7 +359,7 @@ async def test_skipped_set_invariant_is_a_schema_check_not_just_convention(
         await db.raw.execute(
             "INSERT INTO set_logs (session_id, exercise_id, set_index, planned_load_kg, "
             "planned_reps_min, planned_reps_max, actual_load_kg, actual_reps, skipped, "
-            "rpe, source, created_at) VALUES (?, 'barbell_back_squat', 0, 40.0, 5, 8, "
+            "rpe, source, created_at) VALUES (?, 'barbell_back_squat', 1, 40.0, 5, 8, "
             "40.0, 8, 1, NULL, 'button', ?)",
             (session_id, "2024-01-01T00:00:00.000000Z"),
         )
@@ -339,7 +368,7 @@ async def test_skipped_set_invariant_is_a_schema_check_not_just_convention(
         await db.raw.execute(
             "INSERT INTO set_logs (session_id, exercise_id, set_index, planned_load_kg, "
             "planned_reps_min, planned_reps_max, actual_load_kg, actual_reps, skipped, "
-            "rpe, source, created_at) VALUES (?, 'barbell_back_squat', 0, 40.0, 5, 8, "
+            "rpe, source, created_at) VALUES (?, 'barbell_back_squat', 1, 40.0, 5, 8, "
             "NULL, 8, 1, NULL, 'button', ?)",
             (session_id, "2024-01-01T00:00:00.000000Z"),
         )

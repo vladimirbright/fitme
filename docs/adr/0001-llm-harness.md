@@ -17,7 +17,7 @@ and no tool-heavy orchestration. The project must stay readable for the person r
 | Typed output | Native: `output_type=PlanProposal`, union types for refusal | Possible via parsers or structured-output wrappers, more layers | Manual JSON schema and validation |
 | Validation retry | Built in (the model is re-asked on schema failure) | Available, more config | Hand-written |
 | Provider switch | Model string (`anthropic:...`, `openai:...`, local OpenAI-compatible) | Yes | Rewrite |
-| Token usage | `result.usage()` | Callbacks | Per SDK |
+| Token usage | `result.usage` (a property) | Callbacks | Per SDK |
 | Test doubles | `TestModel`, `FunctionModel` | Fake LLMs exist, heavier | Mock HTTP |
 | Dependency weight | Small (slim + one provider extra) | Large, fast-moving API surface | Smallest |
 | Async | Native | Yes | Yes |

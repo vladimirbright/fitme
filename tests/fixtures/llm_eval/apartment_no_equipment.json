@@ -1,0 +1,26 @@
+{
+  "name": "apartment_no_equipment",
+  "user_id": 103,
+  "language": "ru",
+  "age_bucket": "40_49",
+  "weight_bucket": "70_79",
+  "experience": "6m_2y",
+  "barbell_experience": "no",
+  "preferences": ["bodyweight", "mobility"],
+  "focus": "general_fitness",
+  "location": "apartment_no_equipment",
+  "equipment": [],
+  "sessions_per_week": 2,
+  "session_minutes": 30,
+  "flags": [
+    {"flag": "heart_condition", "value": "no"},
+    {"flag": "chest_discomfort", "value": "no"},
+    {"flag": "dizziness_fainting", "value": "no"},
+    {"flag": "high_blood_pressure", "value": "no"},
+    {"flag": "recent_surgery", "value": "no"},
+    {"flag": "pregnant", "value": "no"},
+    {"flag": "other_condition_limits", "value": "no"},
+    {"flag": "knee_injury_current", "value": "no"}
+  ],
+  "history": []
+}

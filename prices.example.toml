@@ -1,0 +1,21 @@
+# Example FITME_PRICES_FILE (A§3.1, A§8.5 rule 5): USD per million tokens, in/out, for each
+# *resolved* model string (the same strings `FITME_LLM_TIER_*`/`FITME_LLM_AGENT_*` resolve to,
+# and what `decisions.model`/`llm_calls.model` store). A model with no entry here shows as
+# "cost unknown" in /system rather than failing anything.
+#
+# Prices below are illustrative defaults matching the three default tier models
+# (A§8.5) as of this file's last edit. Prices change; the operator must verify current
+# prices with the provider before relying on these numbers for anything beyond a rough
+# order of magnitude.
+
+[models."anthropic:claude-opus-5"]
+input_per_million_usd = 5.0
+output_per_million_usd = 25.0
+
+[models."anthropic:claude-sonnet-5"]
+input_per_million_usd = 2.0
+output_per_million_usd = 10.0
+
+[models."anthropic:claude-haiku-4-5"]
+input_per_million_usd = 1.0
+output_per_million_usd = 5.0

@@ -1,0 +1,38 @@
+{
+  "name": "experienced_public_gym",
+  "user_id": 102,
+  "language": "en",
+  "age_bucket": "30_39",
+  "weight_bucket": "90_99",
+  "experience": "gt_5y",
+  "barbell_experience": "yes",
+  "preferences": ["weight_training", "split"],
+  "focus": "strength",
+  "location": "public_gym",
+  "equipment": ["barbell", "rack", "bench", "dumbbells", "pull_up_bar", "kettlebell", "resistance_bands", "machine", "cable"],
+  "sessions_per_week": 4,
+  "session_minutes": 60,
+  "flags": [
+    {"flag": "heart_condition", "value": "no"},
+    {"flag": "chest_discomfort", "value": "no"},
+    {"flag": "dizziness_fainting", "value": "no"},
+    {"flag": "high_blood_pressure", "value": "no"},
+    {"flag": "recent_surgery", "value": "no"},
+    {"flag": "pregnant", "value": "no"},
+    {"flag": "other_condition_limits", "value": "no"}
+  ],
+  "history": [
+    {
+      "exercise_id": "barbell_back_squat",
+      "last_working_load_kg": 80.0,
+      "last_reps": 5,
+      "historical_max_kg": 82.5
+    },
+    {
+      "exercise_id": "barbell_bench_press",
+      "last_working_load_kg": 60.0,
+      "last_reps": 6,
+      "historical_max_kg": 62.5
+    }
+  ]
+}

@@ -125,7 +125,7 @@ async def test_every_stored_timestamp_matches_the_canonical_format(
             conn,
             session_id=session_id,
             exercise_id="e",
-            set_index=0,
+            set_index=1,  # A§4.2: set_index is 1-based
             planned_load_kg=None,
             planned_reps_min=None,
             planned_reps_max=None,

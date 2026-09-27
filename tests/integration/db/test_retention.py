@@ -91,7 +91,7 @@ async def test_purge_keeps_set_logs(db: Database, user_id: int) -> None:
             conn,
             session_id=session_id,
             exercise_id="barbell_back_squat",
-            set_index=0,
+            set_index=1,  # A§4.2: set_index is 1-based
             planned_load_kg=40.0,
             planned_reps_min=5,
             planned_reps_max=8,

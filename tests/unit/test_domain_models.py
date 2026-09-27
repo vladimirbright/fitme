@@ -94,6 +94,15 @@ def test_plan_proposal_accepts_a_refusal() -> None:
     assert refusal.code is RefusalCode.NEEDS_CLEARANCE
 
 
+def test_refusal_message_at_the_length_ceiling_is_accepted() -> None:
+    Refusal(code=RefusalCode.OUT_OF_SCOPE, message="x" * 1000)
+
+
+def test_refusal_message_over_the_length_ceiling_is_rejected() -> None:
+    with pytest.raises(ValidationError):
+        Refusal(code=RefusalCode.OUT_OF_SCOPE, message="x" * 1001)
+
+
 def test_plan_round_trips_through_json() -> None:
     plan = Plan(
         name="Starter plan",

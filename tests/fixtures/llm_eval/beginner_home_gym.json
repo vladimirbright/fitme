@@ -1,0 +1,25 @@
+{
+  "name": "beginner_home_gym",
+  "user_id": 101,
+  "language": "en",
+  "age_bucket": "30_39",
+  "weight_bucket": "80_89",
+  "experience": "lt_6m",
+  "barbell_experience": "no",
+  "preferences": ["weight_training", "full_body"],
+  "focus": "general_fitness",
+  "location": "home_equipment",
+  "equipment": ["dumbbells", "bench"],
+  "sessions_per_week": 3,
+  "session_minutes": 45,
+  "flags": [
+    {"flag": "heart_condition", "value": "no"},
+    {"flag": "chest_discomfort", "value": "no"},
+    {"flag": "dizziness_fainting", "value": "no"},
+    {"flag": "high_blood_pressure", "value": "no"},
+    {"flag": "recent_surgery", "value": "no"},
+    {"flag": "pregnant", "value": "no"},
+    {"flag": "other_condition_limits", "value": "no"}
+  ],
+  "history": []
+}

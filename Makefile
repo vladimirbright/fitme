@@ -50,8 +50,8 @@ export: ## Export all user data to $(OUT)
 purge: ## Run retention now
 	$(FITME) purge
 
-llm-eval: ## Run LLM eval fixtures (spends money; AGENT=, MODEL= optional)
-	$(FITME) llm eval $(if $(AGENT),--agent $(AGENT)) $(if $(MODEL),--model $(MODEL))
+llm-eval: ## Run LLM eval fixtures (spends money; AGENT=, MODEL= optional; add YES=1 to confirm)
+	$(FITME) llm eval $(if $(AGENT),--agent $(AGENT)) $(if $(MODEL),--model $(MODEL)) $(if $(YES),--yes)
 
 clean: ## Remove caches
 	rm -rf .pytest_cache .mypy_cache .ruff_cache

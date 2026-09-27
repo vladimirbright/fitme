@@ -13,9 +13,10 @@ import sys
 from collections.abc import Callable, Coroutine, Sequence
 from typing import Any
 
-from fitme.cli import commands
+from fitme.cli import commands, llm_eval
 from fitme.cli.catalog_check import catalog_check
 from fitme.config.settings import Settings, SettingsError, load_settings
+from fitme.llm import models as llm_models
 from fitme.log import configure_logging
 
 _NOT_IMPLEMENTED = "not implemented yet"
@@ -70,6 +71,9 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     eval_parser.add_argument("--agent", help="Limit the run to one agent.")
     eval_parser.add_argument("--model", help="Model string to evaluate.")
+    eval_parser.add_argument(
+        "--yes", action="store_true", help="Confirm spending real money on a live provider call."
+    )
 
     return parser
 
@@ -101,6 +105,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             return catalog_check()
         return _stub(f"catalog {args.catalog_command}")
     if args.command == "llm":
+        if args.llm_command == "eval":
+            return _with_settings(
+                parser,
+                lambda settings: llm_eval.run(
+                    settings, agent=args.agent, model=args.model, confirmed=args.yes
+                ),
+            )
         return _stub(f"llm {args.llm_command}")
 
     parser.error(f"unknown command: {args.command}")
@@ -120,13 +131,20 @@ def _with_settings(
 
 
 def _serve(parser: argparse.ArgumentParser) -> int:
-    """`fitme serve` refuses to start while any migration is pending (A§4.7); the rest of
-    `serve` (running the bot and web app) is still a stub until later milestones."""
+    """`fitme serve` refuses to start while any migration is pending (A§4.7) or the LLM model
+    configuration is invalid (A§8.5 rule 1); the rest of `serve` (running the bot and web app)
+    is still a stub until later milestones."""
     try:
         settings = load_settings()
     except SettingsError as exc:
         parser.exit(1, f"{exc}\n")
         raise AssertionError("unreachable") from exc  # parser.exit() always raises SystemExit
+
+    try:
+        llm_models.validate_startup(settings)
+    except SettingsError as exc:
+        print(f"Refusing to start: invalid LLM model configuration: {exc}", file=sys.stderr)
+        return 1
 
     # Don't create a database file just to answer "are migrations pending?" — open_database
     # would do exactly that. If the file is missing, there's nothing to check yet.

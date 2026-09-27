@@ -51,8 +51,13 @@ def fake_resources(
     domain_dir = _make_dir(
         tmp_path,
         "domain",
-        {"catalog.py": "class Exercise: ...\n", "enums.py": "class Equipment: ...\n"},
+        {
+            "catalog.py": "class Exercise: ...\n",
+            "enums.py": "class Equipment: ...\n",
+            "models.py": "class Plan: ...\n",
+        },
     )
+    services_dir = _make_dir(tmp_path, "services", {"loads.py": "def next_load(): ...\n"})
     root_dir = tmp_path / "root"
     root_dir.mkdir()
 
@@ -61,6 +66,7 @@ def fake_resources(
         content_module._STOP_WORDS_PACKAGE: stop_words_dir,
         content_module._GUARDS_PACKAGE: guards_dir,
         content_module._DOMAIN_PACKAGE: domain_dir,
+        content_module._SERVICES_PACKAGE: services_dir,
         content_module._ROOT_PACKAGE: root_dir,
     }
     monkeypatch.setattr(content_module.importlib.resources, "files", mapping.__getitem__)
@@ -69,6 +75,7 @@ def fake_resources(
         "stop_words": stop_words_dir,
         "guards": guards_dir,
         "domain": domain_dir,
+        "services": services_dir,
         "root": root_dir,
     }
 
@@ -152,6 +159,28 @@ def test_content_version_changes_when_domain_enums_py_changes(
     assert before != after
 
 
+def test_content_version_changes_when_domain_models_py_changes(
+    fake_resources: dict[str, pathlib.Path],
+) -> None:
+    before = content_module.content_version()
+    (fake_resources["domain"] / "models.py").write_text("class Plan:\n    pass\n", encoding="utf-8")
+    after = content_module.content_version()
+    assert before != after
+
+
+def test_content_version_changes_when_services_loads_py_changes(
+    fake_resources: dict[str, pathlib.Path],
+) -> None:
+    """A§4.8's M4-round update: `services/loads.py` decides every kg value a guard ever
+    checks, so editing it (even in this fake, disconnected tree) must move the hash."""
+    before = content_module.content_version()
+    (fake_resources["services"] / "loads.py").write_text(
+        "def next_load():\n    pass\n", encoding="utf-8"
+    )
+    after = content_module.content_version()
+    assert before != after
+
+
 def test_content_version_changes_when_content_moves_between_files(
     fake_resources: dict[str, pathlib.Path],
 ) -> None:
@@ -193,19 +222,36 @@ def test_content_version_picks_up_a_new_prompt_file(
     assert before != after
 
 
-def test_content_version_does_not_change_when_a_locale_file_changes(
-    fake_resources: dict[str, pathlib.Path], tmp_path: pathlib.Path
-) -> None:
+def test_no_hashed_path_starts_with_i18n(fake_resources: dict[str, pathlib.Path]) -> None:
     """Locales are excluded from the hash (A§4.8): they don't affect what the guards allow.
-    Uses a fake, unconnected "locales" directory under `tmp_path` — never the real
-    `src/fitme/i18n/locales/` — since `content_version` never looks at locale content at all,
-    by construction; this proves that structurally, without touching real shipped files."""
-    fake_locales_dir = tmp_path / "unrelated_locales"
-    fake_locales_dir.mkdir()
-    (fake_locales_dir / "en.toml").write_text('a = "one"\n', encoding="utf-8")
+    Structural, against the real `_hashed_files()` walk (via the fake resource roots this
+    fixture wires up) rather than against a copy of the real `src/fitme/i18n/locales/` — no
+    locale package is even in the mapping `_hashed_files()` reads from, so this asserts the
+    absence directly instead of tautologically re-deriving "locales aren't hashed" from a
+    fixture built to exclude them."""
+    paths = [path for path, _item in content_module._hashed_files()]
+    assert paths, "expected the fake fixture to produce at least one hashed path"
+    assert not any(path.startswith("i18n/") for path in paths), paths
 
-    before = content_module.content_version()
-    (fake_locales_dir / "en.toml").write_text('a = "two"\nb = "three"\n', encoding="utf-8")
-    after = content_module.content_version()
 
-    assert before == after
+def test_every_hashed_path_matches_the_a4_8_allow_list(
+    fake_resources: dict[str, pathlib.Path],
+) -> None:
+    """A§4.8 names exactly six kinds of guard-relevant content: `catalog/exercises.toml`,
+    `guards/stop_words/*.txt`, `prompts/*.md`, `guards/**/*.py`, the three `domain/*.py`
+    logic files, and `services/loads.py`. Every path `_hashed_files()` yields must fall into
+    one of those — a stray path (e.g. a locale file, or something under a package this
+    function was never told to walk) would be a silent scope-creep bug."""
+    allowed_exact = {
+        "catalog/exercises.toml",
+        "domain/catalog.py",
+        "domain/enums.py",
+        "domain/models.py",
+        "services/loads.py",
+    }
+    for path, _item in content_module._hashed_files():
+        if path in allowed_exact:
+            continue
+        is_guard_file = path.startswith("guards/") and path.endswith((".py", ".txt"))
+        is_prompt_file = path.startswith("prompts/") and path.endswith(".md")
+        assert is_guard_file or is_prompt_file, f"{path!r} is not in the A§4.8 allow list"

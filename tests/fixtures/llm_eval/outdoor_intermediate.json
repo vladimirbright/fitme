@@ -1,0 +1,25 @@
+{
+  "name": "outdoor_intermediate",
+  "user_id": 104,
+  "language": "en",
+  "age_bucket": "50_59",
+  "weight_bucket": "80_89",
+  "experience": "2y_5y",
+  "barbell_experience": "some",
+  "preferences": ["bodyweight", "conditioning"],
+  "focus": "conditioning",
+  "location": "outdoor",
+  "equipment": ["pull_up_bar"],
+  "sessions_per_week": 3,
+  "session_minutes": 45,
+  "flags": [
+    {"flag": "heart_condition", "value": "no"},
+    {"flag": "chest_discomfort", "value": "no"},
+    {"flag": "dizziness_fainting", "value": "no"},
+    {"flag": "high_blood_pressure", "value": "no"},
+    {"flag": "recent_surgery", "value": "no"},
+    {"flag": "pregnant", "value": "no"},
+    {"flag": "other_condition_limits", "value": "no"}
+  ],
+  "history": []
+}

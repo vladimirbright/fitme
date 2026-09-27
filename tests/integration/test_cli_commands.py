@@ -18,6 +18,10 @@ _REQUIRED_ENV = {
     "FITME_TELEGRAM_BOT_TOKEN": "test-token",
     "FITME_WEB_BASE_URL": "https://fit.example.org",
     "FITME_SECRET_KEY": "test-secret-key-0123456789abcdef",
+    # M4/B3: `validate_startup` (called by `serve` and `llm eval`) now checks that the
+    # configured provider's API key env var is present. The default tiers all resolve to
+    # `anthropic:...` models, so this is "required" the same way the three above are.
+    "ANTHROPIC_API_KEY": "test-anthropic-key",
 }
 
 
@@ -27,6 +31,7 @@ def _clean_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Iterator[None
     for key in list(os.environ):
         if key.startswith("FITME_"):
             monkeypatch.delenv(key, raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     for key, value in _REQUIRED_ENV.items():
         monkeypatch.setenv(key, value)
     yield
@@ -169,6 +174,44 @@ def test_purge_runs_against_an_upgraded_db(monkeypatch: pytest.MonkeyPatch, tmp_
     assert main(["db", "upgrade"]) == 0
 
     assert main(["purge"]) == 0
+
+
+def test_llm_eval_refuses_without_yes(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """M4: `llm eval` never spends money without an explicit `--yes` — this must hold even
+    with a fully valid configuration, and without ever resolving/calling a real model."""
+    monkeypatch.setenv("FITME_DB_PATH", str(tmp_path / "fitme.db"))
+
+    exit_code = main(["llm", "eval"])
+
+    assert exit_code == 1
+    output = capsys.readouterr().out
+    assert "spends real money" in output
+    assert "Refusing to run without --yes" in output
+
+
+def test_llm_eval_rejects_an_unknown_agent(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setenv("FITME_DB_PATH", str(tmp_path / "fitme.db"))
+
+    exit_code = main(["llm", "eval", "--agent", "not_a_real_agent", "--yes"])
+
+    assert exit_code == 1
+    assert "unknown agent" in capsys.readouterr().out
+
+
+def test_llm_eval_rejects_invalid_llm_configuration(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setenv("FITME_DB_PATH", str(tmp_path / "fitme.db"))
+    monkeypatch.setenv("FITME_LLM_AGENT_PLAN_GENERATE", "not-a-known-tier-or-model-string")
+
+    exit_code = main(["llm", "eval", "--agent", "plan_generate", "--yes"])
+
+    assert exit_code == 1
+    assert "LLM configuration is invalid" in capsys.readouterr().out
 
 
 def test_missing_settings_report_a_friendly_error(

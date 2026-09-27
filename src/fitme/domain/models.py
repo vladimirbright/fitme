@@ -118,7 +118,13 @@ class Refusal(BaseModel):
     model_config = _STRICT_CONFIG
 
     code: RefusalCode
-    message: str  # plain language, in the user's language
+    message: Annotated[str, Field(max_length=1000)]  # plain language, in the user's language
 
 
 PlanProposal = Plan | Refusal
+
+# A§8.1 `session_adjust` agent output type: a revised `Workout` for today's session, or a
+# `Refusal` (e.g. the request is out of scope, or unsafe on its face). Named separately from
+# `PlanProposal` even though the shape (`X | Refusal`) is the same, so `llm/agents.py` and its
+# callers read as self-documenting rather than reusing a "plan" name for a single workout.
+SessionAdjustProposal = Workout | Refusal

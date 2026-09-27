@@ -3,14 +3,15 @@ guard-logic files, so a past `decisions` row can be tied back to exactly what th
 at the time (`git log -S <hash>`, or by recomputing this function at a given commit).
 
 Hashed: `catalog/exercises.toml`, `guards/stop_words/*.txt`, `prompts/*.md` (the directory
-doesn't exist until M4; absent or empty contributes nothing), `guards/**/*.py`, and
-`domain/catalog.py` + `domain/enums.py` (the catalog-logic source that decides what a guard
-sees, per the M3-round-2 update to A§4.8 — a change to a guard's Python, not just its data
-files, must also change the version). Each file contributes its relative path, byte length
-and bytes to the hash, in that order and in sorted-path order overall, so moving the same
-content between files (or renaming a file) changes the result. Locales and the model price
-table are deliberately excluded: they don't change what the guards allow, only how it's
-presented (A§4.8).
+doesn't exist until M4; absent or empty contributes nothing), `guards/**/*.py`, `domain/
+catalog.py` + `domain/enums.py` + `domain/models.py` (the catalog-logic and domain-model
+source that decides what a guard sees and what shape it validates), and `services/loads.py`
+(the M4-round update to A§4.8 — the load engine decides every kg value a guard ever checks,
+so a change to its Python, not just its data files, must also change the version). Each file
+contributes its relative path, byte length and bytes to the hash, in that order and in
+sorted-path order overall, so moving the same content between files (or renaming a file)
+changes the result. Locales and the model price table are deliberately excluded: they don't
+change what the guards allow, only how it's presented (A§4.8).
 """
 
 from __future__ import annotations
@@ -25,9 +26,11 @@ _CATALOG_FILENAME = "exercises.toml"
 _STOP_WORDS_PACKAGE = "fitme.guards.stop_words"
 _GUARDS_PACKAGE = "fitme.guards"
 _DOMAIN_PACKAGE = "fitme.domain"
+_SERVICES_PACKAGE = "fitme.services"
 _ROOT_PACKAGE = "fitme"
 _PROMPTS_SUBDIR = "prompts"
-_DOMAIN_LOGIC_FILES = ("catalog.py", "enums.py")
+_DOMAIN_LOGIC_FILES = ("catalog.py", "enums.py", "models.py")
+_SERVICES_LOGIC_FILES = ("loads.py",)
 
 _HASH_PREFIX_LENGTH = 12
 _SKIP_DIR_NAMES = frozenset({"__pycache__"})
@@ -67,6 +70,9 @@ def _hashed_files() -> Iterable[tuple[str, Traversable]]:
     domain_root = importlib.resources.files(_DOMAIN_PACKAGE)
     for name in _DOMAIN_LOGIC_FILES:
         yield f"domain/{name}", domain_root / name
+    services_root = importlib.resources.files(_SERVICES_PACKAGE)
+    for name in _SERVICES_LOGIC_FILES:
+        yield f"services/{name}", services_root / name
 
 
 def content_version() -> str:

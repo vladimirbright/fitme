@@ -380,7 +380,10 @@ pattern = "vertical_pull"
 equipment = ["pull_up_bar"]
 locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]
 loads_areas = ["shoulder", "elbow_wrist", "neck"]
-contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current"]
+# Conservative: hanging fully from the bar puts load through the abdominal wall exactly like
+# every other hanging pull in this catalog (chin_up, band_assisted_pull_up,
+# machine_assisted_pull_up, hanging_leg_raise) — all contraindicate hernia for consistency.
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current", "hernia"]
 increment_kg = 2.5
 start = { kind = "bodyweight" }
 instructions = { en = "Hang from the bar with an overhand grip, hands just outside shoulder width. Pull your chin above the bar, then lower back down under control.", ru = "Повисните на перекладине хватом сверху, руки чуть шире плеч. Подтянитесь подбородком выше перекладины, затем опуститесь под контролем." }
@@ -393,7 +396,8 @@ pattern = "vertical_pull"
 equipment = ["pull_up_bar", "resistance_bands"]
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["shoulder", "elbow_wrist", "neck"]
-contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current"]
+# Conservative: same hanging-pull hernia consistency as pull_up above.
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current", "hernia"]
 increment_kg = 2.5
 start = { kind = "bodyweight" }
 instructions = { en = "Loop a band around the bar and place one knee or foot in it for support. Pull your chin above the bar, then lower back down under control.", ru = "Закрепите ленту на перекладине и поставьте в неё колено или стопу для опоры. Подтянитесь подбородком выше перекладины, затем опуститесь под контролем." }
@@ -893,7 +897,7 @@ loads_areas = ["hip", "lower_back", "knee"]
 contraindicated_by = ["hip_injury_current", "lower_back_injury_current", "knee_injury_current", "hernia"]
 increment_kg = 2.5
 start = { kind = "kg", kg = 20.0 }
-instructions = { en = "Rest the upper back on the bench. Lift the hips until the torso and thighs align.", ru = "Обопритесь верхней частью спины о скамью. Поднимите таз, выравнивая корпус и бёдра." }
+instructions = { en = "Rest the upper back on the bench. Roll the bar over your hips (use a pad) and hold it in place, then lift the hips until the torso and thighs align.", ru = "Обопритесь верхней частью спины о скамью. Закатите гриф на таз (используйте подкладку) и удерживайте его, затем поднимите таз, выравнивая корпус и бёдра." }
 load_step_kg = 2.5
 
 [[exercise]]
@@ -938,6 +942,11 @@ start = { kind = "kg", kg = 2.0 }
 instructions = { en = "Set the bench to a modest incline. Lower the dumbbells beside the chest; press upward.", ru = "Установите небольшой наклон скамьи. Опустите гантели по бокам груди; выжмите вверх." }
 load_step_kg = 1.0
 
+# Carries (this suitcase carry and the farmer carry below) declare elbow_wrist in loads_areas
+# because gripping and supporting a heavy implement for the whole walk is the point of the
+# exercise — the grip/forearm is genuinely loaded, unlike lunges, step-ups or RDLs elsewhere in
+# this file, where dumbbells are only held as passive resistance and grip isn't what's being
+# trained or tested.
 [[exercise]]
 id = "dumbbell_suitcase_carry"
 names = { en = "Dumbbell suitcase carry", ru = "Ходьба с гантелью в одной руке" }
