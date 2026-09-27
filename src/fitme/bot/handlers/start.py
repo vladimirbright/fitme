@@ -9,6 +9,7 @@ from aiogram.types import Message
 
 from fitme.bot.commands import COMMAND_NAMES
 from fitme.bot.handlers.setup import show_step
+from fitme.bot.handlers.train import PendingTrains, handle_cancel
 from fitme.bot.keyboards import hold_clear_markup
 from fitme.db.connection import Database
 from fitme.i18n import t
@@ -54,7 +55,11 @@ async def cmd_help(message: Message, db: Database, user_id: int) -> None:
 
 
 async def cmd_cancel(
-    message: Message, db: Database, user_id: int, pending_deletes: set[int]
+    message: Message,
+    db: Database,
+    user_id: int,
+    pending_deletes: set[int],
+    pending_train: PendingTrains,
 ) -> None:
     snapshot = await profile_service.get_snapshot(db, user_id)
     lang = snapshot.language
@@ -62,6 +67,10 @@ async def cmd_cancel(
     pending_deletes.discard(user_id)
     step = await profile_service.get_step(db, user_id)
 
+    if await handle_cancel(message, db, user_id, pending_train):
+        # A§6.2: an in-progress workout is kept (resumable); an unstarted one is aborted.
+        # `cancel_train` has already said which.
+        return
     if step is not None:
         # Setup progress is never discarded by /cancel (A§5.1): it's still there to resume.
         await message.answer(t("cancel.setup_paused", lang))

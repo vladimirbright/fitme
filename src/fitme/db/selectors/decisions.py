@@ -56,6 +56,24 @@ async def get_session_halt_decision_for_hold(
     return None if row is None else _decision_from_row(row)
 
 
+async def get_latest_session_event_decision(
+    conn: aiosqlite.Connection, *, session_id: int, kind: str, event: str
+) -> DecisionRecord | None:
+    """The newest decision of `kind` that `services.training` wrote for `session_id` with
+    `user_report.event == event` (M7: `session_adjust`/`adjust` drafts, the applying
+    `session_adjust`/`start` record, `result_parse`/`parse` results). `user_report` is the
+    sanctioned free-form JSON column (A§4.3), so this needs no schema change — the same
+    pattern as `get_session_halt_decision_for_hold`."""
+    async with conn.execute(
+        f"SELECT {_DECISION_COLUMNS} FROM decisions WHERE kind = ? "
+        "AND json_extract(user_report, '$.session_id') = ? "
+        "AND json_extract(user_report, '$.event') = ? ORDER BY id DESC LIMIT 1",
+        (kind, session_id, event),
+    ) as cursor:
+        row = await cursor.fetchone()
+    return None if row is None else _decision_from_row(row)
+
+
 async def list_decisions_for_user(
     conn: aiosqlite.Connection, user_id: int, *, limit: int = 100
 ) -> list[DecisionRecord]:

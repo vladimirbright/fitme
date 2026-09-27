@@ -14,7 +14,7 @@ never nest; never await network inside a unit):
 3. **LLM**, outside any unit of work: `plan_generate` through `run_agent` (one guard-feedback
    retry, A§6.4 step 4), or `plan_revise` through `run_with_escalation` (A§8.5 rule 3: a
    guard-feedback retry, then one large-tier attempt, then refusal).
-4. **Judge** (`_judge`, pure): `guards.plan.validate_plan`. A§7.3: when the *only* failing
+4. **Judge** (`judge`, pure): `guards.plan.validate_plan`. A§7.3: when the *only* failing
    verdicts are load rules (`guards.plan.LOAD_RULES`), the offending prescriptions get the
    load engine's value instead (`services.loads.next_load`; `calibration` for an exercise
    with no history — the engine never emits kg without history) and no retry is spent; the
@@ -36,6 +36,12 @@ never nest; never await network inside a unit):
    dropped, a failing name/title is replaced with a neutral default, and the replacement is
    recorded in `guards_fired`.
 
+**Shared with `/train` (M7).** `read_snapshot`, `gate`, `build_inputs`, `judge`,
+`engine_load`, `load_changes_for` and the decision-shaping helpers are public so
+`services.training` runs the *same* gates, guard context, load engine and load-change
+accounting over a workout as `/plan` runs over a plan (A§2.1: one code path, one set of
+guards).
+
 **Drafts.** An unconfirmed draft is never a `plans` row: it *is* the `Plan` stored in its
 decision's `proposal`. Confirm references the decision id, re-validates the plan against a
 fresh `GuardContext` (state may have changed: a new hold, new history), and only then writes
@@ -48,7 +54,7 @@ becomes `version n+1` of that plan.
 from __future__ import annotations
 
 import logging
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import timedelta
 from enum import StrEnum
@@ -106,10 +112,16 @@ from fitme.domain.enums import (
     WeightBucket,
 )
 from fitme.domain.guard_types import GuardVerdict
-from fitme.domain.models import Load, LoadChange, Plan, Refusal
+from fitme.domain.models import Load, LoadChange, Plan, Refusal, Workout
 from fitme.domain.screening import ScreeningFlagState
 from fitme.guards.context import GuardContext
-from fitme.guards.plan import LOAD_RULES, load_verdicts, reference_load_kg, validate_plan
+from fitme.guards.plan import (
+    LOAD_RULES,
+    load_verdicts,
+    reference_load_kg,
+    validate_plan,
+    validate_workout,
+)
 from fitme.guards.screening import plan_allowed
 from fitme.i18n import wording
 from fitme.llm.context import (
@@ -237,7 +249,7 @@ class _CompleteProfile:
 
 
 @dataclass(frozen=True, slots=True)
-class _Snapshot:
+class Snapshot:
     language: str
     profile: _CompleteProfile | None  # None: setup not finished
     flags: list[ScreeningFlagState]
@@ -254,7 +266,7 @@ def _since_7d() -> str:
     return clock.format_timestamp(clock.now() - timedelta(days=7))
 
 
-async def _read_snapshot(conn: Connection, user_id: int) -> _Snapshot:
+async def read_snapshot(conn: Connection, user_id: int) -> Snapshot:
     """Everything the gates, the guards and the LLM context need, off one connection (so it
     can run inside `db.read()` for a proposal and inside `db.transaction()` for a confirm)."""
     user = await get_user(conn, user_id)
@@ -325,7 +337,7 @@ async def _read_snapshot(conn: Connection, user_id: int) -> _Snapshot:
             session_minutes=profile_record.session_minutes,
         )
 
-    return _Snapshot(
+    return Snapshot(
         language=user.language,
         profile=profile,
         flags=flags,
@@ -342,11 +354,11 @@ async def _read_snapshot(conn: Connection, user_id: int) -> _Snapshot:
 # --- Gates ------------------------------------------------------------------------------------
 
 
-def _refusal(code: RefusalCode, lang: str) -> Refusal:
+def refusal_for(code: RefusalCode, lang: str) -> Refusal:
     return Refusal(code=code, message=i18n.t(f"refusal.{code.value}", lang))
 
 
-def _gate(snapshot: _Snapshot) -> tuple[RefusalCode, GuardVerdict] | None:
+def gate(snapshot: Snapshot) -> tuple[RefusalCode, GuardVerdict] | None:
     """A§6.4 step 1, before any LLM call. `None` means every gate passed."""
     if snapshot.profile is None:
         return RefusalCode.PROFILE_INCOMPLETE, GuardVerdict(
@@ -365,7 +377,7 @@ def _gate(snapshot: _Snapshot) -> tuple[RefusalCode, GuardVerdict] | None:
 # --- Guard context + LLM context ---------------------------------------------------------------
 
 
-def _current_loads(snapshot: _Snapshot) -> dict[str, float]:
+def _current_loads(snapshot: Snapshot) -> dict[str, float]:
     """A§7 current working load: the prescribed load of the exercise's last completed
     session, falling back to the active plan version's prescription (the lowest one, if the
     plan lists the exercise more than once: the conservative reference)."""
@@ -393,17 +405,17 @@ def _weekly_caps(catalog: Catalog, settings: Settings) -> dict[str, float]:
 
 
 @dataclass(frozen=True, slots=True)
-class _Inputs:
+class Inputs:
     """Everything one round needs after the snapshot: the guard context, the pure load-engine
     inputs (for A§7.3 substitution), and the pseudonymized LLM context."""
 
     catalog: Catalog
     ctx: GuardContext
-    snapshot: _Snapshot
+    snapshot: Snapshot
     user_context: UserContext
 
 
-def _history_summaries(snapshot: _Snapshot) -> list[ExerciseHistorySummary]:
+def _history_summaries(snapshot: Snapshot) -> list[ExerciseHistorySummary]:
     exercise_ids = sorted(set(snapshot.history_max) | set(snapshot.outcomes))
     summaries: list[ExerciseHistorySummary] = []
     for exercise_id in exercise_ids:
@@ -422,9 +434,7 @@ def _history_summaries(snapshot: _Snapshot) -> list[ExerciseHistorySummary]:
     return summaries
 
 
-def _build_inputs(
-    catalog: Catalog, snapshot: _Snapshot, settings: Settings, user_id: int
-) -> _Inputs:
+def build_inputs(catalog: Catalog, snapshot: Snapshot, settings: Settings, user_id: int) -> Inputs:
     profile = snapshot.profile
     assert profile is not None  # the gate ran first
     ctx = GuardContext(
@@ -460,14 +470,14 @@ def _build_inputs(
         allowed_exercise_ids=[exercise.id for exercise in allowed],
         history=_history_summaries(snapshot),
     )
-    return _Inputs(catalog=catalog, ctx=ctx, snapshot=snapshot, user_context=user_context)
+    return Inputs(catalog=catalog, ctx=ctx, snapshot=snapshot, user_context=user_context)
 
 
 # --- Judging (pure) ---------------------------------------------------------------------------
 
 
 @dataclass(slots=True)
-class _Judgement:
+class Judgement:
     verdicts: list[GuardVerdict]  # the final `validate_plan` verdicts (after substitution)
     fired: list[GuardVerdict]  # what `decisions.guards_fired` records
 
@@ -484,7 +494,7 @@ def _load_text(load: Load) -> str:
     return f"{load.kg:g} kg" if load.kind == "kg" and load.kg is not None else load.kind
 
 
-def _engine_load(exercise: Exercise, inputs: _Inputs) -> tuple[Load, str, list[GuardVerdict]]:
+def engine_load(exercise: Exercise, inputs: Inputs) -> tuple[Load, str, list[GuardVerdict]]:
     """The load engine's value for `exercise` (A§7.3): `calibration` with no completed
     session, otherwise deterministic double progression from the last prescribed load."""
     history = ExerciseHistory(
@@ -534,19 +544,36 @@ def _sanitize_wording(plan: Plan, lang: str) -> list[GuardVerdict]:
     return fired
 
 
-def _judge(plan: Plan, inputs: _Inputs) -> _Judgement:
+def judge(plan: Plan, inputs: Inputs) -> Judgement:
     """`validate_plan`, then A§7.3 load substitution when the only failures are load rules.
     **Mutates `plan` in place** when it substitutes a load: the object the LLM returned is
     what the caller shows, logs and (later) confirms, so the repair has to land on it — and
     `llm.escalation`'s `guard_check` contract only lets a judge return verdicts. The same
     pass sanitizes the model's display text (`_sanitize_wording`)."""
+    return _judge_with(plan, lambda: validate_plan(plan, inputs.ctx), inputs)
+
+
+def judge_workout(workout: Workout, inputs: Inputs) -> Judgement:
+    """A§6.5.1: the same judging as `judge` — wording, guards, load substitution in place —
+    over *one* workout with `guards.plan.validate_workout` (the gate and every
+    per-prescription verdict, not the plan-wide schedule rules). Used by `/train` for the
+    review, Start and Save to plan."""
+    wrapper = Plan(
+        name=i18n.t("plan.default_name", inputs.snapshot.language), schedule=[], workouts=[workout]
+    )
+    return _judge_with(wrapper, lambda: validate_workout(workout, inputs.ctx), inputs)
+
+
+def _judge_with(
+    plan: Plan, validate: Callable[[], list[GuardVerdict]], inputs: Inputs
+) -> Judgement:
     fired: list[GuardVerdict] = _sanitize_wording(plan, inputs.snapshot.language)
-    verdicts = validate_plan(plan, inputs.ctx)
-    gate = [verdict for verdict in verdicts if verdict.rule == "screening.plan_allowed"]
+    verdicts = validate()
+    gate_verdicts = [verdict for verdict in verdicts if verdict.rule == "screening.plan_allowed"]
     failures = [verdict for verdict in verdicts if not verdict.ok]
-    fired.extend([*gate, *failures])
+    fired.extend([*gate_verdicts, *failures])
     if not failures or any(verdict.rule not in LOAD_RULES for verdict in failures):
-        return _Judgement(verdicts=verdicts, fired=fired)
+        return Judgement(verdicts=verdicts, fired=fired)
 
     for workout in plan.workouts:
         for block in workout.blocks:
@@ -557,7 +584,7 @@ def _judge(plan: Plan, inputs: _Inputs) -> _Judgement:
                 if all(v.ok for v in load_verdicts(exercise, prescription.load, inputs.ctx)):
                     continue
                 proposed = prescription.load
-                replacement, reason, engine_verdicts = _engine_load(exercise, inputs)
+                replacement, reason, engine_verdicts = engine_load(exercise, inputs)
                 fired.append(
                     GuardVerdict(
                         rule=_SUBSTITUTION_RULE,
@@ -571,9 +598,9 @@ def _judge(plan: Plan, inputs: _Inputs) -> _Judgement:
                 fired.extend(engine_verdicts)
                 prescription.load = replacement
 
-    verdicts = validate_plan(plan, inputs.ctx)
+    verdicts = validate()
     fired.extend(verdict for verdict in verdicts if not verdict.ok)
-    return _Judgement(verdicts=verdicts, fired=fired)
+    return Judgement(verdicts=verdicts, fired=fired)
 
 
 def _reference_kg(ctx: GuardContext, exercise_id: str) -> float | None:
@@ -582,7 +609,7 @@ def _reference_kg(ctx: GuardContext, exercise_id: str) -> float | None:
     return reference_load_kg(ctx, exercise_id)
 
 
-def _load_changes(plan: Plan, ctx: GuardContext) -> list[LoadChange]:
+def load_changes_for(plan: Plan, ctx: GuardContext) -> list[LoadChange]:
     """Every prescribed kg above the reference load (A§7: `min(current, history_max)`), one
     entry per exercise (the highest prescribed load wins), for `decisions.load_changes`."""
     highest: dict[str, float] = {}
@@ -605,7 +632,7 @@ def _load_changes(plan: Plan, ctx: GuardContext) -> list[LoadChange]:
 # --- Decision logging --------------------------------------------------------------------------
 
 
-def _draft_proposal(plan: Plan, proposed_load_changes: Sequence[LoadChange]) -> dict[str, object]:
+def draft_proposal(plan: Plan, proposed_load_changes: Sequence[LoadChange]) -> dict[str, object]:
     """`decisions.proposal` for a draft: the plan, plus the load changes confirming it would
     apply (A§4.3: shown here, counted only by the `plan_confirm` decision)."""
     return {
@@ -616,7 +643,7 @@ def _draft_proposal(plan: Plan, proposed_load_changes: Sequence[LoadChange]) -> 
     }
 
 
-def _refusal_proposal(refusal: Refusal, rejected_plan: Plan | None = None) -> dict[str, object]:
+def refusal_proposal(refusal: Refusal, rejected_plan: Plan | None = None) -> dict[str, object]:
     """`decisions.proposal` for a refused round: the refusal, plus the LLM's rejected plan
     when the guards (not the model) refused, so the log shows what was turned down. Never
     parses as a `Plan`, so `confirm_plan` can't mistake it for a draft."""
@@ -626,7 +653,7 @@ def _refusal_proposal(refusal: Refusal, rejected_plan: Plan | None = None) -> di
     return proposal
 
 
-async def _write_refusal_decision(
+async def write_refusal_decision(
     conn: Connection,
     *,
     user_id: int,
@@ -645,7 +672,7 @@ async def _write_refusal_decision(
         content_version=content_version(),
         llm_input=None,
         user_report=user_report,
-        proposal=_refusal_proposal(refusal, rejected_plan),
+        proposal=refusal_proposal(refusal, rejected_plan),
         guards_fired=[verdict.model_dump() for verdict in guards_fired],
     )
 
@@ -662,7 +689,7 @@ async def _record_refusal(
     rejected_plan: Plan | None = None,
 ) -> PlanRoundResult:
     async with db.transaction() as conn:
-        decision_id = await _write_refusal_decision(
+        decision_id = await write_refusal_decision(
             conn,
             user_id=user_id,
             refusal=refusal,
@@ -687,7 +714,7 @@ class _Attempt:
 
     decision_id: int
     outcome: AgentRunOutcome[Plan | Refusal]
-    judgement: _Judgement | None
+    judgement: Judgement | None
     proposed_load_changes: list[LoadChange]
 
 
@@ -698,7 +725,7 @@ async def _log_attempt(
     kind: DecisionKind,
     outcome: AgentRunOutcome[Plan | Refusal],
     llm_input: dict[str, object] | None,
-    judgement: _Judgement | None,
+    judgement: Judgement | None,
     user_report: dict[str, object] | None,
     ctx: GuardContext,
 ) -> _Attempt:
@@ -709,14 +736,14 @@ async def _log_attempt(
     output = outcome.output
     proposed: list[LoadChange] = []
     if isinstance(output, Refusal):
-        proposal = _refusal_proposal(output)
+        proposal = refusal_proposal(output)
         guards_fired: list[GuardVerdict] = []
     else:
         assert judgement is not None
         guards_fired = judgement.fired
         if judgement.ok:
-            proposed = _load_changes(output, ctx)
-        proposal = _draft_proposal(output, proposed)
+            proposed = load_changes_for(output, ctx)
+        proposal = draft_proposal(output, proposed)
     prompt = outcome.prompt
     async with db.transaction() as conn:
         decision_id = await insert_decision(
@@ -746,13 +773,13 @@ async def _log_attempt(
 
 async def _gated_snapshot(
     db: Database, user_id: int
-) -> tuple[_Snapshot, tuple[RefusalCode, GuardVerdict] | None]:
+) -> tuple[Snapshot, tuple[RefusalCode, GuardVerdict] | None]:
     async with db.read() as conn:
-        snapshot = await _read_snapshot(conn, user_id)
-    return snapshot, _gate(snapshot)
+        snapshot = await read_snapshot(conn, user_id)
+    return snapshot, gate(snapshot)
 
 
-def _no_allowed_exercises(inputs: _Inputs) -> GuardVerdict | None:
+def _no_allowed_exercises(inputs: Inputs) -> GuardVerdict | None:
     if inputs.user_context.allowed_exercise_ids:
         return None
     return GuardVerdict(
@@ -765,27 +792,27 @@ def _no_allowed_exercises(inputs: _Inputs) -> GuardVerdict | None:
 async def propose_new_plan(db: Database, llm: LlmRuntime, user_id: int) -> PlanRoundResult:
     """A§6.4: gates → context → `plan_generate` → guards (one feedback retry) → a draft or a
     `Refusal`. See the module docstring."""
-    snapshot, gate = await _gated_snapshot(db, user_id)
+    snapshot, gate_failure = await _gated_snapshot(db, user_id)
     lang = snapshot.language
-    if gate is not None:
-        code, verdict = gate
+    if gate_failure is not None:
+        code, verdict = gate_failure
         return await _record_refusal(
             db,
             user_id=user_id,
-            refusal=_refusal(code, lang),
+            refusal=refusal_for(code, lang),
             guards_fired=[verdict],
             user_report=None,
             plan_id=None,
             lang=lang,
         )
 
-    inputs = _build_inputs(load_catalog(), snapshot, llm.settings, user_id)
+    inputs = build_inputs(load_catalog(), snapshot, llm.settings, user_id)
     empty = _no_allowed_exercises(inputs)
     if empty is not None:
         return await _record_refusal(
             db,
             user_id=user_id,
-            refusal=_refusal(RefusalCode.NO_SAFE_EXERCISES, lang),
+            refusal=refusal_for(RefusalCode.NO_SAFE_EXERCISES, lang),
             guards_fired=[empty],
             user_report=None,
             plan_id=None,
@@ -806,7 +833,7 @@ async def propose_new_plan(db: Database, llm: LlmRuntime, user_id: int) -> PlanR
             prices=llm.prices,
             language=lang,
         )
-        judgement = None if isinstance(outcome.output, Refusal) else _judge(outcome.output, inputs)
+        judgement = None if isinstance(outcome.output, Refusal) else judge(outcome.output, inputs)
         last = await _log_attempt(
             db,
             user_id=user_id,
@@ -834,7 +861,7 @@ async def propose_new_plan(db: Database, llm: LlmRuntime, user_id: int) -> PlanR
     return await _record_refusal(
         db,
         user_id=user_id,
-        refusal=_refusal(RefusalCode.NO_SAFE_PLAN, lang),
+        refusal=refusal_for(RefusalCode.NO_SAFE_PLAN, lang),
         guards_fired=last.judgement.failures,
         user_report=None,
         plan_id=None,
@@ -911,29 +938,29 @@ async def revise_plan(
     halts and never gets here. Raises `PlanNotFoundError`/`StaleDraftError` for a bad `base`.
     """
     async with db.read() as conn:
-        snapshot = await _read_snapshot(conn, user_id)
+        snapshot = await read_snapshot(conn, user_id)
         resolved = await _resolve_base(conn, user_id, base)
     lang = snapshot.language
-    gate = _gate(snapshot)
-    if gate is not None:
-        code, verdict = gate
+    gate_failure = gate(snapshot)
+    if gate_failure is not None:
+        code, verdict = gate_failure
         return await _record_refusal(
             db,
             user_id=user_id,
-            refusal=_refusal(code, lang),
+            refusal=refusal_for(code, lang),
             guards_fired=[verdict],
             user_report=resolved.report,
             plan_id=resolved.plan_id,
             lang=lang,
         )
 
-    inputs = _build_inputs(load_catalog(), snapshot, llm.settings, user_id)
+    inputs = build_inputs(load_catalog(), snapshot, llm.settings, user_id)
     empty = _no_allowed_exercises(inputs)
     if empty is not None:
         return await _record_refusal(
             db,
             user_id=user_id,
-            refusal=_refusal(RefusalCode.NO_SAFE_EXERCISES, lang),
+            refusal=refusal_for(RefusalCode.NO_SAFE_EXERCISES, lang),
             guards_fired=[empty],
             user_report=resolved.report,
             plan_id=resolved.plan_id,
@@ -941,7 +968,7 @@ async def revise_plan(
         )
 
     payload_by_text: dict[str, dict[str, object]] = {}
-    judgements: dict[int, _Judgement] = {}
+    judgements: dict[int, Judgement] = {}
     attempts: list[_Attempt] = []
 
     def build_prompt(verdicts: Sequence[GuardVerdict] | None) -> str:
@@ -958,7 +985,7 @@ async def revise_plan(
         return rendered.text
 
     def guard_check(plan: Plan) -> Sequence[GuardVerdict]:
-        judgement = _judge(plan, inputs)
+        judgement = judge(plan, inputs)
         judgements[id(plan)] = judgement
         return judgement.verdicts
 
@@ -1067,13 +1094,13 @@ async def confirm_plan(
         if latest is None or latest.id != decision_id:
             return ConfirmResult(status=ConfirmStatus.STALE)
 
-        snapshot = await _read_snapshot(conn, user_id)
+        snapshot = await read_snapshot(conn, user_id)
         lang = snapshot.language
-        gate = _gate(snapshot)
-        if gate is not None:
-            code, verdict = gate
-            refusal = _refusal(code, lang)
-            refusal_id = await _write_refusal_decision(
+        gate_failure = gate(snapshot)
+        if gate_failure is not None:
+            code, verdict = gate_failure
+            refusal = refusal_for(code, lang)
+            refusal_id = await write_refusal_decision(
                 conn,
                 user_id=user_id,
                 refusal=refusal,
@@ -1085,12 +1112,12 @@ async def confirm_plan(
                 status=ConfirmStatus.REFUSED, refusal=refusal, decision_id=refusal_id
             )
 
-        inputs = _build_inputs(catalog, snapshot, settings, user_id)
+        inputs = build_inputs(catalog, snapshot, settings, user_id)
         verdicts = validate_plan(plan, inputs.ctx)
         failures = [verdict for verdict in verdicts if not verdict.ok]
         if failures:
-            refusal = _refusal(RefusalCode.NO_SAFE_PLAN, lang)
-            refusal_id = await _write_refusal_decision(
+            refusal = refusal_for(RefusalCode.NO_SAFE_PLAN, lang)
+            refusal_id = await write_refusal_decision(
                 conn,
                 user_id=user_id,
                 refusal=refusal,
@@ -1125,7 +1152,7 @@ async def confirm_plan(
             version = 1
         # A§4.3 "load changes count once, when applied": the confirm decision carries them,
         # computed against the confirm-time reference; the draft carried none.
-        load_changes = _load_changes(plan, inputs.ctx)
+        load_changes = load_changes_for(plan, inputs.ctx)
         confirm_decision_id = await insert_decision(
             conn,
             user_id=user_id,
@@ -1136,7 +1163,7 @@ async def confirm_plan(
             content_version=content_version(),
             llm_input=None,
             user_report={"draft_decision_id": decision_id, "plan_id": plan_id},
-            proposal=_draft_proposal(plan, load_changes),
+            proposal=draft_proposal(plan, load_changes),
             guards_fired=[verdict.model_dump() for verdict in verdicts if not verdict.ok],
             load_changes=load_changes,
         )
@@ -1234,18 +1261,32 @@ __all__ = [
     "ConfirmResult",
     "ConfirmStatus",
     "DraftBase",
+    "Inputs",
+    "Judgement",
     "PlanBase",
     "PlanDetail",
     "PlanNotFoundError",
     "PlanRoundResult",
     "RevisionBase",
+    "Snapshot",
     "StaleDraftError",
     "archive",
+    "build_inputs",
     "confirm_plan",
     "current_draft_id",
+    "draft_proposal",
+    "engine_load",
+    "gate",
     "get_plan_detail",
+    "judge",
+    "judge_workout",
     "list_plans",
+    "load_changes_for",
     "propose_new_plan",
+    "read_snapshot",
+    "refusal_for",
+    "refusal_proposal",
     "revise_plan",
     "set_default",
+    "write_refusal_decision",
 ]

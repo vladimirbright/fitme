@@ -18,14 +18,18 @@ from fitme.db.controllers.training import (
     insert_health_hold,
     insert_set_log,
     insert_workout_session,
+    mark_set_log_skipped,
     start_workout_session,
+    update_set_log_actual,
     update_workout_session_progress,
 )
 from fitme.db.selectors.training import (
+    get_active_workout_session,
     get_checkin,
     get_workout_session,
     historical_max_by_exercise,
     historical_max_kg,
+    last_completed_workout_key_for_plan,
     latest_checkin_answers,
     list_checkins_for_session,
     list_open_health_holds,
@@ -549,3 +553,152 @@ async def test_latest_checkin_answers_uses_the_newest_row_per_area(
 
     # The newer, unanswered knee check-in wins over the older "fine" (silence is not consent).
     assert answers == {"knee": CheckinAnswer.UNKNOWN, "lower_back": CheckinAnswer.WORSE}
+
+
+# --- M7 additions ------------------------------------------------------------------------
+
+
+async def _insert_prescribed_set(
+    conn: object, session_id: int, exercise_id: str, set_index: int, planned_kg: float | None
+) -> int:
+    return await insert_set_log(
+        conn,  # type: ignore[arg-type]
+        session_id=session_id,
+        exercise_id=exercise_id,
+        set_index=set_index,
+        planned_load_kg=planned_kg,
+        planned_reps_min=5,
+        planned_reps_max=8,
+        actual_load_kg=None,
+        actual_reps=None,
+        rpe=None,
+        source="button",
+    )
+
+
+async def test_update_set_log_actual_and_mark_skipped(db: Database, user_id: int) -> None:
+    plan_version_id = await _insert_plan_version(db, user_id)
+    async with db.transaction() as conn:
+        session_id = await insert_workout_session(
+            conn,
+            user_id=user_id,
+            plan_version_id=plan_version_id,
+            workout_key="A",
+            status="in_progress",
+        )
+        first = await _insert_prescribed_set(conn, session_id, "barbell_back_squat", 1, 40.0)
+        second = await _insert_prescribed_set(conn, session_id, "barbell_back_squat", 2, 40.0)
+        await update_set_log_actual(
+            conn, first, actual_load_kg=40.0, actual_reps=8, source="free_text"
+        )
+        await mark_set_log_skipped(conn, second, source="button")
+
+    async with db.read() as conn:
+        logs = {log.id: log for log in await list_set_logs_for_session(conn, session_id)}
+    assert logs[first].actual_load_kg == 40.0 and logs[first].actual_reps == 8
+    assert logs[first].source == "free_text" and not logs[first].skipped
+    assert logs[second].skipped and logs[second].actual_reps is None
+    assert logs[second].actual_load_kg is None
+
+    # Logging a set again clears `skipped` (the schema forbids skipped + actuals together).
+    async with db.transaction() as conn:
+        await update_set_log_actual(
+            conn, second, actual_load_kg=None, actual_reps=5, source="button"
+        )
+    async with db.read() as conn:
+        logs = {log.id: log for log in await list_set_logs_for_session(conn, session_id)}
+    assert not logs[second].skipped and logs[second].actual_reps == 5
+
+
+async def test_list_set_logs_for_session_is_in_creation_order(db: Database, user_id: int) -> None:
+    """Blocks are sent in workout order; a repeated exercise later in the workout restarts its
+    `set_index` at 1, so ordering by `set_index` would interleave two blocks' rows."""
+    plan_version_id = await _insert_plan_version(db, user_id)
+    async with db.transaction() as conn:
+        session_id = await insert_workout_session(
+            conn,
+            user_id=user_id,
+            plan_version_id=plan_version_id,
+            workout_key="A",
+            status="in_progress",
+        )
+        await _insert_prescribed_set(conn, session_id, "barbell_back_squat", 1, 40.0)
+        await _insert_prescribed_set(conn, session_id, "barbell_back_squat", 2, 40.0)
+        await _insert_prescribed_set(conn, session_id, "pushup", 1, None)
+        await _insert_prescribed_set(conn, session_id, "barbell_back_squat", 1, 30.0)
+    async with db.read() as conn:
+        logs = await list_set_logs_for_session(conn, session_id)
+    assert [(log.exercise_id, log.set_index) for log in logs] == [
+        ("barbell_back_squat", 1),
+        ("barbell_back_squat", 2),
+        ("pushup", 1),
+        ("barbell_back_squat", 1),
+    ]
+
+
+async def test_get_active_workout_session_finds_only_unfinished_sessions(
+    db: Database, user_id: int
+) -> None:
+    plan_version_id = await _insert_plan_version(db, user_id)
+    async with db.read() as conn:
+        assert await get_active_workout_session(conn, user_id) is None
+    async with db.transaction() as conn:
+        done = await insert_workout_session(
+            conn,
+            user_id=user_id,
+            plan_version_id=plan_version_id,
+            workout_key="A",
+            status="completed",
+        )
+        active = await insert_workout_session(
+            conn, user_id=user_id, plan_version_id=plan_version_id, workout_key="B", status="draft"
+        )
+    async with db.read() as conn:
+        found = await get_active_workout_session(conn, user_id)
+    assert found is not None and found.id == active and found.id != done
+
+    for status in ("confirmed", "in_progress"):
+        async with db.transaction() as conn:
+            await update_workout_session_progress(conn, active, status=status, current_block=0)
+        async with db.read() as conn:
+            found = await get_active_workout_session(conn, user_id)
+        assert found is not None and found.status == status
+
+    for status in ("aborted", "halted"):
+        async with db.transaction() as conn:
+            await finish_workout_session(conn, active, status=status)
+        async with db.read() as conn:
+            assert await get_active_workout_session(conn, user_id) is None
+
+
+async def test_last_completed_workout_key_for_plan_joins_through_plan_versions(
+    db: Database, user_id: int
+) -> None:
+    plan_version_id = await _insert_plan_version(db, user_id)
+    async with db.read() as conn:
+        version = await conn.execute_fetchall(  # test-only: the plan id behind the version
+            "SELECT plan_id FROM plan_versions WHERE id = ?", (plan_version_id,)
+        )
+    plan_id = int(list(version)[0][0])
+
+    async with db.read() as conn:
+        assert await last_completed_workout_key_for_plan(conn, user_id, plan_id) is None
+    async with db.transaction() as conn:
+        await insert_workout_session(
+            conn,
+            user_id=user_id,
+            plan_version_id=plan_version_id,
+            workout_key="A",
+            status="completed",
+        )
+        # A later session on the same plan, but not completed: it must not count.
+        await insert_workout_session(
+            conn,
+            user_id=user_id,
+            plan_version_id=plan_version_id,
+            workout_key="B",
+            status="aborted",
+        )
+    async with db.read() as conn:
+        assert await last_completed_workout_key_for_plan(conn, user_id, plan_id) == "A"
+        assert await last_completed_workout_key_for_plan(conn, user_id, plan_id + 999) is None

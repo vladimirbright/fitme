@@ -57,13 +57,48 @@ async def list_workout_sessions_for_user(
     return [_session_from_row(row) for row in rows]
 
 
+async def get_active_workout_session(
+    conn: aiosqlite.Connection, user_id: int
+) -> WorkoutSessionRecord | None:
+    """The user's one unfinished session (A§6.5: `draft` = precheck pending, `confirmed` =
+    in review, `in_progress` = training), newest first if several ever exist. `None` when
+    every session is completed, aborted or halted."""
+    async with conn.execute(
+        f"SELECT {_SESSION_COLUMNS} FROM workout_sessions WHERE user_id = ? "
+        "AND status IN ('draft', 'confirmed', 'in_progress') ORDER BY id DESC LIMIT 1",
+        (user_id,),
+    ) as cursor:
+        row = await cursor.fetchone()
+    return None if row is None else _session_from_row(row)
+
+
+async def last_completed_workout_key_for_plan(
+    conn: aiosqlite.Connection, user_id: int, plan_id: int
+) -> str | None:
+    """The `workout_key` of the user's most recent `completed` session on any version of
+    `plan_id` (A§6.5 step 2: "the next one in rotation after the last completed one"), or
+    `None` if the plan has no completed session yet."""
+    async with conn.execute(
+        "SELECT w.workout_key FROM workout_sessions w "
+        "JOIN plan_versions v ON v.id = w.plan_version_id "
+        "WHERE w.user_id = ? AND v.plan_id = ? AND w.status = 'completed' "
+        "ORDER BY w.id DESC LIMIT 1",
+        (user_id, plan_id),
+    ) as cursor:
+        row = await cursor.fetchone()
+    return None if row is None else str(row[0])
+
+
 async def list_set_logs_for_session(
     conn: aiosqlite.Connection, session_id: int
 ) -> list[SetLogRecord]:
+    """Every set row of a session in creation order (blocks are sent, and their rows
+    created, in workout order, A§4.2), which also orders sets within a prescription by
+    `set_index`."""
     async with conn.execute(
         "SELECT id, session_id, exercise_id, set_index, planned_load_kg, planned_reps_min, "
         "planned_reps_max, actual_load_kg, actual_reps, skipped, rpe, source, created_at "
-        "FROM set_logs WHERE session_id = ? ORDER BY set_index",
+        "FROM set_logs WHERE session_id = ? ORDER BY id",
         (session_id,),
     ) as cursor:
         rows = await cursor.fetchall()

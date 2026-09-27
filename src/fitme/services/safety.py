@@ -1,9 +1,12 @@
-"""The halt path (A§6.6) and hold clearing, in one place so M7 (`/train`) reuses it exactly:
-a workout-session halt (pain button, `result_parse` safety signal) is the same path as a
-free-text stop-word hit here, just with a `source_session_id`.
+"""The halt path (A§6.6) and hold clearing, in one place so every trigger goes through the
+same code: a stop word in any free text (M5), and — M7 — the precheck "Yes", the pain button,
+a `result_parse` safety signal and a stop word typed during a workout.
 
-Order matters (A§6.6): create the hold, log the decision, then send the fixed, non-LLM
-message. No workout session exists yet in M5, so `source_session_id` is always `None` here.
+Order matters (A§6.6): halt the session, create the hold, log the decision — all in one
+transaction — then the caller sends the fixed, non-LLM message. `halt()` always halts the
+user's active workout session (draft, in review or in progress), whether or not the caller
+names one: a hold and a still-running session must never coexist, whatever path raised the
+hold (a stop word in a command's arguments halts the workout exactly like the pain button).
 """
 
 from __future__ import annotations
@@ -17,10 +20,14 @@ from fitme.config.content import content_version
 from fitme.db.connection import Database
 from fitme.db.controllers.chat import insert_chat_message
 from fitme.db.controllers.decisions import insert_decision
-from fitme.db.controllers.training import clear_health_hold, insert_health_hold
+from fitme.db.controllers.training import (
+    clear_health_hold,
+    finish_workout_session,
+    insert_health_hold,
+)
 from fitme.db.records import HealthHoldRecord
 from fitme.db.selectors.decisions import get_session_halt_decision_for_hold
-from fitme.db.selectors.training import list_open_health_holds
+from fitme.db.selectors.training import get_active_workout_session, list_open_health_holds
 from fitme.db.selectors.users import get_user
 from fitme.domain.enums import DecisionKind, HealthHoldReason
 from fitme.domain.guard_types import GuardVerdict
@@ -28,12 +35,15 @@ from fitme.guards import stop_words
 from fitme.services.decisions import record_decision
 
 _MIN_HOURS_BEFORE_CLEAR = 12
+_SESSION_HALTED = "halted"
 
 
 @dataclass(frozen=True, slots=True)
 class HaltResult:
     hold_id: int
     decision_id: int
+    # The workout session this halt stopped (A§6.6 step 1), if one was active.
+    session_id: int | None = None
 
 
 async def _timezone_in_effect(db: Database, user_id: int) -> str | None:
@@ -50,23 +60,33 @@ async def halt(
     guards_fired: list[GuardVerdict],
     user_report: dict[str, object],
 ) -> HaltResult:
-    """A§6.6, steps 1-3: open a `health_hold` and log `decision(kind=session_halt)` in one
-    transaction (so a crash between the two can never leave an un-logged hold), then the
-    caller sends the fixed halt message; no LLM call is ever made on this path.
+    """A§6.6, steps 1-3, in one transaction (so a crash can never leave a halted session
+    without its hold, or a hold without its decision): set the active workout session (if
+    any) to `halted` with `halt_reason`, open a `health_hold` tied to it, and log
+    `decision(kind=session_halt)`. The caller then sends the fixed halt message; no LLM call
+    is ever made on this path.
 
-    The halt decision's `user_report` always carries `hold_id` and the `timezone` in effect
-    right now (A§6.6: "same day" is evaluated in the timezone in effect *when the hold was
-    created", read back later by `can_clear` — no schema change, since `user_report` is the
-    sanctioned free-form JSON column for exactly this, A§4.3).
+    The halt decision's `user_report` always carries `hold_id`, the halted `session_id` (or
+    `None`) and the `timezone` in effect right now (A§6.6: "same day" is evaluated in the
+    timezone in effect *when the hold was created*, read back later by `can_clear` — no
+    schema change, since `user_report` is the sanctioned free-form JSON column for exactly
+    this, A§4.3).
     """
     timezone = await _timezone_in_effect(db, user_id)
     async with db.transaction() as conn:
+        active = await get_active_workout_session(conn, user_id)
+        session_id = None if active is None else active.id
+        if session_id is not None:
+            await finish_workout_session(
+                conn, session_id, status=_SESSION_HALTED, halt_reason=reason.value
+            )
         hold_id = await insert_health_hold(
-            conn, user_id=user_id, reason=reason.value, source_session_id=None
+            conn, user_id=user_id, reason=reason.value, source_session_id=session_id
         )
         full_report: dict[str, object] = {
             **user_report,
             "hold_id": hold_id,
+            "session_id": session_id,
             "timezone": timezone,
         }
         decision_id = await insert_decision(
@@ -82,7 +102,7 @@ async def halt(
             proposal=None,
             guards_fired=[verdict.model_dump() for verdict in guards_fired],
         )
-    return HaltResult(hold_id=hold_id, decision_id=decision_id)
+    return HaltResult(hold_id=hold_id, decision_id=decision_id, session_id=session_id)
 
 
 async def record_incoming_text(

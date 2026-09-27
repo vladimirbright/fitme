@@ -216,6 +216,8 @@ class HealthHoldReason(StrEnum):
     CHECKIN_PAIN = "checkin_pain"
     LLM_SAFETY_SIGNAL = "llm_safety_signal"
     PRECHECK_YES = "precheck_yes"
+    # M7: the persistent "Pain / feeling unwell" button on every in-workout message (A§6.3).
+    PAIN_BUTTON = "pain_button"
 
 
 class DecisionKind(StrEnum):
@@ -251,6 +253,9 @@ class RefusalCode(StrEnum):
     # B4: a red flag with no explicit yes/no answer (missing or "unknown") blocks planning
     # exactly like an unclearanced "yes" (AGENTS.md §2: silence is not consent).
     SCREENING_INCOMPLETE = "screening_incomplete"
+    # M7 (A§6.5.1): today's workout fails a per-prescription guard at Start / Save to plan,
+    # after load substitution — the stored plan needs updating in /plan.
+    NO_SAFE_WORKOUT = "no_safe_workout"
 
 
 class ExerciseKind(StrEnum):

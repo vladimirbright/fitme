@@ -31,7 +31,7 @@ import math
 
 from fitme.domain.catalog import Exercise
 from fitme.domain.guard_types import GuardVerdict
-from fitme.domain.models import Load, Plan
+from fitme.domain.models import Load, Plan, Prescription, Workout
 from fitme.guards import ceiling, checkins, screening
 from fitme.guards.context import GuardContext
 from fitme.guards.progression import check_weekly_increment
@@ -189,25 +189,47 @@ def validate_plan(plan: Plan, ctx: GuardContext) -> list[GuardVerdict]:
     )
 
     for workout in plan.workouts:
-        for block in workout.blocks:
-            for prescription in block.items:
-                exercise_id = prescription.exercise_id
-                exercise = ctx.catalog.by_id(exercise_id)
-                if exercise is None:
-                    verdicts.append(
-                        GuardVerdict(
-                            rule=_CATALOG_RULE,
-                            ok=False,
-                            detail=f"{exercise_id} is not a catalog exercise",
-                        )
-                    )
-                    continue
-                verdicts.append(_exercise_catalog_verdict(exercise_id))
-                verdicts.append(_location_verdict(exercise, ctx))
-                verdicts.append(_equipment_verdict(exercise, ctx))
-                verdicts.append(screening.exercise_allowed(exercise, ctx.flags))
-                verdicts.extend(load_verdicts(exercise, prescription.load, ctx))
+        verdicts.extend(_workout_prescription_verdicts(workout, ctx))
 
+    return verdicts
+
+
+def validate_workout(workout: Workout, ctx: GuardContext) -> list[GuardVerdict]:
+    """A§6.5.1: the verdicts for *one* workout trained today — the screening gate plus every
+    per-prescription check (`prescription_verdicts`) — without the plan-wide schedule rules,
+    which say nothing about whether today's workout is safe. `/train` judges a session's
+    workout with this; `/plan` judges a whole plan with `validate_plan`."""
+    return [
+        screening.plan_allowed(ctx.flags, ctx.holds),
+        *_workout_prescription_verdicts(workout, ctx),
+    ]
+
+
+def prescription_verdicts(prescription: Prescription, ctx: GuardContext) -> list[GuardVerdict]:
+    """Every per-prescription verdict: catalog id, location and equipment fit, contraindication
+    (`screening.exercise_allowed`) and the load verdicts (`load_verdicts`)."""
+    exercise_id = prescription.exercise_id
+    exercise = ctx.catalog.by_id(exercise_id)
+    if exercise is None:
+        return [
+            GuardVerdict(
+                rule=_CATALOG_RULE, ok=False, detail=f"{exercise_id} is not a catalog exercise"
+            )
+        ]
+    return [
+        _exercise_catalog_verdict(exercise_id),
+        _location_verdict(exercise, ctx),
+        _equipment_verdict(exercise, ctx),
+        screening.exercise_allowed(exercise, ctx.flags),
+        *load_verdicts(exercise, prescription.load, ctx),
+    ]
+
+
+def _workout_prescription_verdicts(workout: Workout, ctx: GuardContext) -> list[GuardVerdict]:
+    verdicts: list[GuardVerdict] = []
+    for block in workout.blocks:
+        for prescription in block.items:
+            verdicts.extend(prescription_verdicts(prescription, ctx))
     return verdicts
 
 

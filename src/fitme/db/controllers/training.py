@@ -99,6 +99,34 @@ async def insert_set_log(
     return cursor.lastrowid
 
 
+async def update_set_log_actual(
+    conn: aiosqlite.Connection,
+    set_log_id: int,
+    *,
+    actual_load_kg: float | None,
+    actual_reps: int,
+    source: str,
+) -> None:
+    """Record what the user actually did for one prescribed set (A§6.5 step 5: "According
+    to plan" or a confirmed `result_parse`). Clears `skipped`, since a logged set was
+    performed (the schema forbids the two together)."""
+    await conn.execute(
+        "UPDATE set_logs SET actual_load_kg = ?, actual_reps = ?, skipped = 0, source = ? "
+        "WHERE id = ?",
+        (actual_load_kg, actual_reps, source, set_log_id),
+    )
+
+
+async def mark_set_log_skipped(conn: aiosqlite.Connection, set_log_id: int, *, source: str) -> None:
+    """A prescribed set the user didn't perform (A§4.2): `skipped = 1` with both `actual_*`
+    columns NULL, so it stays visible as a gap in the log."""
+    await conn.execute(
+        "UPDATE set_logs SET skipped = 1, actual_load_kg = NULL, actual_reps = NULL, source = ? "
+        "WHERE id = ?",
+        (source, set_log_id),
+    )
+
+
 async def insert_checkin(
     conn: aiosqlite.Connection, *, user_id: int, session_id: int | None, question_key: str
 ) -> int:

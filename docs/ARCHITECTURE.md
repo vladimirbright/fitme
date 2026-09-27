@@ -167,7 +167,7 @@ plaintext.
 | `profiles` | `user_id` PK, `age_bucket`, `weight_bucket`, `experience`, `barbell_experience`, `preferences` (JSON list of enum), `location`, `equipment` (JSON list of enum), `sessions_per_week`, `session_minutes`, `focus`, `completed_at`, `updated_at` | Enums only. Buckets, not exact values. |
 | `screening_flags` | `user_id`, `flag` (enum), `value` (`yes`/`no`/`unknown`), `clearance` (`yes`/`no`/null), `answered_at` | One row per flag. **These gate exercise selection.** |
 | `screening_notes` | `user_id`, `text`, `created_at` | Optional free text for "other". **Never sent to the LLM.** Shown back to the user only. |
-| `health_holds` | `id`, `user_id`, `reason` (enum: `stop_word`, `checkin_pain`, `llm_safety_signal`, `precheck_yes`), `source_session_id` (nullable, `ON DELETE SET NULL`), `created_at`, `cleared_at` | An open hold blocks `/plan` and `/train` until cleared (§6.6). |
+| `health_holds` | `id`, `user_id`, `reason` (enum: `stop_word`, `checkin_pain`, `llm_safety_signal`, `precheck_yes`, `pain_button`), `source_session_id` (nullable, `ON DELETE SET NULL`), `created_at`, `cleared_at` | An open hold blocks `/plan` and `/train` until cleared (§6.6). |
 | `workout_sessions` | `id`, `user_id`, `plan_version_id`, `workout_key`, `status` (`draft`,`confirmed`,`in_progress`,`completed`,`aborted`,`halted`), `current_block`, `started_at`, `finished_at`, `halt_reason` | Performed trainings. |
 | `set_logs` | `id`, `session_id`, `exercise_id`, `set_index`, `planned_load_kg`, `planned_reps_min`, `planned_reps_max`, `actual_load_kg`, `actual_reps` (nullable), `skipped` (0/1), `rpe` (nullable), `source` (`button`,`free_text`,`web`), `created_at` | **Source of truth for history and historical max.** One row per **prescribed** set, created when the block is sent. A set not performed is `skipped=1` with `actual_*` NULL, so missing sets are visible. |
 | `checkins` | `id`, `user_id`, `session_id` (nullable, `ON DELETE SET NULL`), `question_key` (e.g. `area:lower_back`), `answer` (`fine`,`worse`,`pain`,`unknown`), `asked_at`, `answered_at` | Rows are created as `unknown` and updated only by an explicit answer. |
@@ -602,6 +602,35 @@ select_plan ─► select_workout ─► precheck ─► review ─► in_progre
      exercise, change the rep range). Suggested plan changes need the user's **Apply** →
      guards → new `plan_version(origin=progression)`.
    - Decision logged with the planned vs actual numbers, check-ins and guards fired.
+
+### 6.5.1 Workout loop details (settled in M7)
+
+- **Starting the workout.** The decision written at Start is `kind=session_adjust`,
+  `event=start`, even when nothing was adjusted. It carries the exact workout trained and
+  the `load_changes` applied by starting it: engine or adjusted increases, counted once.
+- **Supersets.** Results are entered one exercise at a time, so `set_index` is unambiguous.
+- **`/cancel` during `in_progress`.** The workout is kept and can be resumed; an explicit
+  **Abort workout** button aborts it. `/cancel` on an unstarted session aborts it.
+- **Plausibility guard (`guards/plausibility.py`).** A parsed load is re-asked, never
+  stored, when any of these holds:
+  - it is not finite, or it is ≤ 0;
+  - it is kg on an exercise where `kg_loadable = false`;
+  - it is more than 2× the prescription;
+  - it is more than the prescription + 3 increments;
+  - it is exactly 2× the prescription on a `per_implement` exercise.
+  - For calibration or bodyweight prescriptions, the ratio rules use the known
+    historical max as the reference, when there is one.
+  - **Absolute bounds** apply always, including in calibration: > 300 kg for a `total` load,
+    or > 60 kg for a `per_implement`/`single_implement` load.
+  - The `result_parse` prompt treats a comma between digits followed by one or two digits
+    ("42,5") as a decimal separator, and sets `unclear` when it is ambiguous.
+- **Adjust drafts.** Only guard-accepted adjust attempts can become the current draft
+  (`event=adjust`). Rejected attempts and refusals are logged as `event=adjust_rejected`,
+  and the last accepted draft stays in effect.
+- **"✅ According to plan"** logs every set at the top of the rep range. The button copy
+  says so ("All sets at the top of the range"); otherwise the user enters results.
+- **Start and Save judge today's workout**, not the whole plan: the gate plus
+  per-prescription verdicts. They use train-specific refusal copy.
 
 ### 6.6 Halt path (stop words, pain button, LLM safety signal, precheck yes)
 

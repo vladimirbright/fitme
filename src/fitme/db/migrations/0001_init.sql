@@ -274,8 +274,10 @@ CREATE INDEX idx_set_logs_exercise ON set_logs (exercise_id);
 CREATE TABLE health_holds (
     id INTEGER PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    -- `pain_button` (M7): the persistent "Pain / feeling unwell" button on every in-workout
+    -- message (A§6.3, A§6.6). Added under the A§4.7 pre-release exception.
     reason TEXT NOT NULL CHECK (reason IN (
-        'stop_word', 'checkin_pain', 'llm_safety_signal', 'precheck_yes'
+        'stop_word', 'checkin_pain', 'llm_safety_signal', 'precheck_yes', 'pain_button'
     )),
     source_session_id INTEGER REFERENCES workout_sessions (id) ON DELETE SET NULL,
     created_at TEXT NOT NULL,

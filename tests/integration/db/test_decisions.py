@@ -17,6 +17,7 @@ from fitme.db.selectors.decisions import (
     applied_to_kg_by_exercise,
     get_decision,
     get_latest_plan_round_decision,
+    get_latest_session_event_decision,
     list_decision_outcomes,
     list_decisions_for_user,
     list_llm_calls_since,
@@ -346,3 +347,39 @@ async def test_get_latest_plan_round_decision_ignores_other_kinds(
     async with db.read() as conn:
         latest = await get_latest_plan_round_decision(conn, user_id)
     assert latest is not None and latest.id == fourth
+
+
+async def test_get_latest_session_event_decision_matches_session_and_event(
+    db: Database, user_id: int
+) -> None:
+    async def write(kind: str, report: dict[str, object]) -> int:
+        async with db.transaction() as conn:
+            return await insert_decision(
+                conn,
+                user_id=user_id,
+                kind=kind,
+                prompt_template=None,
+                prompt_version=None,
+                model=None,
+                content_version="abc123def456",
+                llm_input=None,
+                user_report=report,
+                proposal=None,
+                guards_fired=[],
+            )
+
+    await write("session_adjust", {"session_id": 7, "event": "adjust"})
+    newer = await write("session_adjust", {"session_id": 7, "event": "adjust"})
+    await write("session_adjust", {"session_id": 8, "event": "adjust"})
+    await write("session_adjust", {"session_id": 7, "event": "start"})
+    await write("result_parse", {"session_id": 7, "event": "adjust"})
+
+    async with db.read() as conn:
+        found = await get_latest_session_event_decision(
+            conn, session_id=7, kind="session_adjust", event="adjust"
+        )
+        missing = await get_latest_session_event_decision(
+            conn, session_id=9, kind="session_adjust", event="adjust"
+        )
+    assert found is not None and found.id == newer
+    assert missing is None

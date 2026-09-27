@@ -59,3 +59,26 @@ class PlanDraft(CallbackData, prefix="pd"):
 
     action: str
     decision_id: int
+
+
+class TrainPick(CallbackData, prefix="tp"):
+    """`/train` before a session exists (A§6.5 steps 1-2): `plan` (pick a plan), `workouts`
+    (list a plan's workouts, "Pick another") or `workout` (start the precheck for `key`)."""
+
+    kind: str
+    plan_id: int
+    key: str = ""
+
+
+class TrainAction(CallbackData, prefix="tr"):
+    """Every button of a workout session (A§6.3: tied to the session id, the block index and
+    — for per-prescription result entry — the item), so a stale block's button is rejected by
+    `services.training` against the session's current state, not trusted."""
+
+    action: str
+    session_id: int
+    block: int = 0
+    item: int = 0
+    # The `result_parse` decision a Correct button confirms: an older table's Correct must not
+    # apply the newest parse.
+    decision_id: int = 0
