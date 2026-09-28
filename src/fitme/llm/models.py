@@ -62,15 +62,18 @@ AGENT_DEFAULT_TIER: dict[str, str] = {
 # keys when they're actually needed, not guess them; these three agents don't need one yet.
 # `plan_generate` gets the largest budget and longest timeout (rare, large-model, whole-plan
 # calls); `result_parse`/`recap` the smallest (frequent, small-model, short-output calls).
+# `max_tokens` is the whole output budget, and on models that think by default (e.g. Opus 5)
+# the thinking counts against it too. Every plan agent returns the WHOLE plan (all workouts,
+# every exercise, notes), so a real three-day program plus thinking easily exceeds 4k tokens;
+# a cut-off answer shows up as an output-validation failure ("workouts: Field required").
+# The budgets below leave generous room; they're ceilings, not targets.
 AGENT_MODEL_SETTINGS: dict[str, ModelSettings] = {
-    "plan_generate": ModelSettings(max_tokens=4096, timeout=120),
-    "plan_revise": ModelSettings(max_tokens=2048, timeout=60),
-    "session_adjust": ModelSettings(max_tokens=1024, timeout=60),
-    "result_parse": ModelSettings(max_tokens=512, timeout=30),
-    "recap": ModelSettings(max_tokens=512, timeout=30),
-    # A pasted program is transcribed whole (every day, every exercise), so the output is as
-    # long as a generated plan's, not a revision's.
-    "plan_import": ModelSettings(max_tokens=4096, timeout=120),
+    "plan_generate": ModelSettings(max_tokens=16000, timeout=240),
+    "plan_revise": ModelSettings(max_tokens=16000, timeout=240),
+    "plan_import": ModelSettings(max_tokens=16000, timeout=240),
+    "session_adjust": ModelSettings(max_tokens=8000, timeout=120),
+    "result_parse": ModelSettings(max_tokens=2048, timeout=60),
+    "recap": ModelSettings(max_tokens=2048, timeout=60),
 }
 
 # Bug fix (plan_revise output-validation failures): per-agent output-retry budgets, passed to
