@@ -4,7 +4,7 @@
 <h1>{{ t('web.trainings.detail_title') }}</h1>
 <p>
   {{ detail.plan_name }} &mdash; {{ detail.workout.key }}
-  ({{ t('web.trainings.status_' + detail.session.status) }})
+  ({{ t('web.trainings.status_' + detail.session.status) }}{% if detail.session.import_hash %}, {{ t('web.trainings.imported') }}{% endif %})
 </p>
 <p>{{ detail.session.started_at|local_dt(timezone) }} &ndash; {{ detail.session.finished_at|local_dt(timezone) }}</p>
 

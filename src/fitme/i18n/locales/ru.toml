@@ -550,6 +550,7 @@ delete_confirm_cancel = "Отмена"
 deleted_flash = "Удалено тренировок: {n}."
 error_not_found = "Тренировка не найдена; ничего не удалено."
 sets_word = "подходов"
+imported = "импорт"
 
 [web.stats]
 title = "Статистика"
@@ -576,3 +577,9 @@ delete_warning = "Это навсегда удалит ваш аккаунт и 
 delete_confirm_label = "Введите DELETE для подтверждения"
 delete_button = "Удалить мой аккаунт"
 delete_error = "Введите DELETE (заглавными буквами) для подтверждения."
+
+# `fitme history import` (M11): архивный план, к которому привязаны импортированные
+# тренировки, и одна пустая тренировка внутри него.
+[history_import]
+plan_name = "Импортированная история"
+workout_title = "Импортированная тренировка"

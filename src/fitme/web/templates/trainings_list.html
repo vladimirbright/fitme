@@ -25,7 +25,7 @@
       <tr>
         <td><input type="checkbox" name="ids" value="{{ item.session.id }}"></td>
         <td><a href="/app/trainings/{{ item.session.id }}">{{ item.session.started_at|local_dt(timezone) }}</a></td>
-        <td>{{ item.session.workout_key }}</td>
+        <td>{{ item.session.workout_key }}{% if item.session.import_hash %} <small>({{ t('web.trainings.imported') }})</small>{% endif %}</td>
         <td>{{ t('web.trainings.status_' + item.session.status) }}</td>
         <td>{{ item.sets_done }}/{{ item.sets_planned }}</td>
         <td>{{ t('web.kg_value', value=item.volume_kg|round(1)) }}</td>

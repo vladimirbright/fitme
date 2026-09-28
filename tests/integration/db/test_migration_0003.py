@@ -132,8 +132,24 @@ async def _seed_old_rows(db: Database) -> None:
 _TABLES = ("decisions", "plan_versions", "decision_outcomes", "llm_calls", "workout_sessions")
 
 
+# The columns these tables had when 0003 was written: a later migration may add one (0006
+# added `workout_sessions.import_hash`), and the point here is that 0003 preserves every
+# row it copies, not that nothing was ever added afterwards.
+_COLUMNS_AT_0003 = {
+    "workout_sessions": (
+        "id, user_id, plan_version_id, workout_key, status, current_block, started_at, "
+        "finished_at, halt_reason"
+    ),
+}
+
+
 async def _snapshot(db: Database) -> dict[str, list[tuple[object, ...]]]:
-    return {table: await _rows(db, f"SELECT * FROM {table} ORDER BY id") for table in _TABLES}
+    return {
+        table: await _rows(
+            db, f"SELECT {_COLUMNS_AT_0003.get(table, '*')} FROM {table} ORDER BY id"
+        )
+        for table in _TABLES
+    }
 
 
 async def test_fresh_db_accepts_plan_import_and_origin_import(tmp_path: Path) -> None:

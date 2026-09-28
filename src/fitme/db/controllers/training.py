@@ -6,6 +6,7 @@ functions take a timestamp parameter.
 from __future__ import annotations
 
 from collections.abc import Sequence
+from datetime import datetime
 
 import aiosqlite
 
@@ -29,6 +30,32 @@ async def insert_workout_session(
         "INSERT INTO workout_sessions (user_id, plan_version_id, workout_key, status, "
         "current_block) VALUES (?, ?, ?, ?, 0)",
         (user_id, plan_version_id, workout_key, status),
+    )
+    assert cursor.lastrowid is not None
+    return cursor.lastrowid
+
+
+async def insert_imported_workout_session(
+    conn: aiosqlite.Connection,
+    *,
+    user_id: int,
+    plan_version_id: int,
+    workout_key: str,
+    performed_at: datetime,
+    import_hash: str,
+) -> int:
+    """One imported past training (M11, `fitme history import`): a `completed` session whose
+    `started_at` and `finished_at` are both the instant the file gave (`performed_at`, a
+    timezone-aware datetime, formatted here by `clock.format_timestamp` like every other
+    timestamp; no duration is invented), and whose `import_hash` (migration 0006) makes a
+    second import of the same content a no-op. The only session insert that takes a time from
+    the caller: the time is the record's own content, not "now"."""
+    at = clock.format_timestamp(performed_at)
+    cursor = await conn.execute(
+        "INSERT INTO workout_sessions (user_id, plan_version_id, workout_key, status, "
+        "current_block, started_at, finished_at, import_hash) "
+        "VALUES (?, ?, ?, 'completed', 0, ?, ?, ?)",
+        (user_id, plan_version_id, workout_key, at, at, import_hash),
     )
     assert cursor.lastrowid is not None
     return cursor.lastrowid

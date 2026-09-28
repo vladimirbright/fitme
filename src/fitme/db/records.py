@@ -120,6 +120,10 @@ class WorkoutSessionRecord:
     started_at: str | None
     finished_at: str | None
     halt_reason: str | None
+    # M11 (migration 0006): the content hash of an imported session (`fitme history import`),
+    # `None` for every session the bot or the website created. Non-`None` means "imported":
+    # the website labels such a row, and the recap/`/train` paths never act on it.
+    import_hash: str | None = None
 
 
 @dataclass(frozen=True, slots=True)

@@ -171,8 +171,8 @@ plaintext.
 | `screening_flags` | `user_id`, `flag` (enum), `value` (`yes`/`no`/`unknown`), `clearance` (`yes`/`no`/null), `answered_at` | One row per flag. **These gate exercise selection.** |
 | `screening_notes` | `user_id`, `text`, `created_at` | Optional free text for "other". **Never sent to the LLM.** Shown back to the user only. |
 | `health_holds` | `id`, `user_id`, `reason` (enum: `stop_word`, `checkin_pain`, `llm_safety_signal`, `precheck_yes`, `pain_button`), `source_session_id` (nullable, `ON DELETE SET NULL`), `created_at`, `cleared_at` | An open hold blocks `/plan` and `/train` until cleared (§6.6). |
-| `workout_sessions` | `id`, `user_id`, `plan_version_id`, `workout_key`, `status` (`draft`,`confirmed`,`in_progress`,`completed`,`aborted`,`halted`), `current_block`, `started_at`, `finished_at`, `halt_reason` | Performed trainings. |
-| `set_logs` | `id`, `session_id`, `exercise_id`, `set_index`, `planned_load_kg`, `planned_reps_min`, `planned_reps_max`, `actual_load_kg`, `actual_reps` (nullable), `skipped` (0/1), `rpe` (nullable), `source` (`button`,`free_text`,`web`), `created_at` | **Source of truth for history and historical max.** One row per **prescribed** set, created when the block is sent. A set not performed is `skipped=1` with `actual_*` NULL, so missing sets are visible. |
+| `workout_sessions` | `id`, `user_id`, `plan_version_id`, `workout_key`, `import_hash` (nullable, unique per user; migration 0006), `status` (`draft`,`confirmed`,`in_progress`,`completed`,`aborted`,`halted`), `current_block`, `started_at`, `finished_at`, `halt_reason` | Performed trainings. |
+| `set_logs` | `id`, `session_id`, `exercise_id`, `set_index`, `planned_load_kg`, `planned_reps_min`, `planned_reps_max`, `actual_load_kg`, `actual_reps` (nullable), `skipped` (0/1), `rpe` (nullable), `source` (`button`,`free_text`,`web`,`import`), `created_at` | **Source of truth for history and historical max.** One row per **prescribed** set, created when the block is sent. A set not performed is `skipped=1` with `actual_*` NULL, so missing sets are visible. |
 | `checkins` | `id`, `user_id`, `session_id` (nullable, `ON DELETE SET NULL`), `question_key` (e.g. `area:lower_back`), `answer` (`fine`,`worse`,`pain`,`unknown`), `asked_at`, `answered_at` | Rows are created as `unknown` and updated only by an explicit answer. |
 | `chat_messages` | `id`, `user_id`, `session_id` nullable, `direction`, `text`, `created_at` | Raw text. **Deleted after `FITME_CHAT_RETENTION_DAYS`.** |
 
@@ -785,6 +785,15 @@ double progression:
 - **Pasted plans (M8b).** A kg load on an exercise with no history becomes `calibration`.
   The user's number is kept as `Prescription.declared_kg`, which is display-only, bounded
   and untrusted. The guards and the engine never read it.
+- **Recency is chronological.** "Last completed session" means the latest `finished_at`
+  (ties broken by id), not insert order, so older imported history never counts as the
+  most recent session.
+- **Imported history (M11).** Imported sessions are completed sessions whose prescribed
+  load equals the logged load. They **never count as a success** for progression, so the
+  first app session after an import holds at the imported load. They set the history max
+  and the current load, write no
+  `load_changes`, never trigger a recap, and attach to one archived "Imported history"
+  plan. See `docs/import-format.md`.
 - Every decision that applies a load records it in `decisions.load_changes`.
 - Otherwise → hold.
 
@@ -1033,6 +1042,7 @@ session's recap, using the same service.
 | `fitme delete --yes` | Delete the user and all data. |
 | `fitme purge` | Run retention now. |
 | `fitme llm eval [--agent NAME] [--model STR]` | Run the LLM eval fixtures against a model; prints guard-pass rate, refusals, tokens, cost (§8.5). Spends money. |
+| `fitme history import PATH [--dry-run]` | Import past sessions and plans (TOML/JSON; `-` = stdin). Idempotent. See `docs/import-format.md`. |
 | `fitme health` | Healthcheck: DB opens, no pending migrations, settings valid. No network. |
 | `fitme backup --out DIR [--keep N]` | Online SQLite backup (mode 0600), keeping the newest N. |
 | `fitme catalog check` | Validate `exercises.toml` and locales (all keys present in all languages); print `content_version`. |

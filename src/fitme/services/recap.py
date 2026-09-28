@@ -587,7 +587,13 @@ async def pending_recap_session(db: Database, user_id: int) -> int | None:
     recap was never written (no `progression` decision): `/train` and `/start` show that
     recap first."""
     async with db.read() as conn:
-        sessions = await list_workout_sessions_for_user(conn, user_id)
+        # M11: imported sessions (`import_hash` set) are history, not trainings run through
+        # the loop; they never hide a real session's pending recap.
+        sessions = [
+            session
+            for session in await list_workout_sessions_for_user(conn, user_id)
+            if session.import_hash is None
+        ]
         if not sessions or sessions[0].status != WorkoutSessionStatus.COMPLETED.value:
             return None
         newest = sessions[0]
@@ -618,7 +624,13 @@ async def answer_checkin(
         if checkin is None or checkin.user_id != user_id:
             return CheckinResult(status=Status.NOT_FOUND)
         unanswered = checkin.answer == CheckinAnswer.UNKNOWN.value
-        sessions = await list_workout_sessions_for_user(conn, user_id)
+        # M11: an imported session (`import_hash` set) is not a newer training; it never
+        # makes a real session's open check-in stale.
+        sessions = [
+            session
+            for session in await list_workout_sessions_for_user(conn, user_id)
+            if session.import_hash is None
+        ]
         stale = bool(
             sessions and checkin.session_id is not None and sessions[0].id != checkin.session_id
         )

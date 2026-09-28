@@ -75,6 +75,26 @@ docker compose up -d --build
 
 Migrations run automatically on the next start; there's nothing else to do.
 
+## Importing your history
+
+If you already have a training log, import it once so the generated plans start from your
+real loads instead of a calibration session. Write it as a TOML (or JSON) file following
+[`docs/import-format.md`](docs/import-format.md): an alias table from your exercise names to
+catalog ids, your past sessions with their sets, and optionally the plans you followed. Name
+it `*.import.toml` (or `*.import.json`): those patterns are gitignored, since the file is your
+health data. Then:
+
+```sh
+docker compose exec -T fitme fitme history import - < my.import.toml   # Docker
+make import-history FILE=my.import.toml DRY=1                           # local dev: report only
+make import-history FILE=my.import.toml                                 # local dev: import
+```
+
+The import is all-or-nothing per run, idempotent (importing the same file twice adds
+nothing), and reports every session or plan it skipped and why. Imported loads become the
+historical max the safety guards check against; the import itself never counts as a load
+increase.
+
 ## Local development (without Docker)
 
 Requires [`uv`](https://docs.astral.sh/uv/) and Python 3.13.
@@ -102,6 +122,7 @@ committing).
 | `test` / `lint` / `fmt` / `typecheck` / `catalog` / `check` | Local dev QA |
 | `export` / `delete` / `purge` | Data lifecycle (local dev; A§8.3/§8.4) |
 | `unhold` / `hold-clear` | Clear open health holds (local dev; operator bypass) |
+| `import-history` | Import past trainings/plans from `FILE=` (local dev; `DRY=1` to only report) |
 | `llm-eval` | Run LLM eval fixtures against a real model (spends money; never run in CI) |
 | `docker-build` | `docker compose build` |
 | `up` / `down` | Start/stop the Docker Compose stack (`TLS=1 make up` for the `tls` profile) |

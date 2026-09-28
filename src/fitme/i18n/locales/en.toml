@@ -569,6 +569,7 @@ delete_confirm_cancel = "Cancel"
 deleted_flash = "Deleted {n} training(s)."
 error_not_found = "That training couldn't be found; nothing was deleted."
 sets_word = "sets"
+imported = "imported"
 
 [web.stats]
 title = "Stats"
@@ -595,3 +596,10 @@ delete_warning = "This permanently deletes your account and all data. This canno
 delete_confirm_label = "Type DELETE to confirm"
 delete_button = "Delete my account"
 delete_error = "Type DELETE (in capital letters) to confirm."
+
+# `fitme history import` (M11): the archived plan that holds imported past trainings, and the
+# one empty workout every imported session is filed under. Shown in the trainings list and
+# the plans list only.
+[history_import]
+plan_name = "Imported history"
+workout_title = "Imported training"

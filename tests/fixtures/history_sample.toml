@@ -1,0 +1,161 @@
+# Synthetic sample for `fitme history import` (docs/import-format.md). Every number here is
+# made up for the tests; it is not anyone's training log. Committable on purpose: the
+# gitignored personal-data patterns are `*.import.toml` / `*.import.json`, and this file is
+# neither.
+
+[meta]
+version = 1
+timezone = "Europe/Berlin"
+
+[aliases]
+"Squat" = "barbell_back_squat"
+"DB bench" = "dumbbell_bench_press"
+"Push-up" = "pushup"
+"Leg press" = "machine_leg_press"
+
+# --- An old plan, transcribed as written -------------------------------------------------
+
+[[plan]]
+name = "Old two-day"
+
+[[plan.schedule]]
+weekday = 0
+workout = "A"
+
+[[plan.schedule]]
+weekday = 3
+workout = "B"
+
+[[plan.workout]]
+key = "A"
+title = "Lower + push"
+
+[[plan.workout.exercise]]
+exercise = "Squat"
+sets = 3
+reps = [5, 8]
+kg = 75
+
+[[plan.workout.exercise]]
+exercise = "Push-up"
+sets = 3
+reps = [8, 12]
+load = "bodyweight"
+
+[[plan.workout]]
+key = "B"
+title = "Machines + dumbbells"
+
+[[plan.workout.exercise]]
+exercise = "DB bench"
+sets = 3
+reps = [8, 12]
+kg = 20
+
+[[plan.workout.exercise]]
+exercise = "Leg press"
+sets = 3
+reps = [10, 12]
+kg = 120
+rest_seconds = 120
+
+# --- Past trainings, oldest first ----------------------------------------------------------
+
+[[session]]
+date = 2026-08-03
+title = "Lower + push"
+
+[[session.set]]
+exercise = "Squat"
+kg = 75
+reps = 5
+
+[[session.set]]
+exercise = "Squat"
+kg = 75
+reps = 5
+
+[[session.set]]
+exercise = "Squat"
+kg = 75
+reps = 5
+
+[[session.set]]
+exercise = "DB bench"
+kg = 20
+reps = 8
+
+[[session.set]]
+exercise = "DB bench"
+kg = 20
+reps = 8
+
+[[session.set]]
+exercise = "DB bench"
+kg = 20
+reps = 7
+
+[[session]]
+date = 2026-08-06
+
+[[session.set]]
+exercise = "Squat"
+kg = 75
+reps = 5
+
+[[session.set]]
+exercise = "Squat"
+kg = 75
+reps = 5
+
+[[session.set]]
+exercise = "Squat"
+kg = 75
+reps = 4
+
+[[session.set]]
+exercise = "Push-up"
+reps = 12
+
+[[session.set]]
+exercise = "Push-up"
+reps = 12
+
+[[session.set]]
+exercise = "Push-up"
+reps = 10
+
+[[session]]
+date = 2026-08-10T18:30:00
+title = "Machines + dumbbells"
+
+[[session.set]]
+exercise = "Squat"
+kg = 75
+reps = 5
+
+[[session.set]]
+exercise = "Squat"
+kg = 75
+reps = 5
+
+[[session.set]]
+exercise = "Squat"
+kg = 75
+reps = 5
+
+[[session.set]]
+exercise = "Leg press"
+kg = 120
+reps = 10
+
+[[session.set]]
+exercise = "Leg press"
+kg = 120
+reps = 10
+
+[[session.set]]
+exercise = "Leg press"
+kg = 120
+reps = 10
+skipped = false

@@ -332,3 +332,46 @@ async def test_weekly_cap_still_blocks_after_deleting_the_increase_session(
         exercise, increases_7d=increases[_SQUAT], proposed_increase_kg=2.5, cap_kg=2.5
     )
     assert not verdict.ok
+
+
+async def test_imported_sessions_are_listed_with_an_imported_label(
+    client: AsyncClient, db: Database, user_id: int, sent_codes: list[SentCode]
+) -> None:
+    """M11: a session written by `fitme history import` (an `import_hash`) shows on the
+    trainings list and its detail page with the "imported" label; an ordinary one doesn't."""
+    from fitme.db.controllers.training import insert_imported_workout_session
+
+    version_id = await seed_plan(db, user_id)
+    await seed_session(db, user_id, version_id, kg=60.0)
+    async with db.transaction() as conn:
+        imported_id = await insert_imported_workout_session(
+            conn,
+            user_id=user_id,
+            plan_version_id=version_id,
+            workout_key="A",
+            performed_at=clock.now() - timedelta(days=30),
+            import_hash="a" * 64,
+        )
+        await insert_set_log(
+            conn,
+            session_id=imported_id,
+            exercise_id=_SQUAT,
+            set_index=1,
+            planned_load_kg=55.0,
+            planned_reps_min=5,
+            planned_reps_max=5,
+            actual_load_kg=55.0,
+            actual_reps=5,
+            rpe=None,
+            source="import",
+        )
+
+    await login(client, sent_codes)
+    page = await client.get("/app/trainings")
+    assert page.status_code == 200
+    assert page.text.count("(imported)") == 1
+
+    detail = await client.get(f"/app/trainings/{imported_id}")
+    assert detail.status_code == 200
+    assert "imported" in detail.text
+    assert "55" in detail.text

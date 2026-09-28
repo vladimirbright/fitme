@@ -33,6 +33,7 @@ def test_help_lists_subcommands(capsys: pytest.CaptureFixture[str]) -> None:
         "llm",
         "health",
         "backup",
+        "history",
     ):
         assert subcommand in output
 

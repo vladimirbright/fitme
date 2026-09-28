@@ -98,8 +98,23 @@ async def _seed_old_rows(db: Database) -> None:
 _TABLES = ("workout_sessions", "checkins")
 
 
+# The columns these tables had when 0005 was written: 0006 added `workout_sessions.
+# import_hash`, and the point here is that 0005 preserves every row it copies.
+_COLUMNS_AT_0005 = {
+    "workout_sessions": (
+        "id, user_id, plan_version_id, workout_key, status, current_block, started_at, "
+        "finished_at, halt_reason"
+    ),
+}
+
+
 async def _snapshot(db: Database) -> dict[str, list[tuple[object, ...]]]:
-    return {table: await _rows(db, f"SELECT * FROM {table} ORDER BY id") for table in _TABLES}
+    return {
+        table: await _rows(
+            db, f"SELECT {_COLUMNS_AT_0005.get(table, '*')} FROM {table} ORDER BY id"
+        )
+        for table in _TABLES
+    }
 
 
 async def test_fresh_db_has_autoincrement_and_never_reuses_a_deleted_id(tmp_path: Path) -> None:
@@ -147,7 +162,7 @@ async def test_upgrade_from_old_migrations_preserves_ids_and_never_reuses_a_dele
 
         applied = await migrate(db)  # the real package: 0001-0004 match by checksum
 
-        assert applied == ["0005_autoincrement_ids.sql"]
+        assert applied == ["0005_autoincrement_ids.sql", "0006_history_import.sql"]
         assert await _snapshot(db) == before  # every row, every id, preserved verbatim
         assert await _rows(db, "PRAGMA foreign_key_check") == []
         assert await _rows(db, "PRAGMA foreign_keys") == [(1,)]
@@ -157,7 +172,8 @@ async def test_upgrade_from_old_migrations_preserves_ids_and_never_reuses_a_dele
         assert not await _rows(
             db, "SELECT name FROM sqlite_master WHERE name LIKE 'new\\_%' ESCAPE '\\'"
         )
-        assert await _names(db, "index", "workout_sessions") == {"idx_workout_sessions_user_status"}
+        # 0006 adds `idx_workout_sessions_import_hash` on top; 0005's own index must be back.
+        assert "idx_workout_sessions_user_status" in await _names(db, "index", "workout_sessions")
         assert await _names(db, "index", "checkins") == {"idx_checkins_user_question"}
         fk_sessions = await _rows(db, "PRAGMA foreign_key_list(workout_sessions)")
         assert ("plan_versions", "plan_version_id", "id", "RESTRICT") in {

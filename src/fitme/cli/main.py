@@ -95,6 +95,19 @@ def _build_parser() -> argparse.ArgumentParser:
         "--yes", action="store_true", help="Skip the typed confirmation."
     )
 
+    history_parser = subparsers.add_parser("history", help="Training history maintenance.")
+    history_subparsers = history_parser.add_subparsers(dest="history_command", required=True)
+    history_import_parser = history_subparsers.add_parser(
+        "import",
+        help="Import past trainings and plans from a TOML/JSON file (docs/import-format.md).",
+    )
+    history_import_parser.add_argument(
+        "path", metavar="PATH", help="The import file, or - to read standard input."
+    )
+    history_import_parser.add_argument(
+        "--dry-run", action="store_true", help="Report what would be imported; write nothing."
+    )
+
     catalog_parser = subparsers.add_parser("catalog", help="Exercise catalog maintenance.")
     catalog_subparsers = catalog_parser.add_subparsers(dest="catalog_command", required=True)
     catalog_subparsers.add_parser(
@@ -163,6 +176,13 @@ def main(argv: Sequence[str] | None = None) -> int:
                 parser, lambda settings: commands.hold_clear(settings, confirmed=args.yes)
             )
         return _stub(f"hold {args.hold_command}")
+    if args.command == "history":
+        if args.history_command == "import":
+            return _with_settings(
+                parser,
+                lambda settings: commands.history_import(settings, args.path, dry_run=args.dry_run),
+            )
+        return _stub(f"history {args.history_command}")
     if args.command == "catalog":
         if args.catalog_command == "check":
             return catalog_check()

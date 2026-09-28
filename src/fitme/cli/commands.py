@@ -33,6 +33,7 @@ from fitme.db.backup import BackupError, create_backup
 from fitme.db.connection import Database, DatabaseUnavailableError, open_database
 from fitme.db.migrate import migrate, pending_migrations
 from fitme.llm import models as llm_models
+from fitme.services import history_import as history_import_service
 from fitme.services.account import delete_user, export_user, get_single_user
 from fitme.services.identity import issue_activation_code
 from fitme.services.llm_runtime import LlmRuntime
@@ -188,6 +189,68 @@ async def delete_account(settings: Settings, *, confirmed: bool) -> int:
     finally:
         await db.close()
     print("Deleted the user and all associated data.")
+    return 0
+
+
+async def history_import(settings: Settings, path: str, *, dry_run: bool) -> int:
+    """`fitme history import PATH [--dry-run]` (M11, docs/import-format.md): import past
+    trainings and plans from a TOML/JSON file, or from standard input when PATH is `-`
+    (`docker compose exec -T fitme fitme history import - < my.import.toml`). One
+    transaction; a dry run prints the same report and writes nothing."""
+    if path == "-":
+        text = sys.stdin.read()
+        source = "stdin"
+        path_hint: str | None = None
+    else:
+        try:
+            text = Path(path).read_text(encoding="utf-8")
+        except OSError as exc:
+            print(f"Cannot read {path}: {exc.strerror or exc}", file=sys.stderr)
+            return 1
+        source = Path(path).name
+        path_hint = path
+    fmt = history_import_service.detect_format(text, path_hint)
+
+    db = await _try_open_database(settings)
+    if db is None:
+        return 1
+    try:
+        report = await history_import_service.import_history(
+            db, settings, text, fmt=fmt, source=source, dry_run=dry_run
+        )
+    except history_import_service.ImportFormatError as exc:
+        print(f"Import failed, nothing written: {exc}", file=sys.stderr)
+        return 1
+    except history_import_service.NoUserError:
+        print("No user configured yet; run `fitme activate` first.", file=sys.stderr)
+        return 1
+    finally:
+        await db.close()
+
+    label = "Dry run (nothing written)" if report.dry_run else "Imported"
+    print(
+        f"{label}: {report.sessions_new} new session(s), "
+        f"{report.sessions_duplicate} duplicate session(s) skipped, "
+        f"{len(report.plans_saved)} plan(s) saved, "
+        f"{report.plans_duplicate} duplicate plan(s) skipped, "
+        f"{len(report.rejected)} rejected."
+    )
+    for plan in report.plans_saved:
+        print(f"  plan saved: {plan.name} (plan {plan.plan_id}, version {plan.plan_version_id})")
+    for exercise_id, kg in report.per_implement_max:
+        print(f"  {exercise_id}: highest imported load {kg:g} kg each (per dumbbell/kettlebell)")
+    if report.newer_than_last_logged:
+        print(
+            f"  {report.newer_than_last_logged} session(s) are newer than your last logged "
+            "training; they become the current working load (held, not increased, until "
+            "you log a session through the app)."
+        )
+    if report.unknown_exercises:
+        print("  unknown exercises (add them to [aliases]): " + ", ".join(report.unknown_exercises))
+    for item in report.rejected:
+        print(f"  rejected {item.ref}: {item.reason}")
+    if report.decision_id is not None:
+        print(f"Decision {report.decision_id} recorded (file sha256 {report.file_sha256[:12]}).")
     return 0
 
 

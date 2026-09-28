@@ -16,9 +16,11 @@ from fitme.db.records import (
 )
 from fitme.domain.enums import CheckinAnswer
 
+_SOURCE_IMPORT = "import"  # `set_logs.source` of a row written by `fitme history import` (M11)
+
 _SESSION_COLUMNS = (
     "id, user_id, plan_version_id, workout_key, status, current_block, started_at, "
-    "finished_at, halt_reason"
+    "finished_at, halt_reason, import_hash"
 )
 
 
@@ -33,6 +35,7 @@ def _session_from_row(row: aiosqlite.Row) -> WorkoutSessionRecord:
         started_at=row[6],
         finished_at=row[7],
         halt_reason=row[8],
+        import_hash=row[9],
     )
 
 
@@ -82,7 +85,7 @@ async def recent_sessions_for_plan(
     it's excluded; newest first."""
     async with conn.execute(
         "SELECT w.id, w.user_id, w.plan_version_id, w.workout_key, w.status, "
-        "w.current_block, w.started_at, w.finished_at, w.halt_reason "
+        "w.current_block, w.started_at, w.finished_at, w.halt_reason, w.import_hash "
         "FROM workout_sessions w JOIN plan_versions v ON v.id = w.plan_version_id "
         "WHERE w.user_id = ? AND v.plan_id = ? AND w.started_at IS NOT NULL "
         "AND w.started_at >= ? ORDER BY w.started_at DESC",
@@ -111,6 +114,32 @@ async def list_workout_sessions_page(
     ) as cursor:
         rows = await cursor.fetchall()
     return [_session_from_row(row) for row in rows]
+
+
+async def list_import_hashes(conn: aiosqlite.Connection, user_id: int) -> set[str]:
+    """Every `import_hash` this user's sessions carry (M11, migration 0006): the set
+    `services.history_import` checks a file's sessions against, so re-importing the same
+    file reports duplicates instead of tripping the schema's unique index."""
+    async with conn.execute(
+        "SELECT import_hash FROM workout_sessions WHERE user_id = ? AND import_hash IS NOT NULL",
+        (user_id,),
+    ) as cursor:
+        rows = await cursor.fetchall()
+    return {str(row[0]) for row in rows}
+
+
+async def last_app_logged_completed_at(conn: aiosqlite.Connection, user_id: int) -> str | None:
+    """The `finished_at` of this user's newest completed session that was logged through the
+    app (not imported: `import_hash IS NULL`), or `None` with no such session. M11: the import
+    report says how many imported sessions are newer than it, because those become the
+    current working load the engine holds at."""
+    async with conn.execute(
+        "SELECT MAX(finished_at) FROM workout_sessions WHERE user_id = ? "
+        "AND status = 'completed' AND import_hash IS NULL",
+        (user_id,),
+    ) as cursor:
+        row = await cursor.fetchone()
+    return None if row is None or row[0] is None else str(row[0])
 
 
 async def last_completed_workout_key_for_plan(
@@ -230,13 +259,19 @@ async def recent_session_outcomes(
       set fell below `planned_reps_min`.
     - A skipped/unlogged set contributes to neither flag on its own; it just prevents
       `hit_reps_max`.
+
+    "Most recent" is by `finished_at` (then id), not by id alone (M11): imported history
+    (`fitme history import`) is inserted after the fact with its real, older timestamps, and
+    a session performed a year ago must never count as "the last session" just because its
+    row was written last. The app always writes `finished_at` when it completes a session; a
+    completed row without one (only ever seeded by hand) sorts after every dated one.
     """
     async with conn.execute(
         "SELECT w.id, s.actual_load_kg, s.actual_reps, s.planned_load_kg, "
-        "s.planned_reps_min, s.planned_reps_max, s.skipped "
+        "s.planned_reps_min, s.planned_reps_max, s.skipped, s.source "
         "FROM set_logs s JOIN workout_sessions w ON w.id = s.session_id "
         "WHERE w.user_id = ? AND s.exercise_id = ? AND w.status = 'completed' "
-        "ORDER BY w.id DESC, s.set_index ASC",
+        "ORDER BY w.finished_at DESC, w.id DESC, s.set_index ASC",
         (user_id, exercise_id),
     ) as cursor:
         rows = await cursor.fetchall()
@@ -270,21 +305,21 @@ async def recent_session_outcomes_by_exercise(
     """`recent_session_outcomes` for every exercise this user has a completed session for,
     in one query: the plan flow (A§6.4) runs the load engine (A§7.3) for any exercise the LLM
     proposes, so it needs every exercise's history up front rather than one query per
-    exercise. Same derivation rules as `recent_session_outcomes`; an exercise with no
-    completed session has no entry."""
+    exercise. Same derivation rules and the same `finished_at`-then-id recency as
+    `recent_session_outcomes`; an exercise with no completed session has no entry."""
     async with conn.execute(
         "SELECT w.id, s.actual_load_kg, s.actual_reps, s.planned_load_kg, "
-        "s.planned_reps_min, s.planned_reps_max, s.skipped, s.exercise_id "
+        "s.planned_reps_min, s.planned_reps_max, s.skipped, s.source, s.exercise_id "
         "FROM set_logs s JOIN workout_sessions w ON w.id = s.session_id "
         "WHERE w.user_id = ? AND w.status = 'completed' "
-        "ORDER BY w.id DESC, s.set_index ASC",
+        "ORDER BY w.finished_at DESC, w.id DESC, s.set_index ASC",
         (user_id,),
     ) as cursor:
         rows = await cursor.fetchall()
 
     rows_by_exercise: dict[str, list[aiosqlite.Row]] = {}
     for row in rows:
-        rows_by_exercise.setdefault(row[7], []).append(row)
+        rows_by_exercise.setdefault(row[8], []).append(row)
     return {
         exercise_id: _group_outcomes(exercise_rows, limit=limit)
         for exercise_id, exercise_rows in rows_by_exercise.items()
@@ -333,6 +368,13 @@ def _session_outcome_from_set_rows(set_rows: list[aiosqlite.Row]) -> SessionOutc
 
     hit_reps_max = all_performed_at_or_above_target
     below_reps_min = (not hit_reps_max) and any_performed_below_min
+    if any(row[7] == _SOURCE_IMPORT for row in set_rows):
+        # M11: an imported session (`fitme history import`) is real history — it sets the
+        # historical max and is the load the engine holds at — but it is never a *success*
+        # (no increase is earned from it) and never a failure (no decrease is triggered by
+        # it). Progression starts from the first session logged through the app.
+        hit_reps_max = False
+        below_reps_min = False
     return SessionOutcome(
         load_kg=load_kg,
         planned_load_kg=planned_load_kg,
