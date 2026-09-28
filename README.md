@@ -45,8 +45,8 @@ enabled with the `tls` Compose profile:
 
 ```sh
 # in .env: set FITME_DOMAIN to your public hostname (matching FITME_WEB_BASE_URL's host),
-# and FITME_FORWARDED_ALLOW_IPS=172.28.0.0/24 (compose.yaml's fixed network subnet, so
-# uvicorn trusts X-Forwarded-* headers from Caddy but nothing else)
+# and FITME_FORWARDED_ALLOW_IPS=172.28.0.10 (Caddy's static address in compose.yaml, so
+# uvicorn trusts X-Forwarded-* headers from Caddy only; never the whole subnet)
 docker compose --profile tls up -d
 ```
 
