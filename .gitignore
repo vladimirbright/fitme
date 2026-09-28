@@ -42,3 +42,8 @@ htmlcov/
 # Personal history imports (health data)
 *.import.toml
 *.import.json
+
+# Personal training data at the repo root (history import files, program exports)
+/*.toml
+!/pyproject.toml
+!/prices.example.toml
