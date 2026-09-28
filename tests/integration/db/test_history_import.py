@@ -4,9 +4,11 @@ is reported, the load engine then progresses from the imported 75 kg (not calibr
 ceiling uses the imported max, implausible and future rows are rejected, the import writes no
 `load_changes` and leaves the weekly cap untouched, imported sessions never produce a recap
 or an active session, imported sessions belong to no plan (no holder plan is created,
-migration 0007), plans import with `origin = 'import'` and validate against the imported
-history (a plan over the ceiling is reported and not saved; a no-history kg becomes
-calibration with the declared hint), export includes and delete removes the rows, JSON is
+migration 0007), plans import with `origin = 'import'` and are judged exactly like a pasted
+plan (M8b, `judge_import`): a plan over the ceiling is SAVED with the load engine's value and
+the declared kg kept as a hint (reported as a substitution), a no-history kg becomes
+calibration with the declared hint, and a structurally bad plan (schedule vs
+`sessions_per_week`) is still rejected — export includes and delete removes the rows, JSON is
 accepted, and the engine reads chronology rather than insert order."""
 
 from __future__ import annotations
@@ -404,23 +406,64 @@ async def test_ceiling_uses_the_imported_max(db: Database, user_id: int) -> None
     assert "75" in failures["ceiling.historical_max"]
 
 
-async def test_plan_over_the_imported_ceiling_is_reported_and_not_saved(
+async def test_plan_over_the_imported_ceiling_is_saved_with_engine_load_and_hint(
     db: Database, user_id: int
 ) -> None:
+    """A§7.3/M8b: a load-only violation does not reject the plan — the load engine's value is
+    substituted, the file's number survives as the display-only `declared_kg` hint, and the
+    plan is saved like any other (`judge_import`, same as a pasted plan)."""
     await seed_gym_profile(db, user_id)
     await run_import(db, fixture_text())
-    before = await _counts(db, user_id)
 
     report = await run_import(db, toml_with(p=plan_toml("Too heavy", 80.0)))
 
-    assert report.plans_saved == ()
-    assert len(report.rejected) == 1
-    assert report.rejected[0].ref == "plan 'Too heavy'"
-    assert "ceiling.historical_max" in report.rejected[0].reason
-    assert (await _counts(db, user_id))["plans"] == before["plans"]
-    # One increment above the imported max is within the ceiling and the weekly cap.
+    assert report.rejected == ()
+    assert [plan.name for plan in report.plans_saved] == ["Too heavy"]
+    saved = report.plans_saved[0]
+    assert saved.substitutions == (f"{_SQUAT} 80 kg → 75 kg for now (your number kept as a hint)",)
+
+    async with db.read() as conn:
+        versions = await list_plan_versions(conn, saved.plan_id)
+        decisions = await list_decisions_for_user(conn, user_id)
+    prescription = Plan.model_validate(versions[0].body).workouts[0].blocks[0].items[0]
+    # Right after import there is no app-logged success yet, so the engine holds at the
+    # imported 75 kg rather than proposing 77.5 (the ceiling headroom).
+    assert prescription.load.kind == "kg"
+    assert prescription.load.kg == 75.0
+    assert prescription.declared_kg == 80.0
+    # A§4.3: importing a plan is never a load increase, substituted or not.
+    imported = next(d for d in decisions if d.id == report.decision_id)
+    assert imported.load_changes == []
+
+    # One increment above the imported max is within the ceiling and the weekly cap, so it
+    # needs no substitution and carries no hint.
     report = await run_import(db, toml_with(p=plan_toml("One step up", 77.5)))
     assert [plan.name for plan in report.plans_saved] == ["One step up"]
+    assert report.plans_saved[0].substitutions == ()
+
+    # Re-importing the same file dedups on the saved (substituted) body, not the declared one.
+    before = await _counts(db, user_id)
+    report = await run_import(db, toml_with(p=plan_toml("Too heavy", 80.0)))
+    assert report.plans_saved == ()
+    assert report.plans_duplicate == 1
+    assert report.rejected == ()
+    assert (await _counts(db, user_id))["plans"] == before["plans"]
+
+
+async def test_structurally_bad_plan_is_still_rejected(db: Database, user_id: int) -> None:
+    """A structural failure (here: the schedule doesn't match `sessions_per_week`) is not
+    something a load substitution can repair, so the whole plan is rejected, as before."""
+    await seed_gym_profile(db, user_id, sessions_per_week=2)
+    await run_import(db, fixture_text())
+    before = await _counts(db, user_id)
+
+    report = await run_import(db, toml_with(p=plan_toml("One day only", 75.0, weekdays=(0,))))
+
+    assert report.plans_saved == ()
+    assert len(report.rejected) == 1
+    assert report.rejected[0].ref == "plan 'One day only'"
+    assert "plan.schedule_length" in report.rejected[0].reason
+    assert (await _counts(db, user_id))["plans"] == before["plans"]
 
 
 async def test_implausible_and_future_rows_are_rejected(db: Database, user_id: int) -> None:

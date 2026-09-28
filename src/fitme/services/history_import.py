@@ -31,11 +31,16 @@ Imported sessions belong to no plan (`workout_sessions.plan_version_id` NULL, mi
 `start` decision, so `services.recap.pending_recap_session` never shows a recap for them,
 and being `completed` they are never the session `/train` resumes.
 
-Imported `[[plan]]`s are validated with `guards.plan.validate_plan` against a `GuardContext`
-built **after** the file's sessions are written (inside the same transaction), so the imported
-history is the reference. Like a pasted plan (M8b), a kg on an exercise with no history
-becomes `calibration` with the number kept as `declared_kg`. A plan that fails is reported
-and skipped; the accepted ones become `plans` + `plan_versions(origin = 'import')`.
+Imported `[[plan]]`s are judged exactly like a pasted plan (M8b, `services.planning.judge_import`)
+against a `GuardContext` built **after** the file's sessions are written (inside the same
+transaction), so the imported history is the reference. A kg on an exercise with no history
+becomes `calibration` with the number kept as `declared_kg`; a kg that breaks the weekly cap or
+the ceiling is substituted with the load engine's value, and the file's number is kept as the
+`declared_kg` hint too — the plan is still saved, with the substitution reported (A§7.3: only a
+*structural* failure — an unknown or contraindicated exercise, equipment/location, or a
+schedule that does not fit `sessions_per_week` — rejects the whole plan). Every saved plan has
+passed `judge_import`'s own final `validate_plan` re-check. The accepted ones become `plans` +
+`plan_versions(origin = 'import')`.
 """
 
 from __future__ import annotations
@@ -73,9 +78,7 @@ from fitme.domain.models import (
     Prescription,
     ScheduledDay,
     Workout,
-    plausible_declared_kg,
 )
-from fitme.guards.plan import validate_plan
 from fitme.guards.plausibility import check_parsed_load
 from fitme.services import planning
 
@@ -90,7 +93,6 @@ _MAX_SET_INDEX = 100
 _NOON = time(12, 0)
 _MAX_REPORTED_NAMES = 30  # like M8b's `UNMATCHED_MAX_COUNT`: a display cap, not a limit
 _MAX_NAME_LENGTH = 60
-_IMPORT_CALIBRATION_RULE = "loads.import_calibration"  # the same rule name M8b logs
 
 _TOP_LEVEL_KEYS = frozenset({"meta", "aliases", "plan", "session"})
 _META_KEYS = frozenset({"version", "timezone"})
@@ -568,6 +570,10 @@ class SavedPlan:
     name: str
     plan_id: int
     plan_version_id: int
+    # One line per exercise whose declared kg the guards would not honor as-is (A§7.3/M8b):
+    # "barbell_back_squat 80 kg → 75 kg for now (your number kept as a hint)", or "→ calibration"
+    # when there was no history at all. Empty when every declared load was used as given.
+    substitutions: tuple[str, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -627,35 +633,30 @@ async def _write_session(conn: Connection, user_id: int, session: ImportedSessio
     return session_id
 
 
-def _apply_no_history_calibration(plan: Plan, inputs: planning.Inputs) -> list[GuardVerdict]:
-    """M8b's rule for a transcribed plan, in place: a kg on a kg-loadable exercise with no
-    logged history becomes `calibration`, the number kept as the display hint."""
-    fired: list[GuardVerdict] = []
+def _load_text(load: Load) -> str:
+    return f"{load.kg:g} kg" if load.kind == "kg" and load.kg is not None else load.kind
+
+
+def _substitution_lines(plan: Plan) -> list[str]:
+    """One line per prescription whose file-declared kg `judge_import` did not use as given
+    (A§7.3/M8b): no history turned it into `calibration`, or a cap/ceiling breach substituted
+    the load engine's value. In both cases the declared number survives only as the bounded,
+    display-only `declared_kg` hint the caller reports alongside it."""
+    lines: list[str] = []
     for workout in plan.workouts:
         for block in workout.blocks:
             for prescription in block.items:
-                exercise = inputs.catalog.by_id(prescription.exercise_id)
-                kg = prescription.load.kg
-                if exercise is None or kg is None or not exercise.kg_loadable:
+                declared = prescription.declared_kg
+                if declared is None:
                     continue
-                if inputs.ctx.history_max_kg.get(exercise.id) is not None:
+                load = prescription.load
+                if load.kind == "kg" and load.kg == declared:
                     continue
-                prescription.declared_kg = plausible_declared_kg(
-                    kg, per_implement=exercise.load_unit != "total"
+                lines.append(
+                    f"{prescription.exercise_id} {declared:g} kg → {_load_text(load)} "
+                    "for now (your number kept as a hint)"
                 )
-                prescription.load = Load(kind="calibration")
-                fired.append(
-                    GuardVerdict(
-                        rule=_IMPORT_CALIBRATION_RULE,
-                        ok=True,
-                        detail=(
-                            f"{exercise.id}: no logged history, so the declared {kg:g} kg "
-                            "becomes a calibration load; the declared value is kept as a "
-                            "display hint only"
-                        ),
-                    )
-                )
-    return fired
+    return lines
 
 
 async def _save_plans(
@@ -667,10 +668,15 @@ async def _save_plans(
     plans: Sequence[ImportedPlan],
     decision_id: int,
 ) -> tuple[list[SavedPlan], int, list[Rejection], list[GuardVerdict]]:
-    """Validate every parsed plan against the history as it is now (the file's sessions
-    included) and save the ones that pass. Returns the saved plans, how many were skipped as
-    duplicates of an already-imported plan (same body, so a re-import saves no second copy),
-    the rejections and every verdict worth logging."""
+    """Judge every parsed plan exactly like a pasted plan (M8b, `planning.judge_import`)
+    against the history as it is now (the file's sessions included), and save the ones that
+    pass. A LOAD-only violation (weekly cap, ceiling, no history) is substituted with the load
+    engine's value in place, the file's number kept as the `declared_kg` hint, and the plan is
+    still saved; a structural failure (unknown/contraindicated exercise, equipment/location,
+    schedule vs `sessions_per_week`) rejects the whole plan, as before. Returns the saved
+    plans, how many were skipped as duplicates of an already-imported plan (same body after
+    judging, so a re-import saves no second copy), the rejections and every verdict worth
+    logging."""
     saved: list[SavedPlan] = []
     duplicates = 0
     rejected: list[Rejection] = []
@@ -695,17 +701,16 @@ async def _save_plans(
     }
     for item in plans:
         plan = item.plan.model_copy(deep=True)
-        calibration_fired = _apply_no_history_calibration(plan, inputs)
+        judgement = planning.judge_import(plan, inputs)
         body = plan.model_dump(mode="json")
         if _canonical(body) in known_bodies:
             duplicates += 1
             continue
-        fired.extend(calibration_fired)
-        verdicts = validate_plan(plan, inputs.ctx)
-        failures = [verdict for verdict in verdicts if not verdict.ok]
-        if failures:
-            fired.extend(failures)
-            reasons = "; ".join(f"{verdict.rule}: {verdict.detail}" for verdict in failures)
+        fired.extend(judgement.fired)
+        if not judgement.ok:
+            reasons = "; ".join(
+                f"{verdict.rule}: {verdict.detail}" for verdict in judgement.failures
+            )
             rejected.append(Rejection(ref=item.ref, reason=reasons))
             continue
         known_bodies.add(_canonical(body))
@@ -725,7 +730,14 @@ async def _save_plans(
             origin=_ORIGIN_IMPORT,
             decision_id=decision_id,
         )
-        saved.append(SavedPlan(name=plan.name, plan_id=plan_id, plan_version_id=version_id))
+        saved.append(
+            SavedPlan(
+                name=plan.name,
+                plan_id=plan_id,
+                plan_version_id=version_id,
+                substitutions=tuple(_substitution_lines(plan)),
+            )
+        )
     return saved, duplicates, rejected, fired
 
 

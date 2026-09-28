@@ -794,7 +794,11 @@ double progression:
   and the current load, write no
   `load_changes`, never trigger a recap, and belong to no plan
   (`plan_version_id` NULL). There is no holder plan; migration 0007 removes any created by
-  earlier imports. See `docs/import-format.md`.
+  earlier imports. An imported `[[plan]]` is judged the same way as a pasted plan (M8b,
+  `judge_import`, above) against a `GuardContext` built after the file's sessions are
+  written: a structural failure rejects that plan, but a load-only violation is substituted
+  with the engine's value and saved, the declared number kept as the `declared_kg` hint. See
+  `docs/import-format.md`.
 - Every decision that applies a load records it in `decisions.load_changes`.
 - Otherwise → hold.
 

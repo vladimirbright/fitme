@@ -72,20 +72,28 @@ rest_seconds = 120   # optional, default 90
 note = "pause at the bottom"   # optional
 ```
 
-A plan is transcribed as written: one exercise per block, no supersets. It is validated with
-the same guards as every plan the system generates (`guards.plan.validate_plan`) **after**
-the file's sessions are in, so the imported history is the reference: the load ceiling is the
-imported historical max plus one increment, the schedule must match your profile's sessions
-per week, exercises must fit your location, equipment and screening flags. A plan that fails
-is reported and not saved; the others are saved in full or not at all. A saved plan is a
-plan like any other (all plans are equal: it can be viewed, edited, revised, trained from
-and made the default); the first one becomes your default plan when you have no default yet.
+A plan is transcribed as written: one exercise per block, no supersets. It is judged exactly
+like a pasted plan (M8b, `services.planning.judge_import`) **after** the file's sessions are
+in, so the imported history is the reference: the load ceiling is the imported historical max
+plus one increment, the schedule must match your profile's sessions per week, exercises must
+fit your location, equipment and screening flags.
 
-As with a pasted plan (M8b), a `kg` on an exercise you have **no history** for becomes a
-`calibration` load with your number kept as a display hint ("your plan says 80 kg, start at
-or below it and log what you used"). Saved plans get `plan_versions.origin = 'import'`.
-Importing a plan writes **no** load change: the weekly cap starts counting from your first
-generated session onward. Plans need a completed setup (`/start`); sessions do not.
+- A **structural** problem — an unknown or contraindicated exercise, equipment/location the
+  plan doesn't fit, or a schedule that doesn't match your sessions per week — rejects that
+  whole plan; it is reported and not saved. The others are saved in full or not at all.
+- A **load** problem — a `kg` that breaks the weekly cap or the ceiling, or that has **no
+  history** behind it at all — does not reject the plan. The load engine's value is used
+  instead (a `calibration` load when there is no history yet), your declared number is kept
+  as a display hint ("your plan says 80 kg, start at or below it and log what you used"), and
+  the plan is saved with the substitution reported, e.g. `plan "…": barbell_back_squat 80 kg
+  → 75 kg for now (your number kept as a hint)`.
+
+A saved plan has passed a final `validate_plan` re-check (as confirming a pasted plan does)
+and is a plan like any other (all plans are equal: it can be viewed, edited, revised, trained
+from and made the default); the first one becomes your default plan when you have no default
+yet. Saved plans get `plan_versions.origin = 'import'`. Importing a plan writes **no** load
+change: the weekly cap starts counting from your first generated session onward. Plans need a
+completed setup (`/start`); sessions do not.
 
 ### `[[session]]` (repeatable)
 
@@ -138,7 +146,10 @@ Every rejected item is reported with its position (`session #3 (2026-08-10)`, `p
 - a `kg` on a non-kg-loadable exercise, or a missing `kg` on a kg-loadable one;
 - `reps` outside 1–200, a duplicate `set_index` for one exercise in one session;
 - a session dated in the future;
-- a plan whose validation fails (the failing rules are listed).
+- a plan with a structural problem (the failing rules are listed): an unknown or
+  contraindicated exercise, equipment/location it doesn't fit, or a schedule that doesn't
+  match your sessions per week. A plan whose only problem is a load — the weekly cap, the
+  ceiling, or no history at all — is not rejected; see `[[plan]]` above.
 
 A malformed file (bad TOML/JSON, a missing `[meta]`, an unknown key, an invalid timezone) is
 an error: nothing at all is imported.
