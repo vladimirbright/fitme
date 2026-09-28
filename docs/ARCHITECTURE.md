@@ -138,6 +138,8 @@ host cron. See M10.
 | `FITME_CHAT_RETENTION_DAYS` | no | default 365 |
 | `FITME_MAX_WEEKLY_INCREMENT_KG` | no | default 2.5, compound lifts (catalog can set lower) |
 | `FITME_PRICES_FILE` | no | TOML of per-model token prices for `/system` cost estimates |
+| `FITME_FORWARDED_ALLOW_IPS` | no | IPs trusted for X-Forwarded-* headers (uvicorn). Default `127.0.0.1`; in Compose, the Caddy container's address. Never `*`. |
+| `FITME_DOMAIN` | no | Public host name for the optional Caddy TLS profile. |
 | `FITME_DEV` | no | Allows a non-TLS base URL on localhost |
 | `FITME_SOURCE_URL` | no | Source repository link shown in the private-instance reply (§6.1). Default `https://github.com/vladimirbright/fitme`. Forks set their own. Also shown on the web login page (§9.1). |
 
@@ -1031,6 +1033,8 @@ session's recap, using the same service.
 | `fitme delete --yes` | Delete the user and all data. |
 | `fitme purge` | Run retention now. |
 | `fitme llm eval [--agent NAME] [--model STR]` | Run the LLM eval fixtures against a model; prints guard-pass rate, refusals, tokens, cost (§8.5). Spends money. |
+| `fitme health` | Healthcheck: DB opens, no pending migrations, settings valid. No network. |
+| `fitme backup --out DIR [--keep N]` | Online SQLite backup (mode 0600), keeping the newest N. |
 | `fitme catalog check` | Validate `exercises.toml` and locales (all keys present in all languages); print `content_version`. |
 
 Uses stdlib `argparse`.

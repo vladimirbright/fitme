@@ -1,0 +1,102 @@
+# Reference deployment (docs/ARCHITECTURE.md §3, M10). One process (bot + web + retention)
+# in the `fitme` service; `caddy` is optional, automatic-HTTPS TLS termination, enabled with
+# `docker compose --profile tls up -d` (see README.md).
+#
+# PID 1 / signals: `init: true` makes Docker's own tiny init (`docker-init`, tini under the
+# hood — no extra package needed, it ships with the Docker Engine/Desktop host, not the image)
+# the container's real PID 1. It forwards SIGTERM/SIGINT to its one child, and reaps any
+# zombie processes. That child is `docker-entrypoint.sh`, whose own last step (`exec fitme
+# serve`) replaces itself with the Python process in place — so the signal tini forwards
+# reaches `fitme serve` directly, one hop, and its own signal handling
+# (fitme/cli/commands.py::serve_async) does the graceful shutdown. This is the standard
+# "let the platform supply init" choice: it needs nothing added to the image (no `tini`
+# package to install/update/scan for CVEs), only this one `init: true` line here.
+
+services:
+  fitme:
+    build: .
+    image: fitme:local
+    env_file: .env
+    environment:
+      # Container-internal facts, not operator configuration — always these values regardless
+      # of what .env says, so an operator's own FITME_DB_PATH/FITME_WEB_HOST (meant for local
+      # `uv run fitme serve`) can't accidentally point the container at a host path or the
+      # loopback-only address.
+      FITME_DB_PATH: /data/fitme.db
+      FITME_WEB_HOST: 0.0.0.0
+    volumes:
+      - fitme-data:/data
+    ports:
+      # Published to the host's loopback only — the only other way in is through the
+      # optional `caddy` service below, on the compose network.
+      - "127.0.0.1:8080:8080"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    init: true
+    healthcheck:
+      test: ["CMD", "fitme", "health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 10s
+      retries: 3
+
+  caddy:
+    image: caddy:2-alpine
+    profiles: [tls]
+    depends_on:
+      - fitme
+    # NOT `env_file: .env` (M10 review B2): that would also hand Caddy — the one container
+    # with a port open to the internet — the bot token, the LLM provider key and the CSRF
+    # secret key, none of which it has any use for. `${FITME_DOMAIN:?...}` reads *only*
+    # FITME_DOMAIN, resolved by Compose itself from the project's .env at the *host* level
+    # (the same file, used differently: this is Compose's own `${VAR}` interpolation, not the
+    # container-env injection `env_file:` does) and fails the `up` with a clear message if
+    # it's unset, rather than Caddy starting with an empty site address.
+    environment:
+      FITME_DOMAIN: "${FITME_DOMAIN:?set FITME_DOMAIN in .env}"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: unless-stopped
+    cap_drop:
+      - ALL
+    cap_add:
+      # Caddy binds ports 80/443 (privileged, <1024); this is the one capability it needs
+      # back after `cap_drop: [ALL]`.
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      default:
+        # A static address, not just "on this network": the operator's own
+        # FITME_FORWARDED_ALLOW_IPS (.env, read by the `fitme` service) must trust *exactly*
+        # this container, not the whole /24 — the bridge's own gateway address (172.28.0.1)
+        # also fronts traffic arriving through `fitme`'s host-published port (Docker NATs it
+        # through the gateway), so trusting the whole subnet would let a request straight
+        # through the published port on the host forge X-Forwarded-* headers just as
+        # effectively as Caddy itself. Without the `tls` profile, nothing runs on this
+        # network but `fitme`, so FITME_FORWARDED_ALLOW_IPS's default (127.0.0.1) is correct
+        # as-is: no proxy is trusted, because none exists.
+        ipv4_address: 172.28.0.10
+
+networks:
+  default:
+    # Fixed so caddy's ipv4_address above is deterministic across recreations.
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24
+
+volumes:
+  fitme-data:
+  caddy-data:
+  caddy-config:

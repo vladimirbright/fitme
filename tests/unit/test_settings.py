@@ -64,6 +64,7 @@ def test_defaults_apply_when_not_overridden(monkeypatch: pytest.MonkeyPatch) -> 
     assert settings.llm_tier_small == "anthropic:claude-haiku-4-5"
     assert settings.web_host == "127.0.0.1"
     assert settings.web_port == 8080
+    assert settings.forwarded_allow_ips == "127.0.0.1"
     assert settings.chat_retention_days == 365
     assert settings.max_weekly_increment_kg == 2.5
     assert settings.prices_file is None

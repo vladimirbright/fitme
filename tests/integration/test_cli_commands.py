@@ -180,6 +180,123 @@ def test_purge_runs_against_an_upgraded_db(monkeypatch: pytest.MonkeyPatch, tmp_
     assert main(["purge"]) == 0
 
 
+def test_health_fails_before_the_database_exists(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setenv("FITME_DB_PATH", str(tmp_path / "fitme.db"))
+
+    exit_code = main(["health"])
+
+    assert exit_code == 1
+    assert "not initialized" in capsys.readouterr().err
+
+
+def test_health_fails_while_migrations_are_pending(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    db_path = tmp_path / "fitme.db"
+    monkeypatch.setenv("FITME_DB_PATH", str(db_path))
+    db_path.touch()
+
+    exit_code = main(["health"])
+
+    assert exit_code == 1
+    assert "pending migrations" in capsys.readouterr().err
+
+
+def test_health_passes_once_migrated(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setenv("FITME_DB_PATH", str(tmp_path / "fitme.db"))
+    assert main(["db", "upgrade"]) == 0
+    capsys.readouterr()  # drain the "Applied ..." message from `db upgrade` above
+
+    exit_code = main(["health"])
+
+    assert exit_code == 0
+    assert capsys.readouterr().out.strip() == "ok"
+
+
+def test_health_fails_on_invalid_llm_configuration(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setenv("FITME_DB_PATH", str(tmp_path / "fitme.db"))
+    monkeypatch.setenv("FITME_LLM_AGENT_PLAN_GENERATE", "not-a-known-tier-or-model-string")
+    assert main(["db", "upgrade"]) == 0
+
+    exit_code = main(["health"])
+
+    assert exit_code == 1
+    assert "invalid LLM model configuration" in capsys.readouterr().err
+
+
+def test_backup_writes_a_file_and_reports_it(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setenv("FITME_DB_PATH", str(tmp_path / "fitme.db"))
+    assert main(["db", "upgrade"]) == 0
+    asyncio.run(_seed_a_user(tmp_path / "fitme.db"))
+
+    out_dir = tmp_path / "backups"
+    exit_code = main(["backup", "--out", str(out_dir)])
+
+    assert exit_code == 0
+    files = list(out_dir.iterdir())
+    assert len(files) == 1
+    assert "Backup written to" in capsys.readouterr().out
+    mode = stat.S_IMODE(files[0].stat().st_mode)
+    assert mode == 0o600
+
+
+def test_backup_keep_rotates_old_backups(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setenv("FITME_DB_PATH", str(tmp_path / "fitme.db"))
+    assert main(["db", "upgrade"]) == 0
+
+    out_dir = tmp_path / "backups"
+    (out_dir).mkdir()
+    for name in ("fitme-20200101-000000.db", "fitme-20200102-000000.db"):
+        (out_dir / name).touch()
+
+    exit_code = main(["backup", "--out", str(out_dir), "--keep", "1"])
+
+    assert exit_code == 0
+    remaining = sorted(p.name for p in out_dir.iterdir())
+    assert len(remaining) == 1
+    assert "Rotated out 2 old backup(s)" in capsys.readouterr().out
+
+
+def test_backup_reports_no_user_before_the_db_exists(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setenv("FITME_DB_PATH", str(tmp_path / "no-such-directory" / "fitme.db"))
+
+    exit_code = main(["backup", "--out", str(tmp_path / "backups")])
+
+    assert exit_code == 1
+    assert "directory exists" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("keep", ["0", "-1"])
+def test_backup_rejects_a_non_positive_keep(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    keep: str,
+) -> None:
+    """M10 review item 1: `--keep 0` (or negative) would have rotation delete the backup
+    `create_backup` just wrote — argparse must reject it before anything runs."""
+    monkeypatch.setenv("FITME_DB_PATH", str(tmp_path / "fitme.db"))
+    assert main(["db", "upgrade"]) == 0
+
+    with pytest.raises(SystemExit) as exc_info:
+        main(["backup", "--out", str(tmp_path / "backups"), "--keep", keep])
+
+    assert exc_info.value.code == 2
+    assert "must be at least 1" in capsys.readouterr().err
+
+
 def test_llm_eval_refuses_without_yes(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:

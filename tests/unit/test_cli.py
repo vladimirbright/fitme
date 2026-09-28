@@ -22,7 +22,18 @@ def test_help_lists_subcommands(capsys: pytest.CaptureFixture[str]) -> None:
 
     assert exc_info.value.code == 0
     output = capsys.readouterr().out
-    for subcommand in ("serve", "db", "activate", "export", "delete", "purge", "catalog", "llm"):
+    for subcommand in (
+        "serve",
+        "db",
+        "activate",
+        "export",
+        "delete",
+        "purge",
+        "catalog",
+        "llm",
+        "health",
+        "backup",
+    ):
         assert subcommand in output
 
 

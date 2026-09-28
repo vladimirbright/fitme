@@ -1,0 +1,18 @@
+# Reverse-proxies to the `fitme` compose service, terminating TLS with Caddy's automatic
+# HTTPS (Let's Encrypt) for whatever host FITME_DOMAIN names. Only loaded when the `tls`
+# compose profile is enabled: `docker compose --profile tls up -d` (see README.md).
+#
+# {$FITME_DOMAIN} is Caddy's own environment-variable interpolation, filled in from the
+# `caddy` service's `environment:` in compose.yaml at startup (deliberately not `env_file:
+# .env` — see compose.yaml's comment, M10 review B2: that would also hand this
+# internet-facing container the bot token, LLM key and secret key it has no use for) — not a
+# value fitme's own code reads.
+{$FITME_DOMAIN} {
+	# Tell browsers to only ever reach this host over HTTPS from now on (a year), and drop
+	# the default `Server: Caddy` response header — neither the app nor a would-be attacker
+	# needs Caddy's own presence/version advertised.
+	header Strict-Transport-Security "max-age=31536000"
+	header -Server
+
+	reverse_proxy fitme:8080
+}

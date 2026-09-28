@@ -2,9 +2,10 @@
 
 Subcommands mirror docs/ARCHITECTURE.md §11. `db upgrade`, `export`, `delete`, `purge`,
 `catalog check`, `activate` and `serve` are implemented (M1, M3, M5); `llm eval` is
-implemented too (M4), and `hold clear` is the operator's hold bypass (A§6.6). `db <other>`
-and `catalog <other>` subcommands remain stubs, since no other subcommand under those groups
-exists yet.
+implemented too (M4), and `hold clear` is the operator's hold bypass (A§6.6). `health` and
+`backup` are the M10 deployment commands: the container healthcheck and the online-backup
+CLI, respectively. `db <other>` and `catalog <other>` subcommands remain stubs, since no
+other subcommand under those groups exists yet.
 """
 
 from __future__ import annotations
@@ -29,6 +30,16 @@ _NOT_IMPLEMENTED = "not implemented yet"
 def _stub(command: str) -> int:
     print(f"fitme {command}: {_NOT_IMPLEMENTED}", file=sys.stderr)
     return 1
+
+
+def _positive_int(value: str) -> int:
+    """`argparse` `type=` for `--keep` (M10 review, item 1): `--keep 0` (or negative) would
+    have `db/backup.py::_rotate` delete the very backup `create_backup` just wrote — rejected
+    here, at parse time, rather than silently producing an empty backup directory."""
+    parsed = int(value)
+    if parsed < 1:
+        raise argparse.ArgumentTypeError(f"must be at least 1, got {parsed}")
+    return parsed
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -60,6 +71,19 @@ def _build_parser() -> argparse.ArgumentParser:
     )
 
     subparsers.add_parser("purge", help="Run the retention job now.")
+
+    subparsers.add_parser(
+        "health",
+        help="Check the DB opens, migrations are applied and settings are valid; exit 0/1.",
+    )
+
+    backup_parser = subparsers.add_parser(
+        "backup", help="Write a consistent backup and rotate old ones."
+    )
+    backup_parser.add_argument("--out", required=True, help="Output directory.")
+    backup_parser.add_argument(
+        "--keep", type=_positive_int, default=14, help="How many backups to keep (default 14)."
+    )
 
     hold_parser = subparsers.add_parser("hold", help="Health hold maintenance (operator).")
     hold_subparsers = hold_parser.add_subparsers(dest="hold_command", required=True)
@@ -127,6 +151,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     if args.command == "purge":
         return _with_settings(parser, commands.purge_now)
+    if args.command == "health":
+        return _with_settings(parser, commands.health)
+    if args.command == "backup":
+        return _with_settings(
+            parser, lambda settings: commands.backup(settings, args.out, keep=args.keep)
+        )
     if args.command == "hold":
         if args.hold_command == "clear":
             return _with_settings(

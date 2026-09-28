@@ -4,8 +4,9 @@ pending-migrations check `serve` uses before it starts.
 
 `catalog check` and `llm eval` live in their own modules (`cli/catalog_check.py`,
 `cli/llm_eval.py`). This module never imports `db/selectors/` or `db/controllers/` directly
-(A§2.1: bot/web/cli call into `services/`, not `db/`) — `db/migrate.py` and
-`db/connection.py::open_database` are the sanctioned exceptions the plan calls out.
+(A§2.1: bot/web/cli call into `services/`, not `db/`) — `db/migrate.py`,
+`db/connection.py::open_database` and `db/backup.py::create_backup` (M10) are the sanctioned
+exceptions the plan calls out.
 """
 
 from __future__ import annotations
@@ -18,22 +19,27 @@ import os
 import signal
 import sys
 from collections.abc import Callable, Coroutine, Iterator
+from pathlib import Path
 from typing import Any
 
 import uvicorn
 from aiogram import Bot
+from aiogram.exceptions import AiogramError, TelegramUnauthorizedError
 
 from fitme.bot.app import build_dispatcher
 from fitme.bot.commands import register_commands
-from fitme.config.settings import Settings
+from fitme.config.settings import Settings, SettingsError
+from fitme.db.backup import BackupError, create_backup
 from fitme.db.connection import Database, DatabaseUnavailableError, open_database
 from fitme.db.migrate import migrate, pending_migrations
+from fitme.llm import models as llm_models
 from fitme.services.account import delete_user, export_user, get_single_user
 from fitme.services.identity import issue_activation_code
 from fitme.services.llm_runtime import LlmRuntime
 from fitme.services.operator import clear_holds_from_cli, open_holds_for_cli
 from fitme.services.retention import purge as run_retention
 from fitme.web.app import create_app
+from fitme.web.security import validate_web_config
 
 _RETENTION_INTERVAL_SECONDS = 24 * 60 * 60
 HOLD_CLEAR_CONFIRMATION = "CLEAR"
@@ -80,6 +86,60 @@ async def pending_migration_names(settings: Settings) -> list[str] | None:
     finally:
         await db.close()
     return [migration.name for migration in pending]
+
+
+async def health(settings: Settings) -> int:
+    """`fitme health` (A§11, M10): the container healthcheck. Confirms the LLM model
+    configuration resolves, the web configuration is valid, the database opens and has no
+    pending migrations — the same checks `serve` itself refuses to start without. Prints one
+    line and exits 0 (healthy) or 1 (not), same as `serve`'s own startup checks. No network
+    call is made: `llm_models.validate_startup` only parses model strings and reads env vars
+    (see its own docstring)."""
+    try:
+        llm_models.validate_startup(settings)
+    except SettingsError as exc:
+        print(f"unhealthy: invalid LLM model configuration: {exc}", file=sys.stderr)
+        return 1
+
+    try:
+        validate_web_config(settings)
+    except SettingsError as exc:
+        print(f"unhealthy: invalid web configuration: {exc}", file=sys.stderr)
+        return 1
+
+    if not settings.db_path.exists():
+        print("unhealthy: database not initialized", file=sys.stderr)
+        return 1
+
+    pending = await pending_migration_names(settings)
+    if pending is None:
+        return 1  # pending_migration_names already printed a friendly reason
+    if pending:
+        print(f"unhealthy: pending migrations: {', '.join(pending)}", file=sys.stderr)
+        return 1
+
+    print("ok")
+    return 0
+
+
+async def backup(settings: Settings, out_dir: str, *, keep: int) -> int:
+    """`fitme backup --out DIR [--keep N]` (A§11, M10): an online, consistent backup via
+    SQLite's own backup API, rotating to keep only the newest `keep` (default 14)."""
+    db = await _try_open_database(settings)
+    if db is None:
+        return 1
+    try:
+        try:
+            result = await create_backup(db, Path(out_dir), keep=keep)
+        except BackupError as exc:
+            print(str(exc), file=sys.stderr)
+            return 1
+    finally:
+        await db.close()
+    print(f"Backup written to {result.path}")
+    if result.removed:
+        print(f"Rotated out {len(result.removed)} old backup(s).")
+    return 0
 
 
 async def export_data(settings: Settings, out_path: str) -> int:
@@ -311,6 +371,26 @@ async def serve_async(settings: Settings) -> int:
     try:
         bot = Bot(token=settings.telegram_bot_token.get_secret_value())
         try:
+            # M10 review (B4): a rejected token must fail fast with one clear line, not a
+            # crash-loop — the same "refuse to start" shape `_serve()` already uses for an
+            # invalid LLM/web config, so a bad FITME_TELEGRAM_BOT_TOKEN under Docker Compose's
+            # `restart: unless-stopped` doesn't just spam tracebacks forever. `bot.me()` (not
+            # the raw `get_me()`) so the result is cached: `dispatcher.start_polling` below
+            # would otherwise repeat the exact same call. A transient network error here is
+            # NOT fatal — aiogram's own polling loop retries those — only a definitive
+            # rejection of the token itself is.
+            try:
+                await bot.me()
+            except TelegramUnauthorizedError:
+                print(
+                    "Refusing to start: FITME_TELEGRAM_BOT_TOKEN was rejected by Telegram "
+                    "(Unauthorized); fix .env and restart",
+                    file=sys.stderr,
+                )
+                return 1
+            except AiogramError:
+                _logger.warning("could not verify the Telegram bot token at startup")
+
             llm = LlmRuntime.from_settings(settings)
             dispatcher = build_dispatcher(db, settings, llm)
             await register_commands(bot)
@@ -325,6 +405,12 @@ async def serve_async(settings: Settings) -> int:
                     host=settings.web_host,
                     port=settings.web_port,
                     log_config=None,
+                    # M10: only meaningful behind the optional `caddy` reverse proxy —
+                    # `forwarded_allow_ips` is the peer address(es)/CIDR uvicorn trusts to set
+                    # X-Forwarded-*; see `Settings.forwarded_allow_ips` for the default and
+                    # compose.yaml for how the `tls` profile sets it.
+                    proxy_headers=True,
+                    forwarded_allow_ips=settings.forwarded_allow_ips,
                 )
             )
 

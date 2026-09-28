@@ -9,7 +9,7 @@ OUT ?= fitme-export.json
 CAFFEINATE := $(shell command -v caffeinate >/dev/null 2>&1 && echo caffeinate -s)
 
 .DEFAULT_GOAL := help
-.PHONY: help install lock migrate serve activate test lint fmt typecheck catalog check export delete purge unhold hold-clear llm-eval clean
+.PHONY: help install lock migrate serve activate test lint fmt typecheck catalog check export delete purge unhold hold-clear llm-eval clean docker-build up down logs backup activate-docker unhold-docker
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -67,3 +67,26 @@ llm-eval: ## Run LLM eval fixtures (spends money; AGENT=, MODEL= optional; add Y
 clean: ## Remove caches
 	rm -rf .pytest_cache .mypy_cache .ruff_cache
 	find . -name __pycache__ -type d -prune -exec rm -rf {} +
+
+# --- Docker Compose deployment (M10; docs/ARCHITECTURE.md §3) ---
+
+docker-build: ## Build the Docker Compose image
+	docker compose build
+
+up: ## Start the stack in the background (add TLS=1 for the optional Caddy/TLS profile)
+	docker compose $(if $(TLS),--profile tls) up -d
+
+down: ## Stop the stack (the fitme-data volume is kept)
+	docker compose down
+
+logs: ## Follow the running container's logs
+	docker compose logs -f
+
+backup: ## Run a backup inside the running container (see deploy/backup.sh)
+	./deploy/backup.sh
+
+activate-docker: ## Print a one-time Telegram activation code (Docker deployment)
+	docker compose exec fitme fitme activate
+
+unhold-docker: ## Clear open health holds (Docker deployment; operator, asks you to type CLEAR)
+	docker compose exec fitme fitme hold clear

@@ -25,7 +25,7 @@ import asyncio
 import sys
 from pathlib import Path
 
-from aiogram import Dispatcher
+from aiogram import Bot, Dispatcher
 
 from fitme.cli import commands
 from fitme.config.settings import Settings
@@ -42,8 +42,15 @@ async def fake_register_commands(bot):
     return None
 
 
+async def fake_me(self):
+    # M10 review (B4): serve_async's own bot.me() startup preflight would otherwise be a real
+    # call to the Telegram API here — never allowed in a test.
+    return None
+
+
 Dispatcher.start_polling = fake_start_polling
 commands.register_commands = fake_register_commands
+Bot.me = fake_me
 
 settings = Settings(
     telegram_bot_token="123456:TEST-token-for-unit-tests-only",

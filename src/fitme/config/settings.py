@@ -67,6 +67,12 @@ class Settings(BaseSettings):
     # --- web server ---
     web_host: str = "127.0.0.1"
     web_port: int = Field(default=8080, ge=1, le=65535)
+    # M10: passed to uvicorn as `forwarded_allow_ips` (with `proxy_headers=True`) so
+    # `X-Forwarded-*` headers from a trusted reverse proxy (e.g. the optional `caddy` compose
+    # service) are honored. Default trusts only the loopback peer, which is what a
+    # non-proxied, `127.0.0.1`-published deployment sees. Never set this to `*` while the app
+    # port is reachable from anything other than a trusted proxy (M10 compose notes).
+    forwarded_allow_ips: str = "127.0.0.1"
 
     # --- retention & guards ---
     chat_retention_days: int = Field(default=365, ge=1)

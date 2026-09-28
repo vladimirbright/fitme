@@ -1,0 +1,53 @@
+# Keep the build context (and therefore every layer) to source + lockfile only. Anything
+# that holds secrets or personal health data must never even leave the host, let alone land
+# in an image layer (AGENTS.md §5, §1).
+
+.git
+.gitignore
+.github
+
+# Local dev environment / tooling caches — irrelevant to the image, and .venv in particular
+# is built for the host's platform, not necessarily the image's.
+.venv
+.mypy_cache
+.pytest_cache
+.ruff_cache
+.coverage
+.coverage.*
+htmlcov
+__pycache__
+*.py[cod]
+*.egg-info
+build
+dist
+
+# Secrets and personal health data (AGENTS.md §5): never baked into an image layer.
+.env
+.env.*
+!.env.example
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.sqlite-*
+backups/
+fitme-export*.json
+*.export.json
+*.import.toml
+*.import.json
+deploy/restore-staging/
+
+# Not needed at runtime, and no reason to invalidate layer caching over doc/test edits.
+tests
+docs
+deploy
+*.md
+!README.md
+.editorconfig
+.python-version
+
+# Editors / OS
+.idea
+.vscode
+*.swp
+.DS_Store

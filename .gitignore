@@ -12,6 +12,7 @@
 backups/
 fitme-export*.json
 *.export.json
+deploy/restore-staging/
 
 # Python / uv
 .venv/
