@@ -59,6 +59,7 @@ note = "пауза внизу"          # optional, up to 200 characters
 
 [[session]]                   # one per training ACTUALLY PERFORMED, oldest first
 date = 2026-09-01             # the real date (YYYY-MM-DD); never guess one
+workout = "A"                 # optional: which [[plan.workout]] key this training was, if known
 
 [[session.set]]               # one entry per WORKING set (no warm-up sets)
 exercise = "barbell_back_squat"
@@ -98,6 +99,13 @@ reps = 5
 - **Plan:** include only my current program. The number of distinct training days in
   `schedule` must equal how many times a week I train. One exercise per entry, and no
   supersets: list superset exercises one after another and mention the superset in `note`.
+- **Linking a session to the plan:** if you can tell which `[[plan.workout]]` a session was
+  (its exercises match that workout, or its title/day says so), set `workout = "<key>"` on
+  that `[[session]]`, using the same key as `[[plan.schedule]].workout`/`[[plan.workout]].key`.
+  If the program includes more than one `[[plan]]`, also set `plan = "<plan name>"` on the
+  session to say which plan's workout you mean. Leave both out if you're not sure — the tool
+  can still work it out from the date when the schedule makes it unambiguous, and a wrong
+  guess is worse than none.
 - **No personal data:** no names, no health notes, no chat handles. Program notes about
   technique are fine in `note`.
 - **Check before answering:**
@@ -105,6 +113,7 @@ reps = 5
   - every "no kg" exercise has no kg;
   - weights for "each" exercises are for one dumbbell;
   - dates are real and not in the future;
+  - every session's `workout`, if set, is a key that actually exists in `[[plan.workout]]`;
   - the TOML parses.
 
 ## Exercise list (`id | English / Russian name | load`)

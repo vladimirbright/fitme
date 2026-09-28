@@ -101,6 +101,8 @@ completed setup (`/start`); sessions do not.
 [[session]]
 date = 2026-08-03                # a date, a datetime, or the same as an ISO string
 title = "Lower + push"           # optional, display only; not stored
+workout = "A"                    # optional: a plan workout key (see "Linking" below)
+plan = "Old two-day"             # optional: which plan's workout, if the file has more than one
 
 [[session.set]]
 exercise = "Squat"
@@ -134,6 +136,36 @@ Weights follow the catalog's conventions exactly:
 - **dumbbells and kettlebells** (`per_implement`): the weight of **one** implement;
 - **one-hand implements** (`single_implement`): the weight of that implement;
 - **machines**: the number on the stack.
+
+### Linking imported trainings to a plan
+
+A session that came from a `[[plan]]` in the same file can be linked to that plan version and
+workout key, so it shows up in the plan's recent trainings and counts for its workout rotation
+(it otherwise belongs to no plan: see "What the import writes" below). Linking never changes
+what the guards or the load engine see — the history max, outcomes, `applied_to_kg` and
+`increases_7d` are unaffected — it only affects which workout the rotation sees as last
+completed, which is the point.
+
+1. **Explicit.** Give `workout = "A"` on the `[[session]]` (a key from `[[plan.workout]]`). If
+   the file has more than one `[[plan]]`, also give `plan = "<plan name>"` to say which one's
+   workout you mean; with only one plan in the file, `plan` isn't needed. A `workout` that
+   doesn't exist in the plan you meant leaves that session unlinked and reports a warning — the
+   session still imports normally, the key is not an error.
+2. **Inferred.** With no `workout` given, when the file has exactly one `[[plan]]` and the
+   session's local weekday (in the file's timezone) appears in that plan's `schedule` exactly
+   once, that schedule entry's workout key is used. A schedule of Mon=A, Wed=B, Fri=C links
+   every session dated on a Monday, Wednesday or Friday; a weekday that appears twice in the
+   schedule is ambiguous and the session stays unlinked, with no warning (see 3).
+3. **Otherwise** — no `workout`, more than one plan, an unmatched weekday, or a weekday that
+   isn't scheduled at all — the session is left unlinked (`plan_version_id` NULL,
+   `workout_key = "import"`, same as an import with no plan at all). The report gives the count
+   of sessions linked and left unlinked.
+4. **Re-importing** the same file (or an edited one, with `workout`/`plan` added or changed)
+   links any of its sessions that are duplicates of an already-imported session **and are
+   still unlinked**. A session an earlier run already linked is never re-linked or changed,
+   even if the file now says something different for it. The plan version used is the one
+   saved this run, or the version already saved from an earlier run if this run's `[[plan]]`
+   is a duplicate of it. A plan rejected this run (see "What is rejected") links nothing.
 
 ## What is rejected
 
@@ -169,16 +201,21 @@ identical to an already-imported plan version is skipped, not saved a second tim
 In one transaction per run (all or nothing; `--dry-run` writes nothing and prints the same
 report):
 
-- the sessions and their set rows. An imported session belongs to **no plan**
+- the sessions and their set rows. An imported session belongs to **no plan** by default
   (`workout_sessions.plan_version_id` is NULL, `workout_key = "import"`): it did not come
   from a stored plan, and no holder plan is created for it (migration 0007 removed the
-  "Imported history" plan earlier versions used to create);
+  "Imported history" plan earlier versions used to create) — unless it links to a plan
+  imported in the same run (see "Linking imported trainings" above), in which case
+  `plan_version_id` and `workout_key` are that plan workout's, set as one final update inside
+  the same transaction, after the plans are judged;
 - the accepted `[[plan]]`s as `plans` + `plan_versions`;
-- one `decision(kind = history_import)` with the counts, the file's SHA-256, the rejection
-  reasons and the unknown exercise names (bounded: at most 30 names, 60 characters each;
-  never the file's text otherwise), `load_changes = []`, plus a `decision_outcomes` row with
-  what was actually written (the session ids, the saved, duplicate and rejected plans).
+- one `decision(kind = history_import)` with the counts (including sessions linked and
+  unlinked), the file's SHA-256, the rejection reasons, the link warnings and the unknown
+  exercise names (bounded: at most 30 names, 60 characters each; never the file's text
+  otherwise), `load_changes = []`, plus a `decision_outcomes` row with what was actually
+  written (the session ids, the saved/duplicate/rejected plans, the linked session ids and
+  the link warnings).
 
-Imported sessions never trigger a recap or a progression, are never a session to resume, and
-are exported and deleted like every other row (`fitme export`, `fitme delete`, the website's
-training delete).
+Imported sessions never trigger a recap or a progression, are never a session to resume — a
+linked one included, since it stays `completed` — and are exported and deleted like every
+other row (`fitme export`, `fitme delete`, the website's training delete).

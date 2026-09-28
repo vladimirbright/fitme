@@ -327,8 +327,10 @@ class SessionContext:
 
 async def load_session(conn: Connection, user_id: int, session_id: int) -> SessionContext | None:
     """The session with its plan, version and workout, or `None` when it isn't this user's or
-    has no plan (an imported session, `plan_version_id` NULL since migration 0007: it is
-    history, never something the workout loop can resume or recap)."""
+    has no plan (`plan_version_id` NULL: an unlinked imported session, migration 0007 — an
+    import linked to a plan workout, M12, `services.history_import`, does have one, but stays
+    `status = 'completed'`, so every caller's own status check keeps it from ever being
+    resumed, adjusted or recapped; only the read-only training-detail view shows its plan)."""
     session = await get_workout_session(conn, session_id)
     if session is None or session.user_id != user_id or session.plan_version_id is None:
         return None
@@ -1765,8 +1767,9 @@ async def list_sessions_page(
 @dataclass(frozen=True, slots=True)
 class SessionDetail:
     session: WorkoutSessionRecord
-    # Both `None` for an imported session (M11, migration 0007): it belongs to no plan and
-    # has no stored workout, only its set rows.
+    # Both `None` for an imported session with no plan (M11, migration 0007) — only its set
+    # rows. An imported session linked to a plan workout (M12, `services.history_import`)
+    # has both, like any other session.
     plan_name: str | None
     workout: Workout | None
     rows: list[SetLogRecord]
@@ -1777,7 +1780,8 @@ class SessionDetail:
 async def get_session_detail(db: Database, user_id: int, session_id: int) -> SessionDetail | None:
     """A§9.1 `/app/trainings/{id}`: planned vs actual per set, check-ins, and the recap text
     *if one was already written* (read-only — a page view never calls the LLM, A§4.6). An
-    imported session shows its set rows with no plan or workout."""
+    imported session with no plan shows its set rows with no plan or workout; one linked to a
+    plan workout (M12) shows those too, same as any other session."""
     async with db.read() as conn:
         session = await get_workout_session(conn, session_id)
         if session is None or session.user_id != user_id:

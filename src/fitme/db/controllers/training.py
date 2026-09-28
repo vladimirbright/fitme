@@ -61,6 +61,28 @@ async def insert_imported_workout_session(
     return cursor.lastrowid
 
 
+async def link_imported_sessions(
+    conn: aiosqlite.Connection,
+    *,
+    user_id: int,
+    links: Sequence[tuple[int, int, str]],  # (session_id, plan_version_id, workout_key)
+) -> None:
+    """M12 (`fitme history import`, `docs/import-format.md` "Linking imported trainings"):
+    connect one or more previously-unlinked imported sessions to the plan workout they were
+    trained from. Each row's `WHERE` repeats `import_hash IS NOT NULL AND plan_version_id IS
+    NULL` so this can never touch a session the app itself created, nor re-link or change one
+    an earlier run already linked (A§9.4-style idempotency) — a no-op `UPDATE` if the row no
+    longer matches, never an error. Scoped to `user_id` so a caller can never link another
+    user's row. The caller runs this inside the same `db.transaction()` as the sessions and
+    plan versions it references, so the `plan_version_id` foreign key is always satisfied."""
+    for session_id, plan_version_id, workout_key in links:
+        await conn.execute(
+            "UPDATE workout_sessions SET plan_version_id = ?, workout_key = ? "
+            "WHERE id = ? AND user_id = ? AND import_hash IS NOT NULL AND plan_version_id IS NULL",
+            (plan_version_id, workout_key, session_id, user_id),
+        )
+
+
 async def update_workout_session_progress(
     conn: aiosqlite.Connection, session_id: int, *, status: str, current_block: int
 ) -> None:

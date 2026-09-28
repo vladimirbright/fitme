@@ -239,6 +239,12 @@ async def history_import(settings: Settings, path: str, *, dry_run: bool) -> int
         print(f"  plan saved: {plan.name} (plan {plan.plan_id}, version {plan.plan_version_id})")
         for line in plan.substitutions:
             print(f'  plan "{plan.name}": {line}')
+    print(
+        f"  {report.sessions_linked} session(s) linked to a plan workout, "
+        f"{report.sessions_unlinked} new session(s) left unlinked."
+    )
+    for warning in report.link_warnings:
+        print(f"  {warning}")
     for exercise_id, kg in report.per_implement_max:
         print(f"  {exercise_id}: highest imported load {kg:g} kg each (per dumbbell/kettlebell)")
     if report.newer_than_last_logged:

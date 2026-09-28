@@ -116,16 +116,22 @@ async def list_workout_sessions_page(
     return [_session_from_row(row) for row in rows]
 
 
-async def list_import_hashes(conn: aiosqlite.Connection, user_id: int) -> set[str]:
-    """Every `import_hash` this user's sessions carry (M11, migration 0006): the set
-    `services.history_import` checks a file's sessions against, so re-importing the same
-    file reports duplicates instead of tripping the schema's unique index."""
+async def list_import_hash_sessions(
+    conn: aiosqlite.Connection, user_id: int
+) -> dict[str, tuple[int, bool]]:
+    """Every `import_hash` this user's sessions carry (M11, migration 0006), mapped to
+    `(session id, already linked to a plan)`. `services.history_import` uses the hash set
+    (the dict's keys) to detect a duplicate — re-importing the same file reports duplicates
+    instead of tripping the schema's unique index — and the id/linked flag to decide whether
+    a re-imported duplicate is still eligible to be linked to a plan workout (M12): an
+    already-linked session (`plan_version_id IS NOT NULL`) is never re-linked or changed."""
     async with conn.execute(
-        "SELECT import_hash FROM workout_sessions WHERE user_id = ? AND import_hash IS NOT NULL",
+        "SELECT import_hash, id, plan_version_id FROM workout_sessions "
+        "WHERE user_id = ? AND import_hash IS NOT NULL",
         (user_id,),
     ) as cursor:
         rows = await cursor.fetchall()
-    return {str(row[0]) for row in rows}
+    return {str(row[0]): (int(row[1]), row[2] is not None) for row in rows}
 
 
 async def last_app_logged_completed_at(conn: aiosqlite.Connection, user_id: int) -> str | None:

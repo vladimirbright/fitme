@@ -83,24 +83,26 @@ async def get_latest_plan_version(
     return None if row is None else _plan_version_from_row(row)
 
 
-async def list_plan_version_bodies(
+async def list_plan_version_ids_and_bodies(
     conn: aiosqlite.Connection, user_id: int, *, origin: str
-) -> list[dict[str, object]]:
-    """Every stored plan body of this user's versions with the given `origin` (M11:
-    `services.history_import` compares an imported `[[plan]]` against the `import`-origin
-    bodies already saved, so re-importing the same file saves no second copy)."""
+) -> list[tuple[int, dict[str, object]]]:
+    """Every stored plan version id and body of this user's versions with the given `origin`
+    (M11: `services.history_import` compares an imported `[[plan]]` against the
+    `import`-origin bodies already saved, so re-importing the same file saves no second copy;
+    M12: the id lets it link a session that re-imports as a duplicate to the right, already
+    -saved plan version)."""
     async with conn.execute(
-        "SELECT v.body FROM plan_versions v JOIN plans p ON p.id = v.plan_id "
+        "SELECT v.id, v.body FROM plan_versions v JOIN plans p ON p.id = v.plan_id "
         "WHERE p.user_id = ? AND v.origin = ? ORDER BY v.id",
         (user_id, origin),
     ) as cursor:
         rows = await cursor.fetchall()
-    bodies: list[dict[str, object]] = []
+    result: list[tuple[int, dict[str, object]]] = []
     for row in rows:
-        body = json.loads(row[0])
+        body = json.loads(row[1])
         if isinstance(body, dict):
-            bodies.append(body)
-    return bodies
+            result.append((int(row[0]), body))
+    return result
 
 
 async def list_plan_versions(conn: aiosqlite.Connection, plan_id: int) -> list[PlanVersionRecord]:

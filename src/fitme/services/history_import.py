@@ -41,6 +41,23 @@ the ceiling is substituted with the load engine's value, and the file's number i
 schedule that does not fit `sessions_per_week` — rejects the whole plan). Every saved plan has
 passed `judge_import`'s own final `validate_plan` re-check. The accepted ones become `plans` +
 `plan_versions(origin = 'import')`.
+
+**Linking sessions to a plan workout (`docs/import-format.md` "Linking imported trainings").**
+An imported session still belongs to no plan by default, but when the file also carries the
+plan it came from, each session is linked to that plan version's workout key so it shows up
+in the plan's recent trainings and drives its rotation (`selectors.training.
+last_completed_workout_key_for_plan`): explicitly, via an optional `workout = "A"` session key
+(plus `plan = "<name>"` when the file has more than one plan); otherwise inferred, when the
+file has exactly one plan and the session's local weekday matches exactly one schedule entry.
+A `workout` that names a key the plan doesn't have leaves that session unlinked and reports a
+warning; anything else that doesn't resolve leaves it unlinked with no warning. Linking never
+touches `import_hash`, `status` or any set row, so it changes nothing the guards or the load
+engine read: only `last_completed_workout_key_for_plan` (rotation) sees the difference, by
+design. It happens as one final step inside the same transaction, after the sessions are
+written and the plans are judged, via `db.controllers.training.link_imported_sessions`, which
+only ever touches this user's own `import_hash IS NOT NULL AND plan_version_id IS NULL` rows —
+so a re-import links a previously-unlinked duplicate the same way, and never re-links or
+changes a session a prior run already linked. A plan that was rejected links nothing.
 """
 
 from __future__ import annotations
@@ -64,9 +81,13 @@ from fitme.config.settings import Settings
 from fitme.db.connection import Connection, Database
 from fitme.db.controllers.decisions import insert_decision, insert_decision_outcome
 from fitme.db.controllers.plans import insert_plan, insert_plan_version
-from fitme.db.controllers.training import insert_imported_workout_session, insert_set_log
-from fitme.db.selectors.plans import list_plan_version_bodies, list_plans_for_user
-from fitme.db.selectors.training import last_app_logged_completed_at, list_import_hashes
+from fitme.db.controllers.training import (
+    insert_imported_workout_session,
+    insert_set_log,
+    link_imported_sessions,
+)
+from fitme.db.selectors.plans import list_plan_version_ids_and_bodies, list_plans_for_user
+from fitme.db.selectors.training import last_app_logged_completed_at, list_import_hash_sessions
 from fitme.db.selectors.users import get_the_user
 from fitme.domain.catalog import Catalog, Exercise
 from fitme.domain.enums import DecisionKind
@@ -96,7 +117,7 @@ _MAX_NAME_LENGTH = 60
 
 _TOP_LEVEL_KEYS = frozenset({"meta", "aliases", "plan", "session"})
 _META_KEYS = frozenset({"version", "timezone"})
-_SESSION_KEYS = frozenset({"date", "title", "set"})
+_SESSION_KEYS = frozenset({"date", "title", "set", "workout", "plan"})
 _SET_KEYS = frozenset({"exercise", "kg", "reps", "set_index", "skipped"})
 _PLAN_KEYS = frozenset({"name", "schedule", "workout"})
 _SCHEDULE_KEYS = frozenset({"weekday", "workout"})
@@ -132,6 +153,15 @@ class ImportedSession:
     performed_at: datetime  # timezone-aware, UTC
     sets: tuple[ImportedSet, ...]
     content_hash: str
+    # M12 (plan linking, docs/import-format.md): the session's local weekday in the file's
+    # timezone (0 = Monday ... 6 = Sunday, `domain.models.ScheduledDay`'s own convention) for
+    # inferred linking, and the file's optional explicit `workout`/`plan` session keys. None
+    # of these are part of `content_hash`: editing only a hint re-imports as the same session
+    # (docs/import-format.md "Idempotency"), so a file edited to add hints can still link an
+    # already-imported, still-unlinked duplicate on a later run.
+    weekday: int
+    workout_hint: str | None
+    plan_hint: str | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -345,6 +375,12 @@ def _parse_session(
     title = raw.get("title")
     if title is not None and not isinstance(title, str):
         raise _ItemError(f"{where}: title must be a string")
+    workout_hint = raw.get("workout")
+    if workout_hint is not None and (not isinstance(workout_hint, str) or not workout_hint.strip()):
+        raise _ItemError(f"{where}: workout must be a non-empty string (a plan workout key)")
+    plan_hint = raw.get("plan")
+    if plan_hint is not None and (not isinstance(plan_hint, str) or not plan_hint.strip()):
+        raise _ItemError(f"{where}: plan must be a non-empty string (a plan name)")
     raw_sets = raw.get("set")
     if not isinstance(raw_sets, list) or not raw_sets:
         raise _ItemError(f"{where}: at least one [[session.set]] is required")
@@ -369,6 +405,9 @@ def _parse_session(
         performed_at=performed_at,
         sets=tuple(sets),
         content_hash=_content_hash(performed_at, sets),
+        weekday=performed_at.astimezone(tz).weekday(),
+        workout_hint=workout_hint,
+        plan_hint=plan_hint,
     )
 
 
@@ -595,6 +634,16 @@ class ImportReport:
     # (all of them when there is none): those become the current working load the engine
     # holds at, so the report says so.
     newer_than_last_logged: int
+    # M12 (plan linking, docs/import-format.md "Linking imported trainings"): sessions
+    # connected to a plan workout this run, new ones and previously-unlinked duplicates
+    # alike. `sessions_unlinked` counts only the *new* sessions left unlinked — a duplicate
+    # left unlinked isn't new information, it was already unlinked before this run too.
+    sessions_linked: int
+    sessions_unlinked: int
+    link_warnings: tuple[str, ...]
+    # New session ids (a subset of `session_ids`) plus re-linked, previously-unlinked
+    # duplicate session ids, all linked to a plan workout this run.
+    linked_session_ids: tuple[int, ...]
     decision_id: int | None  # None on a dry run (rolled back)
 
 
@@ -659,52 +708,117 @@ def _substitution_lines(plan: Plan) -> list[str]:
     return lines
 
 
-async def _save_plans(
+def _canonical(body: Mapping[str, object]) -> str:
+    return json.dumps(body, sort_keys=True, separators=(",", ":"))
+
+
+# --- Plan linking (M12) -------------------------------------------------------------------------
+#
+# `docs/import-format.md` "Linking imported trainings": each session is linked to the plan
+# version saved (or found as a duplicate) *in the same run*, with the matching workout key —
+# explicitly via an optional `workout` (+ `plan` to disambiguate more than one plan), else
+# inferred from the session's local weekday when the file has exactly one usable plan and the
+# weekday matches its schedule exactly once. Judging every `[[plan]]` (`_judge_plans`) has to
+# happen before the `history_import` decision is written, because the decision's `user_report`
+# carries the final linked/unlinked counts; writing the plans themselves (`_write_plans`) has
+# to happen after, because `plan_versions.decision_id` needs that row's id. Splitting the two
+# lets `_run` insert the decision in between, with the full picture already known.
+
+
+@dataclass(slots=True)
+class _PlanLinkTarget:
+    """A plan a session can link to: its name (for the `plan = "..."` disambiguator), its
+    schedule (for inferred linking) and workout keys (for both). `plan_version_id` is the
+    real id a linked session's `plan_version_id` gets — known from the start for a plan that
+    duplicates an already-saved one, filled in by `_write_plans` for a newly saved one (the
+    same object every `_PlanResolution`/session-link referencing this plan shares, so setting
+    it once here is visible everywhere)."""
+
+    name: str
+    schedule: tuple[ScheduledDay, ...]
+    workout_keys: frozenset[str]
+    plan_version_id: int | None = None
+
+
+@dataclass(slots=True)
+class _PlanResolution:
+    """One parsed `[[plan]]`, judged (A§7.3/M8b) but not yet written to the database."""
+
+    item: ImportedPlan
+    plan: Plan  # judged/substituted; schedule and workout keys are untouched by judging
+    status: str  # "save" | "duplicate" | "rejected"
+    is_default: bool = False
+    target: _PlanLinkTarget | None = None  # None only when status == "rejected"
+
+
+@dataclass(slots=True)
+class _PlanJudgement:
+    resolutions: list[_PlanResolution]
+    rejected: list[Rejection]
+    fired: list[GuardVerdict]
+
+
+async def _judge_plans(
     conn: Connection,
     *,
     user_id: int,
     settings: Settings,
     catalog: Catalog,
     plans: Sequence[ImportedPlan],
-    decision_id: int,
-) -> tuple[list[SavedPlan], int, list[Rejection], list[GuardVerdict]]:
+) -> _PlanJudgement:
     """Judge every parsed plan exactly like a pasted plan (M8b, `planning.judge_import`)
-    against the history as it is now (the file's sessions included), and save the ones that
-    pass. A LOAD-only violation (weekly cap, ceiling, no history) is substituted with the load
-    engine's value in place, the file's number kept as the `declared_kg` hint, and the plan is
-    still saved; a structural failure (unknown/contraindicated exercise, equipment/location,
-    schedule vs `sessions_per_week`) rejects the whole plan, as before. Returns the saved
-    plans, how many were skipped as duplicates of an already-imported plan (same body after
-    judging, so a re-import saves no second copy), the rejections and every verdict worth
-    logging."""
-    saved: list[SavedPlan] = []
-    duplicates = 0
+    against the history as it is now (the file's sessions already written), without writing
+    anything — a pure judgement plus one read, so the caller can know the final
+    linked/unlinked counts before the `history_import` decision (which records them) is
+    written. A LOAD-only violation (weekly cap, ceiling, no history) is substituted with the
+    load engine's value in place, the file's number kept as the `declared_kg` hint, and the
+    plan still resolves to "save"; a structural failure (unknown/contraindicated exercise,
+    equipment/location, schedule vs `sessions_per_week`) resolves to "rejected", as before. A
+    plan whose judged body matches an already-imported one — saved in an earlier run, or
+    earlier in this same file — resolves to "duplicate", sharing that plan's
+    `_PlanLinkTarget` (so two identical `[[plan]]` blocks in one file dedupe against each
+    other, not just against the database, and a session can still link against either one)."""
+    resolutions: list[_PlanResolution] = []
     rejected: list[Rejection] = []
     fired: list[GuardVerdict] = []
     if not plans:
-        return saved, duplicates, rejected, fired
+        return _PlanJudgement(resolutions, rejected, fired)
     snapshot = await planning.read_snapshot(conn, user_id)
     gate_failure = planning.gate(snapshot)
     if gate_failure is not None:
         _code, verdict = gate_failure
         fired.append(verdict)
         for item in plans:
-            rejected.append(
-                Rejection(ref=item.ref, reason=f"plans need a complete setup: {verdict.detail}")
+            reason = Rejection(
+                ref=item.ref, reason=f"plans need a complete setup: {verdict.detail}"
             )
-        return saved, duplicates, rejected, fired
+            rejected.append(reason)
+            resolutions.append(_PlanResolution(item=item, plan=item.plan, status="rejected"))
+        return _PlanJudgement(resolutions, rejected, fired)
     inputs = planning.build_inputs(catalog, snapshot, settings, user_id)
     has_default = any(plan.is_default for plan in await list_plans_for_user(conn, user_id))
-    known_bodies = {
-        _canonical(body)
-        for body in await list_plan_version_bodies(conn, user_id, origin=_ORIGIN_IMPORT)
-    }
+    known_bodies: dict[str, _PlanLinkTarget] = {}
+    for version_id, body in await list_plan_version_ids_and_bodies(
+        conn, user_id, origin=_ORIGIN_IMPORT
+    ):
+        saved_plan = Plan.model_validate(body)
+        known_bodies[_canonical(body)] = _PlanLinkTarget(
+            name=saved_plan.name,
+            schedule=tuple(saved_plan.schedule),
+            workout_keys=frozenset(workout.key for workout in saved_plan.workouts),
+            plan_version_id=version_id,
+        )
+
     for item in plans:
         plan = item.plan.model_copy(deep=True)
         judgement = planning.judge_import(plan, inputs)
         body = plan.model_dump(mode="json")
-        if _canonical(body) in known_bodies:
-            duplicates += 1
+        canonical = _canonical(body)
+        existing_target = known_bodies.get(canonical)
+        if existing_target is not None:
+            resolutions.append(
+                _PlanResolution(item=item, plan=plan, status="duplicate", target=existing_target)
+            )
             continue
         fired.extend(judgement.fired)
         if not judgement.ok:
@@ -712,16 +826,44 @@ async def _save_plans(
                 f"{verdict.rule}: {verdict.detail}" for verdict in judgement.failures
             )
             rejected.append(Rejection(ref=item.ref, reason=reasons))
+            resolutions.append(_PlanResolution(item=item, plan=plan, status="rejected"))
             continue
-        known_bodies.add(_canonical(body))
+        target = _PlanLinkTarget(
+            name=plan.name,
+            schedule=tuple(plan.schedule),
+            workout_keys=frozenset(workout.key for workout in plan.workouts),
+        )
+        known_bodies[canonical] = target
+        resolutions.append(
+            _PlanResolution(
+                item=item, plan=plan, status="save", is_default=not has_default, target=target
+            )
+        )
+        has_default = True
+    return _PlanJudgement(resolutions, rejected, fired)
+
+
+async def _write_plans(
+    conn: Connection, *, user_id: int, decision_id: int, resolutions: Sequence[_PlanResolution]
+) -> list[SavedPlan]:
+    """Phase two of saving plans (see `_judge_plans`): insert the ones resolved to "save" now
+    that a `decision_id` exists, filling in each one's `_PlanLinkTarget.plan_version_id` in
+    place so the session-linking pass, already computed against the same target objects, can
+    read the real id off them right after this returns."""
+    saved: list[SavedPlan] = []
+    for resolution in resolutions:
+        if resolution.status != "save":
+            continue
+        assert resolution.target is not None
+        plan = resolution.plan
+        body = plan.model_dump(mode="json")
         plan_id = await insert_plan(
             conn,
             user_id=user_id,
             name=plan.name,
-            is_default=not has_default,
+            is_default=resolution.is_default,
             status=_PLAN_STATUS_ACTIVE,
         )
-        has_default = True
         version_id = await insert_plan_version(
             conn,
             plan_id=plan_id,
@@ -730,6 +872,7 @@ async def _save_plans(
             origin=_ORIGIN_IMPORT,
             decision_id=decision_id,
         )
+        resolution.target.plan_version_id = version_id
         saved.append(
             SavedPlan(
                 name=plan.name,
@@ -738,11 +881,71 @@ async def _save_plans(
                 substitutions=tuple(_substitution_lines(plan)),
             )
         )
-    return saved, duplicates, rejected, fired
+    return saved
 
 
-def _canonical(body: Mapping[str, object]) -> str:
-    return json.dumps(body, sort_keys=True, separators=(",", ":"))
+def _plan_candidates(resolutions: Sequence[_PlanResolution]) -> list[_PlanLinkTarget]:
+    """Plans a session can link to this run — never a plan that was rejected: it links
+    nothing."""
+    return [
+        resolution.target
+        for resolution in resolutions
+        if resolution.status in ("save", "duplicate") and resolution.target is not None
+    ]
+
+
+@dataclass(frozen=True, slots=True)
+class _LinkDecision:
+    target: _PlanLinkTarget
+    workout_key: str
+
+
+def _resolve_session_link(
+    session: ImportedSession, candidates: Sequence[_PlanLinkTarget], plans_in_file: int
+) -> tuple[_LinkDecision | None, str | None]:
+    """`docs/import-format.md` "Linking imported trainings": an explicit `workout` (optionally
+    disambiguated by `plan`) first; otherwise inferred from the session's local weekday, only
+    when the file has exactly one plan and the weekday matches exactly one schedule entry.
+    Returns the link to apply (`None` when it stays unlinked) and a warning (only for an
+    *explicit* reference that didn't resolve — an unknown `workout`/`plan`, or an explicit
+    `workout` that needs `plan` to disambiguate; the inferred path never warns, it just
+    leaves the session unlinked, per the spec's "otherwise")."""
+    if session.workout_hint is not None:
+        target: _PlanLinkTarget | None
+        if session.plan_hint is not None:
+            target = next((c for c in candidates if c.name == session.plan_hint), None)
+            if target is None:
+                return None, (
+                    f"{session.ref}: plan {session.plan_hint!r} not found; "
+                    f"workout {session.workout_hint!r} not linked"
+                )
+        elif len(candidates) == 1:
+            target = candidates[0]
+        elif len(candidates) > 1:
+            return None, (
+                f"{session.ref}: workout {session.workout_hint!r} given but the file has "
+                'more than one plan; add plan = "..." to disambiguate; not linked'
+            )
+        else:
+            return None, (
+                f"{session.ref}: workout {session.workout_hint!r} given but no plan was "
+                "imported; not linked"
+            )
+        if session.workout_hint not in target.workout_keys:
+            return None, (
+                f"{session.ref}: workout {session.workout_hint!r} not found in plan "
+                f"{target.name!r}; not linked"
+            )
+        return _LinkDecision(target=target, workout_key=session.workout_hint), None
+    if plans_in_file == 1 and len(candidates) == 1:
+        target = candidates[0]
+        matches = [day.workout_key for day in target.schedule if day.weekday == session.weekday]
+        if len(matches) == 1:
+            return _LinkDecision(target=target, workout_key=matches[0]), None
+    return None, None
+
+
+# --- The run --------------------------------------------------------------------------------
 
 
 async def _run(
@@ -756,15 +959,26 @@ async def _run(
     source: str,
     dry_run: bool,
 ) -> ImportReport:
-    existing = await list_import_hashes(conn, user_id)
+    existing = await list_import_hash_sessions(conn, user_id)
     seen: set[str] = set()
     new_sessions: list[ImportedSession] = []
+    # Duplicates of an EXISTING (prior-run) session that is still unlinked: re-import
+    # candidates for linking (M12; a duplicate of another session earlier in *this* file has
+    # no row of its own — nothing to link).
+    reimport_candidates: list[tuple[ImportedSession, int]] = []
     duplicates = 0
     for session in parsed.sessions:
-        if session.content_hash in existing or session.content_hash in seen:
+        if session.content_hash in seen:
             duplicates += 1
             continue
         seen.add(session.content_hash)
+        existing_entry = existing.get(session.content_hash)
+        if existing_entry is not None:
+            duplicates += 1
+            existing_id, already_linked = existing_entry
+            if not already_linked:
+                reimport_candidates.append((session, existing_id))
+            continue
         new_sessions.append(session)
 
     per_implement_max: dict[str, float] = {}
@@ -782,7 +996,38 @@ async def _run(
         if last_logged is None or clock.format_timestamp(session.performed_at) > last_logged
     )
 
-    rejected = list(parsed.rejected)
+    written_sessions: list[tuple[ImportedSession, int]] = []
+    for session in new_sessions:
+        session_id = await _write_session(conn, user_id, session)
+        written_sessions.append((session, session_id))
+    session_ids = [session_id for _, session_id in written_sessions]
+
+    # Plans are judged after the sessions are written (the imported history is the
+    # reference), and before the decision, so its `user_report` can carry the final counts.
+    plan_judgement = await _judge_plans(
+        conn, user_id=user_id, settings=settings, catalog=catalog, plans=parsed.plans
+    )
+    rejected = [*parsed.rejected, *plan_judgement.rejected]
+    plans_duplicate = sum(
+        1 for resolution in plan_judgement.resolutions if resolution.status == "duplicate"
+    )
+
+    candidates = _plan_candidates(plan_judgement.resolutions)
+    plans_in_file = len(parsed.plans)
+    linkable = [*written_sessions, *reimport_candidates]
+    links: list[tuple[int, _PlanLinkTarget, str]] = []
+    link_warnings: list[str] = []
+    for session, session_id in linkable:
+        decision, warning = _resolve_session_link(session, candidates, plans_in_file)
+        if warning is not None:
+            link_warnings.append(warning)
+        if decision is not None:
+            links.append((session_id, decision.target, decision.workout_key))
+    linked_ids = {session_id for session_id, _, _ in links}
+    linked_new_ids = [sid for _, sid in written_sessions if sid in linked_ids]
+    unlinked_new_ids = [sid for _, sid in written_sessions if sid not in linked_ids]
+    linked_duplicate_ids = [sid for _, sid in reimport_candidates if sid in linked_ids]
+
     user_report: dict[str, object] = {
         "source": source,
         "file_sha256": file_sha256,
@@ -794,6 +1039,8 @@ async def _run(
             "new": len(new_sessions),
             "duplicate": duplicates,
             "rejected": sum(1 for item in parsed.rejected if item.ref.startswith("session")),
+            "linked": len(linked_new_ids) + len(linked_duplicate_ids),
+            "unlinked": len(unlinked_new_ids),
         },
         "plans": {
             "declared": len(parsed.plans)
@@ -801,6 +1048,7 @@ async def _run(
         },
         "unknown_exercises": list(parsed.unknown_exercises),
         "rejected": [item.as_dict() for item in parsed.rejected],
+        "link_warnings": list(link_warnings),
     }
     proposal: dict[str, object] = {
         "sessions": [
@@ -828,17 +1076,15 @@ async def _run(
         load_changes=[],  # A§4.3: an import is not a load increase
     )
 
-    session_ids = [await _write_session(conn, user_id, session) for session in new_sessions]
-
-    saved, plan_duplicates, plan_rejections, plan_fired = await _save_plans(
-        conn,
-        user_id=user_id,
-        settings=settings,
-        catalog=catalog,
-        plans=parsed.plans,
-        decision_id=decision_id,
+    saved = await _write_plans(
+        conn, user_id=user_id, decision_id=decision_id, resolutions=plan_judgement.resolutions
     )
-    rejected.extend(plan_rejections)
+
+    apply_links: list[tuple[int, int, str]] = []
+    for session_id, target, workout_key in links:
+        assert target.plan_version_id is not None  # `_write_plans` just filled every target in
+        apply_links.append((session_id, target.plan_version_id, workout_key))
+    await link_imported_sessions(conn, user_id=user_id, links=apply_links)
 
     outcome: dict[str, object] = {
         "session_ids": session_ids,
@@ -846,9 +1092,11 @@ async def _run(
             {"name": item.name, "plan_id": item.plan_id, "plan_version_id": item.plan_version_id}
             for item in saved
         ],
-        "plans_duplicate": plan_duplicates,
-        "plans_rejected": [item.as_dict() for item in plan_rejections],
-        "guards_fired": [verdict.model_dump() for verdict in plan_fired],
+        "plans_duplicate": plans_duplicate,
+        "plans_rejected": [item.as_dict() for item in plan_judgement.rejected],
+        "guards_fired": [verdict.model_dump() for verdict in plan_judgement.fired],
+        "linked_session_ids": sorted(linked_new_ids + linked_duplicate_ids),
+        "link_warnings": list(link_warnings),
     }
     await insert_decision_outcome(conn, decision_id=decision_id, outcome=outcome)
 
@@ -861,10 +1109,14 @@ async def _run(
         rejected=tuple(rejected),
         unknown_exercises=parsed.unknown_exercises,
         plans_saved=tuple(saved),
-        plans_duplicate=plan_duplicates,
+        plans_duplicate=plans_duplicate,
         session_ids=tuple(session_ids),
         per_implement_max=tuple(sorted(per_implement_max.items())),
         newer_than_last_logged=newer_than_last_logged,
+        sessions_linked=len(linked_new_ids) + len(linked_duplicate_ids),
+        sessions_unlinked=len(unlinked_new_ids),
+        link_warnings=tuple(link_warnings),
+        linked_session_ids=tuple(sorted(linked_new_ids + linked_duplicate_ids)),
         decision_id=None if dry_run else decision_id,
     )
 

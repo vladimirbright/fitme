@@ -35,6 +35,7 @@ from fitme.db.controllers.training import (
     insert_set_log,
     insert_workout_session,
 )
+from fitme.db.records import WorkoutSessionRecord
 from fitme.db.selectors.decisions import (
     applied_to_kg_by_exercise,
     list_decision_outcomes,
@@ -147,13 +148,36 @@ def toml_with(**sections: str) -> str:
     )
 
 
-def session_toml(day: str, *sets: tuple[str, float | None, int]) -> str:
+def session_toml(
+    day: str,
+    *sets: tuple[str, float | None, int],
+    workout: str | None = None,
+    plan: str | None = None,
+) -> str:
     lines = [f"[[session]]\ndate = {day}"]
+    if workout is not None:
+        lines.append(f'workout = "{workout}"')
+    if plan is not None:
+        lines.append(f'plan = "{plan}"')
     for exercise, kg, reps in sets:
         lines.append(f'[[session.set]]\nexercise = "{exercise}"\nreps = {reps}')
         if kg is not None:
             lines.append(f"kg = {kg:g}")
     return "\n".join(lines) + "\n"
+
+
+def single_workout_plan_toml(
+    name: str, weekday: int, *, workout_key: str = "A", squat_kg: float = 60.0
+) -> str:
+    """A minimal one-day, one-workout `[[plan]]`, for the plan-linking tests (M12): a single
+    schedule entry so inferred linking has exactly one weekday to match against."""
+    return (
+        f'[[plan]]\nname = "{name}"\n'
+        f'[[plan.schedule]]\nweekday = {weekday}\nworkout = "{workout_key}"\n'
+        f'[[plan.workout]]\nkey = "{workout_key}"\ntitle = "{workout_key}"\n'
+        '[[plan.workout.exercise]]\nexercise = "Squat"\nsets = 3\nreps = [5, 8]\n'
+        f"kg = {squat_kg:g}\n"
+    )
 
 
 def plan_toml(name: str, squat_kg: float, *, weekdays: tuple[int, ...] = (0, 3)) -> str:
@@ -198,6 +222,13 @@ async def test_sample_fixture_imports_cleanly(db: Database, user_id: int) -> Non
     assert report.unknown_exercises == ()
     assert [plan.name for plan in report.plans_saved] == ["Old two-day"]
     assert report.decision_id is not None
+    # The fixture's schedule is Mon=A, Thu=B (weekday 0/3), and its three sessions are dated
+    # Monday, Thursday, Monday: every weekday matches the schedule exactly once, so all three
+    # link by inference (M12, no `workout` key in the fixture).
+    assert report.sessions_linked == 3
+    assert report.sessions_unlinked == 0
+    assert report.link_warnings == ()
+    assert sorted(report.linked_session_ids) == sorted(report.session_ids)
 
     async with db.read() as conn:
         sessions = await list_workout_sessions_for_user(conn, user_id)
@@ -209,14 +240,33 @@ async def test_sample_fixture_imports_cleanly(db: Database, user_id: int) -> Non
         ]
         history_max = await historical_max_by_exercise(conn, user_id)
     assert len(sessions) == 3
+
+    # The only plan the import created is the file's own `[[plan]]`; there is no holder.
+    assert [plan.name for plan in plans] == ["Old two-day"]
+    imported_plan = plans[0]
+    assert imported_plan.status == "active" and imported_plan.is_default
+    async with db.read() as conn:
+        versions = await list_plan_versions(conn, imported_plan.id)
+    assert [version.origin for version in versions] == ["import"]
+    imported_version_id = versions[0].id
+    body = Plan.model_validate(versions[0].body)
+    assert [day.weekday for day in body.schedule] == [0, 3]
+    squat = body.workouts[0].blocks[0].items[0]
+    assert squat.exercise_id == _SQUAT and squat.load.kg == 75.0  # history exists: kept as kg
+
+    # Every session links to that one plan version, with the schedule's weekday-matched key.
+    workout_key_by_finished_at = {
+        "2026-08-03T10:00:00.000000Z": "A",  # Monday
+        "2026-08-06T10:00:00.000000Z": "B",  # Thursday
+        "2026-08-10T16:30:00.000000Z": "A",  # Monday, Berlin summer time
+    }
     for session in sessions:
         assert session.status == "completed"
         assert session.import_hash is not None
-        assert session.plan_version_id is None  # belongs to no plan: no holder plan exists
-        assert session.workout_key == IMPORT_WORKOUT_KEY
         assert session.started_at == session.finished_at
-    # Oldest first in the file; timestamps are the file's dates (noon Berlin -> 10:00Z).
-    by_time = sorted(session.finished_at or "" for session in sessions)
+        assert session.plan_version_id == imported_version_id
+        assert session.workout_key == workout_key_by_finished_at[session.finished_at]
+    by_time = sorted(workout_key_by_finished_at)
     assert by_time[0] == "2026-08-03T10:00:00.000000Z"
     assert by_time[2] == "2026-08-10T16:30:00.000000Z"  # the datetime, Berlin summer time
     assert len(rows) == 18
@@ -230,18 +280,6 @@ async def test_sample_fixture_imports_cleanly(db: Database, user_id: int) -> Non
     assert history_max["machine_leg_press"] == 120.0
     assert "pushup" not in history_max
 
-    # The only plan the import created is the file's own `[[plan]]`; there is no holder.
-    assert [plan.name for plan in plans] == ["Old two-day"]
-    imported_plan = plans[0]
-    assert imported_plan.status == "active" and imported_plan.is_default
-    async with db.read() as conn:
-        versions = await list_plan_versions(conn, imported_plan.id)
-    assert [version.origin for version in versions] == ["import"]
-    body = Plan.model_validate(versions[0].body)
-    assert [day.weekday for day in body.schedule] == [0, 3]
-    squat = body.workouts[0].blocks[0].items[0]
-    assert squat.exercise_id == _SQUAT and squat.load.kg == 75.0  # history exists: kept as kg
-
     kinds = [decision.kind for decision in decisions]
     assert kinds.count("history_import") == 1
     decision = next(item for item in decisions if item.kind == "history_import")
@@ -252,12 +290,17 @@ async def test_sample_fixture_imports_cleanly(db: Database, user_id: int) -> Non
         "new": 3,
         "duplicate": 0,
         "rejected": 0,
+        "linked": 3,
+        "unlinked": 0,
     }
+    assert decision.user_report["link_warnings"] == []
     assert decision.user_report["file_sha256"] == report.file_sha256
     assert "Squat" not in json.dumps(decision.user_report)  # no file text in the record
     assert len(outcomes) == 1
     assert "holder_plan_version_id" not in outcomes[0].outcome
     assert outcomes[0].outcome["session_ids"] == list(report.session_ids)
+    assert sorted(outcomes[0].outcome["linked_session_ids"]) == sorted(report.session_ids)
+    assert outcomes[0].outcome["link_warnings"] == []
 
 
 async def test_dry_run_writes_nothing(db: Database, user_id: int) -> None:
@@ -868,3 +911,265 @@ async def test_imported_sessions_never_trigger_a_decrease(db: Database, user_id:
         (False, False, 70.0),
         (False, False, 70.0),
     ]
+
+
+# --- Plan linking (M12, docs/import-format.md "Linking imported trainings") ------------------
+
+
+async def test_inferred_weekday_linking_with_one_plan(db: Database, user_id: int) -> None:
+    """No `workout` key: with exactly one plan and a weekday that matches its schedule
+    exactly once, the session links to that schedule entry's workout key."""
+    await seed_gym_profile(db, user_id, sessions_per_week=1)
+    text = toml_with(
+        p=single_workout_plan_toml("Two-day", 0),  # Monday -> "A"
+        s=session_toml("2026-08-03", ("Squat", 60, 5)),  # a Monday
+    )
+
+    report = await run_import(db, text)
+
+    assert report.sessions_linked == 1
+    assert report.sessions_unlinked == 0
+    assert report.link_warnings == ()
+    async with db.read() as conn:
+        sessions = await list_workout_sessions_for_user(conn, user_id)
+    assert sessions[0].plan_version_id == report.plans_saved[0].plan_version_id
+    assert sessions[0].workout_key == "A"
+
+
+async def test_explicit_workout_key_links_regardless_of_weekday(db: Database, user_id: int) -> None:
+    await seed_gym_profile(db, user_id, sessions_per_week=1)
+    text = toml_with(
+        p=single_workout_plan_toml("Two-day", 0),  # schedule only matches Monday
+        # 2026-08-05 is a Wednesday: inference alone would leave this unlinked.
+        s=session_toml("2026-08-05", ("Squat", 60, 5), workout="A"),
+    )
+
+    report = await run_import(db, text)
+
+    assert report.sessions_linked == 1
+    assert report.link_warnings == ()
+    async with db.read() as conn:
+        sessions = await list_workout_sessions_for_user(conn, user_id)
+    assert sessions[0].plan_version_id == report.plans_saved[0].plan_version_id
+    assert sessions[0].workout_key == "A"
+
+
+async def test_plan_disambiguates_an_explicit_workout_with_two_plans(
+    db: Database, user_id: int
+) -> None:
+    await seed_gym_profile(db, user_id, sessions_per_week=2)
+    text = toml_with(
+        p1=plan_toml("Plan One", 60.0),
+        p2=plan_toml("Plan Two", 60.0),
+        s=session_toml("2026-08-03", ("Squat", 60, 5), workout="A", plan="Plan Two"),
+    )
+
+    report = await run_import(db, text)
+
+    assert {plan.name for plan in report.plans_saved} == {"Plan One", "Plan Two"}
+    assert report.sessions_linked == 1
+    assert report.link_warnings == ()
+    plan_two_version_id = next(
+        plan.plan_version_id for plan in report.plans_saved if plan.name == "Plan Two"
+    )
+    async with db.read() as conn:
+        sessions = await list_workout_sessions_for_user(conn, user_id)
+    assert sessions[0].plan_version_id == plan_two_version_id
+    assert sessions[0].workout_key == "A"
+
+
+async def test_unknown_workout_key_is_unlinked_with_a_warning(db: Database, user_id: int) -> None:
+    await seed_gym_profile(db, user_id, sessions_per_week=1)
+    text = toml_with(
+        p=single_workout_plan_toml("Two-day", 0),
+        s=session_toml("2026-08-03", ("Squat", 60, 5), workout="Z"),
+    )
+
+    report = await run_import(db, text)
+
+    assert report.sessions_linked == 0
+    assert report.sessions_unlinked == 1
+    assert len(report.link_warnings) == 1
+    assert "workout 'Z' not found in plan 'Two-day'" in report.link_warnings[0]
+    async with db.read() as conn:
+        sessions = await list_workout_sessions_for_user(conn, user_id)
+    assert sessions[0].plan_version_id is None
+    assert sessions[0].workout_key == IMPORT_WORKOUT_KEY
+
+
+async def test_ambiguous_weekday_leaves_the_session_unlinked(db: Database, user_id: int) -> None:
+    """The same weekday twice in the schedule is ambiguous for inference: unlinked, and (per
+    the spec's "otherwise") no warning — unlike an explicit `workout` that doesn't resolve."""
+    await seed_gym_profile(db, user_id, sessions_per_week=2)
+    text = toml_with(
+        p=(
+            '[[plan]]\nname = "Ambiguous"\n'
+            '[[plan.schedule]]\nweekday = 0\nworkout = "A"\n'
+            '[[plan.schedule]]\nweekday = 0\nworkout = "A"\n'
+            '[[plan.workout]]\nkey = "A"\ntitle = "A"\n'
+            '[[plan.workout.exercise]]\nexercise = "Squat"\nsets = 3\nreps = [5, 8]\nkg = 60\n'
+        ),
+        s=session_toml("2026-08-03", ("Squat", 60, 5)),  # Monday
+    )
+
+    report = await run_import(db, text)
+
+    assert report.plans_saved != ()  # the plan itself is structurally fine
+    assert report.sessions_linked == 0
+    assert report.sessions_unlinked == 1
+    assert report.link_warnings == ()
+    async with db.read() as conn:
+        sessions = await list_workout_sessions_for_user(conn, user_id)
+    assert sessions[0].plan_version_id is None
+
+
+async def test_rejected_plan_links_nothing(db: Database, user_id: int) -> None:
+    await seed_gym_profile(db, user_id, sessions_per_week=2)
+    text = toml_with(
+        # Structurally bad: one schedule day for a 2-session-per-week profile.
+        p=plan_toml("One day only", 60.0, weekdays=(0,)),
+        s=session_toml("2026-08-03", ("Squat", 60, 5)),  # Monday: would infer-link if saved
+    )
+
+    report = await run_import(db, text)
+
+    assert report.plans_saved == ()
+    assert len(report.rejected) == 1
+    assert report.sessions_linked == 0
+    assert report.sessions_unlinked == 1
+    async with db.read() as conn:
+        sessions = await list_workout_sessions_for_user(conn, user_id)
+    assert sessions[0].plan_version_id is None
+    assert sessions[0].workout_key == IMPORT_WORKOUT_KEY
+
+
+async def test_reimport_links_previously_unlinked_and_preserves_already_linked(
+    db: Database, user_id: int
+) -> None:
+    await seed_gym_profile(db, user_id, sessions_per_week=2)
+    sessions_toml = session_toml("2026-08-03", ("Squat", 60, 5)) + session_toml(
+        "2026-08-05", ("Squat", 60, 5)
+    )  # a Monday and a Wednesday
+
+    first = await run_import(db, toml_with(s=sessions_toml))
+    assert first.sessions_new == 2
+    assert first.sessions_linked == 0
+    async with db.read() as conn:
+        sessions = await list_workout_sessions_for_user(conn, user_id)
+    assert all(session.plan_version_id is None for session in sessions)
+
+    plan_one = (
+        '[[plan]]\nname = "P1"\n'
+        '[[plan.schedule]]\nweekday = 0\nworkout = "X"\n'
+        '[[plan.schedule]]\nweekday = 2\nworkout = "Y"\n'
+        '[[plan.workout]]\nkey = "X"\ntitle = "X"\n'
+        '[[plan.workout.exercise]]\nexercise = "Squat"\nsets = 3\nreps = [5, 8]\nkg = 60\n'
+        '[[plan.workout]]\nkey = "Y"\ntitle = "Y"\n'
+        '[[plan.workout.exercise]]\nexercise = "Squat"\nsets = 3\nreps = [5, 8]\nkg = 60\n'
+    )
+    second = await run_import(db, toml_with(s=sessions_toml, p=plan_one))
+    assert second.sessions_new == 0
+    assert second.sessions_duplicate == 2
+    assert second.sessions_linked == 2  # both were unlinked, and now match the new plan
+    assert [plan.name for plan in second.plans_saved] == ["P1"]
+    p1_version_id = second.plans_saved[0].plan_version_id
+
+    async def _by_date(prefix: str) -> WorkoutSessionRecord:
+        async with db.read() as conn:
+            sessions = await list_workout_sessions_for_user(conn, user_id)
+        return next(s for s in sessions if (s.started_at or "").startswith(prefix))
+
+    monday = await _by_date("2026-08-03")
+    wednesday = await _by_date("2026-08-05")
+    assert monday.plan_version_id == p1_version_id and monday.workout_key == "X"
+    assert wednesday.plan_version_id == p1_version_id and wednesday.workout_key == "Y"
+
+    # A third, unrelated plan whose schedule also matches both weekdays must not move either
+    # session: they are already linked, so re-importing changes nothing about them.
+    plan_two = (
+        '[[plan]]\nname = "P2"\n'
+        '[[plan.schedule]]\nweekday = 0\nworkout = "Z"\n'
+        '[[plan.schedule]]\nweekday = 2\nworkout = "Z"\n'
+        '[[plan.workout]]\nkey = "Z"\ntitle = "Z"\n'
+        '[[plan.workout.exercise]]\nexercise = "Squat"\nsets = 3\nreps = [5, 8]\nkg = 60\n'
+    )
+    third = await run_import(db, toml_with(s=sessions_toml, p=plan_two))
+    assert third.sessions_new == 0
+    assert third.sessions_duplicate == 2
+    assert third.sessions_linked == 0
+
+    monday = await _by_date("2026-08-03")
+    wednesday = await _by_date("2026-08-05")
+    assert monday.plan_version_id == p1_version_id and monday.workout_key == "X"
+    assert wednesday.plan_version_id == p1_version_id and wednesday.workout_key == "Y"
+
+
+async def test_linked_sessions_appear_in_recent_trainings_and_drive_rotation(
+    db: Database, user_id: int
+) -> None:
+    """The service/selector the web plan-detail page uses (A§9.1) and the rotation selector
+    both see a linked imported session."""
+    from fitme.db.selectors.training import last_completed_workout_key_for_plan
+    from fitme.services.training import list_recent_sessions_for_plan
+
+    await seed_gym_profile(db, user_id, sessions_per_week=1)
+    session_date = (clock.now() - timedelta(days=1)).date()
+    text = toml_with(
+        p=single_workout_plan_toml("Current", session_date.weekday()),
+        s=session_toml(session_date.isoformat(), ("Squat", 60, 5)),
+    )
+
+    report = await run_import(db, text)
+
+    assert report.sessions_linked == 1
+    plan_id = report.plans_saved[0].plan_id
+    items = await list_recent_sessions_for_plan(db, user_id, plan_id)
+    assert [item.session.id for item in items] == list(report.linked_session_ids)
+
+    async with db.read() as conn:
+        key = await last_completed_workout_key_for_plan(conn, user_id, plan_id)
+    assert key == "A"
+
+
+async def test_linking_does_not_change_history_max_outcomes_or_increases(
+    db: Database, user_id: int
+) -> None:
+    await seed_gym_profile(db, user_id, sessions_per_week=1)
+    session_date = (clock.now() - timedelta(days=1)).date()
+    text = toml_with(
+        p=single_workout_plan_toml("Current", session_date.weekday()),
+        s=session_toml(session_date.isoformat(), ("Squat", 60, 5)),
+    )
+
+    report = await run_import(db, text)
+    assert report.sessions_linked == 1
+
+    async with db.read() as conn:
+        history_max = await historical_max_by_exercise(conn, user_id)
+        outcomes = await recent_session_outcomes(conn, user_id, _SQUAT)
+        increases = await recent_increase_deltas_by_exercise(conn, user_id, since=_EPOCH)
+        applied = await applied_to_kg_by_exercise(conn, user_id, since=_EPOCH)
+    assert history_max[_SQUAT] == 60.0
+    assert len(outcomes) == 1
+    assert outcomes[0].hit_reps_max is False  # imported: never a success
+    assert outcomes[0].below_reps_min is False  # imported: never a failure either
+    assert increases == {}
+    assert applied == {}
+
+
+async def test_linked_session_still_produces_no_recap_or_active_session(
+    db: Database, user_id: int
+) -> None:
+    await seed_gym_profile(db, user_id, sessions_per_week=1)
+    session_date = (clock.now() - timedelta(days=1)).date()
+    text = toml_with(
+        p=single_workout_plan_toml("Current", session_date.weekday()),
+        s=session_toml(session_date.isoformat(), ("Squat", 60, 5)),
+    )
+
+    report = await run_import(db, text)
+    assert report.sessions_linked == 1
+
+    assert await recap.pending_recap_session(db, user_id) is None
+    async with db.read() as conn:
+        assert await get_active_workout_session(conn, user_id) is None
