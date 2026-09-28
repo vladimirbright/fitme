@@ -1,17 +1,19 @@
-"""`/plan` (A§6.2, A§6.4): list plans with actions, generate a draft — or paste an existing
-program (M8b "Paste my plan") — show it with Confirm / Change something / Cancel, loop
-through revisions, and confirm.
+"""`/plan` (A§6.2, A§6.4): list plans with actions (view, set default, rename, revise),
+generate a draft — or paste an existing program (M8b "Paste my plan") — show it with
+Confirm / Change something / Cancel, loop through revisions, and confirm. All plans are equal
+(A§4.3): there is no archived state, and every plan offers every action.
 
 Everything that decides anything lives in `services.planning` (the bot and, in M9, the web
 share it). This module only routes buttons and text, renders through `bot.plan_rendering`
 and i18n, and keeps one piece of transient UI state: `pending_plan_revisions` (per user,
-which draft or plan a "what should change?" prompt is waiting on, or that a "paste your
-program" prompt is). It's in-memory dispatcher data like `pending_deletes` — a restart just
-forgets the prompt, and the user taps again.
+which draft or plan a "what should change?" prompt is waiting on, that a "paste your
+program" prompt is, or which plan a "new name?" prompt is for). It's in-memory dispatcher
+data like `pending_deletes` — a restart just forgets the prompt, and the user taps again.
 
-Free text for a pending revision or import arrives through `bot/handlers/free_text.py`, which
-saves it and runs the stop-word guard first (A§6.3); only then does `handle_plan_text` here
-call the service. A stop-word hit halts and drops the pending prompt.
+Free text for a pending revision, import or rename arrives through
+`bot/handlers/free_text.py`, which saves it and runs the stop-word guard first (A§6.3); only
+then does `handle_plan_text` here call the service. A stop-word hit halts and drops the
+pending prompt.
 
 Stale buttons (A§6.3): Confirm/Change/Cancel carry the draft's decision id, which must be the
 user's *current* draft (`services.planning.current_draft_id`); anything else gets a toast.
@@ -33,7 +35,7 @@ from fitme.bot.callback_data import PlanDraft, PlanMenu
 from fitme.catalog import load_catalog
 from fitme.config.settings import Settings
 from fitme.db.connection import Database
-from fitme.domain.models import Plan
+from fitme.domain.models import NAME_MAX_LENGTH, Plan
 from fitme.i18n import t
 from fitme.services import planning
 from fitme.services import profile as profile_service
@@ -50,7 +52,14 @@ class PendingImport:
     """M8b: the next free text is the program to paste."""
 
 
-PendingPlanText = PendingRevision | PendingImport
+@dataclass(frozen=True, slots=True)
+class PendingRename:
+    """The next free text is the new name for `plan_id` (`services.planning.rename_plan`)."""
+
+    plan_id: int
+
+
+PendingPlanText = PendingRevision | PendingImport | PendingRename
 PendingRevisions = dict[int, PendingPlanText]
 
 
@@ -175,7 +184,6 @@ async def on_plan_menu(
             lang,
             name=detail.record.name,
             version=detail.version.version,
-            status=rendering.plan_status_text(detail.record, lang),
             default=default,
         )
         await _send_plan(
@@ -193,12 +201,13 @@ async def on_plan_menu(
             await query.answer(t("plan.default_not_set", lang), show_alert=True)
         await _show_list(message, db, user_id, lang)
         return
-    if action == "archive":
-        if await planning.archive(db, user_id, detail.record.id):
-            await query.answer(t("plan.archived", lang, name=detail.record.name))
-        else:
-            await query.answer(t("plan.archive_failed", lang), show_alert=True)
-        await _show_list(message, db, user_id, lang)
+    if action == "rename":
+        await query.answer()
+        pending_plan_revisions[user_id] = PendingRename(plan_id=detail.record.id)
+        await message.answer(
+            t("plan.rename_prompt", lang, name=detail.record.name),
+            reply_markup=rendering.cancel_revision_markup(0, lang),
+        )
         return
     if action == "revise":
         await query.answer()
@@ -231,6 +240,9 @@ async def on_plan_draft(
         pending = pending_plan_revisions.pop(user_id, None)
         if isinstance(pending, PendingImport):
             await message.answer(t("plan.paste_cancelled", lang))
+            return
+        if isinstance(pending, PendingRename):
+            await message.answer(t("plan.rename_cancelled", lang))
             return
         current = await planning.current_draft_id(db, user_id)
         if pending is not None or (decision_id and current == decision_id):
@@ -302,11 +314,14 @@ async def handle_plan_text(
     pending_plan_revisions: PendingRevisions,
 ) -> bool:
     """Called by the free-text handler *after* the stop-word scan (A§6.3). Returns `True`
-    if a revision or an import (M8b) was pending and the text was consumed by it."""
+    if a revision, an import (M8b) or a rename was pending and the text was consumed by it."""
     pending = pending_plan_revisions.pop(user_id, None)
     if pending is None:
         return False
     lang = await _lang(db, user_id)
+    if isinstance(pending, PendingRename):
+        await _rename(message, db, user_id, pending.plan_id, text, lang)
+        return True
     if isinstance(pending, PendingImport):
         await message.answer(t("plan.importing", lang))
         result = await planning.import_plan(db, llm, user_id, text)
@@ -323,6 +338,23 @@ async def handle_plan_text(
         return True
     await _show_round(message, result, lang)
     return True
+
+
+async def _rename(
+    message: Message, db: Database, user_id: int, plan_id: int, text: str, lang: str
+) -> None:
+    result = await planning.rename_plan(db, user_id, plan_id, text)
+    status = result.status
+    if status == planning.RenameStatus.OK:
+        await message.answer(t("plan.renamed", lang, name=result.name))
+    elif status == planning.RenameStatus.EMPTY:
+        await message.answer(t("plan.rename_empty", lang))
+    elif status == planning.RenameStatus.TOO_LONG:
+        await message.answer(t("plan.rename_too_long", lang, max=NAME_MAX_LENGTH))
+    elif status == planning.RenameStatus.FORBIDDEN:
+        await message.answer(t("plan.rename_forbidden", lang, term=result.term))
+    else:  # NOT_FOUND
+        await message.answer(t("plan.not_found", lang))
 
 
 def build_router() -> Router:

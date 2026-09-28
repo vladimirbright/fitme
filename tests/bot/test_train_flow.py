@@ -475,6 +475,38 @@ async def test_several_plans_without_a_default_are_offered_as_buttons(
     assert "Two" in _last_text(session)
 
 
+async def test_every_plan_can_be_trained_from_default_first(
+    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database
+) -> None:
+    """A§4.3 "all plans are equal": with a default plan, `/train` suggests its workout and
+    offers "Another plan", which lists every plan (the default first); any of them can be
+    picked and trained from."""
+    user_id = await _activate(dispatcher, bot, db)
+    await _seed_profile(db, user_id)
+    older, _ = await _seed_plan(db, user_id, make_plan("Older"), is_default=False)
+    default, _ = await _seed_plan(db, user_id, make_plan("Home plan"), is_default=True)
+    await _send(dispatcher, bot, "/train")
+    assert "Home plan" in _last_text(session)
+    datas = _callback_datas(_sent(session)[-1])
+    assert TrainPick(kind="plans", plan_id=0).pack() in datas
+
+    await _click(dispatcher, bot, TrainPick(kind="plans", plan_id=0))
+    assert _last_text(session) == t("train.choose_plan", "en")
+    datas = _callback_datas(_sent(session)[-1])
+    assert datas == [
+        TrainPick(kind="plan", plan_id=default).pack(),
+        TrainPick(kind="plan", plan_id=older).pack(),
+    ]
+
+    await _click(dispatcher, bot, TrainPick(kind="plan", plan_id=older))
+    assert "Older" in _last_text(session)
+    await _click(dispatcher, bot, _last_pick(session, "workout"))
+    assert _last_text(session) == t("precheck.question", "en")
+    async with db.read() as conn:
+        sessions = await list_workout_sessions_for_user(conn, user_id)
+    assert len(sessions) == 1 and sessions[0].status == "draft"
+
+
 # --- Precheck -----------------------------------------------------------------------------
 
 

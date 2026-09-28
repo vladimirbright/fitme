@@ -1,0 +1,52 @@
+{# One plan body, rendered the same way on the plan detail, draft and revise pages: the
+   schedule with weekday names, then every workout with its exercises, sets × reps, the
+   explicit load (kg — "each" for a two-implement exercise —, bodyweight, or calibration
+   with the pasted plan's declared hint) and notes. `exercise_names` and `load_units` come
+   from the render context (`web.deps.render`). #}
+{% macro load_text(item) %}
+  {%- if item.load.kind == 'kg' -%}
+    {%- if load_units.get(item.exercise_id) == 'per_implement' -%}
+      {{ t('load.per_implement', kg=item.load.kg) }}
+    {%- else -%}
+      {{ t('plan.load_kg', kg=item.load.kg) }}
+    {%- endif -%}
+  {%- elif item.load.kind == 'bodyweight' -%}
+    {{ t('plan.load_bodyweight') }}
+  {%- elif item.declared_kg is not none -%}
+    {%- if load_units.get(item.exercise_id) == 'per_implement' -%}
+      {{ t('plan.load_calibration_declared', declared=t('load.per_implement', kg=item.declared_kg)) }}
+    {%- else -%}
+      {{ t('plan.load_calibration_declared', declared=t('plan.load_kg', kg=item.declared_kg)) }}
+    {%- endif -%}
+  {%- else -%}
+    {{ t('plan.load_calibration') }}
+  {%- endif -%}
+{% endmacro %}
+
+{% macro plan_body(plan) %}
+<section class="plan-body">
+  <h3>{{ t('plan.schedule_title') }}</h3>
+  <ul class="schedule">
+    {% for day in plan.schedule %}
+    <li>{{ t('weekday.' ~ day.weekday) }}: {{ day.workout_key }}</li>
+    {% endfor %}
+  </ul>
+
+  {% for workout in plan.workouts %}
+  <h3>{{ t('plan.workout_title', workout_key=workout.key, title=workout.title) }}</h3>
+  {% for block in workout.blocks %}
+  {% if block.kind == 'superset' %}<p class="superset">{{ t('plan.superset_label') }}</p>{% endif %}
+  <ul class="prescriptions">
+    {% for item in block.items %}
+    <li>
+      {{ exercise_names.get(item.exercise_id, item.exercise_id) }}:
+      {{ t('plan.sets_reps', sets=item.sets, reps_min=item.reps_min, reps_max=item.reps_max) }}
+      @ {{ load_text(item) }}
+      {% if item.note %}&mdash; {{ item.note }}{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% endfor %}
+  {% endfor %}
+</section>
+{% endmacro %}

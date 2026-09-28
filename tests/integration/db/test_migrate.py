@@ -25,6 +25,7 @@ async def test_migrate_applies_on_an_empty_file(tmp_path: Path) -> None:
             "0004_login_codes_created_at.sql",
             "0005_autoincrement_ids.sql",
             "0006_history_import.sql",
+            "0007_plans_equal.sql",
         ]
 
         async with (

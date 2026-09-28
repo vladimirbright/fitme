@@ -1,5 +1,7 @@
 {% extends "base.html" %}
+{% from "_breadcrumbs.html" import crumbs with context %}
 {% block title %}{{ t('web.trainings.list_title') }}{% endblock %}
+{% block breadcrumbs %}{{ crumbs([(t('web.nav.trainings'), none)]) }}{% endblock %}
 {% block content %}
 <h1>{{ t('web.trainings.list_title') }}</h1>
 
@@ -12,23 +14,23 @@
   <table>
     <thead>
       <tr>
-        <th></th>
         <th>{{ t('web.trainings.col_date') }}</th>
         <th>{{ t('web.trainings.col_workout') }}</th>
         <th>{{ t('web.trainings.col_status') }}</th>
         <th>{{ t('web.trainings.col_sets') }}</th>
         <th>{{ t('web.trainings.col_volume') }}</th>
+        <th></th>
       </tr>
     </thead>
     <tbody>
       {% for item in result.items %}
       <tr>
-        <td><input type="checkbox" name="ids" value="{{ item.session.id }}"></td>
         <td><a href="/app/trainings/{{ item.session.id }}">{{ item.session.started_at|local_dt(timezone) }}</a></td>
         <td>{{ item.session.workout_key }}{% if item.session.import_hash %} <small>({{ t('web.trainings.imported') }})</small>{% endif %}</td>
         <td>{{ t('web.trainings.status_' + item.session.status) }}</td>
         <td>{{ item.sets_done }}/{{ item.sets_planned }}</td>
         <td>{{ t('web.kg_value', value=item.volume_kg|round(1)) }}</td>
+        <td><input type="checkbox" name="ids" value="{{ item.session.id }}" aria-label="{{ t('web.trainings.delete_selected') }}"></td>
       </tr>
       {% endfor %}
     </tbody>

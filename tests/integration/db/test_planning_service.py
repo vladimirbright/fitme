@@ -925,43 +925,82 @@ async def _two_saved_plans(db: Database, user_id: int) -> tuple[int, int]:
     return saved_first.plan_id, saved_second.plan_id
 
 
-async def test_set_default_and_archive_semantics(db: Database, user_id: int) -> None:
+async def test_any_plan_can_be_set_as_default(db: Database, user_id: int) -> None:
+    """A§4.3 "all plans are equal": there is no archived state, and every plan of the
+    user's can become the default; a foreign/unknown plan can't."""
     await seed_profile(db, user_id)
     one, two = await _two_saved_plans(db, user_id)
 
     plans = {p.id: p for p in await planning.list_plans(db, user_id)}
     assert plans[one].is_default and not plans[two].is_default  # the first stays default
+    assert all(p.status == "active" for p in plans.values())
 
     assert await planning.set_default(db, user_id, two)
     plans = {p.id: p for p in await planning.list_plans(db, user_id)}
     assert plans[two].is_default and not plans[one].is_default
 
-    # Archiving the default hands the default to the other active plan.
-    assert await planning.archive(db, user_id, two)
+    assert await planning.set_default(db, user_id, one)
     plans = {p.id: p for p in await planning.list_plans(db, user_id)}
-    assert plans[two].status == "archived" and not plans[two].is_default
-    assert plans[one].is_default and plans[one].status == "active"
+    assert plans[one].is_default and not plans[two].is_default
 
-    # An archived plan can't become the default, and can't be archived twice.
-    assert not await planning.set_default(db, user_id, two)
-    assert not await planning.archive(db, user_id, two)
-
-    # Archiving the last active default leaves no default at all.
-    assert await planning.archive(db, user_id, one)
-    assert all(not p.is_default for p in await planning.list_plans(db, user_id))
-
-    # A new plan confirmed afterwards becomes the default again.
+    # A new plan confirmed while a default exists doesn't take the default over.
     draft = await planning.propose_new_plan(
         db, FakeLlm([make_plan(name="Three")]).runtime(), user_id
     )
     saved = await planning.confirm_plan(db, _settings(), user_id, draft.decision_id)
-    assert saved.is_default
+    assert not saved.is_default
 
+    assert not hasattr(planning, "archive")
     assert await planning.get_plan_detail(db, user_id, 999) is None
     detail = await planning.get_plan_detail(db, user_id, one)
     assert detail is not None and detail.plan.name == "One" and detail.version.version == 1
     assert not await planning.set_default(db, user_id, 999)
-    assert not await planning.archive(db, user_id, 999)
+
+
+async def test_rename_plan_validates_and_logs_a_minimal_user_edit(
+    db: Database, user_id: int
+) -> None:
+    """`rename_plan`: trim, 1–60 characters, the AGENTS.md §3 wording check and ownership,
+    in one place for the bot and the website. A saved rename is a `user_edit` decision that
+    names the action and the plan, never the names."""
+    await seed_profile(db, user_id)
+    one, two = await _two_saved_plans(db, user_id)
+    before = len(await decisions(db, user_id))
+
+    result = await planning.rename_plan(db, user_id, one, "  Upper / lower  ")
+    assert result.status == planning.RenameStatus.OK and result.name == "Upper / lower"
+    plans = {p.id: p for p in await planning.list_plans(db, user_id)}
+    assert plans[one].name == "Upper / lower" and plans[two].name == "Two"
+    logged = [d for d in await decisions(db, user_id) if d.kind == "user_edit"]
+    assert len(logged) == 1 and len(await decisions(db, user_id)) == before + 1
+    assert logged[0].user_report == {"action": "rename", "plan_id": one}
+    assert logged[0].load_changes == [] and logged[0].proposal is None
+    assert "Upper" not in json.dumps(logged[0].user_report)
+
+    assert (await planning.rename_plan(db, user_id, one, "   ")).status == (
+        planning.RenameStatus.EMPTY
+    )
+    assert (await planning.rename_plan(db, user_id, one, "x" * 61)).status == (
+        planning.RenameStatus.TOO_LONG
+    )
+    assert (await planning.rename_plan(db, user_id, one, "x" * 60)).status == (
+        planning.RenameStatus.OK
+    )
+    forbidden = await planning.rename_plan(db, user_id, one, "My personal trainer plan")
+    assert forbidden.status == planning.RenameStatus.FORBIDDEN and forbidden.term == "trainer"
+    assert (await planning.rename_plan(db, user_id, one, "Похудение")).status == (
+        planning.RenameStatus.FORBIDDEN
+    )
+    assert (await planning.rename_plan(db, user_id, 999, "Nope")).status == (
+        planning.RenameStatus.NOT_FOUND
+    )
+    assert (await planning.rename_plan(db, user_id + 1, one, "Nope")).status == (
+        planning.RenameStatus.NOT_FOUND
+    )
+    plans = {p.id: p for p in await planning.list_plans(db, user_id)}
+    assert plans[one].name == "x" * 60  # nothing rejected was saved
+    # Only the two successful renames were logged.
+    assert len([d for d in await decisions(db, user_id) if d.kind == "user_edit"]) == 2
 
 
 # --- Output-validation retry (bug fix, M8b) --------------------------------------------------

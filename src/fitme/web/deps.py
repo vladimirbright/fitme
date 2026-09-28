@@ -18,6 +18,7 @@ from fitme import i18n
 from fitme.catalog import load_catalog
 from fitme.config.settings import Settings
 from fitme.db.connection import Database
+from fitme.domain.models import NAME_MAX_LENGTH
 from fitme.services import webauth
 from fitme.services.llm_runtime import LlmRuntime
 from fitme.services.webauth import SendCode, SessionState
@@ -145,6 +146,12 @@ def render(
         "lang": lang,
         "source_url": settings.source_url,
         "csrf_token": csrf,
+        "session": session,  # `base.html` shows the top bar and the sidebar only when set
+        # Read by the shared `_plan_body.html` partial (plan detail, draft and revise pages)
+        # and the plan rename form; a route may still pass its own values.
+        "exercise_names": exercise_display_names(lang),
+        "load_units": exercise_load_units(),
+        "name_max_length": NAME_MAX_LENGTH,
         **context,
     }
     return templates.TemplateResponse(request, name, ctx, status_code=status_code)
@@ -158,6 +165,12 @@ def exercise_display_names(lang: str) -> dict[str, str]:
         exercise.id: exercise.names.get(lang, exercise.names.get("en", exercise.id))
         for exercise in catalog.exercise
     }
+
+
+def exercise_load_units() -> dict[str, str]:
+    """`{exercise_id: load_unit}` for the whole catalog (A§4.4): the plan body partial says
+    "kg each" for a `per_implement` exercise, like the bot's `plan_rendering.load_label`."""
+    return {exercise.id: exercise.load_unit for exercise in load_catalog().exercise}
 
 
 def safe_next(candidate: str | None, *, default: str = "/app/plans") -> str:
@@ -182,6 +195,7 @@ __all__ = [
     "NotAuthenticated",
     "client_ip",
     "exercise_display_names",
+    "exercise_load_units",
     "get_db",
     "get_llm",
     "get_send_code",

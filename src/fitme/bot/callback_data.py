@@ -46,8 +46,8 @@ class DeleteConfirm(CallbackData, prefix="dc"):
 
 
 class PlanMenu(CallbackData, prefix="pm"):
-    """`/plan` list actions (A§6.2): `new`, `list`, or `view`/`default`/`revise`/`archive`
-    for one plan (`plan_id` is 0 for the plan-independent actions)."""
+    """`/plan` list actions (A§6.2): `new`, `paste`, `list`, or `view`/`default`/`rename`/
+    `revise` for one plan (`plan_id` is 0 for the plan-independent actions)."""
 
     action: str
     plan_id: int
@@ -62,8 +62,9 @@ class PlanDraft(CallbackData, prefix="pd"):
 
 
 class TrainPick(CallbackData, prefix="tp"):
-    """`/train` before a session exists (A§6.5 steps 1-2): `plan` (pick a plan), `workouts`
-    (list a plan's workouts, "Pick another") or `workout` (start the precheck for `key`)."""
+    """`/train` before a session exists (A§6.5 steps 1-2): `plans` (list every plan, "Another
+    plan"), `plan` (pick a plan), `workouts` (list a plan's workouts, "Pick another") or
+    `workout` (start the precheck for `key`)."""
 
     kind: str
     plan_id: int

@@ -87,7 +87,7 @@ async def delete_confirm(
     form = await request.form()
     ids = _parse_ids([str(v) for v in form.getlist("ids")])
     raw_next = form.get("next")
-    next_url = safe_next(raw_next if isinstance(raw_next, str) else None)
+    next_url = safe_next(raw_next if isinstance(raw_next, str) else None, default="/app/trainings")
     snapshot = await profile_service.get_snapshot(db, session.user_id)
 
     sessions = []
@@ -117,7 +117,7 @@ async def delete_trainings(
     form = await request.form()
     ids = _parse_ids([str(v) for v in form.getlist("ids")])
     raw_next = form.get("next")
-    next_url = safe_next(raw_next if isinstance(raw_next, str) else None)
+    next_url = safe_next(raw_next if isinstance(raw_next, str) else None, default="/app/trainings")
     result = await training.delete_sessions(db, session.user_id, ids)
     separator = "&" if "?" in next_url else "?"
     if result.status != training.DeleteSessionsStatus.OK:

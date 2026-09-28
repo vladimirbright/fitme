@@ -171,7 +171,7 @@ plaintext.
 | `screening_flags` | `user_id`, `flag` (enum), `value` (`yes`/`no`/`unknown`), `clearance` (`yes`/`no`/null), `answered_at` | One row per flag. **These gate exercise selection.** |
 | `screening_notes` | `user_id`, `text`, `created_at` | Optional free text for "other". **Never sent to the LLM.** Shown back to the user only. |
 | `health_holds` | `id`, `user_id`, `reason` (enum: `stop_word`, `checkin_pain`, `llm_safety_signal`, `precheck_yes`, `pain_button`), `source_session_id` (nullable, `ON DELETE SET NULL`), `created_at`, `cleared_at` | An open hold blocks `/plan` and `/train` until cleared (§6.6). |
-| `workout_sessions` | `id`, `user_id`, `plan_version_id`, `workout_key`, `import_hash` (nullable, unique per user; migration 0006), `status` (`draft`,`confirmed`,`in_progress`,`completed`,`aborted`,`halted`), `current_block`, `started_at`, `finished_at`, `halt_reason` | Performed trainings. |
+| `workout_sessions` | `id`, `user_id`, `plan_version_id` (nullable since migration 0007: imported sessions belong to no plan), `workout_key`, `import_hash` (nullable, unique per user; migration 0006), `status` (`draft`,`confirmed`,`in_progress`,`completed`,`aborted`,`halted`), `current_block`, `started_at`, `finished_at`, `halt_reason` | Performed trainings. |
 | `set_logs` | `id`, `session_id`, `exercise_id`, `set_index`, `planned_load_kg`, `planned_reps_min`, `planned_reps_max`, `actual_load_kg`, `actual_reps` (nullable), `skipped` (0/1), `rpe` (nullable), `source` (`button`,`free_text`,`web`,`import`), `created_at` | **Source of truth for history and historical max.** One row per **prescribed** set, created when the block is sent. A set not performed is `skipped=1` with `actual_*` NULL, so missing sets are visible. |
 | `checkins` | `id`, `user_id`, `session_id` (nullable, `ON DELETE SET NULL`), `question_key` (e.g. `area:lower_back`), `answer` (`fine`,`worse`,`pain`,`unknown`), `asked_at`, `answered_at` | Rows are created as `unknown` and updated only by an explicit answer. |
 | `chat_messages` | `id`, `user_id`, `session_id` nullable, `direction`, `text`, `created_at` | Raw text. **Deleted after `FITME_CHAT_RETENTION_DAYS`.** |
@@ -215,7 +215,7 @@ never accept free-form strings from callers.
 
 | Table | Columns | Notes |
 |---|---|---|
-| `plans` | `id`, `user_id`, `name`, `is_default`, `status` (`draft`,`active`,`archived`), `created_at` | At most one `is_default` per user. |
+| `plans` | `id`, `user_id`, `name`, `is_default`, `status`, `created_at` | At most one `is_default` per user. **All plans are equal** (operator decision, 2026-09-28). There is no archived state: every plan can be viewed, edited and revised, trained from at any time, and marked as default, in the bot and on the website. The `status` column keeps its old CHECK for schema compatibility, but only `active` is written, and migration 0007 turns any `archived` row into `active`. |
 | `plan_versions` | `id`, `plan_id`, `version`, `body` (JSON, `domain.Plan`), `origin` (`llm`,`progression`,`user_edit`,`import`), `decision_id`, `created_at` | **Immutable.** Every change creates a new version. |
 | `decisions` | `id`, `user_id`, `kind`, `prompt_template`, `prompt_version`, `model`, `content_version` (§4.8), `llm_input` (JSON, pseudonymized, exactly as sent), `user_report` (JSON), `proposal` (JSON), `load_changes` (JSON array of `domain.LoadChange {exercise_id, from_kg, to_kg}`, default `[]`), `guards_fired` (JSON list of `{rule, verdict, detail}`), `created_at` | **Append-only.** AGENTS.md §6. |
 | `decision_outcomes` | `id`, `decision_id`, `outcome` (JSON: what the user actually did), `created_at` | Append-only. Lets the log stay immutable when the outcome arrives later. |
@@ -511,7 +511,7 @@ screening answer re-runs the screening gate.
 | `/start` | Unbound: private-instance message. Bound without a profile: intro + setup (§5). Bound with a profile: short intro + main menu buttons (Plan, Train, Stats). The intro says: training plan generator and log, plans are AI-generated, not medical advice, how to reach the website. |
 | `/help` | Command list + disclosure line. |
 | `/profile` | Show and edit setup answers. |
-| `/plan` | Create or revise a plan (§6.4). With existing plans: list them with actions (view, set default, revise, archive) and **New plan**. |
+| `/plan` | Create or revise a plan (§6.4). With existing plans: list them with actions (view, set default, rename, revise) and **New plan**. |
 | `/train`, `/t` | Start today's workout (§6.5). |
 | `/stats` | Short stats (§6.7). |
 | `/system` | Instance stats: DB size, sessions logged, LLM calls and tokens (today / 7 days / 30 days / all time), estimated cost if a price table is set. |
@@ -792,8 +792,9 @@ double progression:
   load equals the logged load. They **never count as a success** for progression, so the
   first app session after an import holds at the imported load. They set the history max
   and the current load, write no
-  `load_changes`, never trigger a recap, and attach to one archived "Imported history"
-  plan. See `docs/import-format.md`.
+  `load_changes`, never trigger a recap, and belong to no plan
+  (`plan_version_id` NULL). There is no holder plan; migration 0007 removes any created by
+  earlier imports. See `docs/import-format.md`.
 - Every decision that applies a load records it in `decisions.load_changes`.
 - Otherwise → hold.
 
@@ -947,7 +948,7 @@ data).
 | `POST /auth/verify` | Checks the code (5-minute TTL, 5 attempts, then invalid). Creates `web_sessions` and sets the cookie. |
 | `POST /auth/logout` | Deletes the session row and clears the cookie. |
 | `GET /app` | Redirects to `/app/plans`. |
-| `GET /app/plans` | Plan list with default marker, status, **Generate new**. |
+| `GET /app/plans` | Plan list with default marker, **Generate new**. Every plan can be viewed, edited, revised, renamed, trained from, and set as default. |
 | `GET /app/plans/{id}` | Plan detail with version history (a diff between versions is nice-to-have), plus **recent trainings on this plan**: sessions from the last 14 days (in the user's timezone), newest first. Each row shows date, workout key and title, status, sets done/planned, volume, a link to `/app/trainings/{id}` and a delete action (§9.4). The empty state is "No trainings in the last 2 weeks". Selector: `selectors.training.recent_sessions_for_plan(conn, user_id, plan_id, since)`, which joins through `plan_versions`, so sessions on any version of the plan are included. |
 | `GET/POST /app/plans/{id}/edit` | Structured form editing (sets, reps, loads, swap exercise from the allowed catalog list). Every value is validated by the domain models; invalid input shows a form error and nothing is saved. Two kinds of failure **block the save and cannot be overridden**: a check-in gate failure (an unknown, worse or pain answer on a flagged area) and a load on a non-kg-loadable exercise. So do non-finite loads and loads over the plausibility bounds. Loads above the weekly cap or the ceiling show a warning and need an explicit confirm checkbox; the edit is saved as `origin=user_edit` and logged. The system itself never progresses past the caps. |
 | `GET/POST /app/plans/new`, `/app/plans/{id}/revise` | Same `services.planning` flow as the bot: a textarea request → proposal → Confirm / Revise. |
@@ -959,6 +960,18 @@ data).
 | `GET /app/account` | Export (download JSON), delete (typed confirmation), active sessions list with revoke. |
 
 A shared footer shows: "Plans are generated by AI. This is not medical advice."
+
+**Layout.** Every authenticated page has:
+- a left sidebar with the main sections (Plans, Trainings), the active one marked with
+  `aria-current`;
+- a top bar with Stats, Account and Logout;
+- breadcrumbs on every page (e.g. Plans › {plan} › Edit) and a "← Back" link on detail,
+  edit, revise, draft and confirm pages;
+- a footer aligned with the main content column.
+
+On a phone the sidebar becomes a tab row above the content. The plan detail page has a
+rename form. The revise ("edit with AI") page shows the current plan under its form, using
+the same plan partial as the detail and draft pages.
 
 ### 9.2 Session & security
 

@@ -1,11 +1,19 @@
 {% extends "base.html" %}
+{% from "_breadcrumbs.html" import crumbs with context %}
+{% from "_plan_body.html" import plan_body with context %}
 {% block title %}{{ t('web.plans.revise_title') }}{% endblock %}
+{% block breadcrumbs %}{{ crumbs([(t('web.nav.plans'), '/app/plans'), (detail.record.name, '/app/plans/' ~ detail.record.id), (t('web.plans.revise_crumb'), none)]) }}{% endblock %}
 {% block content %}
-<h1>{{ t('web.plans.revise_title', name=plan_name) }}</h1>
-<form method="post" action="/app/plans/{{ plan_id }}/revise">
+<p><a class="back" href="/app/plans/{{ detail.record.id }}">&larr; {{ t('web.back') }}</a></p>
+<h1>{{ t('web.plans.revise_title', name=detail.record.name) }}</h1>
+<p class="disclosure">{{ t('disclosure.ai') }}</p>
+<form method="post" action="/app/plans/{{ detail.record.id }}/revise">
   <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
   <label for="request_text">{{ t('web.plans.revise_prompt') }}</label>
   <textarea id="request_text" name="request_text" rows="4" required></textarea>
   <button type="submit">{{ t('web.plans.revise_submit') }}</button>
 </form>
+
+<h2>{{ t('web.plans.version_label', version=detail.version.version) }}</h2>
+{{ plan_body(detail.plan) }}
 {% endblock %}

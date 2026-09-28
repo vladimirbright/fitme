@@ -25,11 +25,9 @@ and not written. The whole run is one `db.transaction()` (all or nothing); `--dr
 the very same code and rolls the transaction back at the end, so the report it prints is
 exactly what a real run would do, and nothing is written.
 
-Imported sessions attach to one archived "Imported history" plan (`plan_versions.origin =
-'import'`, one empty workout with `key = "import"`), because `workout_sessions.
-plan_version_id` is NOT NULL and imported trainings did not come from a stored plan. It is
-created on the first import and found again through the `history_import` decision outcome
-that names it (`selectors.plans.get_history_import_holder_version`). Such sessions have no
+Imported sessions belong to no plan (`workout_sessions.plan_version_id` NULL, migration
+0007; `workout_key = "import"`): imported trainings did not come from a stored plan, and
+"all plans are equal" (A§4.3) leaves no room for a hidden holder plan. Such sessions have no
 `start` decision, so `services.recap.pending_recap_session` never shows a recap for them,
 and being `completed` they are never the session `/train` resumes.
 
@@ -54,7 +52,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import ValidationError
 
-from fitme import clock, i18n
+from fitme import clock
 from fitme.catalog import load_catalog
 from fitme.config.content import content_version
 from fitme.config.settings import Settings
@@ -62,11 +60,7 @@ from fitme.db.connection import Connection, Database
 from fitme.db.controllers.decisions import insert_decision, insert_decision_outcome
 from fitme.db.controllers.plans import insert_plan, insert_plan_version
 from fitme.db.controllers.training import insert_imported_workout_session, insert_set_log
-from fitme.db.selectors.plans import (
-    get_history_import_holder_version,
-    list_plan_version_bodies,
-    list_plans_for_user,
-)
+from fitme.db.selectors.plans import list_plan_version_bodies, list_plans_for_user
 from fitme.db.selectors.training import last_app_logged_completed_at, list_import_hashes
 from fitme.db.selectors.users import get_the_user
 from fitme.domain.catalog import Catalog, Exercise
@@ -87,10 +81,9 @@ from fitme.services import planning
 
 FORMAT_VERSION = 1
 SOURCE_IMPORT = "import"  # `set_logs.source`
-HOLDER_WORKOUT_KEY = "import"  # the one workout of the "Imported history" plan
+IMPORT_WORKOUT_KEY = "import"  # `workout_sessions.workout_key` of an imported session
 _ORIGIN_IMPORT = "import"
 _PLAN_STATUS_ACTIVE = "active"
-_PLAN_STATUS_ARCHIVED = "archived"
 _DEFAULT_REST_SECONDS = 90
 _MAX_REPS = 200
 _MAX_SET_INDEX = 100
@@ -608,49 +601,11 @@ class _DryRunRollback(Exception):
         self.report = report
 
 
-def _holder_plan(lang: str) -> Plan:
-    return Plan(
-        name=i18n.t("history_import.plan_name", lang),
-        schedule=[],
-        workouts=[
-            Workout(
-                key=HOLDER_WORKOUT_KEY,
-                title=i18n.t("history_import.workout_title", lang),
-                blocks=[],
-            )
-        ],
-    )
-
-
-async def _holder_version_id(conn: Connection, user_id: int, lang: str, decision_id: int) -> int:
-    existing = await get_history_import_holder_version(conn, user_id)
-    if existing is not None:
-        return existing.id
-    plan_id = await insert_plan(
-        conn,
-        user_id=user_id,
-        name=i18n.t("history_import.plan_name", lang),
-        is_default=False,
-        status=_PLAN_STATUS_ARCHIVED,
-    )
-    return await insert_plan_version(
-        conn,
-        plan_id=plan_id,
-        version=1,
-        body=_holder_plan(lang).model_dump(mode="json"),
-        origin=_ORIGIN_IMPORT,
-        decision_id=decision_id,
-    )
-
-
-async def _write_session(
-    conn: Connection, user_id: int, holder_version_id: int, session: ImportedSession
-) -> int:
+async def _write_session(conn: Connection, user_id: int, session: ImportedSession) -> int:
     session_id = await insert_imported_workout_session(
         conn,
         user_id=user_id,
-        plan_version_id=holder_version_id,
-        workout_key=HOLDER_WORKOUT_KEY,
+        workout_key=IMPORT_WORKOUT_KEY,
         performed_at=session.performed_at,
         import_hash=session.content_hash,
     )
@@ -733,10 +688,7 @@ async def _save_plans(
             )
         return saved, duplicates, rejected, fired
     inputs = planning.build_inputs(catalog, snapshot, settings, user_id)
-    has_default = any(
-        plan.is_default and plan.status == _PLAN_STATUS_ACTIVE
-        for plan in await list_plans_for_user(conn, user_id)
-    )
+    has_default = any(plan.is_default for plan in await list_plans_for_user(conn, user_id))
     known_bodies = {
         _canonical(body)
         for body in await list_plan_version_bodies(conn, user_id, origin=_ORIGIN_IMPORT)
@@ -785,7 +737,6 @@ async def _run(
     conn: Connection,
     *,
     user_id: int,
-    lang: str,
     settings: Settings,
     catalog: Catalog,
     parsed: ParsedImport,
@@ -865,12 +816,7 @@ async def _run(
         load_changes=[],  # A§4.3: an import is not a load increase
     )
 
-    session_ids: list[int] = []
-    holder_version_id: int | None = None
-    if new_sessions:
-        holder_version_id = await _holder_version_id(conn, user_id, lang, decision_id)
-        for session in new_sessions:
-            session_ids.append(await _write_session(conn, user_id, holder_version_id, session))
+    session_ids = [await _write_session(conn, user_id, session) for session in new_sessions]
 
     saved, plan_duplicates, plan_rejections, plan_fired = await _save_plans(
         conn,
@@ -883,7 +829,6 @@ async def _run(
     rejected.extend(plan_rejections)
 
     outcome: dict[str, object] = {
-        "holder_plan_version_id": holder_version_id,
         "session_ids": session_ids,
         "plans_saved": [
             {"name": item.name, "plan_id": item.plan_id, "plan_version_id": item.plan_version_id}
@@ -941,7 +886,6 @@ async def import_history(
             report = await _run(
                 conn,
                 user_id=user.id,
-                lang=user.language,
                 settings=settings,
                 catalog=catalog,
                 parsed=parsed,

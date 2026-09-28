@@ -1,6 +1,9 @@
 {% extends "base.html" %}
+{% from "_breadcrumbs.html" import crumbs with context %}
 {% block title %}{{ t('web.trainings.delete_confirm_title') }}{% endblock %}
+{% block breadcrumbs %}{{ crumbs([(t('web.nav.trainings'), '/app/trainings'), (t('web.trainings.delete_crumb'), none)]) }}{% endblock %}
 {% block content %}
+<p><a class="back" href="{{ next_url }}">&larr; {{ t('web.back') }}</a></p>
 <h1>{{ t('web.trainings.delete_confirm_title') }}</h1>
 <p>{{ t('web.trainings.delete_confirm_warning') }}</p>
 <p><a href="/app/account/export">{{ t('web.trainings.delete_confirm_export_link') }}</a></p>

@@ -7,6 +7,7 @@
   --muted: #666666;
   --border: #dddddd;
   --accent: #1a5fb4;
+  --tab-bg: #eef3fa;
   --warn-bg: #fff3cd;
   --warn-fg: #664d03;
   --error: #b3261e;
@@ -19,6 +20,7 @@
     --muted: #aaaaaa;
     --border: #333333;
     --accent: #7aa8e6;
+    --tab-bg: #1e2a3a;
     --warn-bg: #4a3f00;
     --warn-fg: #ffe08a;
     --error: #ff8a80;
@@ -38,12 +40,17 @@ body {
   line-height: 1.5;
 }
 
-main {
-  max-width: 720px;
-  margin: 0 auto;
+/* Layout: one centered container holds the top bar and, below it, the left sidebar with
+   the main sections (Plans, Trainings) next to the content column. Breadcrumbs, main and
+   the footer live inside the content column, so they share its left edge and width. */
+.topbar,
+.layout {
+  max-width: 960px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-nav.nav {
+.topbar {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
@@ -53,13 +60,107 @@ nav.nav {
   margin-bottom: 16px;
 }
 
+.brand {
+  font-weight: 600;
+  color: var(--fg);
+  text-decoration: none;
+}
+
+nav.nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-left: auto;
+}
+
 nav.nav a {
   color: var(--accent);
   text-decoration: none;
 }
 
-.nav-logout {
-  margin-left: auto;
+nav.nav a[aria-current="page"] {
+  font-weight: 600;
+}
+
+.layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.sidebar {
+  flex: 0 0 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: sticky;
+  top: 12px;
+}
+
+.sidebar a {
+  display: block;
+  padding: 8px 12px;
+  border-radius: 4px;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.sidebar a[aria-current="page"] {
+  background: var(--tab-bg);
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.content {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.content > .flash {
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+/* Breadcrumbs: an ordered list with CSS separators; the current page is unlinked. */
+nav.breadcrumbs ol {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  font-size: 0.9em;
+  color: var(--muted);
+}
+
+/* Long user-chosen names (up to 60 chars, maybe without spaces) wrap instead of scrolling. */
+nav.breadcrumbs li,
+h1,
+h2,
+td {
+  overflow-wrap: anywhere;
+}
+
+nav.breadcrumbs li + li::before {
+  content: "›";
+  padding: 0 8px;
+  color: var(--muted);
+}
+
+nav.breadcrumbs a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+nav.breadcrumbs li[aria-current="page"] {
+  color: var(--fg);
+}
+
+a.back {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 0.9em;
 }
 
 form {
@@ -133,6 +234,12 @@ th, td {
   color: var(--muted);
 }
 
+.plan-body .superset {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.9em;
+}
+
 .prescription-edit {
   border: 1px solid var(--border);
   border-radius: 4px;
@@ -162,12 +269,32 @@ footer {
   padding-top: 12px;
 }
 
+/* Phone width: the sidebar becomes a horizontal tab row above the content. */
+@media (max-width: 640px) {
+  .layout {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .sidebar {
+    flex: none;
+    width: 100%;
+    flex-direction: row;
+    gap: 8px;
+    position: static;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+  }
+  .content {
+    width: 100%;
+  }
+}
+
 @media (max-width: 480px) {
-  nav.nav {
+  .topbar {
     flex-direction: column;
     align-items: flex-start;
   }
-  .nav-logout {
+  nav.nav {
     margin-left: 0;
   }
 }

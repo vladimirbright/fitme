@@ -77,8 +77,9 @@ the same guards as every plan the system generates (`guards.plan.validate_plan`)
 the file's sessions are in, so the imported history is the reference: the load ceiling is the
 imported historical max plus one increment, the schedule must match your profile's sessions
 per week, exercises must fit your location, equipment and screening flags. A plan that fails
-is reported and not saved; the others are saved in full or not at all. A saved plan is
-`active`; the first one becomes your default plan when you have no active default yet.
+is reported and not saved; the others are saved in full or not at all. A saved plan is a
+plan like any other (all plans are equal: it can be viewed, edited, revised, trained from
+and made the default); the first one becomes your default plan when you have no default yet.
 
 As with a pasted plan (M8b), a `kg` on an exercise you have **no history** for becomes a
 `calibration` load with your number kept as a display hint ("your plan says 80 kg, start at
@@ -157,11 +158,10 @@ identical to an already-imported plan version is skipped, not saved a second tim
 In one transaction per run (all or nothing; `--dry-run` writes nothing and prints the same
 report):
 
-- one archived plan **"Imported history"** with a single empty workout (`key = "import"`),
-  created on the first import and reused afterwards: `workout_sessions.plan_version_id` is
-  required, and imported trainings did not come from a stored plan. It is archived, never
-  default, and `/train` does not suggest it;
-- the sessions and their set rows;
+- the sessions and their set rows. An imported session belongs to **no plan**
+  (`workout_sessions.plan_version_id` is NULL, `workout_key = "import"`): it did not come
+  from a stored plan, and no holder plan is created for it (migration 0007 removed the
+  "Imported history" plan earlier versions used to create);
 - the accepted `[[plan]]`s as `plans` + `plan_versions`;
 - one `decision(kind = history_import)` with the counts, the file's SHA-256, the rejection
   reasons and the unknown exercise names (bounded: at most 30 names, 60 characters each;

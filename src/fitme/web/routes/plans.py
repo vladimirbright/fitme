@@ -11,7 +11,9 @@ from pydantic import ValidationError
 from starlette.datastructures import FormData
 from starlette.responses import Response
 
-from fitme.domain.models import Block, Load, Plan, Prescription, Workout
+from fitme import i18n
+from fitme.db.connection import Database
+from fitme.domain.models import NAME_MAX_LENGTH, Block, Load, Plan, Prescription, Workout
 from fitme.services import plan_edit, planning, training
 from fitme.services import profile as profile_service
 from fitme.services.safety import scan_and_maybe_halt
@@ -58,13 +60,44 @@ async def new_plan_form(
     )
 
 
-def _draft_context(round_result: planning.PlanRoundResult, lang: str) -> dict[str, Any]:
-    names = exercise_display_names(lang)
+Trail = list[tuple[str, str]]
+
+
+def _plans_trail(lang: str) -> Trail:
+    return [(i18n.t("web.nav.plans", lang), "/app/plans")]
+
+
+def _new_plan_trail(lang: str) -> Trail:
+    """Plans › New plan: the parent trail of a draft generated from scratch."""
+    return [*_plans_trail(lang), (i18n.t("web.plans.new_crumb", lang), "/app/plans/new")]
+
+
+def _revise_trail(detail: planning.PlanDetail, lang: str) -> Trail:
+    """Plans › {plan} › Revise: the parent trail of a draft revising an existing plan."""
+    href = f"/app/plans/{detail.record.id}"
+    return [
+        *_plans_trail(lang),
+        (detail.record.name, href),
+        (i18n.t("web.plans.revise_crumb", lang), f"{href}/revise"),
+    ]
+
+
+async def _draft_context(
+    db: Database, user_id: int, round_result: planning.PlanRoundResult, lang: str
+) -> dict[str, Any]:
+    """The draft page's context, with the breadcrumb trail of where the draft came from: a
+    revision of an existing plan (`round_result.plan_id`) or a new plan."""
+    trail = _new_plan_trail(lang)
+    if round_result.plan_id is not None:
+        detail = await planning.get_plan_detail(db, user_id, round_result.plan_id)
+        if detail is not None:
+            trail = _revise_trail(detail, lang)
     return {
         "round": round_result,
         "plan": round_result.plan,
         "refusal": round_result.refusal,
-        "exercise_names": names,
+        "exercise_names": exercise_display_names(lang),
+        "draft_trail": trail,
     }
 
 
@@ -85,7 +118,7 @@ async def propose_plan(
         lang=snapshot.language,
         settings=settings,
         session=session,
-        **_draft_context(result, snapshot.language),
+        **await _draft_context(db, session.user_id, result, snapshot.language),
     )
 
 
@@ -99,14 +132,15 @@ async def revise_plan_form(
     detail = await planning.get_plan_detail(db, session.user_id, plan_id)
     if detail is None:
         return redirect("/app/plans")
+    # The plan being revised is shown below the form (its latest version), through the same
+    # partial as the detail and draft pages.
     return render(
         request,
         "plan_revise.html",
         lang=snapshot.language,
         settings=settings,
         session=session,
-        plan_id=plan_id,
-        plan_name=detail.record.name,
+        detail=detail,
     )
 
 
@@ -145,7 +179,7 @@ async def revise_plan(
         lang=lang,
         settings=settings,
         session=session,
-        **_draft_context(result, lang),
+        **await _draft_context(db, session.user_id, result, lang),
     )
 
 
@@ -177,7 +211,7 @@ async def revise_draft(
         lang=lang,
         settings=settings,
         session=session,
-        **_draft_context(result, lang),
+        **await _draft_context(db, session.user_id, result, lang),
     )
 
 
@@ -213,16 +247,18 @@ async def cancel_draft(
     return redirect("/app/plans")
 
 
-@router.get("/{plan_id}")
-async def plan_detail(
-    request: Request, plan_id: int, session: SessionState = Depends(require_user)
+async def _render_detail(
+    request: Request,
+    session: SessionState,
+    detail: planning.PlanDetail,
+    *,
+    rename_error: str | None = None,
+    status_code: int = 200,
 ) -> Response:
     db = get_db(request)
     settings = get_settings(request)
     snapshot = await profile_service.get_snapshot(db, session.user_id)
-    detail = await planning.get_plan_detail(db, session.user_id, plan_id)
-    if detail is None:
-        return redirect("/app/plans")
+    plan_id = detail.record.id
     versions = await planning.list_versions(db, session.user_id, plan_id)
     recent = await training.list_recent_sessions_for_plan(db, session.user_id, plan_id)
     return render(
@@ -231,12 +267,62 @@ async def plan_detail(
         lang=snapshot.language,
         settings=settings,
         session=session,
+        status_code=status_code,
         detail=detail,
         versions=versions or [],
         recent=recent,
         exercise_names=exercise_display_names(snapshot.language),
         timezone=snapshot.timezone,
+        rename_error=rename_error,
     )
+
+
+@router.get("/{plan_id}")
+async def plan_detail(
+    request: Request, plan_id: int, session: SessionState = Depends(require_user)
+) -> Response:
+    db = get_db(request)
+    detail = await planning.get_plan_detail(db, session.user_id, plan_id)
+    if detail is None:
+        return redirect("/app/plans")
+    return await _render_detail(request, session, detail)
+
+
+_RENAME_ERROR_KEYS = {
+    planning.RenameStatus.EMPTY: "web.plans.rename_empty",
+    planning.RenameStatus.TOO_LONG: "web.plans.rename_too_long",
+    planning.RenameStatus.FORBIDDEN: "web.plans.rename_forbidden",
+}
+
+
+@router.post("/{plan_id}/rename")
+async def rename_plan(
+    request: Request,
+    plan_id: int,
+    name: str = Form(""),
+    session: SessionState = Depends(require_user),
+    _csrf: None = Depends(verify_csrf_form),
+) -> Response:
+    """The plan detail page's rename form: the same `services.planning.rename_plan` the bot
+    uses (trim, 1–60 characters, wording check, ownership). A rejected name re-shows the
+    detail page with the reason; nothing is saved."""
+    db = get_db(request)
+    result = await planning.rename_plan(db, session.user_id, plan_id, name)
+    if result.status == planning.RenameStatus.OK:
+        return redirect(f"/app/plans/{plan_id}")
+    if result.status == planning.RenameStatus.NOT_FOUND:
+        return redirect("/app/plans")
+    detail = await planning.get_plan_detail(db, session.user_id, plan_id)
+    if detail is None:
+        return redirect("/app/plans")
+    snapshot = await profile_service.get_snapshot(db, session.user_id)
+    message = i18n.t(
+        _RENAME_ERROR_KEYS[result.status],
+        snapshot.language,
+        max=NAME_MAX_LENGTH,
+        term=result.term or "",
+    )
+    return await _render_detail(request, session, detail, rename_error=message, status_code=400)
 
 
 # --- Structured edit (A§9.1) ---------------------------------------------------------------------

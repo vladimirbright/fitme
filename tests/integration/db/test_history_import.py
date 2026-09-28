@@ -3,7 +3,8 @@ fixture imports cleanly, a dry run writes nothing, a re-import is a no-op, an un
 is reported, the load engine then progresses from the imported 75 kg (not calibration), the
 ceiling uses the imported max, implausible and future rows are rejected, the import writes no
 `load_changes` and leaves the weekly cap untouched, imported sessions never produce a recap
-or an active session, plans import with `origin = 'import'` and validate against the imported
+or an active session, imported sessions belong to no plan (no holder plan is created,
+migration 0007), plans import with `origin = 'import'` and validate against the imported
 history (a plan over the ceiling is reported and not saved; a no-history kg becomes
 calibration with the declared hint), export includes and delete removes the rows, JSON is
 accepted, and the engine reads chronology rather than insert order."""
@@ -22,7 +23,9 @@ from test_planning_service import _settings
 
 from fitme import clock
 from fitme.catalog import load_catalog
+from fitme.config.content import content_version
 from fitme.db.connection import Database
+from fitme.db.controllers.decisions import insert_decision
 from fitme.db.controllers.plans import insert_plan, insert_plan_version
 from fitme.db.controllers.profile import upsert_profile, upsert_screening_flag
 from fitme.db.controllers.training import (
@@ -36,11 +39,7 @@ from fitme.db.selectors.decisions import (
     list_decisions_for_user,
     recent_increase_deltas_by_exercise,
 )
-from fitme.db.selectors.plans import (
-    get_history_import_holder_version,
-    list_plan_versions,
-    list_plans_for_user,
-)
+from fitme.db.selectors.plans import list_plan_versions, list_plans_for_user
 from fitme.db.selectors.training import (
     get_active_workout_session,
     historical_max_by_exercise,
@@ -54,7 +53,7 @@ from fitme.guards.plan import validate_plan
 from fitme.services import planning, recap
 from fitme.services.account import delete_user, export_user
 from fitme.services.history_import import (
-    HOLDER_WORKOUT_KEY,
+    IMPORT_WORKOUT_KEY,
     ImportFormatError,
     ImportReport,
     NoUserError,
@@ -103,6 +102,37 @@ async def run_import(
     db: Database, text: str, *, fmt: str = "toml", dry_run: bool = False
 ) -> ImportReport:
     return await import_history(db, _settings(), text, fmt=fmt, source="test", dry_run=dry_run)
+
+
+async def seed_plan_version(db: Database, user_id: int, *, name: str = "P") -> int:
+    """A stored plan version for the app-logged sessions some tests add next to the imported
+    ones (an imported session itself belongs to no plan, migration 0007)."""
+    async with db.transaction() as conn:
+        decision_id = await insert_decision(
+            conn,
+            user_id=user_id,
+            kind="plan_confirm",
+            prompt_template=None,
+            prompt_version=None,
+            model=None,
+            content_version=content_version(),
+            llm_input=None,
+            user_report=None,
+            proposal=None,
+            guards_fired=[],
+            load_changes=[],
+        )
+        plan_id = await insert_plan(
+            conn, user_id=user_id, name=name, is_default=False, status="active"
+        )
+        return await insert_plan_version(
+            conn,
+            plan_id=plan_id,
+            version=1,
+            body={"name": name, "schedule": [], "workouts": []},
+            origin="llm",
+            decision_id=decision_id,
+        )
 
 
 def toml_with(**sections: str) -> str:
@@ -169,7 +199,6 @@ async def test_sample_fixture_imports_cleanly(db: Database, user_id: int) -> Non
 
     async with db.read() as conn:
         sessions = await list_workout_sessions_for_user(conn, user_id)
-        holder = await get_history_import_holder_version(conn, user_id)
         plans = await list_plans_for_user(conn, user_id)
         decisions = await list_decisions_for_user(conn, user_id)
         outcomes = await list_decision_outcomes(conn, report.decision_id)
@@ -178,12 +207,11 @@ async def test_sample_fixture_imports_cleanly(db: Database, user_id: int) -> Non
         ]
         history_max = await historical_max_by_exercise(conn, user_id)
     assert len(sessions) == 3
-    assert holder is not None
     for session in sessions:
         assert session.status == "completed"
         assert session.import_hash is not None
-        assert session.plan_version_id == holder.id
-        assert session.workout_key == HOLDER_WORKOUT_KEY
+        assert session.plan_version_id is None  # belongs to no plan: no holder plan exists
+        assert session.workout_key == IMPORT_WORKOUT_KEY
         assert session.started_at == session.finished_at
     # Oldest first in the file; timestamps are the file's dates (noon Berlin -> 10:00Z).
     by_time = sorted(session.finished_at or "" for session in sessions)
@@ -200,10 +228,9 @@ async def test_sample_fixture_imports_cleanly(db: Database, user_id: int) -> Non
     assert history_max["machine_leg_press"] == 120.0
     assert "pushup" not in history_max
 
-    holder_plan = next(plan for plan in plans if plan.id == holder.plan_id)
-    assert holder_plan.status == "archived" and not holder_plan.is_default
-    assert holder.origin == "import"
-    imported_plan = next(plan for plan in plans if plan.name == "Old two-day")
+    # The only plan the import created is the file's own `[[plan]]`; there is no holder.
+    assert [plan.name for plan in plans] == ["Old two-day"]
+    imported_plan = plans[0]
     assert imported_plan.status == "active" and imported_plan.is_default
     async with db.read() as conn:
         versions = await list_plan_versions(conn, imported_plan.id)
@@ -227,7 +254,7 @@ async def test_sample_fixture_imports_cleanly(db: Database, user_id: int) -> Non
     assert decision.user_report["file_sha256"] == report.file_sha256
     assert "Squat" not in json.dumps(decision.user_report)  # no file text in the record
     assert len(outcomes) == 1
-    assert outcomes[0].outcome["holder_plan_version_id"] == holder.id
+    assert "holder_plan_version_id" not in outcomes[0].outcome
     assert outcomes[0].outcome["session_ids"] == list(report.session_ids)
 
 
@@ -302,14 +329,13 @@ async def test_next_load_after_import_proposes_from_the_imported_75(
     # not add an increment from it. Progression starts from the first app-logged session.
     assert await engine_kg() == (75.0, "hold")
 
+    version_id = await seed_plan_version(db, user_id)
     async with db.transaction() as conn:
-        holder = await get_history_import_holder_version(conn, user_id)
-        assert holder is not None
         session_id = await insert_workout_session(
             conn,
             user_id=user_id,
-            plan_version_id=holder.id,
-            workout_key="import",
+            plan_version_id=version_id,
+            workout_key="A",
             status="in_progress",
         )
         for index in (1, 2, 3):
@@ -583,26 +609,10 @@ async def test_engine_reads_chronology_not_insert_order(db: Database, user_id: i
     session": the engine progresses from the real 60 kg prescription, while the ceiling's
     historical max does see the imported 100 kg."""
     await seed_gym_profile(db, user_id)
-    async with db.transaction() as conn:
-        plan_id = await insert_plan(
-            conn, user_id=user_id, name="P", is_default=True, status="active"
-        )
-        decisions = await list_decisions_for_user(conn, user_id)
-        assert decisions == []
-    # A real completed session needs a plan version, which needs a decision: import a
-    # session first (that also creates the holder), then log a real session today.
+    version_id = await seed_plan_version(db, user_id)
+    # Import a session first, then log a real session today.
     await run_import(db, toml_with(s=session_toml("2025-01-10", ("Squat", 100, 5))))
     async with db.transaction() as conn:
-        holder = await get_history_import_holder_version(conn, user_id)
-        assert holder is not None
-        version_id = await insert_plan_version(
-            conn,
-            plan_id=plan_id,
-            version=1,
-            body={"name": "P", "schedule": [], "workouts": []},
-            origin="llm",
-            decision_id=holder.decision_id,
-        )
         session_id = await insert_workout_session(
             conn, user_id=user_id, plan_version_id=version_id, workout_key="A", status="in_progress"
         )
@@ -671,21 +681,18 @@ async def test_import_before_activation_raises(db: Database) -> None:
 async def _app_logged_session_with_start_and_checkin(db: Database, user_id: int) -> tuple[int, int]:
     """A completed session run through the loop (it has a `start` decision) with one open
     check-in, so a pending recap exists and the check-in can be answered."""
-    from fitme.config.content import content_version
-    from fitme.db.controllers.decisions import insert_decision
     from fitme.db.controllers.training import insert_checkin
     from fitme.domain.enums import DecisionKind
     from fitme.services.training import EVENT_START
 
     await run_import(db, toml_with(s=session_toml("2025-01-10", ("Squat", 60, 5))))
+    version_id = await seed_plan_version(db, user_id)
     async with db.transaction() as conn:
-        holder = await get_history_import_holder_version(conn, user_id)
-        assert holder is not None
         session_id = await insert_workout_session(
             conn,
             user_id=user_id,
-            plan_version_id=holder.id,
-            workout_key="import",
+            plan_version_id=version_id,
+            workout_key="A",
             status="in_progress",
         )
         await insert_set_log(
@@ -777,14 +784,13 @@ async def test_report_shows_per_implement_max_and_newer_than_last_logged(
     assert real.newer_than_last_logged == 3
 
     # A session logged through the app today: the August fixture sessions are all older.
+    version_id = await seed_plan_version(db, user_id)
     async with db.transaction() as conn:
-        holder = await get_history_import_holder_version(conn, user_id)
-        assert holder is not None
         session_id = await insert_workout_session(
             conn,
             user_id=user_id,
-            plan_version_id=holder.id,
-            workout_key="import",
+            plan_version_id=version_id,
+            workout_key="A",
             status="in_progress",
         )
         await finish_workout_session(conn, session_id, status="completed")

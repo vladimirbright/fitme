@@ -1,0 +1,16 @@
+{# Breadcrumb trail: `items` is a list of (label, href) pairs, the last one being the current
+   page (its href is ignored and it is rendered unlinked with aria-current). Every label is
+   escaped by Jinja's autoescaping; nothing here is marked safe. Separators come from CSS. #}
+{% macro crumbs(items) %}
+<nav class="breadcrumbs" aria-label="{{ t('web.nav.breadcrumbs') }}">
+  <ol>
+    {% for label, href in items %}
+    {% if loop.last %}
+    <li aria-current="page">{{ label }}</li>
+    {% else %}
+    <li><a href="{{ href }}">{{ label }}</a></li>
+    {% endif %}
+    {% endfor %}
+  </ol>
+</nav>
+{% endmacro %}

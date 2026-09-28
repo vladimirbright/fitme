@@ -1,5 +1,7 @@
 {% extends "base.html" %}
+{% from "_breadcrumbs.html" import crumbs with context %}
 {% block title %}{{ t('web.plans.list_title') }}{% endblock %}
+{% block breadcrumbs %}{{ crumbs([(t('web.nav.plans'), none)]) }}{% endblock %}
 {% block content %}
 <h1>{{ t('web.plans.list_title') }}</h1>
 <p><a href="/app/plans/new">{{ t('web.plans.generate_new') }}</a></p>
@@ -11,7 +13,6 @@
   <li>
     <a href="/app/plans/{{ plan.id }}">{{ plan.name }}</a>
     {% if plan.is_default %}<span class="badge">{{ t('web.plans.default_badge') }}</span>{% endif %}
-    <span class="status">{{ t('plan.status_' + plan.status) }}</span>
   </li>
   {% endfor %}
 </ul>

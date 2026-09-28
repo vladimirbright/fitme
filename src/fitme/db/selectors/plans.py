@@ -83,31 +83,6 @@ async def get_latest_plan_version(
     return None if row is None else _plan_version_from_row(row)
 
 
-async def get_history_import_holder_version(
-    conn: aiosqlite.Connection, user_id: int
-) -> PlanVersionRecord | None:
-    """The plan version imported training sessions are attached to (M11): `workout_sessions.
-    plan_version_id` is NOT NULL, so `fitme history import` keeps one archived "Imported
-    history" plan with a single empty workout for them. It is found through the record that
-    created it — the `history_import` decision whose outcome names it as
-    `holder_plan_version_id` — never through the plan's display name or body, which are
-    user-visible copy. The earliest one wins, so every later import reuses it; `None` before
-    the first import."""
-    async with conn.execute(
-        "SELECT v.id, v.plan_id, v.version, v.body, v.origin, v.decision_id, v.created_at "
-        "FROM plan_versions v "
-        "JOIN plans p ON p.id = v.plan_id "
-        "JOIN decisions d ON d.id = v.decision_id "
-        "JOIN decision_outcomes o ON o.decision_id = d.id "
-        "WHERE p.user_id = ? AND d.kind = 'history_import' "
-        "AND json_extract(o.outcome, '$.holder_plan_version_id') = v.id "
-        "ORDER BY v.id LIMIT 1",
-        (user_id,),
-    ) as cursor:
-        row = await cursor.fetchone()
-    return None if row is None else _plan_version_from_row(row)
-
-
 async def list_plan_version_bodies(
     conn: aiosqlite.Connection, user_id: int, *, origin: str
 ) -> list[dict[str, object]]:

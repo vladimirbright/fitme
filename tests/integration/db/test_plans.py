@@ -10,11 +10,10 @@ from fitme.db.connection import Database
 from fitme.db.controllers.decisions import insert_decision
 from fitme.db.controllers.plans import (
     PlanNotOwnedError,
-    clear_default_plan,
     insert_plan,
     insert_plan_version,
+    rename_plan,
     set_default_plan,
-    update_plan_status,
 )
 from fitme.db.selectors.plans import (
     get_default_plan,
@@ -133,35 +132,27 @@ async def test_plan_versions_table_rejects_update(db: Database, user_id: int) ->
         )
 
 
-async def test_update_plan_status(db: Database, user_id: int) -> None:
-    async with db.transaction() as conn:
-        plan_id = await insert_plan(
-            conn, user_id=user_id, name="Plan A", is_default=True, status="draft"
-        )
-        await update_plan_status(conn, plan_id, "active")
-
-    async with db.read() as conn:
-        plan = await get_plan(conn, plan_id)
-    assert plan is not None
-    assert plan.status == "active"
-
-
-async def test_clear_default_plan_only_touches_the_users_own_plan(
+async def test_rename_plan_updates_the_name_and_rejects_an_unowned_plan_id(
     db: Database, user_id: int
 ) -> None:
+    """`plans.name` is a plain column: a rename updates it in place. A plan_id that isn't
+    this user's own (here: one that was never inserted, ADR 0002) raises and changes
+    nothing."""
     async with db.transaction() as conn:
         plan_id = await insert_plan(
             conn, user_id=user_id, name="P", is_default=True, status="active"
         )
-
-    async with db.transaction() as conn:
-        await clear_default_plan(conn, user_id + 1, plan_id)  # not this user's: no-op
+        await rename_plan(conn, user_id, plan_id, "Q")
     async with db.read() as conn:
-        assert await get_default_plan(conn, user_id) is not None
+        plan = await get_plan(conn, plan_id)
+    assert plan is not None and plan.name == "Q" and plan.is_default
 
-    async with db.transaction() as conn:
-        await clear_default_plan(conn, user_id, plan_id)
+    with pytest.raises(PlanNotOwnedError):
+        async with db.transaction() as conn:
+            await rename_plan(conn, user_id, plan_id + 1000, "R")
+    with pytest.raises(PlanNotOwnedError):
+        async with db.transaction() as conn:
+            await rename_plan(conn, user_id + 1, plan_id, "R")
     async with db.read() as conn:
-        assert await get_default_plan(conn, user_id) is None
-        record = await get_plan(conn, plan_id)
-    assert record is not None and record.is_default is False
+        plan = await get_plan(conn, plan_id)
+    assert plan is not None and plan.name == "Q"

@@ -1,6 +1,9 @@
 {% extends "base.html" %}
+{% from "_breadcrumbs.html" import crumbs with context %}
 {% block title %}{{ t('web.plans.confirm_failed_title') }}{% endblock %}
+{% block breadcrumbs %}{{ crumbs([(t('web.nav.plans'), '/app/plans'), (t('web.plans.confirm_failed_title'), none)]) }}{% endblock %}
 {% block content %}
+<p><a class="back" href="/app/plans">&larr; {{ t('web.back') }}</a></p>
 <h1>{{ t('web.plans.confirm_failed_title') }}</h1>
 {% if refusal %}
 <p class="error">{{ refusal.message }}</p>

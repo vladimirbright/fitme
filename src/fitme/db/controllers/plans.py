@@ -53,8 +53,16 @@ async def set_default_plan(conn: aiosqlite.Connection, user_id: int, plan_id: in
     assert cursor.rowcount == 1  # guaranteed by the ownership check above
 
 
-async def update_plan_status(conn: aiosqlite.Connection, plan_id: int, status: str) -> None:
-    await conn.execute("UPDATE plans SET status = ? WHERE id = ?", (status, plan_id))
+async def rename_plan(conn: aiosqlite.Connection, user_id: int, plan_id: int, name: str) -> None:
+    """Set `plans.name` (a plain column, not append-only: the stored versions keep their own
+    body `name`). `name` is already validated by `services.planning.rename_plan` (trimmed,
+    1–60 characters, wording-checked). A plan_id that isn't this user's own raises
+    `PlanNotOwnedError` and changes nothing."""
+    cursor = await conn.execute(
+        "UPDATE plans SET name = ? WHERE id = ? AND user_id = ?", (name, plan_id, user_id)
+    )
+    if cursor.rowcount != 1:
+        raise PlanNotOwnedError(f"plan {plan_id} does not belong to user {user_id}")
 
 
 async def insert_plan_version(
@@ -73,12 +81,3 @@ async def insert_plan_version(
     )
     assert cursor.lastrowid is not None
     return cursor.lastrowid
-
-
-async def clear_default_plan(conn: aiosqlite.Connection, user_id: int, plan_id: int) -> None:
-    """Unset `is_default` on one of this user's plans (used when archiving the default plan,
-    A§6.2: the default then moves to another active plan, or none). A plan_id that isn't this
-    user's own is a no-op rather than an error: nothing to clear."""
-    await conn.execute(
-        "UPDATE plans SET is_default = 0 WHERE id = ? AND user_id = ?", (plan_id, user_id)
-    )

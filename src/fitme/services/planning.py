@@ -78,13 +78,13 @@ from fitme.catalog import load_catalog
 from fitme.config.content import content_version
 from fitme.config.settings import Settings
 from fitme.db.connection import Connection, Database
+from fitme.db.controllers import plans as plan_controllers
 from fitme.db.controllers.decisions import insert_decision, insert_decision_outcome
 from fitme.db.controllers.plans import (
-    clear_default_plan,
+    PlanNotOwnedError,
     insert_plan,
     insert_plan_version,
     set_default_plan,
-    update_plan_status,
 )
 from fitme.db.records import DecisionRecord, PlanRecord, PlanVersionRecord, SessionOutcome
 from fitme.db.selectors.decisions import (
@@ -128,6 +128,7 @@ from fitme.domain.enums import (
 )
 from fitme.domain.guard_types import GuardVerdict
 from fitme.domain.models import (
+    NAME_MAX_LENGTH,
     Load,
     LoadChange,
     Plan,
@@ -173,8 +174,7 @@ _ALLOWED_EXERCISES_RULE = "plan.allowed_exercises"
 _SUBSTITUTION_RULE = "loads.substituted"
 _IMPORT_CALIBRATION_RULE = "loads.import_calibration"  # M8b: no history -> calibration + hint
 _WORDING_RULE = "wording.forbidden_term"
-_PLAN_STATUS_ACTIVE = "active"
-_PLAN_STATUS_ARCHIVED = "archived"
+_PLAN_STATUS_ACTIVE = "active"  # the only `plans.status` ever written (A§4.3: all plans are equal)
 _ORIGIN_LLM = "llm"
 _ORIGIN_IMPORT = "import"  # M8b: `plan_versions.origin` of a confirmed pasted plan
 _MAX_SUMMARY_REPS = 100  # `llm.context.ExerciseHistorySummary.last_reps` upper bound
@@ -321,7 +321,7 @@ async def read_snapshot(conn: Connection, user_id: int) -> Snapshot:
 
     active_plan: Plan | None = None
     default_plan = await get_default_plan(conn, user_id)
-    if default_plan is not None and default_plan.status == _PLAN_STATUS_ACTIVE:
+    if default_plan is not None:
         latest = await get_latest_plan_version(conn, default_plan.id)
         if latest is not None:
             try:
@@ -1455,9 +1455,7 @@ async def confirm_plan(
             is_default = record.is_default
         else:
             plans = await list_plans_for_user(conn, user_id)
-            is_default = not any(
-                item.is_default and item.status == _PLAN_STATUS_ACTIVE for item in plans
-            )
+            is_default = not any(item.is_default for item in plans)
             plan_id = await insert_plan(
                 conn,
                 user_id=user_id,
@@ -1552,35 +1550,68 @@ async def current_draft_id(db: Database, user_id: int) -> int | None:
 
 
 async def set_default(db: Database, user_id: int, plan_id: int) -> bool:
-    """Make `plan_id` the one default (A§4.3). Only an active plan of this user's qualifies;
-    returns `False` otherwise, changing nothing."""
+    """Make `plan_id` the one default (A§4.3). Any plan of this user's qualifies (all plans
+    are equal); returns `False` for a plan that isn't theirs, changing nothing."""
     async with db.transaction() as conn:
         record = await get_plan(conn, plan_id)
-        if record is None or record.user_id != user_id or record.status != _PLAN_STATUS_ACTIVE:
+        if record is None or record.user_id != user_id:
             return False
         await set_default_plan(conn, user_id, plan_id)
     return True
 
 
-async def archive(db: Database, user_id: int, plan_id: int) -> bool:
-    """Archive `plan_id`. An archived default hands the default to another active plan (the
-    most recently created one), or to none. Returns `False` for a plan that isn't this
-    user's or is already archived."""
+class RenameStatus(StrEnum):
+    OK = "ok"
+    EMPTY = "empty"  # nothing left after trimming
+    TOO_LONG = "too_long"  # over `NAME_MAX_LENGTH`
+    FORBIDDEN = "forbidden"  # an AGENTS.md §3 term (`i18n.wording`)
+    NOT_FOUND = "not_found"  # not this user's plan
+
+
+@dataclass(frozen=True, slots=True)
+class RenameResult:
+    status: RenameStatus
+    name: str | None = None  # the trimmed name that was saved (OK only)
+    term: str | None = None  # the forbidden term found (FORBIDDEN only)
+
+
+async def rename_plan(db: Database, user_id: int, plan_id: int, name: str) -> RenameResult:
+    """Rename one of this user's plans (bot `/plan` › Rename, the website's rename form).
+    Validation lives here, once, for both front-ends: trim; 1–`NAME_MAX_LENGTH` characters;
+    the AGENTS.md §3 wording check; ownership. A saved rename is logged as a
+    `decision(kind=user_edit)` with `{"action": "rename", "plan_id": ...}` and no
+    `load_changes` — never the old or new name (minimal data, AGENTS.md §5)."""
+    trimmed = name.strip()
+    if not trimmed:
+        return RenameResult(status=RenameStatus.EMPTY)
+    if len(trimmed) > NAME_MAX_LENGTH:
+        return RenameResult(status=RenameStatus.TOO_LONG)
+    term = wording.first_forbidden_term(trimmed)
+    if term is not None:
+        return RenameResult(status=RenameStatus.FORBIDDEN, term=term)
     async with db.transaction() as conn:
         record = await get_plan(conn, plan_id)
-        if record is None or record.user_id != user_id or record.status == _PLAN_STATUS_ARCHIVED:
-            return False
-        await update_plan_status(conn, plan_id, _PLAN_STATUS_ARCHIVED)
-        if record.is_default:
-            await clear_default_plan(conn, user_id, plan_id)
-            others = [
-                item
-                for item in await list_plans_for_user(conn, user_id)
-                if item.id != plan_id and item.status == _PLAN_STATUS_ACTIVE
-            ]
-            if others:
-                await set_default_plan(conn, user_id, others[-1].id)
-    return True
+        if record is None or record.user_id != user_id:
+            return RenameResult(status=RenameStatus.NOT_FOUND)
+        try:
+            await plan_controllers.rename_plan(conn, user_id, plan_id, trimmed)
+        except PlanNotOwnedError:
+            return RenameResult(status=RenameStatus.NOT_FOUND)
+        await insert_decision(
+            conn,
+            user_id=user_id,
+            kind=DecisionKind.USER_EDIT.value,
+            prompt_template=None,
+            prompt_version=None,
+            model=None,
+            content_version=content_version(),
+            llm_input=None,
+            user_report={"action": "rename", "plan_id": plan_id},
+            proposal=None,
+            guards_fired=[],
+            load_changes=[],
+        )
+    return RenameResult(status=RenameStatus.OK, name=trimmed)
 
 
 __all__ = [
@@ -1595,8 +1626,9 @@ __all__ = [
     "PlanRoundResult",
     "RevisionBase",
     "Snapshot",
+    "RenameResult",
+    "RenameStatus",
     "StaleDraftError",
-    "archive",
     "build_inputs",
     "confirm_plan",
     "current_draft_id",
@@ -1617,6 +1649,7 @@ __all__ = [
     "read_snapshot",
     "refusal_for",
     "refusal_proposal",
+    "rename_plan",
     "restore_declared",
     "revise_plan",
     "set_default",

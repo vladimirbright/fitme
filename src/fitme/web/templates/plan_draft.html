@@ -1,6 +1,11 @@
 {% extends "base.html" %}
+{% from "_breadcrumbs.html" import crumbs with context %}
+{% from "_plan_body.html" import plan_body with context %}
 {% block title %}{{ t('web.plans.draft_title') }}{% endblock %}
+{# `draft_trail` (from the route) is the parent trail: Plans › New plan, or Plans › {plan} › Revise. #}
+{% block breadcrumbs %}{{ crumbs(draft_trail + [(t('web.plans.draft_crumb'), none)]) }}{% endblock %}
 {% block content %}
+<p><a class="back" href="{{ draft_trail[-1][1] }}">&larr; {{ t('web.back') }}</a></p>
 <h1>{{ t('web.plans.draft_title') }}</h1>
 <p class="disclosure">{{ t('disclosure.ai') }}</p>
 
@@ -10,33 +15,7 @@
 {% else %}
 <h2>{{ plan.name }}</h2>
 
-<h3>{{ t('plan.schedule_title') }}</h3>
-<ul>
-  {% for day in plan.schedule %}
-  <li>{{ t('weekday.' ~ day.weekday) }}: {{ day.workout_key }}</li>
-  {% endfor %}
-</ul>
-
-{% for workout in plan.workouts %}
-<h3>{{ t('plan.workout_title', workout_key=workout.key, title=workout.title) }}</h3>
-{% for block in workout.blocks %}
-{% if block.kind == 'superset' %}<p class="superset">{{ t('plan.superset_label') }}</p>{% endif %}
-<ul>
-  {% for item in block.items %}
-  <li>
-    {{ exercise_names.get(item.exercise_id, item.exercise_id) }}:
-    {{ t('plan.sets_reps', sets=item.sets, reps_min=item.reps_min, reps_max=item.reps_max) }}
-    @
-    {% if item.load.kind == 'kg' %}{{ t('plan.load_kg', kg=item.load.kg) }}
-    {% elif item.load.kind == 'bodyweight' %}{{ t('plan.load_bodyweight') }}
-    {% else %}{{ t('plan.load_calibration') }}
-    {% endif %}
-    {% if item.note %}&mdash; {{ item.note }}{% endif %}
-  </li>
-  {% endfor %}
-</ul>
-{% endfor %}
-{% endfor %}
+{{ plan_body(plan) }}
 
 {% if round.unmatched %}
 <h3>{{ t('plan.unmatched_title') }}</h3>

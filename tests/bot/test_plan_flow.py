@@ -1,7 +1,8 @@
 """The `/plan` bot flow (A§6.2, A§6.4) end to end through the real dispatcher: list / New
 plan, the draft with explicit loads and Confirm / Change something / Cancel, the revise loop
-over free text (stop-word guard first), stale buttons, and View / Set default / Archive. The
-LLM is a `FunctionModel`; Telegram is the `FakeSession`."""
+over free text (stop-word guard first), stale buttons, and View / Set default / Rename /
+Revise (all plans are equal, A§4.3: no Archive). The LLM is a `FunctionModel`; Telegram is
+the `FakeSession`."""
 
 from __future__ import annotations
 
@@ -351,9 +352,9 @@ async def test_cancel_discards_the_draft_and_llm_refusals_are_shown_by_code(
     assert _toasts(session)[-1] == t("plan.stale_draft", "en")
 
 
-async def test_view_set_default_revise_and_archive_from_the_list(
+async def _two_confirmed_plans(
     dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
-) -> None:
+) -> tuple[int, Any, Any]:
     user_id = await _ready(dispatcher, bot, db)
     for name in ("One", "Two"):
         llm.responses.append(make_plan(name=name))
@@ -361,18 +362,36 @@ async def test_view_set_default_revise_and_archive_from_the_list(
         await _click(dispatcher, bot, PlanDraft(action="confirm", decision_id=draft_id))
     async with db.read() as conn:
         plans = {p.name: p for p in await list_plans_for_user(conn, user_id)}
-    one, two = plans["One"], plans["Two"]
+    return user_id, plans["One"], plans["Two"]
+
+
+async def test_view_set_default_and_revise_from_the_list(
+    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
+) -> None:
+    user_id, one, two = await _two_confirmed_plans(dispatcher, bot, session, db, llm)
     assert one.is_default and not two.is_default
+
+    # The list shows every plan with only the default marker: no status, no archive.
+    await _send(dispatcher, bot, "/plan")
+    listing = _sent_messages(session)[-1].text or ""
+    assert "• One — ★ default" in listing and "• Two\n" in listing
+    assert "active" not in listing and "archived" not in listing
 
     await _click(dispatcher, bot, PlanMenu(action="view", plan_id=two.id))
     view = _sent_messages(session)[-1]
-    assert view.text is not None and view.text.startswith("Two (version 1, active)")
+    assert view.text is not None and view.text.startswith("Two (version 1):")
     assert "@ calibration" in view.text
     datas = _callback_datas(view)
     assert PlanMenu(action="default", plan_id=two.id).pack() in datas
+    assert PlanMenu(action="rename", plan_id=two.id).pack() in datas
     assert PlanMenu(action="revise", plan_id=two.id).pack() in datas
-    assert PlanMenu(action="archive", plan_id=two.id).pack() in datas
+    assert not any(data.startswith("pm:archive:") for data in datas)
 
+    await _click(dispatcher, bot, PlanMenu(action="default", plan_id=two.id))
+    assert _toasts(session)[-1] == t("plan.default_set", "en", name="Two")
+    # ... and back: any plan can be the default at any time.
+    await _click(dispatcher, bot, PlanMenu(action="default", plan_id=one.id))
+    assert _toasts(session)[-1] == t("plan.default_set", "en", name="One")
     await _click(dispatcher, bot, PlanMenu(action="default", plan_id=two.id))
     assert _toasts(session)[-1] == t("plan.default_set", "en", name="Two")
 
@@ -386,17 +405,79 @@ async def test_view_set_default_revise_and_archive_from_the_list(
     assert saved.startswith(t("plan.saved", "en", name="Two", version=2))
     async with db.read() as conn:
         assert [v.version for v in await list_plan_versions(conn, two.id)] == [1, 2]
-
-    await _click(dispatcher, bot, PlanMenu(action="archive", plan_id=two.id))
-    assert _toasts(session)[-1] == t("plan.archived", "en", name="Two")
-    async with db.read() as conn:
         plans = {p.name: p for p in await list_plans_for_user(conn, user_id)}
-    assert plans["Two"].status == "archived" and not plans["Two"].is_default
-    assert plans["One"].is_default
+    assert plans["Two"].is_default and plans["Two"].status == "active"
 
-    # A button for a plan that doesn't exist is a stale toast.
+    # A button for a plan that doesn't exist is a stale toast; so is the old Archive one.
     await _click(dispatcher, bot, PlanMenu(action="view", plan_id=999))
     assert _toasts(session)[-1] == t("errors.stale_callback", "en")
+    await _click(dispatcher, bot, PlanMenu(action="archive", plan_id=two.id))
+    assert _toasts(session)[-1] == t("errors.stale_callback", "en")
+
+
+async def test_rename_from_the_list_validates_the_new_name(
+    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
+) -> None:
+    user_id, one, two = await _two_confirmed_plans(dispatcher, bot, session, db, llm)
+
+    async def names() -> dict[int, str]:
+        async with db.read() as conn:
+            return {p.id: p.name for p in await list_plans_for_user(conn, user_id)}
+
+    await _click(dispatcher, bot, PlanMenu(action="rename", plan_id=two.id))
+    assert _sent_messages(session)[-1].text == t("plan.rename_prompt", "en", name="Two")
+    await _send(dispatcher, bot, "  Upper / lower  ")
+    assert _sent_messages(session)[-1].text == t("plan.renamed", "en", name="Upper / lower")
+    assert await names() == {one.id: "One", two.id: "Upper / lower"}
+    assert llm.calls == 2  # the rename never touches the model
+
+    # Rejected names: empty, over the cap, a forbidden term. Nothing changes.
+    for text, reply in (
+        ("   ", t("plan.rename_empty", "en")),
+        ("x" * 61, t("plan.rename_too_long", "en", max=60)),
+        ("my coach's program", t("plan.rename_forbidden", "en", term="coach")),
+    ):
+        await _click(dispatcher, bot, PlanMenu(action="rename", plan_id=one.id))
+        await _send(dispatcher, bot, text)
+        assert _sent_messages(session)[-1].text == reply
+    assert await names() == {one.id: "One", two.id: "Upper / lower"}
+
+    # The prompt is consumed: a second message is plain free text again.
+    await _send(dispatcher, bot, "Something")
+    assert _sent_messages(session)[-1].text == t("unknown.free_text_hint", "en")
+    assert await names() == {one.id: "One", two.id: "Upper / lower"}
+
+    # Cancel drops the prompt.
+    await _click(dispatcher, bot, PlanMenu(action="rename", plan_id=one.id))
+    await _click(dispatcher, bot, PlanDraft(action="cancel", decision_id=0))
+    assert _sent_messages(session)[-1].text == t("plan.rename_cancelled", "en")
+    await _send(dispatcher, bot, "Not a name")
+    assert _sent_messages(session)[-1].text == t("unknown.free_text_hint", "en")
+    assert await names() == {one.id: "One", two.id: "Upper / lower"}
+
+    # A rename button for a plan that doesn't exist is a stale toast.
+    await _click(dispatcher, bot, PlanMenu(action="rename", plan_id=999))
+    assert _toasts(session)[-1] == t("errors.stale_callback", "en")
+
+
+async def test_stop_word_in_rename_text_halts_and_renames_nothing(
+    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
+) -> None:
+    """The rename text goes through the owner free-text path: saved, stop-word scanned
+    first (A§6.3). A hit halts, opens a hold and drops the pending rename."""
+    user_id, one, _two = await _two_confirmed_plans(dispatcher, bot, session, db, llm)
+    await _click(dispatcher, bot, PlanMenu(action="rename", plan_id=one.id))
+
+    await _send(dispatcher, bot, "knee plan, sharp pain today")
+
+    assert _sent_messages(session)[-1].text == t("halt.message", "en")
+    async with db.read() as conn:
+        holds = await list_open_health_holds(conn, user_id)
+        plans = {p.id: p.name for p in await list_plans_for_user(conn, user_id)}
+    assert len(holds) == 1 and holds[0].reason == "stop_word"
+    assert plans[one.id] == "One"
+    await _send(dispatcher, bot, "Plain name")
+    assert _sent_messages(session)[-1].text == t("unknown.free_text_hint", "en")
 
 
 async def test_long_plan_is_split_into_several_messages(

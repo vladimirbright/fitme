@@ -184,15 +184,28 @@ async def on_checkin_reply(
 
 
 async def _show_suggestion(
-    message: Message, suggested: training.WorkoutSuggested, lang: str
+    message: Message, db: Database, user_id: int, suggested: training.WorkoutSuggested, lang: str
 ) -> None:
+    has_other_plans = len(await training.list_plans(db, user_id)) > 1
     await message.answer(
         rendering.suggestion_text(
             suggested.plan, suggested.workout, scheduled_today=suggested.scheduled_today, lang=lang
         ),
         reply_markup=rendering.suggestion_markup(
-            suggested.plan.id, suggested.workout, has_others=bool(suggested.others), lang=lang
+            suggested.plan.id,
+            suggested.workout,
+            has_others=bool(suggested.others),
+            has_other_plans=has_other_plans,
+            lang=lang,
         ),
+    )
+
+
+async def _show_plan_choice(message: Message, db: Database, user_id: int, lang: str) -> None:
+    """Every plan as a button, the default first (A§4.3: all plans are equal)."""
+    plans = await training.list_plans(db, user_id)
+    await message.answer(
+        t("train.choose_plan", lang), reply_markup=rendering.plan_choice_markup(plans)
     )
 
 
@@ -269,7 +282,7 @@ async def cmd_train(
             t("train.choose_plan", lang), reply_markup=rendering.plan_choice_markup(result.plans)
         )
     elif isinstance(result, training.WorkoutSuggested):
-        await _show_suggestion(message, result, lang)
+        await _show_suggestion(message, db, user_id, result, lang)
     else:
         await _show_active(message, db, settings, user_id, result, lang)
 
@@ -286,13 +299,18 @@ async def on_train_pick(
     message = _message_of(query)
     kind = callback_data.kind
 
+    if kind == "plans":
+        await query.answer()
+        await _show_plan_choice(message, db, user_id, lang)
+        return
+
     if kind == "plan":
         suggested = await training.suggest_workout(db, user_id, callback_data.plan_id)
         if suggested is None:
             await query.answer(t("errors.stale_callback", lang))
             return
         await query.answer()
-        await _show_suggestion(message, suggested, lang)
+        await _show_suggestion(message, db, user_id, suggested, lang)
         return
 
     if kind == "workouts":

@@ -21,7 +21,6 @@ from fitme.domain.models import Load, Plan, Prescription
 from fitme.i18n import t, wording
 
 TELEGRAM_MESSAGE_LIMIT = 4096
-_PLAN_STATUS_ACTIVE = "active"
 _DEFAULT_MARK = "★"
 
 
@@ -179,15 +178,13 @@ def new_plan_markup(lang: str) -> InlineKeyboardMarkup:
     )
 
 
-def plan_status_text(record: PlanRecord, lang: str) -> str:
-    return t(f"plan.status_{record.status}", lang)
-
-
 def plan_list_text(plans: Sequence[PlanRecord], lang: str) -> str:
+    """The plan list (A§6.2): every plan by name, the default marked; no status — all plans
+    are equal (A§4.3)."""
     lines = [t("plan.list_title", lang), ""]
     for record in plans:
-        mark = f" {_DEFAULT_MARK} {t('plan.default_marker', lang)}" if record.is_default else ""
-        lines.append(f"• {record.name} — {plan_status_text(record, lang)}{mark}")
+        mark = f" — {_DEFAULT_MARK} {t('plan.default_marker', lang)}" if record.is_default else ""
+        lines.append(f"• {record.name}{mark}")
     lines.extend(["", t("plan.list_hint", lang)])
     return "\n".join(lines)
 
@@ -207,26 +204,27 @@ def plan_list_markup(plans: Sequence[PlanRecord], lang: str) -> InlineKeyboardMa
 
 
 def plan_actions_markup(record: PlanRecord, lang: str) -> InlineKeyboardMarkup:
-    """View / Set default / Revise / Archive (A§6.2) for one plan, plus New plan and Back."""
+    """Set default / Rename / Revise (A§6.2) for one plan, plus New plan, Paste and Back.
+    Every plan offers every action (A§4.3: all plans are equal); only the default plan
+    lacks "Set default", since it already is."""
     builder = InlineKeyboardBuilder()
-    if record.status == _PLAN_STATUS_ACTIVE:
-        if not record.is_default:
-            builder.add(
-                InlineKeyboardButton(
-                    text=t("plan.set_default_button", lang),
-                    callback_data=PlanMenu(action="default", plan_id=record.id).pack(),
-                )
-            )
+    if not record.is_default:
         builder.add(
             InlineKeyboardButton(
-                text=t("plan.revise_button", lang),
-                callback_data=PlanMenu(action="revise", plan_id=record.id).pack(),
-            ),
-            InlineKeyboardButton(
-                text=t("plan.archive_button", lang),
-                callback_data=PlanMenu(action="archive", plan_id=record.id).pack(),
-            ),
+                text=t("plan.set_default_button", lang),
+                callback_data=PlanMenu(action="default", plan_id=record.id).pack(),
+            )
         )
+    builder.add(
+        InlineKeyboardButton(
+            text=t("plan.rename_button", lang),
+            callback_data=PlanMenu(action="rename", plan_id=record.id).pack(),
+        ),
+        InlineKeyboardButton(
+            text=t("plan.revise_button", lang),
+            callback_data=PlanMenu(action="revise", plan_id=record.id).pack(),
+        ),
+    )
     builder.add(
         _new_plan_button(lang),
         _paste_plan_button(lang),

@@ -94,7 +94,6 @@ from fitme.db.selectors.decisions import (
     list_decision_outcomes,
 )
 from fitme.db.selectors.plans import (
-    get_default_plan,
     get_latest_plan_version,
     get_plan,
     get_plan_version,
@@ -139,7 +138,6 @@ from fitme.services import planning
 from fitme.services.llm_runtime import LlmRuntime
 from fitme.services.safety import HaltResult, halt
 
-_PLAN_STATUS_ACTIVE = "active"
 _ORIGIN_LLM = "llm"
 _SOURCE_BUTTON = "button"
 _SOURCE_FREE_TEXT = "free_text"
@@ -328,8 +326,11 @@ class SessionContext:
 
 
 async def load_session(conn: Connection, user_id: int, session_id: int) -> SessionContext | None:
+    """The session with its plan, version and workout, or `None` when it isn't this user's or
+    has no plan (an imported session, `plan_version_id` NULL since migration 0007: it is
+    history, never something the workout loop can resume or recap)."""
     session = await get_workout_session(conn, session_id)
-    if session is None or session.user_id != user_id:
+    if session is None or session.user_id != user_id or session.plan_version_id is None:
         return None
     version = await get_plan_version(conn, session.plan_version_id)
     if version is None:
@@ -488,13 +489,11 @@ def _pick_workout(
 
 async def suggest_workout(db: Database, user_id: int, plan_id: int) -> WorkoutSuggested | None:
     """Today's workout of `plan_id` (A§6.5 steps 1-2), or `None` for a plan that isn't the
-    user's, isn't active or has no workouts."""
+    user's or has no workouts."""
     async with db.read() as conn:
         user = await get_user(conn, user_id)
         record = await get_plan(conn, plan_id)
         if user is None or record is None or record.user_id != user_id:
-            return None
-        if record.status != _PLAN_STATUS_ACTIVE:
             return None
         version = await get_latest_plan_version(conn, plan_id)
         if version is None:
@@ -532,24 +531,23 @@ async def entry(db: Database, user_id: int) -> Entry:
     active = await active_session(db, user_id)
     if active is not None:
         return active
-    async with db.read() as conn:
-        default = await get_default_plan(conn, user_id)
-        plans = [
-            plan
-            for plan in await list_plans_for_user(conn, user_id)
-            if plan.status == _PLAN_STATUS_ACTIVE
-        ]
+    plans = await list_plans(db, user_id)
     if not plans:
         return NoPlan()
-    chosen: PlanRecord | None = None
-    if default is not None and default.status == _PLAN_STATUS_ACTIVE:
-        chosen = default
-    elif len(plans) == 1:
-        chosen = plans[0]
+    default = next((plan for plan in plans if plan.is_default), None)
+    chosen = default if default is not None else plans[0] if len(plans) == 1 else None
     if chosen is None:
         return ChoosePlan(plans=plans)
     suggested = await suggest_workout(db, user_id, chosen.id)
     return suggested if suggested is not None else NoPlan()
+
+
+async def list_plans(db: Database, user_id: int) -> list[PlanRecord]:
+    """Every plan of this user's, the default first, then oldest first (A§4.3: all plans are
+    equal — `/train` offers any of them, `entry` picks the default when there is one)."""
+    async with db.read() as conn:
+        plans = await list_plans_for_user(conn, user_id)
+    return sorted(plans, key=lambda plan: not plan.is_default)
 
 
 async def create_session(
@@ -567,7 +565,7 @@ async def create_session(
         return active
     async with db.transaction() as conn:
         record = await get_plan(conn, plan_id)
-        if record is None or record.user_id != user_id or record.status != _PLAN_STATUS_ACTIVE:
+        if record is None or record.user_id != user_id:
             return None
         version = await get_latest_plan_version(conn, plan_id)
         if version is None:
@@ -1767,8 +1765,10 @@ async def list_sessions_page(
 @dataclass(frozen=True, slots=True)
 class SessionDetail:
     session: WorkoutSessionRecord
-    plan_name: str
-    workout: Workout
+    # Both `None` for an imported session (M11, migration 0007): it belongs to no plan and
+    # has no stored workout, only its set rows.
+    plan_name: str | None
+    workout: Workout | None
     rows: list[SetLogRecord]
     checkins: list[CheckinRecord]
     recap_text: str | None
@@ -1776,13 +1776,21 @@ class SessionDetail:
 
 async def get_session_detail(db: Database, user_id: int, session_id: int) -> SessionDetail | None:
     """A§9.1 `/app/trainings/{id}`: planned vs actual per set, check-ins, and the recap text
-    *if one was already written* (read-only — a page view never calls the LLM, A§4.6)."""
+    *if one was already written* (read-only — a page view never calls the LLM, A§4.6). An
+    imported session shows its set rows with no plan or workout."""
     async with db.read() as conn:
-        ctx = await load_session(conn, user_id, session_id)
-        if ctx is None:
+        session = await get_workout_session(conn, session_id)
+        if session is None or session.user_id != user_id:
             return None
-        started = await started_workout(conn, session_id)
-        workout = started if started is not None else ctx.workout
+        plan_name: str | None = None
+        workout: Workout | None = None
+        if session.plan_version_id is not None:
+            ctx = await load_session(conn, user_id, session_id)
+            if ctx is None:
+                return None
+            started = await started_workout(conn, session_id)
+            workout = started if started is not None else ctx.workout
+            plan_name = ctx.plan_record.name
         rows = await list_set_logs_for_session(conn, session_id)
         checkins = await list_checkins_for_session(conn, session_id)
         progression = await get_latest_session_event_decision(
@@ -1793,8 +1801,8 @@ async def get_session_detail(db: Database, user_id: int, session_id: int) -> Ses
         text = progression.proposal.get("recap_text")
         recap_text = text if isinstance(text, str) else None
     return SessionDetail(
-        session=ctx.session,
-        plan_name=ctx.plan_record.name,
+        session=session,
+        plan_name=plan_name,
         workout=workout,
         rows=rows,
         checkins=checkins,
@@ -1854,6 +1862,7 @@ __all__ = [
     "current_block",
     "delete_sessions",
     "get_session_detail",
+    "list_plans",
     "list_recent_sessions_for_plan",
     "list_sessions_page",
     "entry",

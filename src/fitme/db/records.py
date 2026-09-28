@@ -113,7 +113,9 @@ class HealthHoldRecord:
 class WorkoutSessionRecord:
     id: int
     user_id: int
-    plan_version_id: int
+    # `None` since migration 0007 for an imported session (`fitme history import`): it came
+    # from no stored plan. Every session the bot or the website creates has one.
+    plan_version_id: int | None
     workout_key: str
     status: str
     current_block: int

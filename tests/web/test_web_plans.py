@@ -4,6 +4,7 @@ over-the-cap warning/confirmation flow (logged as a `user_edit` decision with `l
 
 from __future__ import annotations
 
+import html
 from datetime import timedelta
 
 from conftest import SentCode, get_csrf_token, login
@@ -211,3 +212,140 @@ async def test_plan_edit_over_cap_needs_confirmation_and_logs_user_edit(
 async def list_decisions_for_user_helper(db: Database, user_id: int):
     async with db.read() as conn:
         return await list_decisions_for_user(conn, user_id)
+
+
+# --- Rename (all plans are equal, A§4.3) ---------------------------------------------------
+
+
+async def _plan_name(db: Database, plan_id: int) -> str:
+    from fitme.db.selectors.plans import get_plan
+
+    async with db.read() as conn:
+        record = await get_plan(conn, plan_id)
+    assert record is not None
+    return record.name
+
+
+async def test_rename_form_renames_the_plan_and_logs_a_user_edit(
+    client: AsyncClient, db: Database, user_id: int, sent_codes: list[SentCode]
+) -> None:
+    await seed_profile(db, user_id)
+    plan_id, _version_id = await seed_confirmed_plan(db, user_id, make_plan(60.0))
+    await login(client, sent_codes)
+    page = await client.get(f"/app/plans/{plan_id}")
+    assert f'action="/app/plans/{plan_id}/rename"' in page.text
+    token = get_csrf_token(page.text)
+
+    saved = await client.post(
+        f"/app/plans/{plan_id}/rename",
+        data={"csrf_token": token, "name": "  Upper / lower  "},
+        follow_redirects=False,
+    )
+    assert saved.status_code == 303 and saved.headers["location"] == f"/app/plans/{plan_id}"
+    assert await _plan_name(db, plan_id) == "Upper / lower"
+    detail = await client.get(f"/app/plans/{plan_id}")
+    assert "<h1>Upper / lower</h1>" in detail.text
+    user_edits = [
+        d for d in await list_decisions_for_user_helper(db, user_id) if d.kind == "user_edit"
+    ]
+    assert len(user_edits) == 1
+    assert user_edits[0].user_report == {"action": "rename", "plan_id": plan_id}
+    assert user_edits[0].load_changes == []
+
+
+async def test_rename_form_rejects_empty_long_forbidden_and_foreign_names(
+    client: AsyncClient, db: Database, user_id: int, sent_codes: list[SentCode]
+) -> None:
+    await seed_profile(db, user_id)
+    plan_id, _version_id = await seed_confirmed_plan(db, user_id, make_plan(60.0))
+    await login(client, sent_codes)
+    token = get_csrf_token((await client.get(f"/app/plans/{plan_id}")).text)
+
+    for name, message in (
+        ("   ", "The name can't be empty."),
+        ("x" * 61, "The name can be at most 60 characters."),
+        ("my personal trainer plan", "The name can't contain “trainer”."),
+    ):
+        rejected = await client.post(
+            f"/app/plans/{plan_id}/rename", data={"csrf_token": token, "name": name}
+        )
+        assert rejected.status_code == 400, name
+        assert message in html.unescape(rejected.text)
+        assert "<h1>Home strength</h1>" in rejected.text  # the detail page, re-shown
+    assert await _plan_name(db, plan_id) == "Home strength"
+
+    foreign = await client.post(
+        "/app/plans/999/rename", data={"csrf_token": token, "name": "Nope"}, follow_redirects=False
+    )
+    assert foreign.status_code == 303 and foreign.headers["location"] == "/app/plans"
+    assert not any(d.kind == "user_edit" for d in await list_decisions_for_user_helper(db, user_id))
+
+
+async def test_rename_form_requires_the_csrf_token(
+    client: AsyncClient, db: Database, user_id: int, sent_codes: list[SentCode]
+) -> None:
+    await seed_profile(db, user_id)
+    plan_id, _version_id = await seed_confirmed_plan(db, user_id, make_plan(60.0))
+    await login(client, sent_codes)
+    missing = await client.post(f"/app/plans/{plan_id}/rename", data={"name": "New"})
+    assert missing.status_code == 403
+    wrong = await client.post(
+        f"/app/plans/{plan_id}/rename", data={"csrf_token": "bogus", "name": "New"}
+    )
+    assert wrong.status_code == 403
+    assert await _plan_name(db, plan_id) == "Home strength"
+
+
+async def test_plan_list_and_detail_show_no_status(
+    client: AsyncClient, db: Database, user_id: int, sent_codes: list[SentCode]
+) -> None:
+    await seed_profile(db, user_id)
+    plan_id, _version_id = await seed_confirmed_plan(db, user_id, make_plan(60.0))
+    await login(client, sent_codes)
+    listing = await client.get("/app/plans")
+    assert 'class="status"' not in listing.text
+    assert ">default<" in listing.text
+    detail = await client.get(f"/app/plans/{plan_id}")
+    assert "archived" not in detail.text and "Archive" not in detail.text
+
+
+# --- The revise page shows the plan being revised ------------------------------------------
+
+
+async def test_revise_page_shows_the_current_plan_below_the_form(
+    client: AsyncClient, db: Database, user_id: int, sent_codes: list[SentCode]
+) -> None:
+    from fitme.domain.models import Block, Load, Prescription, Workout
+
+    plan = make_plan(60.0)
+    bench = Prescription(
+        exercise_id="dumbbell_bench_press",
+        sets=3,
+        reps_min=8,
+        reps_max=12,
+        load=Load(kind="calibration"),
+        rest_seconds=90,
+        note="pause at the bottom",
+        declared_kg=22.5,
+    )
+    plan.workouts.append(
+        Workout(key="B", title="Push", blocks=[Block(kind="single", items=[bench])])
+    )
+    await seed_profile(db, user_id)
+    plan_id, _version_id = await seed_confirmed_plan(db, user_id, plan)
+    await login(client, sent_codes)
+
+    page = await client.get(f"/app/plans/{plan_id}/revise")
+    assert page.status_code == 200
+    form_end = page.text.index("</form>")
+    body = page.text[form_end:]
+    assert "Monday: A" in body and "Wednesday: A" in body
+    assert "Workout A — Full body" in body and "Workout B — Push" in body
+    assert "Barbell back squat" in body and "3 × 5–8" in body and "60.0 kg" in body
+    assert "Push-up" in body and "bodyweight" in body
+    assert "22.5 kg each" in body and "pause at the bottom" in body
+    assert "calibration" in body
+
+    # The very same partial renders the detail page.
+    detail = await client.get(f"/app/plans/{plan_id}")
+    assert "22.5 kg each" in detail.text and "pause at the bottom" in detail.text

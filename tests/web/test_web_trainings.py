@@ -337,8 +337,9 @@ async def test_weekly_cap_still_blocks_after_deleting_the_increase_session(
 async def test_imported_sessions_are_listed_with_an_imported_label(
     client: AsyncClient, db: Database, user_id: int, sent_codes: list[SentCode]
 ) -> None:
-    """M11: a session written by `fitme history import` (an `import_hash`) shows on the
-    trainings list and its detail page with the "imported" label; an ordinary one doesn't."""
+    """M11: a session written by `fitme history import` (an `import_hash`, no plan version
+    since migration 0007) shows on the trainings list and its detail page with the
+    "imported" label and its set rows; an ordinary one doesn't."""
     from fitme.db.controllers.training import insert_imported_workout_session
 
     version_id = await seed_plan(db, user_id)
@@ -347,8 +348,7 @@ async def test_imported_sessions_are_listed_with_an_imported_label(
         imported_id = await insert_imported_workout_session(
             conn,
             user_id=user_id,
-            plan_version_id=version_id,
-            workout_key="A",
+            workout_key="import",
             performed_at=clock.now() - timedelta(days=30),
             import_hash="a" * 64,
         )
@@ -374,4 +374,9 @@ async def test_imported_sessions_are_listed_with_an_imported_label(
     detail = await client.get(f"/app/trainings/{imported_id}")
     assert detail.status_code == 200
     assert "imported" in detail.text
+    assert "Imported training" in detail.text  # no plan or workout to name
     assert "55" in detail.text
+
+    # The stats charts count it too (a completed session with set rows).
+    stats = await client.get("/api/stats/sessions.json")
+    assert sum(point["value"] for point in stats.json()) == 2

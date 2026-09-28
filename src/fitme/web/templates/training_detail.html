@@ -1,9 +1,16 @@
 {% extends "base.html" %}
+{% from "_breadcrumbs.html" import crumbs with context %}
 {% block title %}{{ t('web.trainings.detail_title') }}{% endblock %}
+{% block breadcrumbs %}{{ crumbs([(t('web.nav.trainings'), '/app/trainings'), (detail.session.started_at|local_dt(timezone), none)]) }}{% endblock %}
 {% block content %}
+<p><a class="back" href="/app/trainings">&larr; {{ t('web.back') }}</a></p>
 <h1>{{ t('web.trainings.detail_title') }}</h1>
 <p>
+  {% if detail.plan_name is not none and detail.workout is not none %}
   {{ detail.plan_name }} &mdash; {{ detail.workout.key }}
+  {% else %}
+  {{ t('history_import.workout_title') }}
+  {% endif %}
   ({{ t('web.trainings.status_' + detail.session.status) }}{% if detail.session.import_hash %}, {{ t('web.trainings.imported') }}{% endif %})
 </p>
 <p>{{ detail.session.started_at|local_dt(timezone) }} &ndash; {{ detail.session.finished_at|local_dt(timezone) }}</p>

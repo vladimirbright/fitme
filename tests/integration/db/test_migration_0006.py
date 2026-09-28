@@ -232,7 +232,7 @@ async def test_upgrade_from_0005_preserves_every_row_and_id(tmp_path: Path) -> N
 
         applied = await migrate(db)  # the real package: 0001-0005 match by checksum
 
-        assert applied == ["0006_history_import.sql"]
+        assert applied == ["0006_history_import.sql", "0007_plans_equal.sql"]
         assert await _snapshot(db) == before  # every row, every id, every source preserved
         assert await _rows(db, "SELECT import_hash FROM workout_sessions") == [(None,)] * 3
         assert await _rows(db, "PRAGMA foreign_keys") == [(1,)]

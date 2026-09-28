@@ -1,5 +1,7 @@
 {% extends "base.html" %}
+{% from "_breadcrumbs.html" import crumbs with context %}
 {% block title %}{{ t('web.account.title') }}{% endblock %}
+{% block breadcrumbs %}{{ crumbs([(t('web.nav.account'), none)]) }}{% endblock %}
 {% block content %}
 <h1>{{ t('web.account.title') }}</h1>
 

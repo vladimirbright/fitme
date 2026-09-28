@@ -162,7 +162,11 @@ async def test_upgrade_from_old_migrations_preserves_ids_and_never_reuses_a_dele
 
         applied = await migrate(db)  # the real package: 0001-0004 match by checksum
 
-        assert applied == ["0005_autoincrement_ids.sql", "0006_history_import.sql"]
+        assert applied == [
+            "0005_autoincrement_ids.sql",
+            "0006_history_import.sql",
+            "0007_plans_equal.sql",
+        ]
         assert await _snapshot(db) == before  # every row, every id, preserved verbatim
         assert await _rows(db, "PRAGMA foreign_key_check") == []
         assert await _rows(db, "PRAGMA foreign_keys") == [(1,)]

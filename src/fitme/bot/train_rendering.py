@@ -73,8 +73,15 @@ def suggestion_text(plan: PlanRecord, workout: Workout, *, scheduled_today: bool
 
 
 def suggestion_markup(
-    plan_id: int, workout: Workout, *, has_others: bool, lang: str
+    plan_id: int,
+    workout: Workout,
+    *,
+    has_others: bool,
+    has_other_plans: bool = False,
+    lang: str,
 ) -> InlineKeyboardMarkup:
+    """Start / Pick another (workout of the same plan) / Another plan (A§4.3: every plan can
+    be trained from at any time, not only the default one)."""
     buttons = [
         InlineKeyboardButton(
             text=t("train.start_button", lang),
@@ -86,6 +93,13 @@ def suggestion_markup(
             InlineKeyboardButton(
                 text=t("train.pick_another_button", lang),
                 callback_data=TrainPick(kind="workouts", plan_id=plan_id).pack(),
+            )
+        )
+    if has_other_plans:
+        buttons.append(
+            InlineKeyboardButton(
+                text=t("train.other_plan_button", lang),
+                callback_data=TrainPick(kind="plans", plan_id=0).pack(),
             )
         )
     return _rows(*buttons)

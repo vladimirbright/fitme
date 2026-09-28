@@ -89,7 +89,7 @@ async def short_stats(db: Database, user_id: int) -> ShortStats:
 
         default_plan = await get_default_plan(conn, user_id)
         plan_body: Plan | None = None
-        if default_plan is not None and default_plan.status == "active":
+        if default_plan is not None:
             version = await get_latest_plan_version(conn, default_plan.id)
             if version is not None:
                 try:

@@ -1,6 +1,9 @@
 {% extends "base.html" %}
-{% block title %}{{ t('web.plans.edit_title') }}{% endblock %}
+{% from "_breadcrumbs.html" import crumbs with context %}
+{% block title %}{{ t('web.plans.edit_title', name=detail.record.name) }}{% endblock %}
+{% block breadcrumbs %}{{ crumbs([(t('web.nav.plans'), '/app/plans'), (detail.record.name, '/app/plans/' ~ detail.record.id), (t('web.plans.edit_crumb'), none)]) }}{% endblock %}
 {% block content %}
+<p><a class="back" href="/app/plans/{{ detail.record.id }}">&larr; {{ t('web.back') }}</a></p>
 <h1>{{ t('web.plans.edit_title', name=detail.record.name) }}</h1>
 <p class="disclosure">{{ t('web.plans.edit_engine_hint') }}</p>
 

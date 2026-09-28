@@ -1,6 +1,9 @@
 {% extends "base.html" %}
+{% from "_breadcrumbs.html" import crumbs with context %}
 {% block title %}{{ t('web.plans.new_title') }}{% endblock %}
+{% block breadcrumbs %}{{ crumbs([(t('web.nav.plans'), '/app/plans'), (t('web.plans.new_crumb'), none)]) }}{% endblock %}
 {% block content %}
+<p><a class="back" href="/app/plans">&larr; {{ t('web.back') }}</a></p>
 <h1>{{ t('web.plans.new_title') }}</h1>
 <p class="disclosure">{{ t('disclosure.ai') }}</p>
 <form method="post" action="/app/plans/new">

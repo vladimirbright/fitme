@@ -7,34 +7,49 @@
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-  {# M9 review ("ALSO" #3): flash messages never echo query-string text back to the page —
-     only a validated integer count, or a fixed allow-listed code, feeds a server-rendered,
-     translated string. #}
-  {% set deleted_count = request.query_params.get('deleted') %}
-  {% if deleted_count is not none and deleted_count.isdigit() %}
-    <p class="flash">{{ t('web.trainings.deleted_flash', n=deleted_count|int) }}</p>
-  {% endif %}
-  {% set error_code = request.query_params.get('error') %}
-  {% if error_code == 'not_found' %}
-    <p class="flash error">{{ t('web.trainings.error_not_found') }}</p>
-  {% endif %}
   {% if session %}
-  <nav class="nav">
-    <a href="/app/plans">{{ t('web.nav.plans') }}</a>
-    <a href="/app/trainings">{{ t('web.nav.trainings') }}</a>
-    <a href="/app/stats">{{ t('web.nav.stats') }}</a>
-    <a href="/app/account">{{ t('web.nav.account') }}</a>
-    <form method="post" action="/auth/logout" class="nav-logout">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-      <button type="submit">{{ t('web.nav.logout') }}</button>
-    </form>
-  </nav>
+  {# The main sections are tabs in a left sidebar (a tab row at phone width); Stats, Account
+     and Log out stay in the top bar. The active tab follows the current URL prefix. #}
+  {% set path = request.url.path %}
+  <header class="topbar">
+    <a class="brand" href="/app/plans">Fitme</a>
+    <nav class="nav">
+      <a href="/app/stats"{% if path.startswith('/app/stats') %} aria-current="page"{% endif %}>{{ t('web.nav.stats') }}</a>
+      <a href="/app/account"{% if path.startswith('/app/account') %} aria-current="page"{% endif %}>{{ t('web.nav.account') }}</a>
+      <form method="post" action="/auth/logout" class="nav-logout">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit">{{ t('web.nav.logout') }}</button>
+      </form>
+    </nav>
+  </header>
   {% endif %}
-  <main>
-    {% block content %}{% endblock %}
-  </main>
-  <footer>
-    <p>{{ t('web.footer') }}</p>
-  </footer>
+  <div class="layout">
+    {% if session %}
+    <nav class="sidebar" aria-label="{{ t('web.nav.sections') }}">
+      <a href="/app/plans"{% if path.startswith('/app/plans') %} aria-current="page"{% endif %}>{{ t('web.nav.plans') }}</a>
+      <a href="/app/trainings"{% if path.startswith('/app/trainings') %} aria-current="page"{% endif %}>{{ t('web.nav.trainings') }}</a>
+    </nav>
+    {% endif %}
+    <div class="content">
+      {# M9 review ("ALSO" #3): flash messages never echo query-string text back to the page —
+         only a validated integer count, or a fixed allow-listed code, feeds a server-rendered,
+         translated string. #}
+      {% set deleted_count = request.query_params.get('deleted') %}
+      {% if deleted_count is not none and deleted_count.isdigit() %}
+        <p class="flash">{{ t('web.trainings.deleted_flash', n=deleted_count|int) }}</p>
+      {% endif %}
+      {% set error_code = request.query_params.get('error') %}
+      {% if error_code == 'not_found' %}
+        <p class="flash error">{{ t('web.trainings.error_not_found') }}</p>
+      {% endif %}
+      {% block breadcrumbs %}{% endblock %}
+      <main>
+        {% block content %}{% endblock %}
+      </main>
+      <footer>
+        <p>{{ t('web.footer') }}</p>
+      </footer>
+    </div>
+  </div>
 </body>
 </html>
