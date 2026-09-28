@@ -90,6 +90,9 @@ make import-history FILE=my.import.toml DRY=1                           # local 
 make import-history FILE=my.import.toml                                 # local dev: import
 ```
 
+To have an LLM convert your notes or chat history into this file, paste the prompt in
+[`docs/import-llm-prompt.md`](docs/import-llm-prompt.md) into that chat.
+
 The import is all-or-nothing per run, idempotent (importing the same file twice adds
 nothing), and reports every session or plan it skipped and why. Imported loads become the
 historical max the safety guards check against; the import itself never counts as a load
