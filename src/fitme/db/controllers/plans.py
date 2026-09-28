@@ -65,6 +65,27 @@ async def rename_plan(conn: aiosqlite.Connection, user_id: int, plan_id: int, na
         raise PlanNotOwnedError(f"plan {plan_id} does not belong to user {user_id}")
 
 
+async def delete_plan(conn: aiosqlite.Connection, user_id: int, plan_id: int) -> None:
+    """Hard delete one of this user's plans and all of its versions (A§4.3 `delete_plan`,
+    web edit page / bot `/plan`, after a confirm step). Raises `PlanNotOwnedError` (nothing
+    changed) if `plan_id` isn't this user's own.
+
+    `plan_versions` has no `BEFORE DELETE` trigger (only `BEFORE UPDATE`, A§4.6 rule 5), so a
+    delete is allowed here. The caller must detach every session that references one of this
+    plan's versions *first* (`training.detach_sessions_for_plan`):
+    `workout_sessions.plan_version_id` is `ON DELETE RESTRICT`, so a still-linked session
+    would abort this delete. `decisions` are never touched — `plan_versions.decision_id` is
+    also `ON DELETE RESTRICT`, and the decision log stays immutable and complete."""
+    async with conn.execute(
+        "SELECT 1 FROM plans WHERE id = ? AND user_id = ?", (plan_id, user_id)
+    ) as cursor:
+        owned = await cursor.fetchone()
+    if owned is None:
+        raise PlanNotOwnedError(f"plan {plan_id} does not belong to user {user_id}")
+    await conn.execute("DELETE FROM plan_versions WHERE plan_id = ?", (plan_id,))
+    await conn.execute("DELETE FROM plans WHERE id = ?", (plan_id,))
+
+
 async def insert_plan_version(
     conn: aiosqlite.Connection,
     *,

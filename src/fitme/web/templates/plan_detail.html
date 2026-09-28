@@ -7,13 +7,24 @@
 <p><a class="back" href="/app/plans">&larr; {{ t('web.back') }}</a></p>
 <h1>{{ detail.record.name }}</h1>
 <p>
-  {% if detail.record.is_default %}{{ t('web.plans.default_badge') }} &mdash; {% endif %}
+  {% if detail.record.is_default %}
+  {{ t('web.plans.default_badge') }} &mdash;
+  {% endif %}
   {{ t('web.plans.version_label', version=detail.version.version) }}
 </p>
+{% if not detail.record.is_default %}
+<form method="post" action="/app/plans/{{ detail.record.id }}/default" class="inline-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <input type="hidden" name="next" value="/app/plans/{{ detail.record.id }}">
+  <button type="submit">{{ t('web.plans.set_default_button') }}</button>
+</form>
+{% endif %}
 <p>
   <a href="/app/plans/{{ detail.record.id }}/edit">{{ t('web.plans.edit_link') }}</a>
   &middot;
   <a href="/app/plans/{{ detail.record.id }}/revise">{{ t('web.plans.revise_link') }}</a>
+  &middot;
+  <a class="button-danger" href="/app/plans/{{ detail.record.id }}/delete">{{ t('web.plans.delete_link') }}</a>
 </p>
 
 {{ plan_body(detail.plan) }}

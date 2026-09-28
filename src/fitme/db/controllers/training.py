@@ -226,6 +226,36 @@ async def clear_health_hold(conn: aiosqlite.Connection, hold_id: int) -> None:
     )
 
 
+async def abort_sessions_for_plan(
+    conn: aiosqlite.Connection, *, user_id: int, plan_id: int
+) -> None:
+    """`services.planning.delete_plan` step 2 (A§4.3): abort this user's unfinished sessions
+    (`draft`/`confirmed`/`in_progress`) on any version of `plan_id`, before they are detached
+    from it. A `completed`, `aborted` or `halted` session is left as it is."""
+    await conn.execute(
+        "UPDATE workout_sessions SET status = 'aborted', finished_at = ? "
+        "WHERE user_id = ? AND status IN ('draft', 'confirmed', 'in_progress') "
+        "AND plan_version_id IN (SELECT id FROM plan_versions WHERE plan_id = ?)",
+        (clock.utc_now(), user_id, plan_id),
+    )
+
+
+async def detach_sessions_for_plan(
+    conn: aiosqlite.Connection, *, user_id: int, plan_id: int
+) -> None:
+    """`services.planning.delete_plan` step 3 (A§4.3): detach every one of this user's
+    sessions (any status) from any version of `plan_id` (`plan_version_id` -> NULL).
+    Training history — the session row, its `set_logs`, `workout_key` — is kept; only the
+    plan link is cleared. Must run before the plan's versions are deleted:
+    `workout_sessions.plan_version_id` is `ON DELETE RESTRICT`."""
+    await conn.execute(
+        "UPDATE workout_sessions SET plan_version_id = NULL "
+        "WHERE user_id = ? "
+        "AND plan_version_id IN (SELECT id FROM plan_versions WHERE plan_id = ?)",
+        (user_id, plan_id),
+    )
+
+
 async def delete_workout_sessions(
     conn: aiosqlite.Connection, *, user_id: int, session_ids: Sequence[int]
 ) -> None:

@@ -31,6 +31,7 @@ from fitme.db.selectors.decisions import (
     list_llm_calls_since,
 )
 from fitme.db.selectors.plans import list_plan_versions, list_plans_for_user
+from fitme.db.selectors.training import historical_max_by_exercise, list_workout_sessions_for_user
 from fitme.domain.enums import AREA_FLAGS, RED_FLAGS, RefusalCode, ScreeningFlag
 from fitme.domain.models import (
     Block,
@@ -1001,6 +1002,158 @@ async def test_rename_plan_validates_and_logs_a_minimal_user_edit(
     assert plans[one].name == "x" * 60  # nothing rejected was saved
     # Only the two successful renames were logged.
     assert len([d for d in await decisions(db, user_id) if d.kind == "user_edit"]) == 2
+
+
+# --- Delete (A§4.3 "any plan can be deleted") -----------------------------------------------
+
+
+async def _rows(db: Database, sql: str) -> list[tuple[object, ...]]:
+    async with db.read() as conn, conn.execute(sql) as cursor:
+        return [tuple(row) for row in await cursor.fetchall()]
+
+
+async def test_delete_plan_aborts_and_detaches_every_session_then_removes_the_plan(
+    db: Database, user_id: int
+) -> None:
+    """A§4.3 `delete_plan` steps 2-4: a `draft`/`confirmed`/`in_progress` session on the
+    plan is aborted; every session (any status) is detached (`plan_version_id` -> NULL,
+    `workout_key` kept, `set_logs` untouched); the plan's versions and row are gone."""
+    plan_id = await _saved_plan_with_squat_history(db, user_id)  # 1 completed session, 40 kg
+    async with db.read() as conn:
+        version = await list_plan_versions(conn, plan_id)
+    version_id = version[-1].id
+
+    async with db.transaction() as conn:
+        draft_session = await insert_workout_session(
+            conn, user_id=user_id, plan_version_id=version_id, workout_key="A", status="draft"
+        )
+        in_progress_session = await insert_workout_session(
+            conn,
+            user_id=user_id,
+            plan_version_id=version_id,
+            workout_key="B",
+            status="in_progress",
+        )
+
+    result = await planning.delete_plan(db, user_id, plan_id)
+
+    assert result.status == planning.DeleteStatus.OK
+    assert await planning.get_plan_detail(db, user_id, plan_id) is None
+    async with db.read() as conn:
+        assert await list_plans_for_user(conn, user_id) == []
+        assert await list_plan_versions(conn, plan_id) == []
+
+    async with db.read() as conn:
+        sessions = {s.id: s for s in await list_workout_sessions_for_user(conn, user_id)}
+    assert len(sessions) == 3
+    for session in sessions.values():
+        assert session.plan_version_id is None  # every session is detached
+    assert sessions[draft_session].status == "aborted"
+    assert sessions[draft_session].workout_key == "A"
+    assert sessions[in_progress_session].status == "aborted"
+    assert sessions[in_progress_session].workout_key == "B"
+    completed_ids = set(sessions) - {draft_session, in_progress_session}
+    assert len(completed_ids) == 1
+    completed = sessions[completed_ids.pop()]
+    assert completed.status == "completed"  # a finished session is left as it is
+    assert completed.workout_key == "A"
+
+    # No dangling FK, and history is untouched (AGENTS.md §2/§4.3: deleting a plan keeps the
+    # data the guards read).
+    assert await _rows(db, "PRAGMA foreign_key_check") == []
+    async with db.read() as conn:
+        assert (await historical_max_by_exercise(conn, user_id))[_SQUAT] == 40.0
+
+
+async def test_delete_plan_reassigns_the_default_to_the_newest_remaining_plan(
+    db: Database, user_id: int
+) -> None:
+    await seed_profile(db, user_id)
+    one, two = await _two_saved_plans(db, user_id)
+    plans = {p.id: p for p in await planning.list_plans(db, user_id)}
+    assert plans[one].is_default and not plans[two].is_default
+
+    # Deleting the non-default plan changes nothing about the default.
+    result = await planning.delete_plan(db, user_id, two)
+    assert result.status == planning.DeleteStatus.OK and result.new_default_plan_id is None
+    plans = {p.id: p for p in await planning.list_plans(db, user_id)}
+    assert plans[one].is_default
+
+    third = await planning.propose_new_plan(
+        db, FakeLlm([make_plan(name="Three")]).runtime(), user_id
+    )
+    saved_third = await planning.confirm_plan(db, _settings(), user_id, third.decision_id)
+    assert saved_third.plan_id is not None and not saved_third.is_default
+
+    # Deleting the default reassigns it to the most recently created remaining plan.
+    result = await planning.delete_plan(db, user_id, one)
+    assert result.status == planning.DeleteStatus.OK
+    assert result.new_default_plan_id == saved_third.plan_id
+    plans = {p.id: p for p in await planning.list_plans(db, user_id)}
+    assert set(plans) == {saved_third.plan_id}
+    assert plans[saved_third.plan_id].is_default
+
+    # Deleting the last plan leaves no default to reassign.
+    result = await planning.delete_plan(db, user_id, saved_third.plan_id)
+    assert result.status == planning.DeleteStatus.OK and result.new_default_plan_id is None
+    assert await planning.list_plans(db, user_id) == []
+
+
+async def test_delete_plan_checks_ownership_and_logs_a_minimal_user_edit(
+    db: Database, user_id: int
+) -> None:
+    await seed_profile(db, user_id)
+    one, two = await _two_saved_plans(db, user_id)
+    before = len(await decisions(db, user_id))
+
+    assert (await planning.delete_plan(db, user_id, 999)).status == planning.DeleteStatus.NOT_FOUND
+    assert (
+        await planning.delete_plan(db, user_id + 1, one)
+    ).status == planning.DeleteStatus.NOT_FOUND
+    # Nothing changed by either rejected call.
+    assert {p.id for p in await planning.list_plans(db, user_id)} == {one, two}
+    assert len(await decisions(db, user_id)) == before
+
+    result = await planning.delete_plan(db, user_id, two)
+    assert result.status == planning.DeleteStatus.OK
+
+    logged = [d for d in await decisions(db, user_id) if d.kind == "user_edit"]
+    assert len(logged) == 1
+    assert logged[0].user_report == {"action": "delete_plan", "plan_id": two}
+    assert logged[0].load_changes == [] and logged[0].proposal is None
+    # The plan's own draft/confirm decisions are kept (append-only, A§4.3: "decisions are
+    # kept"); only the new user_edit decision was added.
+    assert len(await decisions(db, user_id)) == before + 1
+
+
+async def test_deleting_a_plan_does_not_reset_the_weekly_cap_for_other_plans(
+    db: Database, user_id: int
+) -> None:
+    """A§4.3 "deleting a plan never raises what the guards allow": the weekly cap and the
+    ceiling come from `set_logs`/`decisions.load_changes`, never from `plans`. After a plan's
+    `plan_confirm` applies +2.5 this week and that plan is deleted, a *different* plan's
+    confirm the same week still sees the cap as used, not reset."""
+    plan_id = await _confirmed_42_5(db, user_id)  # plan_confirm applied 40 -> 42.5 this week
+
+    deleted = await planning.delete_plan(db, user_id, plan_id)
+    assert deleted.status == planning.DeleteStatus.OK
+    assert await planning.list_plans(db, user_id) == []
+
+    llm = FakeLlm([make_plan(squat_load=Load(kind="kg", kg=45.0), name="Fresh")])
+    result = await planning.propose_new_plan(db, llm.runtime(), user_id)
+
+    assert llm.calls == 1  # load-only substitution, no retry spent
+    assert _squat_load(result.plan) == Load(kind="kg", kg=42.5)
+    rules = {(g.rule, g.ok) for g in result.guards_fired}
+    assert ("progression.weekly_cap", False) in rules
+    assert ("loads.substituted", True) in rules
+    assert result.proposed_load_changes == []
+
+    confirmed = await planning.confirm_plan(db, _settings(), user_id, result.decision_id)
+    assert confirmed.status == planning.ConfirmStatus.SAVED
+    async with db.read() as conn:
+        confirm_decision = await get_decision(conn, confirmed.decision_id or 0)
+    assert confirm_decision is not None and confirm_decision.load_changes == []
 
 
 # --- Output-validation retry (bug fix, M8b) --------------------------------------------------

@@ -219,6 +219,26 @@ async def on_plan_menu(
             t("plan.change_prompt", lang), reply_markup=rendering.cancel_revision_markup(0, lang)
         )
         return
+    if action == "delete":
+        await query.answer()
+        await message.answer(
+            t("plan.delete_confirm_prompt", lang, name=detail.record.name),
+            reply_markup=rendering.delete_confirm_markup(detail.record.id, lang),
+        )
+        return
+    if action == "delete_confirm":
+        await query.answer()
+        result = await planning.delete_plan(db, user_id, detail.record.id)
+        if result.status != planning.DeleteStatus.OK:
+            await message.answer(t("plan.not_found", lang))
+            return
+        await message.answer(t("plan.deleted", lang, name=detail.record.name))
+        await _show_list(message, db, user_id, lang)
+        return
+    if action == "delete_cancel":
+        await query.answer()
+        await message.answer(t("plan.delete_cancelled", lang))
+        return
     await query.answer(t("errors.stale_callback", lang))
 
 

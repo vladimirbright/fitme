@@ -82,6 +82,16 @@ def _revise_trail(detail: planning.PlanDetail, lang: str) -> Trail:
     ]
 
 
+def _delete_trail(detail: planning.PlanDetail, lang: str) -> Trail:
+    """Plans › {plan} › Delete: the delete-confirm page's breadcrumb trail."""
+    href = f"/app/plans/{detail.record.id}"
+    return [
+        *_plans_trail(lang),
+        (detail.record.name, href),
+        (i18n.t("web.plans.delete_crumb", lang), f"{href}/delete"),
+    ]
+
+
 async def _draft_context(
     db: Database, user_id: int, round_result: planning.PlanRoundResult, lang: str
 ) -> dict[str, Any]:
@@ -529,6 +539,78 @@ async def edit_plan_submit(
         warnings=result.warnings or {},
         errors=result.errors or [],
     )
+
+
+# --- Set default (A§9.1: the website had no way to do this; the bot's /plan already does) ----
+
+
+def _default_next(candidate: str | None, plan_id: int) -> str:
+    """A tight whitelist for the "Make default" form's `next` (A§9.4-style): only the plans
+    list or this plan's own detail page, never an arbitrary `/app/...` path."""
+    if candidate in (f"/app/plans/{plan_id}", "/app/plans"):
+        assert candidate is not None
+        return candidate
+    return "/app/plans"
+
+
+@router.post("/{plan_id}/default")
+async def set_default_plan_route(
+    request: Request,
+    plan_id: int,
+    session: SessionState = Depends(require_user),
+    _csrf: None = Depends(verify_csrf_form),
+) -> Response:
+    """Make `plan_id` the one default (`services.planning.set_default`, the same call the
+    bot's `/plan` "Set default" button makes). Redirects back to wherever the form was
+    submitted from (the plans list or this plan's detail page), with an allow-listed flash
+    query code (`base.html`'s `deleted=`/`error=` pattern)."""
+    db = get_db(request)
+    form = await request.form()
+    raw_next = form.get("next")
+    next_url = _default_next(raw_next if isinstance(raw_next, str) else None, plan_id)
+    ok = await planning.set_default(db, session.user_id, plan_id)
+    separator = "&" if "?" in next_url else "?"
+    if not ok:
+        return redirect(f"{next_url}{separator}error=not_found")
+    return redirect(f"{next_url}{separator}plan_default=1")
+
+
+# --- Delete (A§4.3: "any plan can be deleted") ------------------------------------------------
+
+
+@router.get("/{plan_id}/delete")
+async def delete_plan_confirm(
+    request: Request, plan_id: int, session: SessionState = Depends(require_user)
+) -> Response:
+    db = get_db(request)
+    settings = get_settings(request)
+    snapshot = await profile_service.get_snapshot(db, session.user_id)
+    detail = await planning.get_plan_detail(db, session.user_id, plan_id)
+    if detail is None:
+        return redirect("/app/plans")
+    return render(
+        request,
+        "plan_delete_confirm.html",
+        lang=snapshot.language,
+        settings=settings,
+        session=session,
+        detail=detail,
+        trail=_delete_trail(detail, snapshot.language),
+    )
+
+
+@router.post("/{plan_id}/delete")
+async def delete_plan_submit(
+    request: Request,
+    plan_id: int,
+    session: SessionState = Depends(require_user),
+    _csrf: None = Depends(verify_csrf_form),
+) -> Response:
+    db = get_db(request)
+    result = await planning.delete_plan(db, session.user_id, plan_id)
+    if result.status != planning.DeleteStatus.OK:
+        return redirect("/app/plans?error=not_found")
+    return redirect("/app/plans?plan_deleted=1")
 
 
 __all__ = ["router"]

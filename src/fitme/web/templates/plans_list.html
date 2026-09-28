@@ -12,7 +12,15 @@
   {% for plan in plans %}
   <li>
     <a href="/app/plans/{{ plan.id }}">{{ plan.name }}</a>
-    {% if plan.is_default %}<span class="badge">{{ t('web.plans.default_badge') }}</span>{% endif %}
+    {% if plan.is_default %}
+    <span class="badge">{{ t('web.plans.default_badge') }}</span>
+    {% else %}
+    <form method="post" action="/app/plans/{{ plan.id }}/default" class="inline-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="next" value="/app/plans">
+      <button type="submit">{{ t('web.plans.set_default_button') }}</button>
+    </form>
+    {% endif %}
   </li>
   {% endfor %}
 </ul>

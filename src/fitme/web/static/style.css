@@ -229,6 +229,21 @@ th, td {
   border-radius: 4px;
 }
 
+.danger-zone {
+  margin-top: 24px;
+}
+
+.button-danger {
+  display: inline-block;
+  padding: 8px 16px;
+  border: 1px solid var(--error);
+  border-radius: 4px;
+  background: var(--error);
+  color: #fff;
+  text-decoration: none;
+  cursor: pointer;
+}
+
 .badge {
   font-size: 0.8em;
   color: var(--muted);

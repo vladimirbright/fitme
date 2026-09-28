@@ -86,6 +86,7 @@ from fitme.db.controllers.plans import (
     insert_plan_version,
     set_default_plan,
 )
+from fitme.db.controllers.training import abort_sessions_for_plan, detach_sessions_for_plan
 from fitme.db.records import DecisionRecord, PlanRecord, PlanVersionRecord, SessionOutcome
 from fitme.db.selectors.decisions import (
     applied_to_kg_by_exercise,
@@ -1614,9 +1615,79 @@ async def rename_plan(db: Database, user_id: int, plan_id: int, name: str) -> Re
     return RenameResult(status=RenameStatus.OK, name=trimmed)
 
 
+class DeleteStatus(StrEnum):
+    OK = "ok"
+    NOT_FOUND = "not_found"  # not this user's plan (unknown or foreign plan_id)
+
+
+@dataclass(frozen=True, slots=True)
+class DeleteResult:
+    status: DeleteStatus
+    new_default_plan_id: int | None = None  # set when the deleted plan was the default
+
+
+async def delete_plan(db: Database, user_id: int, plan_id: int) -> DeleteResult:
+    """Delete one of this user's plans (A§4.3 "any plan can be deleted"), in ONE transaction:
+
+    1. Ownership check: an unknown or foreign plan is `NOT_FOUND`, nothing changes.
+    2. Abort the user's `draft`/`confirmed`/`in_progress` sessions on any version of this plan
+       (`training.abort_sessions_for_plan`).
+    3. Detach *every* session of this plan's versions (`plan_version_id` -> NULL,
+       `training.detach_sessions_for_plan`). Training history is kept; `workout_key` stays
+       as it is.
+    4. Delete the plan's `plan_versions` rows, then the `plans` row
+       (`db.controllers.plans.delete_plan`) — the detach must happen first, since
+       `workout_sessions.plan_version_id` is `ON DELETE RESTRICT`.
+    5. If the deleted plan was the default, the most recently created remaining plan becomes
+       the new default (`list_plans_for_user` is oldest-first, so the last entry is newest).
+    6. Log `decision(kind=user_edit, user_report={"action": "delete_plan", "plan_id": ...},
+       load_changes=[])`.
+
+    Deleting a plan never raises what the guards allow: history max, the weekly cap and
+    applied lifts come from `set_logs` and `decisions.load_changes`, not `plans` — none of
+    which this touches (A§4.3)."""
+    async with db.transaction() as conn:
+        record = await get_plan(conn, plan_id)
+        if record is None or record.user_id != user_id:
+            return DeleteResult(status=DeleteStatus.NOT_FOUND)
+
+        await abort_sessions_for_plan(conn, user_id=user_id, plan_id=plan_id)
+        await detach_sessions_for_plan(conn, user_id=user_id, plan_id=plan_id)
+        try:
+            await plan_controllers.delete_plan(conn, user_id, plan_id)
+        except PlanNotOwnedError:
+            return DeleteResult(status=DeleteStatus.NOT_FOUND)
+
+        new_default_plan_id: int | None = None
+        if record.is_default:
+            remaining = await list_plans_for_user(conn, user_id)
+            if remaining:
+                newest = remaining[-1]
+                await set_default_plan(conn, user_id, newest.id)
+                new_default_plan_id = newest.id
+
+        await insert_decision(
+            conn,
+            user_id=user_id,
+            kind=DecisionKind.USER_EDIT.value,
+            prompt_template=None,
+            prompt_version=None,
+            model=None,
+            content_version=content_version(),
+            llm_input=None,
+            user_report={"action": "delete_plan", "plan_id": plan_id},
+            proposal=None,
+            guards_fired=[],
+            load_changes=[],
+        )
+    return DeleteResult(status=DeleteStatus.OK, new_default_plan_id=new_default_plan_id)
+
+
 __all__ = [
     "ConfirmResult",
     "ConfirmStatus",
+    "DeleteResult",
+    "DeleteStatus",
     "DraftBase",
     "Inputs",
     "Judgement",
@@ -1633,6 +1704,7 @@ __all__ = [
     "confirm_plan",
     "current_draft_id",
     "declared_loads_of",
+    "delete_plan",
     "draft_proposal",
     "engine_decision",
     "engine_load",

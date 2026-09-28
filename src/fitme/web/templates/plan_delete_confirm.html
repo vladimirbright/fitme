@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "_breadcrumbs.html" import crumbs with context %}
+{% block title %}{{ t('web.plans.delete_confirm_title', name=detail.record.name) }}{% endblock %}
+{% block breadcrumbs %}{{ crumbs(trail) }}{% endblock %}
+{% block content %}
+<p><a class="back" href="/app/plans/{{ detail.record.id }}/edit">&larr; {{ t('web.back') }}</a></p>
+<h1>{{ t('web.plans.delete_confirm_title', name=detail.record.name) }}</h1>
+<p class="warning">{{ t('web.plans.delete_confirm_warning') }}</p>
+<form method="post" action="/app/plans/{{ detail.record.id }}/delete">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <button type="submit" class="button-danger">{{ t('web.plans.delete_confirm_button') }}</button>
+</form>
+<p><a href="/app/plans/{{ detail.record.id }}/edit">{{ t('web.plans.delete_confirm_cancel') }}</a></p>
+{% endblock %}

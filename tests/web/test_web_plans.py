@@ -20,6 +20,8 @@ from fitme.db.controllers.training import insert_set_log, insert_workout_session
 from fitme.db.selectors.decisions import list_decisions_for_user
 from fitme.domain.enums import AREA_FLAGS, RED_FLAGS, DecisionKind
 from fitme.domain.models import Block, Load, Plan, Prescription, ScheduledDay, Workout
+from fitme.i18n import t
+from fitme.services import planning
 
 _SQUAT = "barbell_back_squat"
 
@@ -87,7 +89,9 @@ def make_plan(squat_kg: float) -> Plan:
     )
 
 
-async def seed_confirmed_plan(db: Database, user_id: int, plan: Plan) -> tuple[int, int]:
+async def seed_confirmed_plan(
+    db: Database, user_id: int, plan: Plan, *, is_default: bool = True
+) -> tuple[int, int]:
     async with db.transaction() as conn:
         decision_id = await insert_decision(
             conn,
@@ -104,7 +108,7 @@ async def seed_confirmed_plan(db: Database, user_id: int, plan: Plan) -> tuple[i
             load_changes=[],
         )
         plan_id = await insert_plan(
-            conn, user_id=user_id, name=plan.name, is_default=True, status="active"
+            conn, user_id=user_id, name=plan.name, is_default=is_default, status="active"
         )
         version_id = await insert_plan_version(
             conn,
@@ -349,3 +353,181 @@ async def test_revise_page_shows_the_current_plan_below_the_form(
     # The very same partial renders the detail page.
     detail = await client.get(f"/app/plans/{plan_id}")
     assert "22.5 kg each" in detail.text and "pause at the bottom" in detail.text
+
+
+# --- Delete (A§4.3 "any plan can be deleted") -----------------------------------------------
+
+
+async def test_delete_button_is_on_the_edit_page(
+    client: AsyncClient, db: Database, user_id: int, sent_codes: list[SentCode]
+) -> None:
+    await seed_profile(db, user_id)
+    plan_id, _version_id = await seed_confirmed_plan(db, user_id, make_plan(60.0))
+    await login(client, sent_codes)
+
+    page = await client.get(f"/app/plans/{plan_id}/edit")
+    assert page.status_code == 200
+    assert f'href="/app/plans/{plan_id}/delete"' in page.text
+    assert t("web.plans.delete_link", "en") in page.text
+
+
+async def test_delete_confirm_page_has_breadcrumbs_back_and_warning(
+    client: AsyncClient, db: Database, user_id: int, sent_codes: list[SentCode]
+) -> None:
+    await seed_profile(db, user_id)
+    plan_id, _version_id = await seed_confirmed_plan(db, user_id, make_plan(60.0))
+    await login(client, sent_codes)
+
+    page = await client.get(f"/app/plans/{plan_id}/delete")
+    assert page.status_code == 200
+    assert "Home strength" in page.text  # the plan-name breadcrumb
+    assert t("web.plans.delete_crumb", "en") in page.text
+    assert f'href="/app/plans/{plan_id}/edit"' in page.text  # the "<- Back" link
+    assert t("web.plans.delete_confirm_warning", "en") in html.unescape(page.text)
+    assert f'action="/app/plans/{plan_id}/delete"' in page.text
+
+
+async def test_delete_without_csrf_is_forbidden(
+    client: AsyncClient, db: Database, user_id: int, sent_codes: list[SentCode]
+) -> None:
+    await seed_profile(db, user_id)
+    plan_id, _version_id = await seed_confirmed_plan(db, user_id, make_plan(60.0))
+    await login(client, sent_codes)
+
+    missing = await client.post(f"/app/plans/{plan_id}/delete", data={})
+    assert missing.status_code == 403
+    wrong = await client.post(f"/app/plans/{plan_id}/delete", data={"csrf_token": "bogus"})
+    assert wrong.status_code == 403
+    assert await _plan_name(db, plan_id) == "Home strength"
+
+
+async def test_delete_removes_the_plan_and_a_detached_training_still_renders(
+    client: AsyncClient, db: Database, user_id: int, sent_codes: list[SentCode]
+) -> None:
+    await seed_profile(db, user_id)
+    plan_id, version_id = await seed_confirmed_plan(db, user_id, make_plan(60.0))
+    session_id = await seed_completed_session(db, user_id, version_id, kg=60.0, finished_days_ago=1)
+    await login(client, sent_codes)
+    token = get_csrf_token((await client.get(f"/app/plans/{plan_id}/delete")).text)
+
+    deleted = await client.post(
+        f"/app/plans/{plan_id}/delete", data={"csrf_token": token}, follow_redirects=False
+    )
+    assert deleted.status_code == 303
+    assert deleted.headers["location"] == "/app/plans?plan_deleted=1"
+
+    listing = await client.get("/app/plans?plan_deleted=1")
+    assert t("web.plans.deleted_flash", "en") in listing.text
+    assert "Home strength" not in listing.text
+
+    gone = await client.get(f"/app/plans/{plan_id}", follow_redirects=False)
+    assert gone.status_code == 303 and gone.headers["location"] == "/app/plans"
+
+    # Training history is kept: the training-detail page still renders, no longer showing
+    # the (now-deleted) plan.
+    detail = await client.get(f"/app/trainings/{session_id}")
+    assert detail.status_code == 200
+    assert "Home strength" not in detail.text
+    assert t("history_import.workout_title", "en") in detail.text
+
+
+async def test_delete_of_an_unknown_or_foreign_plan_redirects_with_an_error(
+    client: AsyncClient, db: Database, user_id: int, sent_codes: list[SentCode]
+) -> None:
+    await seed_profile(db, user_id)
+    await login(client, sent_codes)
+    token = get_csrf_token((await client.get("/app/plans")).text)
+
+    missing = await client.post(
+        "/app/plans/999/delete", data={"csrf_token": token}, follow_redirects=False
+    )
+    assert missing.status_code == 303
+    assert missing.headers["location"] == "/app/plans?error=not_found"
+
+    listing = await client.get("/app/plans?error=not_found")
+    assert t("web.error_not_found", "en") in html.unescape(listing.text)
+
+
+# --- Make default (A§9.1: the website had no way to do this; the bot's /plan already does) ---
+
+
+async def test_make_default_button_shows_only_on_non_default_plans(
+    client: AsyncClient, db: Database, user_id: int, sent_codes: list[SentCode]
+) -> None:
+    await seed_profile(db, user_id)
+    one, _v1 = await seed_confirmed_plan(db, user_id, make_plan(60.0))
+    two, _v2 = await seed_confirmed_plan(db, user_id, make_plan(65.0), is_default=False)
+    await login(client, sent_codes)
+
+    listing = await client.get("/app/plans")
+    assert f'action="/app/plans/{two}/default"' in listing.text
+    assert f'action="/app/plans/{one}/default"' not in listing.text
+
+    default_detail = await client.get(f"/app/plans/{one}")
+    assert f'action="/app/plans/{one}/default"' not in default_detail.text
+    non_default_detail = await client.get(f"/app/plans/{two}")
+    assert f'action="/app/plans/{two}/default"' in non_default_detail.text
+
+
+async def test_make_default_without_csrf_is_forbidden(
+    client: AsyncClient, db: Database, user_id: int, sent_codes: list[SentCode]
+) -> None:
+    await seed_profile(db, user_id)
+    one, _v1 = await seed_confirmed_plan(db, user_id, make_plan(60.0))
+    two, _v2 = await seed_confirmed_plan(db, user_id, make_plan(65.0), is_default=False)
+    await login(client, sent_codes)
+
+    missing = await client.post(f"/app/plans/{two}/default", data={})
+    assert missing.status_code == 403
+    plans = {p.id: p for p in await planning.list_plans(db, user_id)}
+    assert plans[one].is_default and not plans[two].is_default
+
+
+async def test_make_default_sets_exactly_one_default_and_redirects_with_flash(
+    client: AsyncClient, db: Database, user_id: int, sent_codes: list[SentCode]
+) -> None:
+    await seed_profile(db, user_id)
+    one, _v1 = await seed_confirmed_plan(db, user_id, make_plan(60.0))
+    two, _v2 = await seed_confirmed_plan(db, user_id, make_plan(65.0), is_default=False)
+    await login(client, sent_codes)
+    token = get_csrf_token((await client.get("/app/plans")).text)
+
+    made_default = await client.post(
+        f"/app/plans/{two}/default",
+        data={"csrf_token": token, "next": f"/app/plans/{two}"},
+        follow_redirects=False,
+    )
+    assert made_default.status_code == 303
+    assert made_default.headers["location"] == f"/app/plans/{two}?plan_default=1"
+
+    plans = {p.id: p for p in await planning.list_plans(db, user_id)}
+    assert plans[two].is_default and not plans[one].is_default
+    assert sum(1 for p in plans.values() if p.is_default) == 1
+
+    detail = await client.get(f"/app/plans/{two}?plan_default=1")
+    assert t("web.plans.default_set_flash", "en") in detail.text
+
+    # An arbitrary `next` is not honored: it falls back to the plans list.
+    back_to_one = await client.post(
+        f"/app/plans/{one}/default",
+        data={"csrf_token": token, "next": "/app/account"},
+        follow_redirects=False,
+    )
+    assert back_to_one.headers["location"] == "/app/plans?plan_default=1"
+
+
+async def test_make_default_for_a_foreign_or_unknown_plan_errors(
+    client: AsyncClient, db: Database, user_id: int, sent_codes: list[SentCode]
+) -> None:
+    await seed_profile(db, user_id)
+    one, _v1 = await seed_confirmed_plan(db, user_id, make_plan(60.0))
+    await login(client, sent_codes)
+    token = get_csrf_token((await client.get("/app/plans")).text)
+
+    missing = await client.post(
+        "/app/plans/999/default", data={"csrf_token": token}, follow_redirects=False
+    )
+    assert missing.status_code == 303
+    assert missing.headers["location"] == "/app/plans?error=not_found"
+    plans = {p.id: p for p in await planning.list_plans(db, user_id)}
+    assert plans[one].is_default

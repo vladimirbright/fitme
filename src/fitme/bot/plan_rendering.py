@@ -226,11 +226,36 @@ def plan_actions_markup(record: PlanRecord, lang: str) -> InlineKeyboardMarkup:
         ),
     )
     builder.add(
+        InlineKeyboardButton(
+            text=t("plan.delete_button", lang),
+            callback_data=PlanMenu(action="delete", plan_id=record.id).pack(),
+        )
+    )
+    builder.add(
         _new_plan_button(lang),
         _paste_plan_button(lang),
         InlineKeyboardButton(
             text=t("plan.back_to_list_button", lang),
             callback_data=PlanMenu(action="list", plan_id=0).pack(),
+        ),
+    )
+    builder.adjust(1)
+    return builder.as_markup()
+
+
+def delete_confirm_markup(plan_id: int, lang: str) -> InlineKeyboardMarkup:
+    """Yes / No for the delete confirm step (A§4.3), stale-safe like every other `/plan`
+    callback: both buttons carry the plan id, which `on_plan_menu` re-checks against the
+    user's own plans before deleting anything."""
+    builder = InlineKeyboardBuilder()
+    builder.add(
+        InlineKeyboardButton(
+            text=t("plan.delete_yes_button", lang),
+            callback_data=PlanMenu(action="delete_confirm", plan_id=plan_id).pack(),
+        ),
+        InlineKeyboardButton(
+            text=t("plan.delete_no_button", lang),
+            callback_data=PlanMenu(action="delete_cancel", plan_id=plan_id).pack(),
         ),
     )
     builder.adjust(1)

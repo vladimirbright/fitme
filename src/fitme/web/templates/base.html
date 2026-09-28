@@ -38,9 +38,17 @@
       {% if deleted_count is not none and deleted_count.isdigit() %}
         <p class="flash">{{ t('web.trainings.deleted_flash', n=deleted_count|int) }}</p>
       {% endif %}
+      {% set plan_deleted = request.query_params.get('plan_deleted') %}
+      {% if plan_deleted == '1' %}
+        <p class="flash">{{ t('web.plans.deleted_flash') }}</p>
+      {% endif %}
+      {% set plan_default = request.query_params.get('plan_default') %}
+      {% if plan_default == '1' %}
+        <p class="flash">{{ t('web.plans.default_set_flash') }}</p>
+      {% endif %}
       {% set error_code = request.query_params.get('error') %}
       {% if error_code == 'not_found' %}
-        <p class="flash error">{{ t('web.trainings.error_not_found') }}</p>
+        <p class="flash error">{{ t('web.error_not_found') }}</p>
       {% endif %}
       {% block breadcrumbs %}{% endblock %}
       <main>

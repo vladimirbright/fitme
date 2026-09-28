@@ -480,6 +480,68 @@ async def test_stop_word_in_rename_text_halts_and_renames_nothing(
     assert _sent_messages(session)[-1].text == t("unknown.free_text_hint", "en")
 
 
+async def test_delete_from_the_list_with_a_yes_no_confirm_and_a_stale_second_tap(
+    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
+) -> None:
+    """A§4.3 "any plan can be deleted": the confirm step, No first (nothing happens), then
+    Yes (the plan is gone and a second Yes on the same plan is a stale toast, not a second
+    delete)."""
+    user_id, one, two = await _two_confirmed_plans(dispatcher, bot, session, db, llm)
+
+    await _click(dispatcher, bot, PlanMenu(action="view", plan_id=two.id))
+    view = _sent_messages(session)[-1]
+    assert PlanMenu(action="delete", plan_id=two.id).pack() in _callback_datas(view)
+
+    await _click(dispatcher, bot, PlanMenu(action="delete", plan_id=two.id))
+    prompt = _sent_messages(session)[-1]
+    assert prompt.text == t("plan.delete_confirm_prompt", "en", name="Two")
+    datas = _callback_datas(prompt)
+    assert PlanMenu(action="delete_confirm", plan_id=two.id).pack() in datas
+    assert PlanMenu(action="delete_cancel", plan_id=two.id).pack() in datas
+
+    # No: nothing is deleted.
+    await _click(dispatcher, bot, PlanMenu(action="delete_cancel", plan_id=two.id))
+    assert _sent_messages(session)[-1].text == t("plan.delete_cancelled", "en")
+    async with db.read() as conn:
+        assert {p.id for p in await list_plans_for_user(conn, user_id)} == {one.id, two.id}
+
+    # Yes: it's gone, and the list is shown again.
+    await _click(dispatcher, bot, PlanMenu(action="delete", plan_id=two.id))
+    await _click(dispatcher, bot, PlanMenu(action="delete_confirm", plan_id=two.id))
+    texts = [m.text or "" for m in _sent_messages(session)]
+    assert t("plan.deleted", "en", name="Two") in texts
+    async with db.read() as conn:
+        remaining = await list_plans_for_user(conn, user_id)
+    assert [p.id for p in remaining] == [one.id]
+    listing = _sent_messages(session)[-1]
+    assert listing.text is not None and "Two" not in listing.text
+
+    # A stale second tap of the same Yes button (or an unknown plan) is a toast, not a crash.
+    await _click(dispatcher, bot, PlanMenu(action="delete_confirm", plan_id=two.id))
+    assert _toasts(session)[-1] == t("errors.stale_callback", "en")
+    await _click(dispatcher, bot, PlanMenu(action="delete", plan_id=999))
+    assert _toasts(session)[-1] == t("errors.stale_callback", "en")
+
+
+async def test_deleting_the_default_plan_reassigns_it_to_the_newest_remaining_plan(
+    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
+) -> None:
+    user_id, one, two = await _two_confirmed_plans(dispatcher, bot, session, db, llm)
+    assert one.is_default and not two.is_default
+
+    await _click(dispatcher, bot, PlanMenu(action="delete", plan_id=one.id))
+    await _click(dispatcher, bot, PlanMenu(action="delete_confirm", plan_id=one.id))
+    assert t("plan.deleted", "en", name="One") in [m.text or "" for m in _sent_messages(session)]
+
+    async with db.read() as conn:
+        remaining = await list_plans_for_user(conn, user_id)
+    assert len(remaining) == 1 and remaining[0].id == two.id and remaining[0].is_default
+
+    await _send(dispatcher, bot, "/plan")
+    listing = _sent_messages(session)[-1].text or ""
+    assert "Two" in listing and t("plan.default_marker", "en") in listing and "One" not in listing
+
+
 async def test_long_plan_is_split_into_several_messages(
     dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
 ) -> None:

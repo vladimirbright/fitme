@@ -10,6 +10,7 @@ from fitme.db.connection import Database
 from fitme.db.controllers.decisions import insert_decision
 from fitme.db.controllers.plans import (
     PlanNotOwnedError,
+    delete_plan,
     insert_plan,
     insert_plan_version,
     rename_plan,
@@ -156,3 +157,41 @@ async def test_rename_plan_updates_the_name_and_rejects_an_unowned_plan_id(
     async with db.read() as conn:
         plan = await get_plan(conn, plan_id)
     assert plan is not None and plan.name == "Q"
+
+
+async def test_delete_plan_removes_the_versions_then_the_plan_and_rejects_an_unowned_id(
+    db: Database, user_id: int
+) -> None:
+    """A§4.6 rule 5: `plan_versions` has no `BEFORE DELETE` trigger (only `BEFORE UPDATE`), so
+    the controller's delete is allowed. A plan_id that isn't this user's own (ADR 0002: one
+    that was never inserted, exactly like a stranger's) raises and changes nothing."""
+    decision_id = await _insert_decision(db, user_id)
+    async with db.transaction() as conn:
+        plan_id = await insert_plan(
+            conn, user_id=user_id, name="Plan A", is_default=True, status="active"
+        )
+        await insert_plan_version(
+            conn,
+            plan_id=plan_id,
+            version=1,
+            body={"name": "Plan A", "workouts": []},
+            origin="llm",
+            decision_id=decision_id,
+        )
+
+    with pytest.raises(PlanNotOwnedError):
+        async with db.transaction() as conn:
+            await delete_plan(conn, user_id, plan_id + 1000)
+    with pytest.raises(PlanNotOwnedError):
+        async with db.transaction() as conn:
+            await delete_plan(conn, user_id + 1, plan_id)
+    async with db.read() as conn:
+        assert await get_plan(conn, plan_id) is not None  # untouched by the rejected calls
+
+    async with db.transaction() as conn:
+        await delete_plan(conn, user_id, plan_id)
+
+    async with db.read() as conn:
+        assert await get_plan(conn, plan_id) is None
+        assert await list_plan_versions(conn, plan_id) == []
+        assert await list_plans_for_user(conn, user_id) == []

@@ -88,4 +88,8 @@
 
   <button type="submit">{{ t('web.plans.edit_save_button') }}</button>
 </form>
+
+<p class="danger-zone">
+  <a class="button-danger" href="/app/plans/{{ detail.record.id }}/delete">{{ t('web.plans.delete_link') }}</a>
+</p>
 {% endblock %}

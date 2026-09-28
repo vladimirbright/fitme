@@ -11,8 +11,10 @@ from fitme.db.connection import Database
 from fitme.db.controllers.decisions import insert_decision
 from fitme.db.controllers.plans import insert_plan, insert_plan_version
 from fitme.db.controllers.training import (
+    abort_sessions_for_plan,
     answer_checkin,
     clear_health_hold,
+    detach_sessions_for_plan,
     finish_workout_session,
     insert_checkin,
     insert_health_hold,
@@ -68,6 +70,39 @@ async def _insert_plan_version(db: Database, user_id: int) -> int:
             origin="llm",
             decision_id=decision_id,
         )
+
+
+async def _insert_plan_and_version(
+    db: Database, user_id: int, *, name: str = "Plan A", is_default: bool = True
+) -> tuple[int, int]:
+    """Like `_insert_plan_version`, but also returns the `plans.id` (needed by
+    `abort_sessions_for_plan`/`detach_sessions_for_plan`, which key off `plan_id`)."""
+    async with db.transaction() as conn:
+        decision_id = await insert_decision(
+            conn,
+            user_id=user_id,
+            kind="plan_generate",
+            prompt_template=None,
+            prompt_version=None,
+            model=None,
+            content_version="abc123def456",
+            llm_input=None,
+            user_report=None,
+            proposal=None,
+            guards_fired=[],
+        )
+        plan_id = await insert_plan(
+            conn, user_id=user_id, name=name, is_default=is_default, status="active"
+        )
+        version_id = await insert_plan_version(
+            conn,
+            plan_id=plan_id,
+            version=1,
+            body={"name": name, "workouts": []},
+            origin="llm",
+            decision_id=decision_id,
+        )
+    return plan_id, version_id
 
 
 async def test_workout_session_lifecycle(db: Database, user_id: int) -> None:
@@ -745,3 +780,107 @@ async def test_historical_max_by_exercise_before_session_excludes_that_session(
     assert before == {"barbell_back_squat": 40.0}
     assert overall == {"barbell_back_squat": 45.0}
     assert nothing == {"barbell_back_squat": 45.0}
+
+
+# --- delete_plan (A§4.3 "any plan can be deleted") support: abort + detach -------------------
+
+
+async def test_abort_sessions_for_plan_only_touches_unfinished_sessions_of_that_plan(
+    db: Database, user_id: int
+) -> None:
+    plan_id, version_id = await _insert_plan_and_version(db, user_id, name="Plan A")
+    _other_plan_id, other_version_id = await _insert_plan_and_version(
+        db, user_id, name="Plan B", is_default=False
+    )
+
+    async with db.transaction() as conn:
+        draft = await insert_workout_session(
+            conn, user_id=user_id, plan_version_id=version_id, workout_key="A", status="draft"
+        )
+        confirmed = await insert_workout_session(
+            conn, user_id=user_id, plan_version_id=version_id, workout_key="A", status="confirmed"
+        )
+        in_progress = await insert_workout_session(
+            conn,
+            user_id=user_id,
+            plan_version_id=version_id,
+            workout_key="A",
+            status="in_progress",
+        )
+        completed = await insert_workout_session(
+            conn, user_id=user_id, plan_version_id=version_id, workout_key="A", status="completed"
+        )
+        other = await insert_workout_session(
+            conn,
+            user_id=user_id,
+            plan_version_id=other_version_id,
+            workout_key="A",
+            status="draft",
+        )
+
+    async with db.transaction() as conn:
+        await abort_sessions_for_plan(conn, user_id=user_id, plan_id=plan_id)
+
+    async with db.read() as conn:
+        sessions = {s.id: s for s in await list_workout_sessions_for_user(conn, user_id)}
+    assert sessions[draft].status == "aborted" and sessions[draft].finished_at is not None
+    assert sessions[confirmed].status == "aborted"
+    assert sessions[in_progress].status == "aborted"
+    assert sessions[completed].status == "completed"  # left as it is
+    assert sessions[other].status == "draft"  # a different plan: untouched
+    # Every session is still linked; abort alone never detaches.
+    assert sessions[draft].plan_version_id == version_id
+    assert sessions[other].plan_version_id == other_version_id
+
+
+async def test_detach_sessions_for_plan_clears_plan_version_id_for_every_status(
+    db: Database, user_id: int
+) -> None:
+    plan_id, version_id = await _insert_plan_and_version(db, user_id, name="Plan A")
+    _other_plan_id, other_version_id = await _insert_plan_and_version(
+        db, user_id, name="Plan B", is_default=False
+    )
+
+    async with db.transaction() as conn:
+        completed = await insert_workout_session(
+            conn, user_id=user_id, plan_version_id=version_id, workout_key="A", status="completed"
+        )
+        aborted = await insert_workout_session(
+            conn, user_id=user_id, plan_version_id=version_id, workout_key="B", status="aborted"
+        )
+        other = await insert_workout_session(
+            conn,
+            user_id=user_id,
+            plan_version_id=other_version_id,
+            workout_key="A",
+            status="completed",
+        )
+        await insert_set_log(
+            conn,
+            session_id=completed,
+            exercise_id="barbell_back_squat",
+            set_index=1,
+            planned_load_kg=40.0,
+            planned_reps_min=5,
+            planned_reps_max=8,
+            actual_load_kg=40.0,
+            actual_reps=8,
+            rpe=None,
+            source="button",
+        )
+
+    async with db.transaction() as conn:
+        await detach_sessions_for_plan(conn, user_id=user_id, plan_id=plan_id)
+
+    async with db.read() as conn:
+        sessions = {s.id: s for s in await list_workout_sessions_for_user(conn, user_id)}
+        history = await historical_max_by_exercise(conn, user_id)
+    assert sessions[completed].plan_version_id is None
+    assert sessions[completed].workout_key == "A"  # kept as it is
+    assert sessions[completed].status == "completed"  # status untouched by detach
+    assert sessions[aborted].plan_version_id is None
+    assert sessions[aborted].workout_key == "B"
+    assert sessions[other].plan_version_id == other_version_id  # a different plan: untouched
+    # Set logs (and so the historical max) survive the detach: A§4.3 "training history is
+    # kept".
+    assert history["barbell_back_squat"] == 40.0
