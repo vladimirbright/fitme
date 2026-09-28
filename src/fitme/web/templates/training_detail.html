@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}{{ t('web.trainings.detail_title') }}{% endblock %}
+{% block content %}
+<h1>{{ t('web.trainings.detail_title') }}</h1>
+<p>
+  {{ detail.plan_name }} &mdash; {{ detail.workout.key }}
+  ({{ t('web.trainings.status_' + detail.session.status) }})
+</p>
+<p>{{ detail.session.started_at|local_dt(timezone) }} &ndash; {{ detail.session.finished_at|local_dt(timezone) }}</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>{{ t('web.trainings.col_exercise') }}</th>
+      <th>#</th>
+      <th>{{ t('web.trainings.col_planned') }}</th>
+      <th>{{ t('web.trainings.col_actual') }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in detail.rows %}
+    <tr>
+      <td>{{ exercise_names.get(row.exercise_id, row.exercise_id) }}</td>
+      <td>{{ row.set_index }}</td>
+      <td>
+        {% if row.planned_reps_min is not none %}{{ row.planned_reps_min }}&ndash;{{ row.planned_reps_max }}{% endif %}
+        {% if row.planned_load_kg is not none %}@ {{ t('web.kg_value', value=row.planned_load_kg) }}{% endif %}
+      </td>
+      <td>
+        {% if row.skipped %}{{ t('web.trainings.skipped') }}
+        {% elif row.actual_reps is not none %}
+          {{ row.actual_reps }} {% if row.actual_load_kg is not none %}@ {{ t('web.kg_value', value=row.actual_load_kg) }}{% endif %}
+        {% else %}&ndash;{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if detail.checkins %}
+<h2>{{ t('web.trainings.checkins_title') }}</h2>
+<ul>
+  {% for checkin in detail.checkins %}
+  <li>{{ checkin.question_key }}: {{ t('enum.checkin_answer.' + checkin.answer) }}</li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+{% if detail.recap_text %}
+<h2>{{ t('web.trainings.recap_title') }}</h2>
+<p>{{ detail.recap_text }}</p>
+{% endif %}
+
+<form method="post" action="/app/trainings/delete/confirm">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <input type="hidden" name="ids" value="{{ detail.session.id }}">
+  <input type="hidden" name="next" value="/app/trainings">
+  <button type="submit">{{ t('web.trainings.delete_this') }}</button>
+</form>
+{% endblock %}

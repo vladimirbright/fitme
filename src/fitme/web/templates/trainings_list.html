@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}{{ t('web.trainings.list_title') }}{% endblock %}
+{% block content %}
+<h1>{{ t('web.trainings.list_title') }}</h1>
+
+{% if not result.items %}
+<p>{{ t('web.trainings.empty') }}</p>
+{% else %}
+<form method="post" action="/app/trainings/delete/confirm">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <input type="hidden" name="next" value="/app/trainings">
+  <table>
+    <thead>
+      <tr>
+        <th></th>
+        <th>{{ t('web.trainings.col_date') }}</th>
+        <th>{{ t('web.trainings.col_workout') }}</th>
+        <th>{{ t('web.trainings.col_status') }}</th>
+        <th>{{ t('web.trainings.col_sets') }}</th>
+        <th>{{ t('web.trainings.col_volume') }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in result.items %}
+      <tr>
+        <td><input type="checkbox" name="ids" value="{{ item.session.id }}"></td>
+        <td><a href="/app/trainings/{{ item.session.id }}">{{ item.session.started_at|local_dt(timezone) }}</a></td>
+        <td>{{ item.session.workout_key }}</td>
+        <td>{{ t('web.trainings.status_' + item.session.status) }}</td>
+        <td>{{ item.sets_done }}/{{ item.sets_planned }}</td>
+        <td>{{ t('web.kg_value', value=item.volume_kg|round(1)) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <button type="submit">{{ t('web.trainings.delete_selected') }}</button>
+</form>
+
+<nav class="pagination">
+  {% if result.page > 1 %}<a href="/app/trainings?page={{ result.page - 1 }}">{{ t('web.pagination.prev') }}</a>{% endif %}
+  <span>{{ t('web.pagination.page_of', page=result.page, total=result.total_pages) }}</span>
+  {% if result.page < result.total_pages %}<a href="/app/trainings?page={{ result.page + 1 }}">{{ t('web.pagination.next') }}</a>{% endif %}
+</nav>
+{% endif %}
+{% endblock %}

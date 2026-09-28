@@ -44,6 +44,34 @@ _TABLES_WITHOUT_USER_ID_SINGLE_USER_ONLY: tuple[str, ...] = (
 
 _INSTANCE_WIDE_TABLES: tuple[str, ...] = ("activation_codes", "activation_state")
 
+# M9 review ("ALSO" #11): a column omitted from the export entirely, because a SHA-256 hash of
+# a one-time code or a session id tells the user nothing about their own account — it's
+# meaningless without the original value, which is never stored (A§4.1). Dropping it here is
+# plain data minimization (AGENTS.md §5), even though the hash alone can't be used to derive
+# the original code or forge a session. Keyed by table name; every table not listed here is
+# exported in full.
+_OMIT_COLUMNS: dict[str, frozenset[str]] = {
+    "login_codes": frozenset({"code_hash"}),
+    "web_sessions": frozenset({"id_hash"}),
+    "activation_codes": frozenset({"code_hash"}),
+}
+
+
+async def _table_columns(conn: aiosqlite.Connection, table: str) -> list[str]:
+    async with conn.execute(f"PRAGMA table_info({table})") as cursor:  # nosec: hard-coded tuple
+        rows = await cursor.fetchall()
+    return [str(row[1]) for row in rows]
+
+
+async def _select_columns(conn: aiosqlite.Connection, table: str) -> str:
+    """`table`'s columns, comma-joined, minus anything in `_OMIT_COLUMNS` — `SELECT *` for any
+    table with no entry there."""
+    omit = _OMIT_COLUMNS.get(table)
+    if not omit:
+        return "*"
+    columns = [name for name in await _table_columns(conn, table) if name not in omit]
+    return ", ".join(columns)
+
 
 async def export_all(conn: aiosqlite.Connection, user_id: int) -> dict[str, list[ExportedRow]]:
     """Every row belonging to this user, keyed by table name.
@@ -59,8 +87,9 @@ async def export_all(conn: aiosqlite.Connection, user_id: int) -> dict[str, list
         result["users"] = [dict(row) async for row in cursor]
 
     for table in _TABLES_BY_USER_ID:
+        columns = await _select_columns(conn, table)
         async with conn.execute(
-            f"SELECT * FROM {table} WHERE user_id = ?",
+            f"SELECT {columns} FROM {table} WHERE user_id = ?",
             (user_id,),  # nosec: hard-coded tuple
         ) as cursor:
             result[table] = [dict(row) async for row in cursor]
@@ -68,7 +97,8 @@ async def export_all(conn: aiosqlite.Connection, user_id: int) -> dict[str, list
     # Single-user instance (ADR 0002): every row in these tables already belongs to the
     # one user, since none of them carry a user_id column at all.
     for table in _TABLES_WITHOUT_USER_ID_SINGLE_USER_ONLY + _INSTANCE_WIDE_TABLES:
-        async with conn.execute(f"SELECT * FROM {table}") as cursor:  # nosec: hard-coded tuple
+        columns = await _select_columns(conn, table)
+        async with conn.execute(f"SELECT {columns} FROM {table}") as cursor:  # nosec
             result[table] = [dict(row) async for row in cursor]
 
     return result

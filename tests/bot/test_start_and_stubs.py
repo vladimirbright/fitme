@@ -1,5 +1,5 @@
-"""`/start` (bound, no profile vs. bound, with profile), `/cancel`, and the M9 stub
-commands (`/stats`, `/system`) reply "not available yet" for now."""
+"""`/start` (bound, no profile vs. bound, with profile) and `/cancel`. `/stats`/`/system`
+(M9) have their own tests in `tests/bot/test_stats_system.py`."""
 
 from __future__ import annotations
 
@@ -73,17 +73,3 @@ async def test_cancel_does_not_wipe_setup_progress(
     text = session.last_sent_text()
     assert text is not None
     assert "/start" in text  # "setup is paused, resume with /start" (not the generic message)
-
-
-async def test_stub_commands_reply_not_available_yet(
-    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database
-) -> None:
-    await _run_full_setup_with_no_red_flags(dispatcher, bot, db)
-    owner = make_user(OWNER_CHAT_ID)
-
-    for command in ("/stats", "/system"):
-        await dispatcher.feed_update(
-            bot, message_update(user=owner, chat_id=OWNER_CHAT_ID, text=command)
-        )
-        text = session.last_sent_text()
-        assert text is not None

@@ -43,6 +43,8 @@ class LoginCodeRecord:
     expires_at: str
     attempts: int
     used_at: str | None
+    # Nullable: rows written before M9's 0004 migration have none (see that migration).
+    created_at: str | None = None
 
 
 @dataclass(frozen=True, slots=True)

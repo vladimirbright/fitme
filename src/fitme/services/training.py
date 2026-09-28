@@ -57,7 +57,8 @@ the reference back to a load the user just failed at within the same week; the e
 from __future__ import annotations
 
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from datetime import timedelta
 from enum import StrEnum
 from zoneinfo import ZoneInfo
 
@@ -69,6 +70,8 @@ from fitme.db.connection import Connection, Database
 from fitme.db.controllers.decisions import insert_decision, insert_decision_outcome
 from fitme.db.controllers.plans import insert_plan_version
 from fitme.db.controllers.training import (
+    SessionsNotOwnedError,
+    delete_workout_sessions,
     finish_workout_session,
     insert_checkin,
     insert_set_log,
@@ -79,6 +82,7 @@ from fitme.db.controllers.training import (
     update_workout_session_progress,
 )
 from fitme.db.records import (
+    CheckinRecord,
     DecisionRecord,
     PlanRecord,
     PlanVersionRecord,
@@ -98,11 +102,16 @@ from fitme.db.selectors.plans import (
 )
 from fitme.db.selectors.profile import list_screening_flags
 from fitme.db.selectors.training import (
+    count_workout_sessions_for_user,
     get_active_workout_session,
     get_workout_session,
     last_completed_workout_key_for_plan,
     list_checkins_for_session,
     list_set_logs_for_session,
+    list_workout_sessions_page,
+)
+from fitme.db.selectors.training import (
+    recent_sessions_for_plan as _recent_sessions_for_plan_rows,
 )
 from fitme.db.selectors.users import get_user
 from fitme.domain.catalog import Catalog, Exercise
@@ -125,6 +134,7 @@ from fitme.llm.context import render_user_prompt
 from fitme.llm.escalation import run_with_escalation
 from fitme.llm.models import model_for
 from fitme.llm.usage import AgentRunOutcome, record_llm_call, run_agent
+from fitme.services import catalog as catalog_service
 from fitme.services import planning
 from fitme.services.llm_runtime import LlmRuntime
 from fitme.services.safety import HaltResult, halt
@@ -1558,6 +1568,240 @@ async def confirm_results(
         return ConfirmResults(status=Status.OK, advance=await _advance(conn, progress))
 
 
+# --- Delete (A§9.4, website) -------------------------------------------------------------------
+
+_UNFINISHED_SESSION_STATUSES = frozenset(
+    {
+        WorkoutSessionStatus.DRAFT.value,
+        WorkoutSessionStatus.CONFIRMED.value,
+        WorkoutSessionStatus.IN_PROGRESS.value,
+    }
+)
+
+
+class DeleteSessionsStatus(StrEnum):
+    OK = "ok"
+    NOT_FOUND = "not_found"  # a foreign or unknown id: nothing was deleted (whole batch)
+
+
+@dataclass(frozen=True, slots=True)
+class DeletedSessionSummary:
+    """One deleted session's identifying details, as recorded in the `session_delete`
+    decision's `user_report` (A§9.4: "dates, workout keys and set counts. It does not hold a
+    copy of the set data.")."""
+
+    session_id: int
+    workout_key: str
+    status: str
+    started_at: str | None
+    finished_at: str | None
+    set_count: int
+
+
+@dataclass(frozen=True, slots=True)
+class DeleteSessionsResult:
+    status: DeleteSessionsStatus
+    deleted: tuple[DeletedSessionSummary, ...] = ()
+    decision_id: int | None = None
+
+
+async def delete_sessions(
+    db: Database, user_id: int, session_ids: Sequence[int]
+) -> DeleteSessionsResult:
+    """A§9.4: hard-delete a batch of this user's own training sessions and log one
+    `decision(kind=session_delete)`. Any id that isn't this user's own or doesn't exist
+    aborts the whole batch (`NOT_FOUND`, nothing deleted) — checked first, in a read unit, so
+    the transaction that follows only ever does real work.
+
+    What's deleted, kept or detached is `db.controllers.training.delete_workout_sessions`'s
+    job (A§9.4: `set_logs`/`chat_messages` cascade, `health_holds`/non-`fine` `checkins` are
+    detached, `fine` check-ins are deleted outright). `decisions`/`decision_outcomes` are
+    never touched here — append-only, and the weekly increment cap reads from them, not from
+    `set_logs`, so deleting logs can never unlock a second increase in the same week.
+    """
+    if not session_ids:
+        return DeleteSessionsResult(status=DeleteSessionsStatus.OK)
+
+    async with db.read() as conn:
+        summaries: list[DeletedSessionSummary] = []
+        for session_id in session_ids:
+            session = await get_workout_session(conn, session_id)
+            if session is None or session.user_id != user_id:
+                return DeleteSessionsResult(status=DeleteSessionsStatus.NOT_FOUND)
+            rows = await list_set_logs_for_session(conn, session_id)
+            summaries.append(
+                DeletedSessionSummary(
+                    session_id=session_id,
+                    workout_key=session.workout_key,
+                    status=session.status,
+                    started_at=session.started_at,
+                    finished_at=session.finished_at,
+                    set_count=len(rows),
+                )
+            )
+
+    async with db.transaction() as conn:
+        # A§9.4/M9 review ("ALSO" #7): an unfinished session (still `draft`/`confirmed`/
+        # `in_progress`) is marked `aborted` before it's deleted — deleting a live session is
+        # conceptually an abort, and the decision log should say so rather than showing a
+        # status that no longer describes what happened.
+        corrected_summaries = [
+            replace(summary, status="aborted")
+            if summary.status in _UNFINISHED_SESSION_STATUSES
+            else summary
+            for summary in summaries
+        ]
+        for session_id, summary in zip(session_ids, summaries, strict=True):
+            if summary.status in _UNFINISHED_SESSION_STATUSES:
+                await finish_workout_session(conn, session_id, status="aborted")
+        try:
+            await delete_workout_sessions(conn, user_id=user_id, session_ids=session_ids)
+        except SessionsNotOwnedError:
+            return DeleteSessionsResult(status=DeleteSessionsStatus.NOT_FOUND)
+        decision_id = await insert_decision(
+            conn,
+            user_id=user_id,
+            kind=DecisionKind.SESSION_DELETE.value,
+            prompt_template=None,
+            prompt_version=None,
+            model=None,
+            content_version=content_version(),
+            llm_input=None,
+            user_report={
+                "sessions": [
+                    {
+                        "session_id": item.session_id,
+                        "workout_key": item.workout_key,
+                        "status": item.status,
+                        "started_at": item.started_at,
+                        "finished_at": item.finished_at,
+                        "set_count": item.set_count,
+                    }
+                    for item in corrected_summaries
+                ]
+            },
+            proposal=None,
+            guards_fired=[],
+        )
+    return DeleteSessionsResult(
+        status=DeleteSessionsStatus.OK, deleted=tuple(corrected_summaries), decision_id=decision_id
+    )
+
+
+# --- Website read views (A§9.1) -----------------------------------------------------------------
+
+_RECAP_EVENT = "recap"  # `services.recap._EVENT_RECAP`'s own string (A§4.3 user_report.event)
+
+
+@dataclass(frozen=True, slots=True)
+class SessionListItem:
+    session: WorkoutSessionRecord
+    sets_planned: int
+    sets_done: int
+    volume_kg: float
+
+
+def volume_kg(rows: Sequence[SetLogRecord]) -> float:
+    """Σ reps × kg over the sets logged with a kg load, both implements counted for a
+    `per_implement` exercise (`services.catalog.implements_for`). M9 review ("ALSO" #9): the
+    one shared helper `/stats`, the stats charts and every website listing page use, so they
+    always agree on one session's volume."""
+    total = 0.0
+    for row in rows:
+        if row.actual_reps is None or row.actual_load_kg is None:
+            continue
+        total += (
+            row.actual_reps * row.actual_load_kg * catalog_service.implements_for(row.exercise_id)
+        )
+    return total
+
+
+async def _session_list_item(conn: Connection, session: WorkoutSessionRecord) -> SessionListItem:
+    rows = await list_set_logs_for_session(conn, session.id)
+    done = sum(1 for row in rows if row.actual_reps is not None)
+    return SessionListItem(
+        session=session, sets_planned=len(rows), sets_done=done, volume_kg=volume_kg(rows)
+    )
+
+
+async def list_recent_sessions_for_plan(
+    db: Database, user_id: int, plan_id: int, *, days: int = 14
+) -> list[SessionListItem]:
+    """A§9.1 plan detail: this plan's (any version's) trainings from the last `days` days,
+    newest first. The 14-day window is a plain UTC cutoff (`started_at` is always UTC); "in
+    the user's timezone" (A§9.1) is about how each session's date is *displayed*, which the
+    template does with the user's own `timezone` (`services.profile`), not about shifting
+    this cutoff by a UTC offset."""
+    since = clock.format_timestamp(clock.now() - timedelta(days=days))
+    async with db.read() as conn:
+        rows = await _recent_sessions_for_plan_rows(conn, user_id, plan_id, since)
+        items = [await _session_list_item(conn, session) for session in rows]
+    return items
+
+
+@dataclass(frozen=True, slots=True)
+class SessionsPage:
+    items: list[SessionListItem]
+    total: int
+    page: int
+    page_size: int
+
+    @property
+    def total_pages(self) -> int:
+        return max(1, -(-self.total // self.page_size))
+
+
+async def list_sessions_page(
+    db: Database, user_id: int, *, page: int, page_size: int = 20
+) -> SessionsPage:
+    """A§9.1 `/app/trainings`, paginated: newest first, `page` is 1-based."""
+    page = max(1, page)
+    offset = (page - 1) * page_size
+    async with db.read() as conn:
+        total = await count_workout_sessions_for_user(conn, user_id)
+        rows = await list_workout_sessions_page(conn, user_id, limit=page_size, offset=offset)
+        items = [await _session_list_item(conn, session) for session in rows]
+    return SessionsPage(items=items, total=total, page=page, page_size=page_size)
+
+
+@dataclass(frozen=True, slots=True)
+class SessionDetail:
+    session: WorkoutSessionRecord
+    plan_name: str
+    workout: Workout
+    rows: list[SetLogRecord]
+    checkins: list[CheckinRecord]
+    recap_text: str | None
+
+
+async def get_session_detail(db: Database, user_id: int, session_id: int) -> SessionDetail | None:
+    """A§9.1 `/app/trainings/{id}`: planned vs actual per set, check-ins, and the recap text
+    *if one was already written* (read-only — a page view never calls the LLM, A§4.6)."""
+    async with db.read() as conn:
+        ctx = await load_session(conn, user_id, session_id)
+        if ctx is None:
+            return None
+        started = await started_workout(conn, session_id)
+        workout = started if started is not None else ctx.workout
+        rows = await list_set_logs_for_session(conn, session_id)
+        checkins = await list_checkins_for_session(conn, session_id)
+        progression = await get_latest_session_event_decision(
+            conn, session_id=session_id, kind=DecisionKind.PROGRESSION.value, event=_RECAP_EVENT
+        )
+    recap_text: str | None = None
+    if progression is not None and progression.proposal is not None:
+        text = progression.proposal.get("recap_text")
+        recap_text = text if isinstance(text, str) else None
+    return SessionDetail(
+        session=ctx.session,
+        plan_name=ctx.plan_record.name,
+        workout=workout,
+        rows=rows,
+        checkins=checkins,
+        recap_text=recap_text,
+    )
+
+
 def _shown_parse(decision: DecisionRecord | None, *, block: int, item: int) -> ParsedResults | None:
     if decision is None or decision.proposal is None or decision.user_report is None:
         return None
@@ -1582,7 +1826,13 @@ __all__ = [
     "ChoosePlan",
     "Completion",
     "ConfirmResults",
+    "DeleteSessionsResult",
+    "DeleteSessionsStatus",
+    "DeletedSessionSummary",
     "Entry",
+    "SessionDetail",
+    "SessionListItem",
+    "SessionsPage",
     "NoPlan",
     "ParseResult",
     "ParseStatus",
@@ -1602,6 +1852,10 @@ __all__ = [
     "confirm_results",
     "create_session",
     "current_block",
+    "delete_sessions",
+    "get_session_detail",
+    "list_recent_sessions_for_plan",
+    "list_sessions_page",
     "entry",
     "next_result_prompt",
     "pain_button",
@@ -1613,4 +1867,5 @@ __all__ = [
     "skip_block",
     "start",
     "suggest_workout",
+    "volume_kg",
 ]

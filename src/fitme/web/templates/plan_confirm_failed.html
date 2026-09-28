@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}{{ t('web.plans.confirm_failed_title') }}{% endblock %}
+{% block content %}
+<h1>{{ t('web.plans.confirm_failed_title') }}</h1>
+{% if refusal %}
+<p class="error">{{ refusal.message }}</p>
+{% elif status.value == 'stale' %}
+<p class="error">{{ t('plan.stale_draft') }}</p>
+{% else %}
+<p class="error">{{ t('plan.not_found') }}</p>
+{% endif %}
+<p><a href="/app/plans">{{ t('web.plans.back_to_list') }}</a></p>
+{% endblock %}

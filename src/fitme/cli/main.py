@@ -21,6 +21,7 @@ from fitme.cli.catalog_check import catalog_check
 from fitme.config.settings import Settings, SettingsError, load_settings
 from fitme.llm import models as llm_models
 from fitme.log import configure_logging
+from fitme.web.security import validate_web_config
 
 _NOT_IMPLEMENTED = "not implemented yet"
 
@@ -163,9 +164,10 @@ def _with_settings(
 
 
 def _serve(parser: argparse.ArgumentParser) -> int:
-    """`fitme serve` refuses to start while any migration is pending (A§4.7) or the LLM model
-    configuration is invalid (A§8.5 rule 1). Once those checks pass, `commands.serve_async`
-    runs the bot (the web app is still to come, M9)."""
+    """`fitme serve` refuses to start while any migration is pending (A§4.7), the LLM model
+    configuration is invalid (A§8.5 rule 1), or the web configuration is invalid (A§9.2: an
+    `https://` base URL, unless `FITME_DEV` and `http://localhost`). Once those checks pass,
+    `commands.serve_async` runs the bot and the website together (A§3)."""
     try:
         settings = load_settings()
     except SettingsError as exc:
@@ -176,6 +178,12 @@ def _serve(parser: argparse.ArgumentParser) -> int:
         llm_models.validate_startup(settings)
     except SettingsError as exc:
         print(f"Refusing to start: invalid LLM model configuration: {exc}", file=sys.stderr)
+        return 1
+
+    try:
+        validate_web_config(settings)
+    except SettingsError as exc:
+        print(f"Refusing to start: invalid web configuration: {exc}", file=sys.stderr)
         return 1
 
     # Don't create a database file just to answer "are migrations pending?" — open_database

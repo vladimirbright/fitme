@@ -1,12 +1,11 @@
 """Real implementations for the CLI subcommands: `db upgrade`, `export`, `delete`, `purge`
-(M1), `activate` and `serve` (M5), and the pending-migrations check `serve` uses before it
-starts.
+(M1), `activate` (M5), `serve` (M5, extended in M9 with the website), and the
+pending-migrations check `serve` uses before it starts.
 
 `catalog check` and `llm eval` live in their own modules (`cli/catalog_check.py`,
-`cli/llm_eval.py`); the web app (M9) is still to come. This module never imports
-`db/selectors/` or `db/controllers/` directly (A§2.1: bot/web/cli call into `services/`, not
-`db/`) — `db/migrate.py` and `db/connection.py::open_database` are the sanctioned exceptions
-the plan calls out.
+`cli/llm_eval.py`). This module never imports `db/selectors/` or `db/controllers/` directly
+(A§2.1: bot/web/cli call into `services/`, not `db/`) — `db/migrate.py` and
+`db/connection.py::open_database` are the sanctioned exceptions the plan calls out.
 """
 
 from __future__ import annotations
@@ -16,9 +15,12 @@ import contextlib
 import json
 import logging
 import os
+import signal
 import sys
-from collections.abc import Callable
+from collections.abc import Callable, Coroutine, Iterator
+from typing import Any
 
+import uvicorn
 from aiogram import Bot
 
 from fitme.bot.app import build_dispatcher
@@ -31,6 +33,7 @@ from fitme.services.identity import issue_activation_code
 from fitme.services.llm_runtime import LlmRuntime
 from fitme.services.operator import clear_holds_from_cli, open_holds_for_cli
 from fitme.services.retention import purge as run_retention
+from fitme.web.app import create_app
 
 _RETENTION_INTERVAL_SECONDS = 24 * 60 * 60
 HOLD_CLEAR_CONFIRMATION = "CLEAR"
@@ -232,11 +235,75 @@ async def _retention_loop(db: Database, *, chat_retention_days: int) -> None:
         await asyncio.sleep(_RETENTION_INTERVAL_SECONDS)
 
 
+_SHUTDOWN_SIGNALS = (signal.SIGINT, signal.SIGTERM)
+
+
+class _SilentSignalsServer(uvicorn.Server):
+    """`uvicorn.Server.capture_signals()` installs its own SIGINT/SIGTERM handlers, and,
+    critically, **restores the original handler and re-raises the signal** the moment its own
+    `should_exit` loop notices the signal and returns (see the uvicorn source: `for
+    captured_signal in reversed(self._captured_signals): signal.raise_signal(captured_signal)`).
+    For SIGTERM, the original handler is the process default — terminate — so the re-raised
+    signal kills the process immediately, skipping every `finally` in `serve_async` (no DB
+    close, the bot polling task never gets a chance to be cancelled): M9 review fix B3.
+
+    This override makes signal handling entirely `serve_async`'s job instead: `capture_signals`
+    becomes a no-op, and `serve_async` installs its own handlers via
+    `loop.add_signal_handler`, which just set `should_exit` directly and never re-raise
+    anything.
+    """
+
+    @contextlib.contextmanager
+    def capture_signals(self) -> Iterator[None]:
+        yield
+
+
+async def _serve_concurrently(
+    *,
+    polling: Coroutine[Any, Any, None],
+    web_serve: Coroutine[Any, Any, None],
+    retention_task: asyncio.Task[None],
+) -> None:
+    """A§3 "one process": the bot (long polling) and the website run as two tasks in this one
+    event loop. Whichever exits first (normally: `serve_async`'s own signal handler setting
+    `server.should_exit`, since the bot polling is started with `handle_signals=False`
+    precisely so the two don't fight over the same signal) stops the other, then the
+    retention loop — graceful shutdown of all three, in that order. A genuine crash in either
+    (not a cancellation) propagates via `task.result()`."""
+    polling_task = asyncio.create_task(polling)
+    web_task = asyncio.create_task(web_serve)
+    try:
+        done, pending = await asyncio.wait(
+            {polling_task, web_task}, return_when=asyncio.FIRST_COMPLETED
+        )
+        for task in pending:
+            task.cancel()
+        for task in pending:
+            with contextlib.suppress(asyncio.CancelledError):
+                await task
+        _logger.info("bot polling stopped")
+        _logger.info("web server stopped")
+        for task in done:
+            task.result()
+    finally:
+        retention_task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await retention_task
+        _logger.info("retention loop stopped")
+
+
 async def serve_async(settings: Settings) -> int:
-    """`fitme serve` (A§3, A§11): opens the database once (closed in `finally`, so the
-    process exits cleanly on error), runs the bot (long polling) and the daily retention job
-    in this one event loop, and stops gracefully on SIGINT/SIGTERM (aiogram's
-    `start_polling` installs its own handlers for these by default)."""
+    """`fitme serve` (A§3, A§9, A§11): opens the database once (closed last, so the process
+    exits cleanly on a signal or an error), then runs the bot (long polling), the website
+    (uvicorn) and the daily retention job in this one event loop (`_serve_concurrently`).
+
+    Signal handling (M9 review fix B3) is installed here, once, via
+    `loop.add_signal_handler`: SIGINT/SIGTERM just set `server.should_exit = True`, which
+    `_SilentSignalsServer` (see its docstring) never turns into a re-raised signal. Setting
+    `should_exit` makes `server.serve()` return on its own, which `_serve_concurrently`
+    already treats like any other "one of the two finished" case: the bot polling task (never
+    given its own signal handling, `handle_signals=False`) gets cancelled right alongside it.
+    """
     os.environ.setdefault("PYDANTIC_AI_NO_BANNER", "1")  # A§10; also set at CLI entry
     db = await _try_open_database(settings)
     if db is None:
@@ -244,19 +311,52 @@ async def serve_async(settings: Settings) -> int:
     try:
         bot = Bot(token=settings.telegram_bot_token.get_secret_value())
         try:
-            dispatcher = build_dispatcher(db, settings, LlmRuntime.from_settings(settings))
+            llm = LlmRuntime.from_settings(settings)
+            dispatcher = build_dispatcher(db, settings, llm)
             await register_commands(bot)
+
+            async def send_code(chat_id: int, text: str) -> None:
+                await bot.send_message(chat_id, text)
+
+            web_app = create_app(db=db, settings=settings, llm=llm, send_code=send_code)
+            server = _SilentSignalsServer(
+                uvicorn.Config(
+                    web_app,
+                    host=settings.web_host,
+                    port=settings.web_port,
+                    log_config=None,
+                )
+            )
+
+            loop = asyncio.get_running_loop()
+            installed_signals: list[signal.Signals] = []
+            for sig in _SHUTDOWN_SIGNALS:
+                try:
+                    loop.add_signal_handler(sig, _request_shutdown, server, sig)
+                except NotImplementedError:
+                    break  # e.g. Windows: no event-loop signal handlers: default handling
+                installed_signals.append(sig)
+
             retention_task = asyncio.create_task(
                 _retention_loop(db, chat_retention_days=settings.chat_retention_days)
             )
             try:
-                await dispatcher.start_polling(bot)
+                await _serve_concurrently(
+                    polling=dispatcher.start_polling(bot, handle_signals=False),
+                    web_serve=server.serve(),
+                    retention_task=retention_task,
+                )
             finally:
-                retention_task.cancel()
-                with contextlib.suppress(asyncio.CancelledError):
-                    await retention_task
+                for sig in installed_signals:
+                    loop.remove_signal_handler(sig)
         finally:
             await bot.session.close()
     finally:
         await db.close()
+        _logger.info("database closed")
     return 0
+
+
+def _request_shutdown(server: uvicorn.Server, sig: signal.Signals) -> None:
+    _logger.info("received shutdown signal", extra={"signal": sig.name})
+    server.should_exit = True

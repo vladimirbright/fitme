@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}{{ t('web.stats.title') }}{% endblock %}
+{% block content %}
+<h1>{{ t('web.stats.title') }}</h1>
+
+<section>
+  <h2>{{ t('web.stats.volume_title') }}</h2>
+  <div id="chart-volume" class="chart"></div>
+  <table class="fallback-table" data-fallback-for="chart-volume">
+    <thead><tr><th>{{ t('web.stats.col_week') }}</th><th>{{ t('web.stats.col_volume') }}</th></tr></thead>
+    <tbody>
+      {% for point in data.weekly_volume %}
+      <tr><td>{{ point.week_start }}</td><td>{{ point.value }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>{{ t('web.stats.sessions_title') }}</h2>
+  <div id="chart-sessions" class="chart"></div>
+  <table class="fallback-table" data-fallback-for="chart-sessions">
+    <thead><tr><th>{{ t('web.stats.col_week') }}</th><th>{{ t('web.stats.col_sessions') }}</th></tr></thead>
+    <tbody>
+      {% for point in data.sessions_per_week %}
+      <tr><td>{{ point.week_start }}</td><td>{{ point.value|int }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>{{ t('web.stats.loads_title') }}</h2>
+  <div id="chart-loads" class="chart"></div>
+  <table class="fallback-table" data-fallback-for="chart-loads">
+    <thead><tr><th>{{ t('web.stats.col_exercise') }}</th><th>{{ t('web.stats.col_date') }}</th><th>{{ t('web.stats.col_load') }}</th></tr></thead>
+    <tbody>
+      {% for exercise_id, points in data.load_over_time.items() %}
+        {% for point in points %}
+        <tr><td>{{ exercise_names.get(exercise_id, exercise_id) }}</td><td>{{ point.date }}</td><td>{{ point.kg }}</td></tr>
+        {% endfor %}
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<script type="module" src="/static/charts.js"></script>
+{% endblock %}

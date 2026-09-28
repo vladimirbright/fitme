@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}{{ t('web.login.title') }}{% endblock %}
+{% block content %}
+<h1>{{ t('web.login.title') }}</h1>
+<p>{{ t('web.login.description') }}</p>
+<p class="disclosure">{{ t('disclosure.ai') }}</p>
+
+{% if invalid_code %}
+<p class="error">{{ t('web.login.invalid_code') }}</p>
+{% endif %}
+
+{% if not code_sent %}
+<form method="post" action="/auth/request-code">
+  <button type="submit">{{ t('web.login.send_code_button') }}</button>
+</form>
+{% else %}
+<p>{{ t('web.login.code_sent') }}</p>
+<form method="post" action="/auth/verify">
+  <label for="code">{{ t('web.login.code_placeholder') }}</label>
+  <input id="code" type="text" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autofocus>
+  <button type="submit">{{ t('web.login.verify_button') }}</button>
+</form>
+<form method="post" action="/auth/request-code">
+  <button type="submit">{{ t('web.login.resend_button') }}</button>
+</form>
+{% endif %}
+
+<p class="open-source"><a href="{{ source_url }}" rel="noopener">{{ t('web.login.open_source_line', source_url=source_url) }}</a></p>
+{% endblock %}

@@ -477,6 +477,116 @@ async def test_applied_to_kg_by_exercise_drops_a_lift_only_after_a_lower_prescri
         }
 
 
+async def test_applied_to_kg_by_exercise_never_rises_after_deleting_a_completed_session(
+    db: Database, user_id: int
+) -> None:
+    """M9 review fix B4 (A§7/A§9.4): a completed session prescribed below an applied lift
+    discards that lift. Deleting that very session must not make the lift reappear — deleting
+    training data would then *raise* what the guards allow, which A§9.4 forbids outright."""
+    from fitme.db.controllers.plans import insert_plan, insert_plan_version
+    from fitme.db.controllers.training import (
+        finish_workout_session,
+        insert_set_log,
+        insert_workout_session,
+    )
+    from fitme.services import training
+
+    async with db.transaction() as conn:
+        decision_id = await insert_decision(
+            conn,
+            user_id=user_id,
+            kind="plan_confirm",
+            prompt_template=None,
+            prompt_version=None,
+            model=None,
+            content_version="abc123def456",
+            llm_input=None,
+            user_report=None,
+            proposal=None,
+            guards_fired=[],
+        )
+        plan_id = await insert_plan(
+            conn, user_id=user_id, name="P", is_default=True, status="active"
+        )
+        version_id = await insert_plan_version(
+            conn, plan_id=plan_id, version=1, body={}, origin="llm", decision_id=decision_id
+        )
+
+    await _insert_kind(
+        db,
+        user_id,
+        "plan_confirm",
+        [LoadChange(exercise_id="barbell_back_squat", from_kg=60.0, to_kg=62.5)],
+    )
+
+    async with db.transaction() as conn:
+        lower_session_id = await insert_workout_session(
+            conn,
+            user_id=user_id,
+            plan_version_id=version_id,
+            workout_key="A",
+            status="in_progress",
+        )
+        await insert_set_log(
+            conn,
+            session_id=lower_session_id,
+            exercise_id="barbell_back_squat",
+            set_index=1,
+            planned_load_kg=55.0,
+            planned_reps_min=5,
+            planned_reps_max=8,
+            actual_load_kg=55.0,
+            actual_reps=6,
+            rpe=None,
+            source="button",
+        )
+        await finish_workout_session(conn, lower_session_id, status="completed")
+
+    since = "1970-01-01T00:00:00.000000Z"
+    async with db.read() as conn:
+        before = await applied_to_kg_by_exercise(conn, user_id, since=since)
+    assert before == {}  # the later, lower session already discarded the lift
+
+    result = await training.delete_sessions(db, user_id, [lower_session_id])
+    assert result.status == training.DeleteSessionsStatus.OK
+
+    async with db.read() as conn:
+        after = await applied_to_kg_by_exercise(conn, user_id, since=since)
+    # Must NOT come back as {"barbell_back_squat": 62.5}: the discarding evidence is gone,
+    # but that must never let a stale lift reappear.
+    assert after == {}
+
+
+async def test_applied_to_kg_by_exercise_ignores_over_cap_user_edit_changes(
+    db: Database, user_id: int
+) -> None:
+    """M9 review fix B5: an over-cap `user_edit` (`plan_edit.save_edit`) tags the exercises
+    it saved past a guard cap in `user_report.over_cap_exercises`. Those load_changes never
+    lift the reference here, though they still count towards `increases_7d` (the weekly cap)
+    — unaffected by the tag."""
+    async with db.transaction() as conn:
+        await insert_decision(
+            conn,
+            user_id=user_id,
+            kind="user_edit",
+            prompt_template=None,
+            prompt_version=None,
+            model=None,
+            content_version="abc123def456",
+            llm_input=None,
+            user_report={"plan_id": 1, "over_cap_exercises": ["barbell_back_squat"]},
+            proposal=None,
+            guards_fired=[],
+            load_changes=[LoadChange(exercise_id="barbell_back_squat", from_kg=60.0, to_kg=70.0)],
+        )
+    since = "1970-01-01T00:00:00.000000Z"
+    async with db.read() as conn:
+        applied = await applied_to_kg_by_exercise(conn, user_id, since=since)
+        increases = await recent_increase_deltas_by_exercise(conn, user_id, since=since)
+    assert applied == {}
+    assert increases == {"barbell_back_squat": [10.0]}
+
+
 async def test_get_latest_decision_of_kind(db: Database, user_id: int) -> None:
     async with db.read() as conn:
         assert await get_latest_decision_of_kind(conn, user_id, "progression") is None

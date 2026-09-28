@@ -9,10 +9,21 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
+from fitme.catalog import load_catalog
 from fitme.domain.catalog import Catalog, Exercise
 from fitme.domain.enums import Equipment, Location
 from fitme.domain.screening import ScreeningFlagState
 from fitme.guards.screening import exercise_allowed
+
+
+def implements_for(exercise_id: str) -> int:
+    """How many implements a set of `exercise_id` loads (A§4.4 "loads are per implement"): 2
+    for a `per_implement` exercise (e.g. two dumbbells — the logged kg is one of them), 1 for
+    everything else. M9 review ("ALSO" #9): the one place this doubling lives, so `/stats`,
+    the stats charts and every website listing page compute the same volume number for the
+    same session."""
+    exercise = load_catalog().by_id(exercise_id)
+    return 2 if exercise is not None and exercise.load_unit == "per_implement" else 1
 
 
 def available_exercises(

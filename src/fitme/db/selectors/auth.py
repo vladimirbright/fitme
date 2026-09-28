@@ -41,17 +41,10 @@ async def get_activation_failed_attempts(conn: aiosqlite.Connection) -> int:
     return 0 if row is None else int(row[0])
 
 
-async def get_login_code_by_hash(
-    conn: aiosqlite.Connection, code_hash: str
-) -> LoginCodeRecord | None:
-    async with conn.execute(
-        "SELECT id, user_id, code_hash, expires_at, attempts, used_at FROM login_codes "
-        "WHERE code_hash = ?",
-        (code_hash,),
-    ) as cursor:
-        row = await cursor.fetchone()
-    if row is None:
-        return None
+_LOGIN_CODE_COLUMNS = "id, user_id, code_hash, expires_at, attempts, used_at, created_at"
+
+
+def _login_code_from_row(row: aiosqlite.Row) -> LoginCodeRecord:
     return LoginCodeRecord(
         id=row[0],
         user_id=row[1],
@@ -59,7 +52,49 @@ async def get_login_code_by_hash(
         expires_at=row[3],
         attempts=row[4],
         used_at=row[5],
+        created_at=row[6],
     )
+
+
+async def get_login_code_by_hash(
+    conn: aiosqlite.Connection, code_hash: str
+) -> LoginCodeRecord | None:
+    async with conn.execute(
+        f"SELECT {_LOGIN_CODE_COLUMNS} FROM login_codes WHERE code_hash = ?",
+        (code_hash,),
+    ) as cursor:
+        row = await cursor.fetchone()
+    return None if row is None else _login_code_from_row(row)
+
+
+async def get_latest_unused_login_code(
+    conn: aiosqlite.Connection, user_id: int
+) -> LoginCodeRecord | None:
+    """The newest not-yet-used login code for `user_id` (the M1 note, A§9.2: "look codes up
+    by user_id + latest unused, not by hash alone"). `services.webauth.verify_login_code`
+    compares the submitted code's hash against this one row with `hmac.compare_digest`,
+    rather than an equality `WHERE code_hash = ?` lookup — the same reasoning as
+    `list_pending_activation_codes` (A§6.1): a request-code always supersedes the previous
+    one, so there is at most one "current" code to check per user at any time."""
+    async with conn.execute(
+        f"SELECT {_LOGIN_CODE_COLUMNS} FROM login_codes "
+        "WHERE user_id = ? AND used_at IS NULL ORDER BY id DESC LIMIT 1",
+        (user_id,),
+    ) as cursor:
+        row = await cursor.fetchone()
+    return None if row is None else _login_code_from_row(row)
+
+
+async def count_login_codes_since(conn: aiosqlite.Connection, user_id: int, since: str) -> int:
+    """How many login codes were issued to `user_id` at or after `since` (A§9.1 rate limit:
+    1 per 60s, 5 per hour), including already-used/expired ones — a spent code still counts
+    against the rate limit, exactly like a Telegram message already sent."""
+    async with conn.execute(
+        "SELECT COUNT(*) FROM login_codes WHERE user_id = ? AND created_at >= ?",
+        (user_id, since),
+    ) as cursor:
+        row = await cursor.fetchone()
+    return 0 if row is None else int(row[0])
 
 
 async def get_web_session(conn: aiosqlite.Connection, id_hash: str) -> WebSessionRecord | None:

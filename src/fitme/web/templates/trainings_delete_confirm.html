@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}{{ t('web.trainings.delete_confirm_title') }}{% endblock %}
+{% block content %}
+<h1>{{ t('web.trainings.delete_confirm_title') }}</h1>
+<p>{{ t('web.trainings.delete_confirm_warning') }}</p>
+<p><a href="/app/account/export">{{ t('web.trainings.delete_confirm_export_link') }}</a></p>
+
+{% if not sessions %}
+<p>{{ t('web.trainings.delete_confirm_none') }}</p>
+{% else %}
+<ul>
+  {% for item in sessions %}
+  <li>{{ item.session.started_at }} &mdash; {{ item.session.workout_key }} ({{ item.rows|length }} {{ t('web.trainings.sets_word') }})</li>
+  {% endfor %}
+</ul>
+<form method="post" action="/app/trainings/delete">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <input type="hidden" name="next" value="{{ next_url }}">
+  {% for id in ids %}
+  <input type="hidden" name="ids" value="{{ id }}">
+  {% endfor %}
+  <button type="submit">{{ t('web.trainings.delete_confirm_button') }}</button>
+</form>
+{% endif %}
+<p><a href="{{ next_url }}">{{ t('web.trainings.delete_confirm_cancel') }}</a></p>
+{% endblock %}

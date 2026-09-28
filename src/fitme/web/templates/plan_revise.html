@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}{{ t('web.plans.revise_title') }}{% endblock %}
+{% block content %}
+<h1>{{ t('web.plans.revise_title', name=plan_name) }}</h1>
+<form method="post" action="/app/plans/{{ plan_id }}/revise">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <label for="request_text">{{ t('web.plans.revise_prompt') }}</label>
+  <textarea id="request_text" name="request_text" rows="4" required></textarea>
+  <button type="submit">{{ t('web.plans.revise_submit') }}</button>
+</form>
+{% endblock %}

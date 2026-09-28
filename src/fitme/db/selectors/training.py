@@ -72,6 +72,47 @@ async def get_active_workout_session(
     return None if row is None else _session_from_row(row)
 
 
+async def recent_sessions_for_plan(
+    conn: aiosqlite.Connection, user_id: int, plan_id: int, since: str
+) -> list[WorkoutSessionRecord]:
+    """Sessions of `plan_id` — on **any** version of it — started at or after `since` (A§9.1
+    plan detail: "recent trainings ... from the last 14 days", joined through
+    `plan_versions` so a revised plan still shows its earlier sessions). A `draft`/`confirmed`
+    session that was never actually started (`started_at IS NULL`) isn't a training yet, so
+    it's excluded; newest first."""
+    async with conn.execute(
+        "SELECT w.id, w.user_id, w.plan_version_id, w.workout_key, w.status, "
+        "w.current_block, w.started_at, w.finished_at, w.halt_reason "
+        "FROM workout_sessions w JOIN plan_versions v ON v.id = w.plan_version_id "
+        "WHERE w.user_id = ? AND v.plan_id = ? AND w.started_at IS NOT NULL "
+        "AND w.started_at >= ? ORDER BY w.started_at DESC",
+        (user_id, plan_id, since),
+    ) as cursor:
+        rows = await cursor.fetchall()
+    return [_session_from_row(row) for row in rows]
+
+
+async def count_workout_sessions_for_user(conn: aiosqlite.Connection, user_id: int) -> int:
+    async with conn.execute(
+        "SELECT COUNT(*) FROM workout_sessions WHERE user_id = ?", (user_id,)
+    ) as cursor:
+        row = await cursor.fetchone()
+    return 0 if row is None else int(row[0])
+
+
+async def list_workout_sessions_page(
+    conn: aiosqlite.Connection, user_id: int, *, limit: int, offset: int
+) -> list[WorkoutSessionRecord]:
+    """A page of this user's sessions, newest first (A§9.1 `/app/trainings`, paginated)."""
+    async with conn.execute(
+        f"SELECT {_SESSION_COLUMNS} FROM workout_sessions WHERE user_id = ? "
+        "ORDER BY id DESC LIMIT ? OFFSET ?",
+        (user_id, limit, offset),
+    ) as cursor:
+        rows = await cursor.fetchall()
+    return [_session_from_row(row) for row in rows]
+
+
 async def last_completed_workout_key_for_plan(
     conn: aiosqlite.Connection, user_id: int, plan_id: int
 ) -> str | None:

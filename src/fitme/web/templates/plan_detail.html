@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}{{ detail.record.name }}{% endblock %}
+{% block content %}
+<h1>{{ detail.record.name }}</h1>
+<p>
+  {{ t('plan.status_' + detail.record.status) }}
+  {% if detail.record.is_default %} &mdash; {{ t('web.plans.default_badge') }}{% endif %}
+  &mdash; {{ t('web.plans.version_label', version=detail.version.version) }}
+</p>
+<p>
+  <a href="/app/plans/{{ detail.record.id }}/edit">{{ t('web.plans.edit_link') }}</a>
+  &middot;
+  <a href="/app/plans/{{ detail.record.id }}/revise">{{ t('web.plans.revise_link') }}</a>
+</p>
+
+<h2>{{ t('plan.schedule_title') }}</h2>
+<ul>
+  {% for day in detail.plan.schedule %}
+  <li>{{ t('weekday.' ~ day.weekday) }}: {{ day.workout_key }}</li>
+  {% endfor %}
+</ul>
+
+{% for workout in detail.plan.workouts %}
+<h3>{{ t('plan.workout_title', workout_key=workout.key, title=workout.title) }}</h3>
+<ul>
+  {% for block in workout.blocks %}
+    {% for item in block.items %}
+    <li>
+      {{ exercise_names.get(item.exercise_id, item.exercise_id) }}:
+      {{ t('plan.sets_reps', sets=item.sets, reps_min=item.reps_min, reps_max=item.reps_max) }}
+      @
+      {% if item.load.kind == 'kg' %}{{ t('plan.load_kg', kg=item.load.kg) }}
+      {% elif item.load.kind == 'bodyweight' %}{{ t('plan.load_bodyweight') }}
+      {% else %}{{ t('plan.load_calibration') }}
+      {% endif %}
+    </li>
+    {% endfor %}
+  {% endfor %}
+</ul>
+{% endfor %}
+
+<h2>{{ t('web.plans.version_history_title') }}</h2>
+<ul>
+  {% for version in versions %}
+  <li>{{ t('web.plans.version_label', version=version.version) }} ({{ version.origin }}, {{ version.created_at }})</li>
+  {% endfor %}
+</ul>
+
+<h2>{{ t('web.plans.recent_trainings_title') }}</h2>
+{% if not recent %}
+<p>{{ t('web.plans.recent_trainings_empty') }}</p>
+{% else %}
+<table>
+  <thead>
+    <tr>
+      <th>{{ t('web.trainings.col_date') }}</th>
+      <th>{{ t('web.trainings.col_workout') }}</th>
+      <th>{{ t('web.trainings.col_status') }}</th>
+      <th>{{ t('web.trainings.col_sets') }}</th>
+      <th>{{ t('web.trainings.col_volume') }}</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for item in recent %}
+    <tr>
+      <td>{{ item.session.started_at|local_dt(timezone) }}</td>
+      <td>{{ item.session.workout_key }}</td>
+      <td>{{ t('web.trainings.status_' + item.session.status) }}</td>
+      <td>{{ item.sets_done }}/{{ item.sets_planned }}</td>
+      <td>{{ t('web.kg_value', value=item.volume_kg|round(1)) }}</td>
+      <td>
+        <a href="/app/trainings/{{ item.session.id }}">{{ t('web.trainings.view_link') }}</a>
+        <form method="post" action="/app/trainings/delete/confirm" class="inline-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <input type="hidden" name="ids" value="{{ item.session.id }}">
+          <input type="hidden" name="next" value="/app/plans/{{ detail.record.id }}">
+          <button type="submit">{{ t('web.trainings.delete_this') }}</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}

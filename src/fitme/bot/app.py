@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from aiogram import Dispatcher
 
-from fitme.bot.handlers import account, activation, free_text, plan, setup, start, stubs, train
+from fitme.bot.handlers import account, activation, free_text, plan, setup, start, stats, train
 from fitme.bot.middleware import OwnerGateMiddleware, StopWordCommandArgsMiddleware
 from fitme.config.settings import Settings
 from fitme.db.connection import Database
@@ -35,7 +35,7 @@ def build_dispatcher(db: Database, settings: Settings, llm: LlmRuntime | None = 
     dp.include_router(account.build_router())
     dp.include_router(plan.build_router())
     dp.include_router(train.build_router())
-    dp.include_router(stubs.build_router())
+    dp.include_router(stats.build_router())
     dp.include_router(free_text.build_router())
 
     return dp

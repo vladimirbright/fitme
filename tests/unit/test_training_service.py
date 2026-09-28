@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from fitme.db.records import SetLogRecord
 from fitme.domain.models import Block, Load, Plan, Prescription, ScheduledDay, Workout
-from fitme.services.training import _block_rows_exist, _pick_workout, assign_rows
+from fitme.services.training import _block_rows_exist, _pick_workout, assign_rows, volume_kg
 
 
 def _prescription(exercise_id: str, sets: int) -> Prescription:
@@ -61,7 +61,15 @@ def test_pick_workout_starts_at_the_first_workout_without_history_or_with_a_gone
     assert _pick_workout(_plan(), weekday=1, last_completed_key="Z")[0].key == "A"
 
 
-def _row(row_id: int, exercise_id: str, set_index: int) -> SetLogRecord:
+def _row(
+    row_id: int,
+    exercise_id: str,
+    set_index: int,
+    *,
+    actual_reps: int | None = None,
+    actual_load_kg: float | None = None,
+    skipped: bool = False,
+) -> SetLogRecord:
     return SetLogRecord(
         id=row_id,
         session_id=1,
@@ -70,13 +78,28 @@ def _row(row_id: int, exercise_id: str, set_index: int) -> SetLogRecord:
         planned_load_kg=None,
         planned_reps_min=5,
         planned_reps_max=8,
-        actual_load_kg=None,
-        actual_reps=None,
-        skipped=False,
+        actual_load_kg=actual_load_kg,
+        actual_reps=actual_reps,
+        skipped=skipped,
         rpe=None,
         source="button",
         created_at="2026-01-01T00:00:00.000000Z",
     )
+
+
+def test_volume_kg_doubles_a_per_implement_exercise() -> None:
+    """M9 review ("ALSO" #9): a `per_implement` exercise (e.g. dumbbell bench press) logs the
+    kg for *one* dumbbell, so its volume counts both — the one shared helper `/stats`, the
+    stats charts and every website listing page use, so they always agree."""
+    rows = [
+        _row(1, "dumbbell_bench_press", 1, actual_reps=8, actual_load_kg=20.0),
+        _row(2, "pushup", 1, actual_reps=10, actual_load_kg=None),  # no kg: contributes 0
+        _row(3, "barbell_back_squat", 1, actual_reps=5, actual_load_kg=60.0),
+        _row(4, "barbell_back_squat", 2, skipped=True),  # skipped: contributes 0
+    ]
+    # dumbbell_bench_press: 8 * 20.0 * 2 (per implement) = 320
+    # barbell_back_squat:   5 * 60.0 * 1 (total)         = 300
+    assert volume_kg(rows) == 620.0
 
 
 def test_assign_rows_maps_rows_onto_blocks_in_order_even_for_a_repeated_exercise() -> None:

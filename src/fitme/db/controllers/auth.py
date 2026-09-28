@@ -37,8 +37,8 @@ async def insert_login_code(
     conn: aiosqlite.Connection, *, user_id: int, code_hash: str, expires_at: datetime
 ) -> int:
     cursor = await conn.execute(
-        "INSERT INTO login_codes (user_id, code_hash, expires_at) VALUES (?, ?, ?)",
-        (user_id, code_hash, clock.format_timestamp(expires_at)),
+        "INSERT INTO login_codes (user_id, code_hash, expires_at, created_at) VALUES (?, ?, ?, ?)",
+        (user_id, code_hash, clock.format_timestamp(expires_at), clock.utc_now()),
     )
     assert cursor.lastrowid is not None
     return cursor.lastrowid

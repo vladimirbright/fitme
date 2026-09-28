@@ -206,6 +206,28 @@ async def test_export_returns_every_seeded_table(db: Database, user_id: int) -> 
         assert len(exported[table]) >= 1, f"export returned nothing for {table}"
 
 
+async def test_export_omits_code_and_session_hashes(db: Database, user_id: int) -> None:
+    """M9 review ("ALSO" #11): a SHA-256 hash of a login/activation code or a session id is
+    meaningless to the user (it can't be turned back into the original value) and is dropped
+    from the export as plain data minimization (AGENTS.md §5) — every other column of those
+    rows is still exported."""
+    await _seed_every_table(db, user_id)
+
+    exported = await export_user(db, user_id)
+
+    assert exported["login_codes"]
+    assert "code_hash" not in exported["login_codes"][0]
+    assert "user_id" in exported["login_codes"][0]
+
+    assert exported["web_sessions"]
+    assert "id_hash" not in exported["web_sessions"][0]
+    assert "user_id" in exported["web_sessions"][0]
+
+    assert exported["activation_codes"]
+    assert "code_hash" not in exported["activation_codes"][0]
+    assert "expires_at" in exported["activation_codes"][0]
+
+
 async def test_delete_user_leaves_zero_rows_in_every_table(db: Database, user_id: int) -> None:
     await _seed_every_table(db, user_id)
 

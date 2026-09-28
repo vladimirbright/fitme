@@ -197,6 +197,35 @@ async def recent_increase_deltas_by_exercise(
     return deltas
 
 
+async def _latest_completed_session_delete_cutoff(
+    conn: aiosqlite.Connection, user_id: int
+) -> str | None:
+    """The `created_at` of the newest `session_delete` decision that removed at least one
+    **completed** session (M9 review fix B4, A§7/A§9.4). Deleting a completed session can
+    destroy exactly the "trained at a lower prescription since" evidence that would otherwise
+    have discarded an applied lift (`applied_to_kg_by_exercise`'s own discard rule below) —
+    without this cutoff, deleting that later, lower session would make the earlier, higher
+    lift reappear as the reference, which means deleting training data could *raise* what the
+    guards allow. A§9.4 forbids that outright, so once such a delete has happened, every
+    load_changes entry recorded before it is ignored for this computation entirely (never
+    re-trusted), not just the one exercise the deleted session happened to touch — the
+    deletion could have hidden evidence for any exercise, not only the one it logged."""
+    async with conn.execute(
+        "SELECT created_at, user_report FROM decisions "
+        "WHERE user_id = ? AND kind = 'session_delete' ORDER BY id DESC",
+        (user_id,),
+    ) as cursor:
+        rows = await cursor.fetchall()
+    for created_at, user_report_json in rows:
+        if user_report_json is None:
+            continue
+        report = json.loads(user_report_json)
+        sessions = report.get("sessions") or []
+        if any(isinstance(item, dict) and item.get("status") == "completed" for item in sessions):
+            return str(created_at)
+    return None
+
+
 async def applied_to_kg_by_exercise(
     conn: aiosqlite.Connection, user_id: int, *, since: str
 ) -> dict[str, float]:
@@ -210,7 +239,19 @@ async def applied_to_kg_by_exercise(
     through the lift. A session prescribed *at* `to_kg` (skipped, logged lighter, or failed
     once) keeps the lift: holding that load is a hold, not a new increase. A completed session
     without a `finished_at` (never written by the app; only a seeded row) is not "after"
-    anything and never discards."""
+    anything and never discards.
+
+    Two kinds of applied change never lift the reference here (M9 review fixes B4/B5), though
+    both still count towards `increases_7d` (`recent_increase_deltas_by_exercise`, unaffected
+    by either):
+
+    - a change recorded **before** the newest `session_delete` that removed a completed
+      session (`_latest_completed_session_delete_cutoff` above);
+    - an **over-cap `user_edit`**: `plan_edit.save_edit` tags the exercises it saved past a
+      guard cap in `user_report.over_cap_exercises`, and those specific load_changes entries
+      are skipped — the system itself must never treat a user's manual over-cap edit as a new,
+      higher baseline to build on.
+    """
     async with conn.execute(
         "SELECT s.exercise_id, w.finished_at, MAX(s.planned_load_kg) FROM set_logs s "
         "JOIN workout_sessions w ON w.id = s.session_id "
@@ -225,17 +266,27 @@ async def applied_to_kg_by_exercise(
         completed.setdefault(str(exercise_id), []).append(
             (str(finished_at), None if planned_kg is None else float(planned_kg))
         )
+
+    cutoff = await _latest_completed_session_delete_cutoff(conn, user_id)
+    effective_since = since if cutoff is None or cutoff <= since else cutoff
+
     async with conn.execute(
-        "SELECT load_changes, created_at FROM decisions "
+        "SELECT load_changes, user_report, created_at FROM decisions "
         "WHERE user_id = ? AND created_at >= ? AND load_changes != '[]'",
-        (user_id, since),
+        (user_id, effective_since),
     ) as cursor:
         rows = await cursor.fetchall()
 
     highest: dict[str, float] = {}
-    for load_changes_json, created_at in rows:
+    for load_changes_json, user_report_json, created_at in rows:
+        over_cap_exercises: set[str] = set()
+        if user_report_json is not None:
+            report = json.loads(user_report_json)
+            over_cap_exercises = set(report.get("over_cap_exercises") or [])
         for change in json.loads(load_changes_json):
             exercise_id = str(change["exercise_id"])
+            if exercise_id in over_cap_exercises:
+                continue
             to_kg = float(change["to_kg"])
             later = [
                 planned_kg

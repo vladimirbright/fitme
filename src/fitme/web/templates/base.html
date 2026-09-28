@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Fitme{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  {# M9 review ("ALSO" #3): flash messages never echo query-string text back to the page —
+     only a validated integer count, or a fixed allow-listed code, feeds a server-rendered,
+     translated string. #}
+  {% set deleted_count = request.query_params.get('deleted') %}
+  {% if deleted_count is not none and deleted_count.isdigit() %}
+    <p class="flash">{{ t('web.trainings.deleted_flash', n=deleted_count|int) }}</p>
+  {% endif %}
+  {% set error_code = request.query_params.get('error') %}
+  {% if error_code == 'not_found' %}
+    <p class="flash error">{{ t('web.trainings.error_not_found') }}</p>
+  {% endif %}
+  {% if session %}
+  <nav class="nav">
+    <a href="/app/plans">{{ t('web.nav.plans') }}</a>
+    <a href="/app/trainings">{{ t('web.nav.trainings') }}</a>
+    <a href="/app/stats">{{ t('web.nav.stats') }}</a>
+    <a href="/app/account">{{ t('web.nav.account') }}</a>
+    <form method="post" action="/auth/logout" class="nav-logout">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit">{{ t('web.nav.logout') }}</button>
+    </form>
+  </nav>
+  {% endif %}
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+  <footer>
+    <p>{{ t('web.footer') }}</p>
+  </footer>
+</body>
+</html>

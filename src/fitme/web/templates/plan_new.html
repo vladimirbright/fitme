@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ t('web.plans.new_title') }}{% endblock %}
+{% block content %}
+<h1>{{ t('web.plans.new_title') }}</h1>
+<p class="disclosure">{{ t('disclosure.ai') }}</p>
+<form method="post" action="/app/plans/new">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <button type="submit">{{ t('web.plans.generate_button') }}</button>
+</form>
+{% endblock %}

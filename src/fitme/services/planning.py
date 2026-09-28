@@ -99,6 +99,7 @@ from fitme.db.selectors.plans import (
     get_latest_plan_version,
     get_plan,
     get_plan_version,
+    list_plan_versions,
     list_plans_for_user,
 )
 from fitme.db.selectors.profile import get_profile, list_screening_flags
@@ -1529,6 +1530,16 @@ async def get_plan_detail(db: Database, user_id: int, plan_id: int) -> PlanDetai
     return PlanDetail(record=record, version=version, plan=Plan.model_validate(version.body))
 
 
+async def list_versions(db: Database, user_id: int, plan_id: int) -> list[PlanVersionRecord] | None:
+    """Every version of `plan_id`, oldest first (M9 website, A§9.1 plan detail: "version
+    history"). `None` if the plan isn't this user's own."""
+    async with db.read() as conn:
+        record = await get_plan(conn, plan_id)
+        if record is None or record.user_id != user_id:
+            return None
+        return await list_plan_versions(conn, plan_id)
+
+
 async def current_draft_id(db: Database, user_id: int) -> int | None:
     """The decision id of the user's current (latest-round) draft, or `None` if the latest
     round was a refusal or there is none. A button referencing any other decision is stale
@@ -1600,6 +1611,7 @@ __all__ = [
     "judge_import",
     "judge_workout",
     "list_plans",
+    "list_versions",
     "load_changes_for",
     "propose_new_plan",
     "read_snapshot",

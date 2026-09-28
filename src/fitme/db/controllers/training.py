@@ -5,9 +5,16 @@ functions take a timestamp parameter.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 import aiosqlite
 
 from fitme import clock
+
+
+class SessionsNotOwnedError(RuntimeError):
+    """One or more session ids in a delete batch aren't `user_id`'s own, or don't exist at
+    all (A§9.4: "any foreign or unknown id aborts the whole batch")."""
 
 
 async def insert_workout_session(
@@ -168,3 +175,36 @@ async def clear_health_hold(conn: aiosqlite.Connection, hold_id: int) -> None:
     await conn.execute(
         "UPDATE health_holds SET cleared_at = ? WHERE id = ?", (clock.utc_now(), hold_id)
     )
+
+
+async def delete_workout_sessions(
+    conn: aiosqlite.Connection, *, user_id: int, session_ids: Sequence[int]
+) -> None:
+    """Hard delete a batch of this user's own sessions (A§9.4). Raises `SessionsNotOwnedError`
+    (nothing is deleted) if any id isn't this user's own or doesn't exist — the caller runs
+    this inside one `db.transaction()`, so the raise rolls the whole batch back.
+
+    `set_logs` and `chat_messages` cascade from `workout_sessions` (`ON DELETE CASCADE`,
+    0001_init.sql). `health_holds.source_session_id` and `checkins.session_id` are
+    `ON DELETE SET NULL` there, which already gives every *other* check-in the detach A§9.4
+    asks for — except a `fine` one, which A§9.4 says to delete outright, so those are removed
+    explicitly first, before they'd otherwise just get detached like the rest.
+    """
+    ids = list(dict.fromkeys(session_ids))  # de-dupe, keep order
+    if not ids:
+        return
+    placeholders = ",".join("?" for _ in ids)
+    async with conn.execute(
+        f"SELECT id FROM workout_sessions WHERE id IN ({placeholders}) AND user_id = ?",
+        (*ids, user_id),
+    ) as cursor:
+        owned = {row[0] for row in await cursor.fetchall()}
+    missing = [session_id for session_id in ids if session_id not in owned]
+    if missing:
+        raise SessionsNotOwnedError(
+            f"session id(s) not owned by user {user_id} or don't exist: {missing}"
+        )
+    await conn.execute(
+        f"DELETE FROM checkins WHERE session_id IN ({placeholders}) AND answer = 'fine'", ids
+    )
+    await conn.execute(f"DELETE FROM workout_sessions WHERE id IN ({placeholders})", ids)

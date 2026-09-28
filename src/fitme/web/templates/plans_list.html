@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}{{ t('web.plans.list_title') }}{% endblock %}
+{% block content %}
+<h1>{{ t('web.plans.list_title') }}</h1>
+<p><a href="/app/plans/new">{{ t('web.plans.generate_new') }}</a></p>
+{% if not plans %}
+<p>{{ t('web.plans.empty') }}</p>
+{% else %}
+<ul class="plan-list">
+  {% for plan in plans %}
+  <li>
+    <a href="/app/plans/{{ plan.id }}">{{ plan.name }}</a>
+    {% if plan.is_default %}<span class="badge">{{ t('web.plans.default_badge') }}</span>{% endif %}
+    <span class="status">{{ t('plan.status_' + plan.status) }}</span>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% endblock %}
