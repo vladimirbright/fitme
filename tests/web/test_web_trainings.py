@@ -137,6 +137,24 @@ async def test_a_draft_sessions_missing_started_at_shows_a_fallback_label(
     assert "—" in page.text  # the em-dash fallback, not an empty <a></a>
 
 
+async def test_trainings_list_has_a_select_all_checkbox_driven_by_a_same_origin_script(
+    client: AsyncClient, db: Database, user_id: int, sent_codes: list[SentCode]
+) -> None:
+    version_id = await seed_plan(db, user_id)
+    await seed_session(db, user_id, version_id, kg=60.0)
+
+    await login(client, sent_codes)
+    page = await client.get("/app/trainings")
+    assert page.status_code == 200
+    # Hidden until the script runs, so no dead control without JavaScript (CSP: no inline JS).
+    assert 'data-select-all="ids"' in page.text
+    assert '<script type="module" src="/static/select_all.js"></script>' in page.text
+
+    script = await client.get("/static/select_all.js")
+    assert script.status_code == 200
+    assert "data-select-all" in script.text
+
+
 async def test_single_delete_removes_session_and_set_logs(
     client: AsyncClient, db: Database, user_id: int, sent_codes: list[SentCode]
 ) -> None:

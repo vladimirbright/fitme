@@ -19,7 +19,7 @@
         <th>{{ t('web.trainings.col_status') }}</th>
         <th>{{ t('web.trainings.col_sets') }}</th>
         <th>{{ t('web.trainings.col_volume') }}</th>
-        <th></th>
+        <th><input type="checkbox" data-select-all="ids" aria-label="{{ t('web.trainings.select_all') }}" hidden></th>
       </tr>
     </thead>
     <tbody>
@@ -37,6 +37,7 @@
   </table>
   <button type="submit">{{ t('web.trainings.delete_selected') }}</button>
 </form>
+<script type="module" src="/static/select_all.js"></script>
 
 <nav class="pagination">
   {% if result.page > 1 %}<a href="/app/trainings?page={{ result.page - 1 }}">{{ t('web.pagination.prev') }}</a>{% endif %}
