@@ -29,6 +29,7 @@ _TABLES_BY_USER_ID: tuple[str, ...] = (
     "workout_sessions",
     "checkins",
     "chat_messages",
+    "conversations",
     "plans",
     "decisions",
 )

@@ -37,7 +37,6 @@ from __future__ import annotations
 import math
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import TypedDict
 
 from fitme.catalog import load_catalog
 from fitme.config.content import content_version
@@ -54,6 +53,7 @@ from fitme.guards.context import GuardContext
 from fitme.guards.plan import prescription_verdicts
 from fitme.services import planning
 from fitme.services.catalog import available_exercises
+from fitme.services.decisions import PromptMeta, prompt_columns
 
 # A§9.1/B5: only these two load-rule failures are overridable warnings. Every other guard
 # failure (structural, check-in gate, kg_loadable, a garbage reference) blocks unconditionally
@@ -137,36 +137,6 @@ async def allowed_exercises_for_edit(db: Database, user_id: int) -> list[Exercis
     return available_exercises(
         load_catalog(), snapshot.profile.location, snapshot.profile.equipment, snapshot.flags
     )
-
-
-@dataclass(frozen=True, slots=True)
-class PromptMeta:
-    """ADR 0003: when an edit was *interpreted* by the `assistant` agent from the owner's
-    message, the decision records which prompt and model did it (AGENTS.md §6)."""
-
-    template_name: str
-    version: int
-    model: str
-    llm_input: Mapping[str, object] | None = None
-
-
-class PromptColumns(TypedDict):
-    prompt_template: str | None
-    prompt_version: str | None
-    model: str | None
-    llm_input: dict[str, object] | None
-
-
-def prompt_columns(prompt: PromptMeta | None) -> PromptColumns:
-    """`insert_decision`'s prompt/model columns for an edit — all `None` for a manual edit."""
-    if prompt is None:
-        return {"prompt_template": None, "prompt_version": None, "model": None, "llm_input": None}
-    return {
-        "prompt_template": prompt.template_name,
-        "prompt_version": str(prompt.version),
-        "model": prompt.model,
-        "llm_input": None if prompt.llm_input is None else dict(prompt.llm_input),
-    }
 
 
 @dataclass(frozen=True, slots=True)

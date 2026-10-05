@@ -38,7 +38,7 @@ from fitme.config.settings import Settings
 from fitme.db.connection import Database
 from fitme.domain.models import NAME_MAX_LENGTH, Plan
 from fitme.i18n import t
-from fitme.services import planning
+from fitme.services import conversations, planning
 from fitme.services import profile as profile_service
 from fitme.services.llm_runtime import LlmRuntime
 
@@ -103,6 +103,8 @@ async def _show_round(
     result: planning.PlanRoundResult,
     lang: str,
     *,
+    db: Database,
+    user_id: int,
     title_key: str = "plan.draft_title",
 ) -> None:
     refusal = result.refusal
@@ -120,6 +122,37 @@ async def _show_round(
         lang=lang,
         markup=rendering.draft_markup(result.decision_id, lang),
         unmatched=result.unmatched,
+    )
+    await _draft_in_session(
+        db, user_id, plan_id=result.plan_id, round_=result, plan=plan, lang=lang
+    )
+
+
+async def _draft_in_session(
+    db: Database,
+    user_id: int,
+    *,
+    plan_id: int | None,
+    round_: planning.PlanRoundResult,
+    plan: Plan,
+    lang: str,
+) -> None:
+    """ADR 0004: every shown draft is the current draft of the planning session for its plan
+    (opened here if needed), and the session's history notes that it was shown."""
+    record = await conversations.planning_draft_shown(
+        db, user_id, plan_id=plan_id, draft_decision_id=round_.decision_id
+    )
+    await conversations.record_outgoing(
+        db,
+        user_id,
+        record.id,
+        t(
+            "assistant.history_draft",
+            lang,
+            name=plan.name,
+            workouts=len(plan.workouts),
+            days=len(plan.schedule),
+        ),
     )
 
 
@@ -145,7 +178,7 @@ async def _generate(
     # held across it (A§4.6), so other updates keep flowing meanwhile.
     await message.answer(t("plan.generating", lang))
     result = await planning.propose_new_plan(db, llm, user_id, guidance=guidance)
-    await _show_round(message, result, lang)
+    await _show_round(message, result, lang, db=db, user_id=user_id)
 
 
 async def _ask_or_generate(
@@ -224,19 +257,72 @@ async def new_plan(
     await _ask_or_generate(message, db, llm, user_id, lang, pending_plan_revisions)
 
 
-async def revise_plan_from_text(
-    message: Message, db: Database, llm: LlmRuntime, user_id: int, plan_id: int, text: str
+async def revise_from_base(
+    message: Message,
+    db: Database,
+    llm: LlmRuntime,
+    user_id: int,
+    base: planning.RevisionBase,
+    text: str,
 ) -> None:
-    """A whole-plan rewrite stays a *draft* with Confirm/Change/Cancel (A§6.4): the model
-    designs it, so the owner confirms it — unlike a direct, specific edit."""
+    """A redesign by the plan designer (`plan_revise`), shown as the session's new draft."""
     lang = await _lang(db, user_id)
     await message.answer(t("plan.revising", lang))
     try:
-        result = await planning.revise_plan(db, llm, user_id, planning.PlanBase(plan_id), text)
+        result = await planning.revise_plan(db, llm, user_id, base, text)
+    except planning.StaleDraftError:
+        await message.answer(t("plan.stale_draft", lang))
+        return
     except planning.PlanNotFoundError:
         await message.answer(t("plan.not_found", lang))
         return
-    await _show_round(message, result, lang)
+    await _show_round(message, result, lang, db=db, user_id=user_id)
+
+
+async def show_draft(
+    message: Message, db: Database, user_id: int, decision_id: int, lang: str
+) -> None:
+    """The whole current draft, with the session buttons."""
+    if await planning.current_draft_id(db, user_id) != decision_id:
+        await message.answer(t("plan.stale_draft", lang))
+        return
+    plan = await planning.draft_base_plan(db, user_id, plan_id=None, draft_decision_id=decision_id)
+    if plan is None:
+        await message.answer(t("plan.stale_draft", lang))
+        return
+    await _send_plan(
+        message,
+        plan,
+        title=t("plan.draft_title", lang),
+        lang=lang,
+        markup=rendering.session_draft_markup(decision_id, lang),
+    )
+
+
+async def show_edit_draft(
+    message: Message,
+    result: planning.EditDraftResult,
+    before: Plan | None,
+    lang: str,
+) -> None:
+    """A draft built from direct edits (ADR 0004): what changed against the previous draft
+    (or the saved plan), any load the guards limited, and Save / whole draft / Close."""
+    round_ = result.round
+    if round_ is None or round_.plan is None:
+        lines = [t("assistant.blocked", lang), *(f"• {e}" for e in result.errors)]
+        await message.answer("\n".join(lines))
+        return
+    catalog = load_catalog()
+    plan = round_.plan
+    lines = [t("assistant.draft_updated", lang, name=plan.name)]
+    if before is not None:
+        lines.extend(rendering.plan_diff_lines(before, plan, catalog, lang))
+    if result.requested is not None:
+        lines.extend(rendering.load_change_notes(result.requested, plan, catalog, lang))
+    lines.extend(["", t("assistant.draft_hint", lang)])
+    await message.answer(
+        "\n".join(lines), reply_markup=rendering.session_draft_markup(round_.decision_id, lang)
+    )
 
 
 async def cmd_plan(message: Message, db: Database, user_id: int) -> None:
@@ -365,7 +451,8 @@ async def on_plan_draft(
             await message.answer(t("plan.new_cancelled", lang))
             return
         current = await planning.current_draft_id(db, user_id)
-        if pending is not None or (decision_id and current == decision_id):
+        closed = await conversations.close_planning(db, user_id, status="discarded")
+        if pending is not None or closed is not None or (decision_id and current == decision_id):
             await message.answer(t("plan.change_cancelled", lang))
         else:
             await message.answer(t("plan.nothing_to_cancel", lang))
@@ -376,11 +463,18 @@ async def on_plan_draft(
         # answers a double-tap with ALREADY_SAVED before the (now stale) draft check.
         pending_plan_revisions.pop(user_id, None)
         result = await planning.confirm_plan(db, settings, user_id, decision_id)
+        if result.status in (planning.ConfirmStatus.SAVED, planning.ConfirmStatus.ALREADY_SAVED):
+            await conversations.close_planning(db, user_id, status="saved")
         await _show_confirm(query, message, db, user_id, result, lang)
         return
 
     if await planning.current_draft_id(db, user_id) != decision_id:
         await query.answer(t("plan.stale_draft", lang), show_alert=True)
+        return
+
+    if action == "view":
+        await query.answer()
+        await show_draft(message, db, user_id, decision_id, lang)
         return
 
     if action == "change":
@@ -449,7 +543,9 @@ async def handle_plan_text(
     if isinstance(pending, PendingImport):
         await message.answer(t("plan.importing", lang))
         result = await planning.import_plan(db, llm, user_id, text)
-        await _show_round(message, result, lang, title_key="plan.import_title")
+        await _show_round(
+            message, result, lang, db=db, user_id=user_id, title_key="plan.import_title"
+        )
         return True
     await message.answer(t("plan.revising", lang))
     try:
@@ -460,7 +556,7 @@ async def handle_plan_text(
     except planning.PlanNotFoundError:
         await message.answer(t("plan.not_found", lang))
         return True
-    await _show_round(message, result, lang)
+    await _show_round(message, result, lang, db=db, user_id=user_id)
     return True
 
 

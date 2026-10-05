@@ -1,17 +1,13 @@
-"""Free-text assistant output types (ADR 0003). Pure pydantic v2, no I/O.
+"""Free-text assistant types (ADR 0003, ADR 0004). Pure pydantic v2, no I/O.
 
-The `assistant` agent reads the owner's unprompted message (anything no button or pending
-prompt claimed) and answers with exactly one of:
+The `assistant` agent works with tools (`llm.agents.AssistantTools`): read-only lookups, and
+*staging* tools that check an action against the current state right away and record it for
+after the run. Its final output is only what it says to the owner: `AssistantTurn`, or a
+`Refusal`. Nothing it stages is written before deterministic code applies it through the
+guards (`services.assistant`).
 
-- `AssistantEdits`: a short list of typed edit operations, applied by deterministic code
-  (`services.assistant`) after the same guards as the website's plan editor — the model never
-  writes anything itself;
-- `AssistantAction`: open an existing bot flow (plan list, a plan, a new plan, a plan
-  revision, today's workout, stats);
-- `AssistantReply`: a short plain answer or a clarifying question;
-- `Refusal`: out of scope.
-
-Every model forbids extra fields, like `domain.models`.
+The edit operations below are the arguments of the staging tools. A plan edit names the
+workout (`workout_key`); an edit of today's workout during a workout doesn't need one.
 """
 
 from __future__ import annotations
@@ -26,25 +22,22 @@ from fitme.domain.models import (
     Load,
     Refusal,
     ScheduledDay,
-    _trim_name,
     _trim_title,
 )
 
 _STRICT_CONFIG = ConfigDict(extra="forbid", allow_inf_nan=False)
 
 MAX_OPS = 20
-REPLY_MAX_LENGTH = 1000
-REQUEST_MAX_LENGTH = 1000
+MESSAGE_MAX_LENGTH = 2000
 
 
 class SetPrescription(BaseModel):
-    """Change one exercise's numbers in one workout. Omitted fields stay as they are."""
+    """Change one exercise's numbers. Omitted fields stay as they are."""
 
     model_config = _STRICT_CONFIG
 
     op: Literal["set_prescription"]
-    plan_id: int
-    workout_key: str
+    workout_key: str | None = None
     exercise_id: str
     sets: Annotated[int, Field(ge=1, le=10)] | None = None
     reps_min: Annotated[int, Field(ge=1, le=50)] | None = None
@@ -67,8 +60,7 @@ class SwapExercise(BaseModel):
     model_config = _STRICT_CONFIG
 
     op: Literal["swap_exercise"]
-    plan_id: int
-    workout_key: str
+    workout_key: str | None = None
     exercise_id: str
     new_exercise_id: str
     load: Load | None = None
@@ -80,8 +72,7 @@ class AddExercise(BaseModel):
     model_config = _STRICT_CONFIG
 
     op: Literal["add_exercise"]
-    plan_id: int
-    workout_key: str
+    workout_key: str | None = None
     exercise_id: str
     sets: Annotated[int, Field(ge=1, le=10)]
     reps_min: Annotated[int, Field(ge=1, le=50)]
@@ -94,8 +85,7 @@ class RemoveExercise(BaseModel):
     model_config = _STRICT_CONFIG
 
     op: Literal["remove_exercise"]
-    plan_id: int
-    workout_key: str
+    workout_key: str | None = None
     exercise_id: str
 
 
@@ -105,7 +95,6 @@ class SetSchedule(BaseModel):
     model_config = _STRICT_CONFIG
 
     op: Literal["set_schedule"]
-    plan_id: int
     days: Annotated[list[ScheduledDay], Field(min_length=1, max_length=7)]
 
 
@@ -113,129 +102,55 @@ class RenameWorkout(BaseModel):
     model_config = _STRICT_CONFIG
 
     op: Literal["rename_workout"]
-    plan_id: int
-    workout_key: str
+    workout_key: str | None = None
     title: Annotated[str, BeforeValidator(_trim_title), Field(min_length=1)]
 
 
-class RenamePlan(BaseModel):
-    model_config = _STRICT_CONFIG
-
-    op: Literal["rename_plan"]
-    plan_id: int
-    name: Annotated[str, BeforeValidator(_trim_name), Field(min_length=1)]
-
-
-class SetDefaultPlan(BaseModel):
-    model_config = _STRICT_CONFIG
-
-    op: Literal["set_default_plan"]
-    plan_id: int
+AnyWorkoutOp = SetPrescription | SwapExercise | AddExercise | RemoveExercise
+AnyPlanOp = AnyWorkoutOp | SetSchedule | RenameWorkout
+WorkoutOp = Annotated[AnyWorkoutOp, Field(discriminator="op")]
+PlanOp = Annotated[AnyPlanOp, Field(discriminator="op")]
 
 
 class FixLoggedSet(BaseModel):
     """Correct one already-logged set of a finished session. `set_number` is 1-based within
-    the exercise, as the user counts. `load_kg` is `None` for a bodyweight set."""
+    the exercise, as the user counts. `load_kg` is `None` to keep the logged kg (or for a
+    bodyweight set)."""
 
     model_config = _STRICT_CONFIG
 
-    op: Literal["fix_logged_set"]
-    session_id: int
     exercise_id: str
     set_number: Annotated[int, Field(ge=1, le=10)]
     reps: Annotated[int, Field(ge=1, le=100)]
     load_kg: float | None = None
 
 
-PlanBodyOp = SetPrescription | SwapExercise | AddExercise | RemoveExercise | SetSchedule
-PlanOp = PlanBodyOp | RenameWorkout | RenamePlan | SetDefaultPlan
-EditOp = Annotated[PlanOp | FixLoggedSet, Field(discriminator="op")]
-
-PLAN_BODY_OPS = (SetPrescription, SwapExercise, AddExercise, RemoveExercise, SetSchedule)
-
-
-class AssistantEdits(BaseModel):
-    """Edits the owner asked for. One message edits **one** plan, or fixes logged sets of
-    **one** session — never both, never several (keeps Undo a single step)."""
+class AssistantTurn(BaseModel):
+    """What the assistant says to the owner after this turn: what it did, what it couldn't,
+    or a question. The effects of its tools are shown separately, built from the data."""
 
     model_config = _STRICT_CONFIG
 
-    ops: Annotated[list[EditOp], Field(min_length=1, max_length=MAX_OPS)]
-
-    @model_validator(mode="after")
-    def _one_target(self) -> AssistantEdits:
-        plan_ids = {op.plan_id for op in self.ops if not isinstance(op, FixLoggedSet)}
-        session_ids = {op.session_id for op in self.ops if isinstance(op, FixLoggedSet)}
-        if plan_ids and session_ids:
-            raise ValueError("edit either one plan or one session's logged sets, not both")
-        if len(plan_ids) > 1 or len(session_ids) > 1:
-            raise ValueError("all ops must target the same plan_id (or the same session_id)")
-        return self
+    message: Annotated[str, Field(min_length=1, max_length=MESSAGE_MAX_LENGTH)]
 
 
-class AssistantAction(BaseModel):
-    """Open an existing bot flow. `plan_id` is needed for `show_plan`/`revise_plan`.
-    `request` is the owner's own words: required for `revise_plan` (the rewrite), optional
-    for `new_plan` (what the new plan should be; without it the bot asks when plans exist).
-    The `*_block` actions apply to the current block of the in-progress workout only."""
-
-    model_config = _STRICT_CONFIG
-
-    action: Literal[
-        "show_plans",
-        "show_plan",
-        "new_plan",
-        "revise_plan",
-        "train",
-        "stats",
-        # During an in-progress workout, for the block on screen — exactly the block's
-        # buttons (✅ / ✏️ / ⏭). `log_block_results` sends the user's *own* message to the
-        # result parser, never a model paraphrase of it.
-        "log_block_as_planned",
-        "log_block_results",
-        "skip_block",
-    ]
-    plan_id: int | None = None
-    request: Annotated[str, Field(max_length=REQUEST_MAX_LENGTH)] | None = None
-
-    @model_validator(mode="after")
-    def _arguments_match_action(self) -> AssistantAction:
-        if self.action in ("show_plan", "revise_plan") and self.plan_id is None:
-            raise ValueError(f"{self.action} needs plan_id")
-        if self.action == "revise_plan" and not (self.request or "").strip():
-            raise ValueError("revise_plan needs the request text")
-        return self
-
-
-class AssistantReply(BaseModel):
-    """A short plain answer, or a clarifying question when the request is ambiguous."""
-
-    model_config = _STRICT_CONFIG
-
-    message: Annotated[str, Field(min_length=1, max_length=REPLY_MAX_LENGTH)]
-
-
-AssistantProposal = AssistantEdits | AssistantAction | AssistantReply | Refusal
+AssistantOutput = AssistantTurn | Refusal
 
 __all__ = [
     "MAX_OPS",
     "NAME_MAX_LENGTH",
-    "PLAN_BODY_OPS",
     "TITLE_MAX_LENGTH",
     "AddExercise",
-    "AssistantAction",
-    "AssistantEdits",
-    "AssistantProposal",
-    "AssistantReply",
-    "EditOp",
+    "AnyPlanOp",
+    "AnyWorkoutOp",
+    "AssistantOutput",
+    "AssistantTurn",
     "FixLoggedSet",
-    "PlanBodyOp",
     "PlanOp",
     "RemoveExercise",
-    "RenamePlan",
     "RenameWorkout",
-    "SetDefaultPlan",
     "SetPrescription",
     "SetSchedule",
     "SwapExercise",
+    "WorkoutOp",
 ]

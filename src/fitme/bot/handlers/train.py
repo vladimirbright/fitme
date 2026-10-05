@@ -29,6 +29,7 @@ from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message
 from fitme.bot import plan_rendering
 from fitme.bot import train_rendering as rendering
 from fitme.bot.callback_data import CheckinReply, TrainAction, TrainPick
+from fitme.bot.handlers import plan as plan_handlers
 from fitme.bot.rendering import refusal_text
 from fitme.catalog import load_catalog
 from fitme.config.settings import Settings
@@ -36,9 +37,9 @@ from fitme.db.connection import Database
 from fitme.domain.enums import CheckinAnswer, WorkoutSessionStatus
 from fitme.domain.models import Refusal
 from fitme.i18n import t
+from fitme.services import conversations, planning, training
 from fitme.services import profile as profile_service
 from fitme.services import recap as recap_service
-from fitme.services import training
 from fitme.services.llm_runtime import LlmRuntime
 from fitme.services.safety import HaltResult
 
@@ -134,6 +135,11 @@ async def _show_advance(
             planned=completion.sets_planned,
         )
     )
+    if await training.changed_mid_session(db, user_id, session_id):
+        await message.answer(
+            t("train.to_plan_offer", lang),
+            reply_markup=rendering.to_plan_markup(session_id, lang),
+        )
     await _show_recap(message, db, llm, user_id, session_id, lang)
 
 
@@ -518,6 +524,11 @@ async def on_train_action(
             )
         return
 
+    if action == "to_plan":
+        await query.answer()
+        await _workout_to_plan(message, db, settings, user_id, session_id, lang)
+        return
+
     if action == "apply":
         applied = await recap_service.apply_suggestion(
             db, settings, user_id, session_id, callback_data.decision_id, callback_data.item
@@ -644,6 +655,48 @@ async def handle_train_text(
         reply_markup=rendering.parsed_markup(parsed.prompt, parsed.decision_id, lang),
     )
     return True
+
+
+async def _workout_to_plan(
+    message: Message,
+    db: Database,
+    settings: Settings,
+    user_id: int,
+    session_id: int,
+    lang: str,
+) -> None:
+    """ADR 0004: today's workout, as changed during it, replaces that workout in the plan —
+    as a draft of a planning session (judged like any draft), which the owner saves or
+    closes."""
+    trained = await training.trained_workout(db, user_id, session_id)
+    detail = None if trained is None else await planning.get_plan_detail(db, user_id, trained[0])
+    if trained is None or detail is None:
+        await message.answer(t("train.stale", lang))
+        return
+    plan_id, workout = trained
+    before = detail.plan
+    if not any(item.key == workout.key for item in before.workouts):
+        await message.answer(t("train.stale", lang))
+        return
+    edited = before.model_copy(
+        update={
+            "workouts": [workout if item.key == workout.key else item for item in before.workouts]
+        },
+        deep=True,
+    )
+    result = await planning.record_edit_draft(
+        db,
+        settings,
+        user_id,
+        plan=edited,
+        plan_id=plan_id,
+        user_report={"base": "plan_version", "source": "workout", "session_id": session_id},
+    )
+    if result.round is not None:
+        await conversations.planning_draft_shown(
+            db, user_id, plan_id=plan_id, draft_decision_id=result.round.decision_id
+        )
+    await plan_handlers.show_edit_draft(message, result, before, lang)
 
 
 # --- Entry points for the free-text assistant (ADR 0003) ------------------------------------

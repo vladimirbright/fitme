@@ -22,7 +22,7 @@ _REAL_PROMPT_VERSIONS = {
     "result_parse": 1,
     "recap": 1,
     "plan_import": 1,
-    "assistant": 3,  # v2: narrow refusals; v3: log/skip the current workout block
+    "assistant": 4,  # v3: workout blocks; v4: sessions + tools (ADR 0004)
 }
 _REAL_PROMPT_NAMES = tuple(_REAL_PROMPT_VERSIONS)
 

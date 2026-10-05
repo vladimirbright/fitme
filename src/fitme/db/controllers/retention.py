@@ -22,6 +22,16 @@ async def purge_chat_messages_older_than(conn: aiosqlite.Connection, cutoff: dat
     return cursor.rowcount
 
 
+async def purge_conversations_closed_before(conn: aiosqlite.Connection, cutoff: datetime) -> int:
+    """ADR 0004: a closed session older than the chat retention has no messages left (they
+    were purged by `purge_chat_messages_older_than`), so the empty shell goes too."""
+    cursor = await conn.execute(
+        "DELETE FROM conversations WHERE status != 'open' AND closed_at < ?",
+        (clock.format_timestamp(cutoff),),
+    )
+    return cursor.rowcount
+
+
 async def purge_expired_activation_codes(conn: aiosqlite.Connection) -> int:
     cursor = await conn.execute(
         "DELETE FROM activation_codes WHERE expires_at < ? OR used_at IS NOT NULL",

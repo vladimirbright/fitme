@@ -1,5 +1,6 @@
-"""`services.assistant.apply_plan_ops` (ADR 0003): the deterministic step between the
-assistant agent's typed ops and `plan_edit.save_edit`'s guards. Pure — no DB, no model."""
+"""`services.assistant.apply_plan_ops` / `apply_workout_ops` (ADR 0003, ADR 0004): the
+deterministic step between the assistant's tool arguments and the guards. Pure — no DB, no
+model."""
 
 from __future__ import annotations
 
@@ -8,9 +9,6 @@ from pydantic import ValidationError
 
 from fitme.domain.assistant import (
     AddExercise,
-    AssistantAction,
-    AssistantEdits,
-    FixLoggedSet,
     RemoveExercise,
     RenameWorkout,
     SetPrescription,
@@ -18,7 +16,7 @@ from fitme.domain.assistant import (
     SwapExercise,
 )
 from fitme.domain.models import Block, Load, Plan, Prescription, ScheduledDay, Workout
-from fitme.services.assistant import OpError, apply_plan_ops
+from fitme.services.assistant import OpError, apply_plan_ops, apply_workout_ops
 
 ALLOWED = frozenset({"barbell_back_squat", "dumbbell_bench_press", "pushup", "goblet_squat"})
 
@@ -42,7 +40,8 @@ def _plan() -> Plan:
                 title="Legs",
                 blocks=[
                     Block(
-                        kind="single", items=[_item("barbell_back_squat", Load(kind="kg", kg=60))]
+                        kind="single",
+                        items=[_item("barbell_back_squat", Load(kind="kg", kg=60))],
                     )
                 ],
             ),
@@ -63,43 +62,44 @@ def _plan() -> Plan:
     )
 
 
+def _set(exercise_id: str = "barbell_back_squat", key: str | None = "A", **fields: object):  # type: ignore[no-untyped-def]
+    return SetPrescription(
+        op="set_prescription", workout_key=key, exercise_id=exercise_id, **fields
+    )  # type: ignore[arg-type]
+
+
 def test_set_prescription_changes_only_the_named_fields_and_leaves_the_input_untouched() -> None:
     plan = _plan()
-    op = SetPrescription(
-        op="set_prescription",
-        plan_id=1,
-        workout_key="a",  # case-insensitive
-        exercise_id="barbell_back_squat",
-        load=Load(kind="kg", kg=62.5),
-        sets=4,
-    )
-    edited = apply_plan_ops(plan, [op], ALLOWED)
+    edited = apply_plan_ops(plan, [_set(key="a", load=Load(kind="kg", kg=62.5), sets=4)], ALLOWED)
     item = edited.workouts[0].blocks[0].items[0]
     assert (item.sets, item.reps_min, item.reps_max, item.load.kg) == (4, 8, 10, 62.5)
     assert plan.workouts[0].blocks[0].items[0].load.kg == 60  # not mutated
 
 
 def test_a_single_rep_target_outside_the_range_moves_both_ends() -> None:
-    op = SetPrescription(
-        op="set_prescription",
-        plan_id=1,
-        workout_key="A",
-        exercise_id="barbell_back_squat",
-        reps_min=12,
-    )
-    item = apply_plan_ops(_plan(), [op], ALLOWED).workouts[0].blocks[0].items[0]
+    item = apply_plan_ops(_plan(), [_set(reps_min=12)], ALLOWED).workouts[0].blocks[0].items[0]
     assert (item.reps_min, item.reps_max) == (12, 12)
 
 
 def test_set_prescription_needs_at_least_one_change() -> None:
     with pytest.raises(ValidationError):
-        SetPrescription(op="set_prescription", plan_id=1, workout_key="A", exercise_id="x")
+        SetPrescription(op="set_prescription", workout_key="A", exercise_id="x")
+
+
+def test_workout_key_is_required_only_when_the_plan_has_several_workouts() -> None:
+    with pytest.raises(OpError) as exc:
+        apply_plan_ops(_plan(), [_set(key=None, sets=4)], ALLOWED)
+    assert exc.value.code == "unknown_workout"
+    one = _plan().model_copy(update={"workouts": _plan().workouts[:1]})
+    assert (
+        apply_plan_ops(one, [_set(key=None, sets=4)], ALLOWED).workouts[0].blocks[0].items[0].sets
+        == 4
+    )
 
 
 def test_swap_resets_the_load_to_calibration_and_refuses_a_disallowed_exercise() -> None:
     swap = SwapExercise(
         op="swap_exercise",
-        plan_id=1,
         workout_key="A",
         exercise_id="barbell_back_squat",
         new_exercise_id="goblet_squat",
@@ -117,7 +117,6 @@ def test_swap_resets_the_load_to_calibration_and_refuses_a_disallowed_exercise()
 def test_add_exercise_appends_a_single_block_and_checks_the_allowed_list() -> None:
     add = AddExercise(
         op="add_exercise",
-        plan_id=1,
         workout_key="A",
         exercise_id="pushup",
         sets=3,
@@ -132,15 +131,12 @@ def test_add_exercise_appends_a_single_block_and_checks_the_allowed_list() -> No
 
 
 def test_remove_turns_a_two_item_superset_into_a_single_and_refuses_an_empty_workout() -> None:
-    remove = RemoveExercise(op="remove_exercise", plan_id=1, workout_key="B", exercise_id="pushup")
+    remove = RemoveExercise(op="remove_exercise", workout_key="B", exercise_id="pushup")
     block = apply_plan_ops(_plan(), [remove], ALLOWED).workouts[1].blocks[0]
-    assert block.kind == "single" and [i.exercise_id for i in block.items] == [
-        "dumbbell_bench_press"
-    ]
+    assert block.kind == "single"
+    assert [i.exercise_id for i in block.items] == ["dumbbell_bench_press"]
 
-    last = RemoveExercise(
-        op="remove_exercise", plan_id=1, workout_key="A", exercise_id="barbell_back_squat"
-    )
+    last = RemoveExercise(op="remove_exercise", workout_key="A", exercise_id="barbell_back_squat")
     with pytest.raises(OpError) as exc:
         apply_plan_ops(_plan(), [last], ALLOWED)
     assert exc.value.code == "workout_empty"
@@ -150,22 +146,14 @@ def test_unknown_workout_or_exercise_is_an_op_error() -> None:
     with pytest.raises(OpError) as exc:
         apply_plan_ops(
             _plan(),
-            [
-                RemoveExercise(
-                    op="remove_exercise", plan_id=1, workout_key="Z", exercise_id="pushup"
-                )
-            ],
+            [RemoveExercise(op="remove_exercise", workout_key="Z", exercise_id="pushup")],
             ALLOWED,
         )
     assert exc.value.code == "unknown_workout"
     with pytest.raises(OpError) as exc:
         apply_plan_ops(
             _plan(),
-            [
-                RemoveExercise(
-                    op="remove_exercise", plan_id=1, workout_key="A", exercise_id="pushup"
-                )
-            ],
+            [RemoveExercise(op="remove_exercise", workout_key="A", exercise_id="pushup")],
             ALLOWED,
         )
     assert exc.value.code == "unknown_exercise"
@@ -174,7 +162,6 @@ def test_unknown_workout_or_exercise_is_an_op_error() -> None:
 def test_set_schedule_sorts_days_and_rejects_duplicates_and_unknown_keys() -> None:
     op = SetSchedule(
         op="set_schedule",
-        plan_id=1,
         days=[ScheduledDay(weekday=3, workout_key="b"), ScheduledDay(weekday=0, workout_key="A")],
     )
     schedule = apply_plan_ops(_plan(), [op], ALLOWED).schedule
@@ -199,31 +186,26 @@ def test_set_schedule_sorts_days_and_rejects_duplicates_and_unknown_keys() -> No
 
 
 def test_rename_workout_runs_the_wording_check() -> None:
-    op = RenameWorkout(
-        op="rename_workout", plan_id=1, workout_key="A", title="Your personal coach day"
-    )
+    op = RenameWorkout(op="rename_workout", workout_key="A", title="Your personal coach day")
     with pytest.raises(OpError) as exc:
         apply_plan_ops(_plan(), [op], ALLOWED)
     assert exc.value.code == "forbidden_term"
 
 
-def test_one_message_edits_one_plan_or_one_session_never_both() -> None:
-    set_op = SetPrescription(
-        op="set_prescription", plan_id=1, workout_key="A", exercise_id="barbell_back_squat", sets=4
+def test_today_edits_only_reach_blocks_after_the_current_one() -> None:
+    """ADR 0004: during a workout, blocks up to the current one are started or done."""
+    workout = Workout(
+        key="A",
+        title="Full body",
+        blocks=[
+            Block(kind="single", items=[_item("barbell_back_squat", Load(kind="kg", kg=60))]),
+            Block(kind="single", items=[_item("pushup", Load(kind="bodyweight"))]),
+        ],
     )
-    fix = FixLoggedSet(
-        op="fix_logged_set", session_id=7, exercise_id="barbell_back_squat", set_number=1, reps=5
-    )
-    with pytest.raises(ValidationError):
-        AssistantEdits(ops=[set_op, fix])
-    with pytest.raises(ValidationError):
-        AssistantEdits(ops=[set_op, set_op.model_copy(update={"plan_id": 2})])
-    assert AssistantEdits(ops=[set_op, set_op]).ops
+    later = apply_workout_ops(workout, [_set("pushup", key=None, sets=2)], ALLOWED, first_block=1)
+    assert later.blocks[1].items[0].sets == 2
+    assert workout.blocks[1].items[0].sets == 3  # not mutated
 
-
-def test_actions_require_their_arguments() -> None:
-    with pytest.raises(ValidationError):
-        AssistantAction(action="show_plan")
-    with pytest.raises(ValidationError):
-        AssistantAction(action="revise_plan", plan_id=1, request="  ")
-    assert AssistantAction(action="train").action == "train"
+    with pytest.raises(OpError) as exc:
+        apply_workout_ops(workout, [_set(key=None, sets=5)], ALLOWED, first_block=1)
+    assert exc.value.code == "block_started"

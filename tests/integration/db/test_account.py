@@ -15,6 +15,7 @@ from fitme.db.controllers.auth import (
     upsert_activation_failed_attempts,
 )
 from fitme.db.controllers.chat import insert_chat_message
+from fitme.db.controllers.conversations import insert_conversation
 from fitme.db.controllers.decisions import insert_decision, insert_decision_outcome, insert_llm_call
 from fitme.db.controllers.plans import insert_plan, insert_plan_version
 from fitme.db.controllers.profile import (
@@ -55,6 +56,7 @@ _EXPECTED_TABLES = {
     "health_holds",
     "checkins",
     "chat_messages",
+    "conversations",
     "decision_outcomes",
     "llm_calls",
 }
@@ -179,10 +181,18 @@ async def _seed_every_table(db: Database, user_id: int) -> int:
             conn, user_id=user_id, reason="stop_word", source_session_id=session_id
         )
         await insert_checkin(conn, user_id=user_id, session_id=session_id, question_key="area:knee")
+        conversation_id = await insert_conversation(
+            conn,
+            user_id=user_id,
+            kind="training",
+            plan_id=None,
+            workout_session_id=session_id,
+        )
         await insert_chat_message(
             conn,
             user_id=user_id,
             session_id=session_id,
+            conversation_id=conversation_id,
             direction="in",
             text="wal-checkpoint-marker-9f3a1c",
         )

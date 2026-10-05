@@ -1,11 +1,12 @@
-"""The free-text assistant (ADR 0003) end to end through the real dispatcher and DB: an
-unprompted message → `assistant` agent (a scripted `FunctionModel`, including tool calls) →
-edits applied immediately through the website editor's guards, shown as a diff with Undo.
+"""The free-text assistant with sessions and tools (ADR 0003, ADR 0004), end to end through
+the real dispatcher and DB. The model is a scripted `FunctionModel` that calls the real tools.
 
-Covers the AGENTS.md §2 invariants on this new path: the progression cap and the
-historical-max ceiling refuse (no confirmation checkbox in chat); a stop word halts before any
-model call; an open health hold refuses before any model call; an implausible logged load is
-refused; and the LLM only ever sees pseudonymized data.
+Covers: plan changes go to a planning session's draft (never straight into the plan) and are
+saved by the button or by asking; the session remembers the conversation; several tools in
+one turn; tool answers let the model correct itself; loads above the guards are limited, not
+saved as asked; a started workout is a training session (log, enter results verbatim, skip,
+change the remaining blocks, carry the changes into the plan); a stop word halts and an open
+hold refuses before any model call; refusals are logged; the model sees pseudonymized data.
 """
 
 from __future__ import annotations
@@ -16,7 +17,7 @@ from typing import Any
 
 import pytest
 from aiogram import Bot, Dispatcher
-from aiogram.methods import AnswerCallbackQuery, SendMessage
+from aiogram.methods import SendMessage
 from conftest import FakeSession, callback_update, make_user, message_update
 from pydantic_ai.messages import (
     ModelMessage,
@@ -29,7 +30,7 @@ from pydantic_ai.models.function import AgentInfo, FunctionModel
 
 from fitme import clock
 from fitme.bot.app import build_dispatcher
-from fitme.bot.callback_data import AssistantUndo
+from fitme.bot.callback_data import PlanDraft, TrainAction
 from fitme.config.content import content_version
 from fitme.config.settings import Settings
 from fitme.db.connection import Database
@@ -45,23 +46,19 @@ from fitme.db.controllers.training import (
     insert_set_log,
     insert_workout_session,
 )
+from fitme.db.records import ConversationRecord
+from fitme.db.selectors.conversations import list_open_conversations
 from fitme.db.selectors.decisions import get_decision, list_decisions_for_user
 from fitme.db.selectors.plans import list_plan_versions
 from fitme.db.selectors.training import list_set_logs_for_session
 from fitme.db.selectors.users import get_telegram_account_by_telegram_user_id
-from fitme.domain.assistant import (
-    AssistantAction,
-    AssistantEdits,
-    AssistantReply,
-    FixLoggedSet,
-    SetPrescription,
-    SwapExercise,
-)
+from fitme.domain.assistant import AssistantTurn
 from fitme.domain.enums import AREA_FLAGS, RED_FLAGS, RefusalCode
 from fitme.domain.models import Block, Load, Plan, Prescription, Refusal, ScheduledDay, Workout
 from fitme.domain.results import ParsedResults, SetResult
 from fitme.i18n import t
 from fitme.llm.agents import assistant_agent, plan_generate_agent, result_parse_agent
+from fitme.services import profile as profile_service
 from fitme.services import training
 from fitme.services.identity import issue_activation_code
 from fitme.services.llm_runtime import LlmRuntime
@@ -70,18 +67,22 @@ OWNER_CHAT_ID = 1
 
 
 @dataclass(frozen=True)
-class ToolStep:
+class Call:
+    """One tool call the scripted model makes (its own model request)."""
+
     name: str
-    args: dict[str, Any]
+    args: dict[str, Any] = field(default_factory=dict)
 
 
-Step = ToolStep | AssistantEdits | AssistantAction | AssistantReply | Refusal | Plan | ParsedResults
+def say(message: str) -> AssistantTurn:
+    return AssistantTurn(message=message)
+
+
+Step = Call | AssistantTurn | Refusal | Plan | ParsedResults
 
 
 @dataclass
 class ScriptedLlm:
-    """Each model request pops one step: a read-only tool call, or the final output."""
-
     steps: list[Step] = field(default_factory=list)
     requests: list[ModelRequest] = field(default_factory=list)
     calls: int = 0
@@ -92,41 +93,46 @@ class ScriptedLlm:
         assert isinstance(request, ModelRequest)
         self.requests.append(request)
         step = self.steps.pop(0)
-        if isinstance(step, ToolStep):
+        if isinstance(step, Call):
             return ModelResponse(parts=[ToolCallPart(tool_name=step.name, args=step.args)])
         names = [tool.name for tool in info.output_tools]
-        # A union output has one tool per member; a single output type has just one.
         wanted = f"final_result_{type(step).__name__}" if len(names) > 1 else names[0]
-        assert wanted in names
+        assert wanted in names, (wanted, names)
         return ModelResponse(
             parts=[ToolCallPart(tool_name=wanted, args=step.model_dump(mode="json"))]
         )
 
     def runtime(self, settings: Settings) -> LlmRuntime:
+        def wrap(factory: Any) -> Any:
+            return lambda model: factory(FunctionModel(self._respond, model_name=str(model)))
+
         return LlmRuntime(
             settings=settings,
             prices={},
             agent_factories={
-                "assistant": lambda model: assistant_agent(
-                    FunctionModel(self._respond, model_name=str(model))
-                ),
-                "plan_generate": lambda model: plan_generate_agent(
-                    FunctionModel(self._respond, model_name=str(model))
-                ),
-                "result_parse": lambda model: result_parse_agent(
-                    FunctionModel(self._respond, model_name=str(model))
-                ),
+                "assistant": wrap(assistant_agent),
+                "plan_generate": wrap(plan_generate_agent),
+                "result_parse": wrap(result_parse_agent),
             },
         )
 
-    def first_prompt(self) -> str:
-        for part in self.requests[0].parts:
-            if part.part_kind == "user-prompt":
-                return str(part.content)
-        raise AssertionError("no user prompt")
+    def prompts(self) -> list[dict[str, Any]]:
+        """Every user prompt sent (one per agent run), parsed."""
+        return [
+            json.loads(str(part.content))
+            for request in self.requests
+            for part in request.parts
+            if part.part_kind == "user-prompt"
+        ]
 
-    def tool_returns(self) -> list[ToolReturnPart]:
-        return [p for r in self.requests for p in r.parts if isinstance(p, ToolReturnPart)]
+    def returns(self, tool: str) -> list[Any]:
+        """Every answer `tool` gave, in order."""
+        return [
+            part.content
+            for request in self.requests
+            for part in request.parts
+            if isinstance(part, ToolReturnPart) and part.tool_name == tool
+        ]
 
 
 @pytest.fixture
@@ -139,12 +145,13 @@ def dispatcher(db: Database, settings: Settings, llm: ScriptedLlm) -> Dispatcher
     return build_dispatcher(db, settings, llm.runtime(settings))
 
 
-def _plan() -> Plan:
-    def item(exercise_id: str, load: Load) -> Prescription:
-        return Prescription(
-            exercise_id=exercise_id, sets=3, reps_min=5, reps_max=5, load=load, rest_seconds=120
-        )
+def _item(exercise_id: str, load: Load) -> Prescription:
+    return Prescription(
+        exercise_id=exercise_id, sets=3, reps_min=5, reps_max=5, load=load, rest_seconds=120
+    )
 
+
+def _plan() -> Plan:
     return Plan(
         name="Home plan",
         schedule=[
@@ -157,9 +164,14 @@ def _plan() -> Plan:
                 title="Full body",
                 blocks=[
                     Block(
-                        kind="single", items=[item("barbell_back_squat", Load(kind="kg", kg=60))]
+                        kind="single",
+                        items=[_item("barbell_back_squat", Load(kind="kg", kg=60))],
                     ),
-                    Block(kind="single", items=[item("pushup", Load(kind="bodyweight"))]),
+                    Block(kind="single", items=[_item("pushup", Load(kind="bodyweight"))]),
+                    Block(
+                        kind="single",
+                        items=[_item("dumbbell_bench_press", Load(kind="calibration"))],
+                    ),
                 ],
             )
         ],
@@ -234,7 +246,11 @@ async def _ready(dispatcher: Dispatcher, bot: Bot, db: Database) -> Seeded:
         )
         # One finished session: squat 3 × 5 @ 60 kg, so 60 is the logged max and reference.
         session_id = await insert_workout_session(
-            conn, user_id=user_id, plan_version_id=version_id, workout_key="A", status="in_progress"
+            conn,
+            user_id=user_id,
+            plan_version_id=version_id,
+            workout_key="A",
+            status="in_progress",
         )
         for set_index in (1, 2, 3):
             await insert_set_log(
@@ -268,113 +284,197 @@ def _messages(session: FakeSession) -> list[SendMessage]:
     return [m for m in session.sent if isinstance(m, SendMessage)]
 
 
+def _texts(session: FakeSession) -> list[str]:
+    return [m.text or "" for m in _messages(session)]
+
+
 def _last_text(session: FakeSession) -> str:
-    return _messages(session)[-1].text
+    return _texts(session)[-1]
 
 
-def _undo_id(message: SendMessage) -> int:
+def _datas(message: SendMessage) -> list[str]:
     markup = message.reply_markup
-    assert markup is not None and hasattr(markup, "inline_keyboard")
-    data = markup.inline_keyboard[0][0].callback_data
-    assert data is not None
-    return AssistantUndo.unpack(data).decision_id
+    if markup is None or not hasattr(markup, "inline_keyboard"):
+        return []
+    return [b.callback_data for row in markup.inline_keyboard for b in row if b.callback_data]
+
+
+def _last_data(session: FakeSession, prefix: str) -> str:
+    for message in reversed(_messages(session)):
+        for data in _datas(message):
+            if data.startswith(prefix):
+                return data
+    raise AssertionError(f"no button {prefix!r} was sent")
 
 
 async def _lang(db: Database, user_id: int) -> str:
-    from fitme.services import profile as profile_service
-
     return (await profile_service.get_snapshot(db, user_id)).language
 
 
-async def _bodies(db: Database, plan_id: int) -> list[dict[str, object]]:
+async def _bodies(db: Database, plan_id: int) -> list[Plan]:
     async with db.read() as conn:
-        return [v.body for v in await list_plan_versions(conn, plan_id)]
+        return [Plan.model_validate(v.body) for v in await list_plan_versions(conn, plan_id)]
 
 
-def _squat_kg(body: dict[str, object]) -> float:
-    plan = Plan.model_validate(body)
-    return plan.workouts[0].blocks[0].items[0].load.kg or 0.0
+def _kg(plan: Plan, index: int = 0) -> float | None:
+    return plan.workouts[0].blocks[index].items[0].load.kg
 
 
-def _set_squat(plan_id: int, kg: float) -> SetPrescription:
-    return SetPrescription(
-        op="set_prescription",
-        plan_id=plan_id,
-        workout_key="A",
-        exercise_id="barbell_back_squat",
-        load=Load(kind="kg", kg=kg),
-    )
+def _edit(plan_id: int | None, *ops: dict[str, Any]) -> Call:
+    return Call("edit_plan", {"plan_id": plan_id, "ops": list(ops)})
 
 
-# --- Tests -----------------------------------------------------------------------------------
+def _squat_kg(kg: float) -> dict[str, Any]:
+    return {
+        "op": "set_prescription",
+        "workout_key": "A",
+        "exercise_id": "barbell_back_squat",
+        "load": {"kind": "kg", "kg": kg},
+    }
 
 
-async def test_an_edit_is_applied_immediately_shown_as_a_diff_and_can_be_undone(
+async def _open_conversations(db: Database, user_id: int) -> list[ConversationRecord]:
+    async with db.read() as conn:
+        return await list_open_conversations(conn, user_id)
+
+
+# --- Planning sessions --------------------------------------------------------------------------
+
+
+async def test_a_plan_edit_goes_to_a_draft_and_is_saved_with_the_button(
     dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
 ) -> None:
     seeded = await _ready(dispatcher, bot, db)
     lang = await _lang(db, seeded.user_id)
     llm.steps = [
-        ToolStep("get_plan", {"plan_id": seeded.plan_id}),
-        AssistantEdits(ops=[_set_squat(seeded.plan_id, 62.5)]),
+        Call("get_plan", {"plan_id": seeded.plan_id}),
+        _edit(seeded.plan_id, _squat_kg(62.5)),
+        say("Поставил присед 62,5 в черновик."),
     ]
     await _send(dispatcher, bot, "squat 62.5 from now on")
 
-    # The read-only tool answered with the plan.
-    returns = llm.tool_returns()
-    assert len(returns) == 1 and "barbell_back_squat" in json.dumps(returns[0].content)
-    # Saved as version 2 through save_edit, logged with the assistant's prompt and model.
-    bodies = await _bodies(db, seeded.plan_id)
-    assert [_squat_kg(b) for b in bodies] == [60.0, 62.5]
-    reply = _messages(session)[-1]
-    assert t("assistant.saved_title", lang, name="Home plan") in reply.text
-    decision_id = _undo_id(reply)
+    assert "barbell_back_squat" in json.dumps(llm.returns("get_plan")[0])
+    assert llm.returns("edit_plan")[0]["ok"] is True
+    # Nothing saved yet: a planning session with a draft round is open.
+    assert len(await _bodies(db, seeded.plan_id)) == 1
+    open_ = await _open_conversations(db, seeded.user_id)
+    assert [(c.kind, c.plan_id) for c in open_] == [("planning", seeded.plan_id)]
+    draft_id = open_[0].draft_decision_id
+    assert draft_id is not None
     async with db.read() as conn:
-        decision = await get_decision(conn, decision_id)
-    assert decision is not None and decision.kind == "user_edit"
-    assert decision.prompt_template == "assistant" and decision.model
-    assert decision.user_report is not None and decision.user_report["source"] == "assistant"
+        draft = await get_decision(conn, draft_id)
+    assert draft is not None and draft.kind == "plan_revise"
+    assert draft.prompt_template == "assistant" and draft.load_changes == []
+    texts = _texts(session)
+    assert texts[-2].startswith("Поставил присед 62,5 в черновик.")
+    assert t("assistant.reply_footer", lang) in texts[-2]
+    assert texts[-1].startswith(t("assistant.draft_updated", lang, name="Home plan"))
+    assert "62.5 kg" in texts[-1]
 
-    await _click(dispatcher, bot, AssistantUndo(decision_id=decision_id).pack())
+    await _click(dispatcher, bot, PlanDraft(action="confirm", decision_id=draft_id).pack())
+    assert [_kg(b) for b in await _bodies(db, seeded.plan_id)] == [60.0, 62.5]
+    assert await _open_conversations(db, seeded.user_id) == []
+
+
+async def test_the_session_remembers_the_conversation_and_saves_by_asking(
+    dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
+) -> None:
+    seeded = await _ready(dispatcher, bot, db)
+    llm.steps = [_edit(seeded.plan_id, _squat_kg(62.5)), say("Готово, присед 62,5.")]
+    await _send(dispatcher, bot, "присед 62.5")
+    # The next turn names no plan: the open session's draft. Then it saves on request.
+    pushups = {"op": "set_prescription", "workout_key": "A", "exercise_id": "pushup", "sets": 4}
+    llm.steps = [_edit(None, pushups), Call("save_draft"), say("Сохранил.")]
+    await _send(dispatcher, bot, "и отжиманий 4 подхода, сохраняй")
+
+    payload = llm.prompts()[-1]
+    assert payload["history"] == [
+        {"role": "user", "text": "присед 62.5"},
+        {"role": "assistant", "text": "Готово, присед 62,5."},
+    ]
+    assert payload["state"]["planning_session"]["plan_id"] == seeded.plan_id
+    assert payload["state"]["planning_session"]["draft"] is not None
     bodies = await _bodies(db, seeded.plan_id)
-    assert [_squat_kg(b) for b in bodies] == [60.0, 62.5, 60.0]
-    assert _last_text(session) == t("assistant.undo_done", lang)
-
-    # A second tap is stale: version 3 is not the edit's version any more.
-    await _click(dispatcher, bot, AssistantUndo(decision_id=decision_id).pack())
-    toasts = [m.text for m in session.sent if isinstance(m, AnswerCallbackQuery)]
-    assert toasts[-1] == t("assistant.undo_stale", lang)
-    assert len(await _bodies(db, seeded.plan_id)) == 3
+    assert len(bodies) == 2
+    assert _kg(bodies[-1]) == 62.5 and bodies[-1].workouts[0].blocks[1].items[0].sets == 4
+    assert await _open_conversations(db, seeded.user_id) == []
 
 
-async def test_an_increase_above_the_cap_and_ceiling_is_refused_not_saved(
+async def test_several_tools_in_one_turn(
     dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
 ) -> None:
-    """AGENTS.md §2 progression cap / ceiling: no checkbox in chat, so nothing is saved."""
     seeded = await _ready(dispatcher, bot, db)
     lang = await _lang(db, seeded.user_id)
-    llm.steps = [AssistantEdits(ops=[_set_squat(seeded.plan_id, 80)])]
+    schedule = {
+        "op": "set_schedule",
+        "days": [{"weekday": 0, "workout_key": "A"}, {"weekday": 3, "workout_key": "A"}],
+    }
+    llm.steps = [
+        _edit(seeded.plan_id, _squat_kg(62.5)),
+        _edit(seeded.plan_id, schedule),
+        Call("rename_plan", {"plan_id": seeded.plan_id, "name": "Основной"}),
+        say("Сделал три изменения."),
+    ]
+    await _send(dispatcher, bot, "присед 62.5, пн и чт, и назови план Основной")
+    texts = _texts(session)
+    assert t("assistant.renamed", lang, name="Основной") in texts
+    title = t("assistant.draft_updated", lang, name="Home plan")
+    draft_text = next(text for text in texts if text.startswith(title))
+    assert "62.5 kg" in draft_text and "📅" in draft_text
+
+
+async def test_a_load_above_the_guards_is_limited_in_the_draft_not_kept(
+    dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
+) -> None:
+    """AGENTS.md §2: the weekly cap and the ceiling hold in a draft — 80 kg becomes what the
+    guards allow, and both the model and the user are told."""
+    seeded = await _ready(dispatcher, bot, db)
+    llm.steps = [_edit(seeded.plan_id, _squat_kg(80)), say("Ок.")]
     await _send(dispatcher, bot, "squat 80 kg")
-    assert len(await _bodies(db, seeded.plan_id)) == 1
-    assert _last_text(session).startswith(t("assistant.over_cap", lang))
+
+    assert llm.returns("edit_plan")[0]["notes"]
+    draft_id = (await _open_conversations(db, seeded.user_id))[0].draft_decision_id
+    assert draft_id is not None
+    async with db.read() as conn:
+        draft = await get_decision(conn, draft_id)
+    assert draft is not None and draft.proposal is not None
+    drafted = _kg(Plan.model_validate(draft.proposal["plan"]))
+    assert drafted is not None and drafted <= 62.5
+    assert "⚠️" in _last_text(session)
 
 
-async def test_a_disallowed_exercise_is_refused(
+async def test_a_tool_error_lets_the_model_correct_itself_and_nothing_is_staged(
+    dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
+) -> None:
+    seeded = await _ready(dispatcher, bot, db)
+    swap = {
+        "op": "swap_exercise",
+        "workout_key": "A",
+        "exercise_id": "barbell_back_squat",
+        "new_exercise_id": "cable_row_made_up",
+    }
+    llm.steps = [_edit(seeded.plan_id, swap), say("Такого упражнения нет в доступных.")]
+    await _send(dispatcher, bot, "замени присед на тягу блока")
+    assert llm.returns("edit_plan")[0]["ok"] is False
+    assert await _open_conversations(db, seeded.user_id) == []
+    assert _last_text(session).startswith("Такого упражнения нет в доступных.")
+
+
+async def test_close_without_saving(
     dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
 ) -> None:
     seeded = await _ready(dispatcher, bot, db)
     lang = await _lang(db, seeded.user_id)
-    swap = SwapExercise(
-        op="swap_exercise",
-        plan_id=seeded.plan_id,
-        workout_key="A",
-        exercise_id="barbell_back_squat",
-        new_exercise_id="cable_row_made_up",
-    )
-    llm.steps = [AssistantEdits(ops=[swap])]
-    await _send(dispatcher, bot, "swap squats for cable rows")
+    llm.steps = [_edit(seeded.plan_id, _squat_kg(62.5)), say("Ок.")]
+    await _send(dispatcher, bot, "присед 62.5")
+    llm.steps = [Call("discard_draft"), say("Закрыл.")]
+    await _send(dispatcher, bot, "нет, оставь как было")
+    assert _last_text(session) == t("assistant.draft_discarded", lang)
+    assert await _open_conversations(db, seeded.user_id) == []
     assert len(await _bodies(db, seeded.plan_id)) == 1
-    assert _last_text(session).startswith(t("assistant.op_exercise_not_allowed", lang))
+
+
+# --- Safety and data ----------------------------------------------------------------------------
 
 
 async def test_a_stop_word_halts_before_any_model_call_and_a_hold_then_refuses(
@@ -395,65 +495,15 @@ async def test_the_model_sees_only_pseudonymized_data(
     dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
 ) -> None:
     seeded = await _ready(dispatcher, bot, db)
-    llm.steps = [ToolStep("list_plans", {}), AssistantReply(message="You have one plan.")]
-    await _send(dispatcher, bot, "how many plans do I have? mail me at a@b.example")
-    prompt = llm.first_prompt()
-    payload = json.loads(prompt)
+    llm.steps = [Call("list_plans"), say("У вас один план.")]
+    await _send(dispatcher, bot, "сколько у меня планов? пишите на a@b.example")
+    payload = llm.prompts()[0]
+    prompt = json.dumps(payload, ensure_ascii=False)
     assert payload["context"]["user_id"] == seeded.user_id
-    assert "a@b.example" not in prompt  # scrubbed
-    assert set(payload) == {"context", "user_request", "state"}
+    assert set(payload) == {"context", "user_request", "state", "history"}
+    assert "a@b.example" not in prompt
     assert "telegram" not in prompt.lower() and "chat_id" not in prompt
-    for part in llm.tool_returns():
-        assert "telegram" not in json.dumps(part.content)
-    lang = await _lang(db, seeded.user_id)
-    assert _last_text(session) == f"You have one plan.\n\n{t('assistant.reply_footer', lang)}"
-
-
-async def test_a_logged_set_can_be_corrected_and_undone_but_not_to_an_implausible_load(
-    dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
-) -> None:
-    seeded = await _ready(dispatcher, bot, db)
-    lang = await _lang(db, seeded.user_id)
-
-    def fix(reps: int, kg: float | None) -> FixLoggedSet:
-        return FixLoggedSet(
-            op="fix_logged_set",
-            session_id=seeded.session_id,
-            exercise_id="barbell_back_squat",
-            set_number=3,
-            reps=reps,
-            load_kg=kg,
-        )
-
-    async def third_set() -> tuple[int | None, float | None]:
-        async with db.read() as conn:
-            rows = await list_set_logs_for_session(conn, seeded.session_id)
-        return rows[2].actual_reps, rows[2].actual_load_kg
-
-    llm.steps = [AssistantEdits(ops=[fix(5, 600.0)])]
-    await _send(dispatcher, bot, "last set was 600")
-    assert await third_set() == (5, 60.0)
-    assert _last_text(session).startswith(t("assistant.log_implausible", lang))
-
-    llm.steps = [AssistantEdits(ops=[fix(3, None)])]  # reps only: the kg stays
-    await _send(dispatcher, bot, "my last squat set was only 3 reps")
-    assert await third_set() == (3, 60.0)
-    reply = _messages(session)[-1]
-    assert reply.text.startswith(t("assistant.log_fixed_title", lang))
-
-    await _click(dispatcher, bot, AssistantUndo(decision_id=_undo_id(reply)).pack())
-    assert await third_set() == (5, 60.0)
-
-
-async def test_an_action_opens_the_existing_flow(
-    dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
-) -> None:
-    seeded = await _ready(dispatcher, bot, db)
-    lang = await _lang(db, seeded.user_id)
-    llm.steps = [AssistantAction(action="show_plan", plan_id=seeded.plan_id)]
-    await _send(dispatcher, bot, "show my plan")
-    assert "Home plan" in _messages(session)[-1].text
-    assert t("disclosure.ai", lang) in _messages(session)[-1].text
+    assert "telegram" not in json.dumps(llm.returns("list_plans"))
 
 
 async def test_a_refusal_is_logged_shows_the_model_reason_and_changes_nothing(
@@ -461,22 +511,39 @@ async def test_a_refusal_is_logged_shows_the_model_reason_and_changes_nothing(
 ) -> None:
     seeded = await _ready(dispatcher, bot, db)
     lang = await _lang(db, seeded.user_id)
-    llm.steps = [Refusal(code=RefusalCode.OUT_OF_SCOPE, message="Nutrition is out of scope.")]
-    await _send(dispatcher, bot, "what should I eat?")
-    assert _last_text(session) == "Nutrition is out of scope."
-    assert len(await _bodies(db, seeded.plan_id)) == 1
-    # Logged as a refusal decision with the prompt and model that chose it.
+    llm.steps = [Refusal(code=RefusalCode.OUT_OF_SCOPE, message="Питание вне рамок.")]
+    await _send(dispatcher, bot, "что мне есть?")
+    assert _last_text(session) == "Питание вне рамок."
     async with db.read() as conn:
         refusals = [
             d for d in await list_decisions_for_user(conn, seeded.user_id) if d.kind == "refusal"
         ]
-    assert len(refusals) == 1
-    assert refusals[0].prompt_template == "assistant" and refusals[0].model
-    assert refusals[0].user_report == {"source": "assistant"}
-    # A safety refusal code keeps its fixed copy even with model text attached.
+    assert len(refusals) == 1 and refusals[0].prompt_template == "assistant"
     llm.steps = [Refusal(code=RefusalCode.NEEDS_CLEARANCE, message="free-form model text")]
     await _send(dispatcher, bot, "anything")
     assert _last_text(session) == t("refusal.needs_clearance", lang)
+
+
+async def test_a_logged_set_can_be_corrected_and_undone(
+    dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
+) -> None:
+    seeded = await _ready(dispatcher, bot, db)
+
+    async def third_set() -> tuple[int | None, float | None]:
+        async with db.read() as conn:
+            rows = await list_set_logs_for_session(conn, seeded.session_id)
+        return rows[2].actual_reps, rows[2].actual_load_kg
+
+    fix = {"exercise_id": "barbell_back_squat", "set_number": 3, "reps": 3}
+    llm.steps = [
+        Call("get_session", {"session_id": seeded.session_id}),
+        Call("fix_logged_sets", {"session_id": seeded.session_id, "fixes": [fix]}),
+        say("Исправил."),
+    ]
+    await _send(dispatcher, bot, "в последней тренировке третий подход приседа был на 3")
+    assert await third_set() == (3, 60.0)
+    await _click(dispatcher, bot, _last_data(session, "au:"))
+    assert await third_set() == (5, 60.0)
 
 
 async def test_disabled_assistant_falls_back_to_the_menu_hint(
@@ -490,34 +557,7 @@ async def test_disabled_assistant_falls_back_to_the_menu_hint(
     assert _last_text(session) == t("unknown.free_text_hint", await _lang(db, seeded.user_id))
 
 
-async def test_a_typed_new_plan_asks_for_guidance_or_uses_the_words_given(
-    dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
-) -> None:
-    seeded = await _ready(dispatcher, bot, db)
-    lang = await _lang(db, seeded.user_id)
-
-    # No description: same as tapping New plan with plans present — ask first.
-    llm.steps = [AssistantAction(action="new_plan")]
-    await _send(dispatcher, bot, "new plan please")
-    assert _last_text(session) == t("plan.new_guidance_prompt", lang, names="“Home plan”")
-    assert llm.calls == 1
-
-    # The answer is the guidance for the generator.
-    llm.steps = [_plan()]
-    await _send(dispatcher, bot, "upper body focus")
-    payload = json.loads(_user_prompt(llm.requests[-1]))
-    assert payload["user_request"] == "upper body focus"
-
-    # A description in the same message is used directly.
-    llm.steps = [AssistantAction(action="new_plan", request="a gym version"), _plan()]
-    await _send(dispatcher, bot, "make me a new gym version of my plan")
-    payload = json.loads(_user_prompt(llm.requests[-1]))
-    assert payload["user_request"] == "a gym version"
-    assert _last_text(session).startswith(t("plan.draft_title", lang))
-
-
-def _user_prompt(request: ModelRequest) -> str:
-    return next(str(p.content) for p in request.parts if p.part_kind == "user-prompt")
+# --- Training sessions --------------------------------------------------------------------------
 
 
 async def _start_workout(db: Database, settings: Settings, seeded: Seeded) -> int:
@@ -536,7 +576,7 @@ async def _logged(db: Database, session_id: int) -> list[tuple[str, int | None, 
     return [(r.exercise_id, r.actual_reps, r.skipped) for r in rows]
 
 
-async def test_during_a_workout_as_planned_logs_the_current_block(
+async def test_during_a_workout_as_planned_logs_the_block_and_the_session_remembers(
     dispatcher: Dispatcher,
     bot: Bot,
     db: Database,
@@ -544,24 +584,24 @@ async def test_during_a_workout_as_planned_logs_the_current_block(
     session: FakeSession,
     llm: ScriptedLlm,
 ) -> None:
-    """The screenshot case: "по плану" under an open block logs it (✅), it doesn't re-open
-    /train with "the workout is already in progress"."""
     seeded = await _ready(dispatcher, bot, db)
     lang = await _lang(db, seeded.user_id)
     session_id = await _start_workout(db, settings, seeded)
 
-    llm.steps = [AssistantAction(action="log_block_as_planned")]
+    llm.steps = [Call("log_current_block", {"skip": False}), say("Записал.")]
     await _send(dispatcher, bot, "по плану")
+    state = llm.prompts()[-1]["state"]
+    assert state["session"] == "training" and state["current_block"]["block"] == 1
+    assert (await _logged(db, session_id))[:3] == [("barbell_back_squat", 5, False)] * 3
+    assert t("train.block_logged", lang) in _texts(session)
+    assert "Push-up" in _last_text(session)  # the next block
 
-    state = json.loads(llm.first_prompt())["state"]
-    assert state["current_block"]["block"] == 1
-    assert state["current_block"]["exercises"][0]["exercise_id"] == "barbell_back_squat"
-    logged = await _logged(db, session_id)
-    assert logged[:3] == [("barbell_back_squat", 5, False)] * 3
-    assert all(reps is None for _id, reps, _skipped in logged[3:])  # next block: not yet
-    texts = [m.text for m in _messages(session)]
-    assert t("train.block_logged", lang) in texts
-    assert "Push-up" in _last_text(session)  # the next block is shown
+    llm.steps = [Call("log_current_block", {"skip": True}), say("Пропустил.")]
+    await _send(dispatcher, bot, "отжимания пропускаю")
+    history = llm.prompts()[-1]["history"]
+    assert {"role": "user", "text": "по плану"} in history
+    assert {"role": "assistant", "text": "Записал."} in history
+    assert t("train.block_skipped", lang) in _texts(session)
 
 
 async def test_during_a_workout_reported_results_go_to_the_parser_verbatim(
@@ -574,30 +614,18 @@ async def test_during_a_workout_reported_results_go_to_the_parser_verbatim(
 ) -> None:
     seeded = await _ready(dispatcher, bot, db)
     await _start_workout(db, settings, seeded)
-
     parsed = ParsedResults(
         sets=[SetResult(set_index=i, reps=4, load_kg=60.0) for i in (1, 2, 3)],
         safety_signal=False,
         unclear=False,
     )
-    llm.steps = [AssistantAction(action="log_block_results"), parsed]
+    llm.steps = [Call("enter_current_block_results"), say("Отправил на разбор."), parsed]
     await _send(dispatcher, bot, "сделал 4, 4, 4 по 60")
-
-    # The result parser got the user's own words, not a paraphrase.
-    parse_prompt = json.loads(
-        next(str(p.content) for p in llm.requests[-1].parts if p.part_kind == "user-prompt")
-    )
-    assert parse_prompt["result_text"] == "сделал 4, 4, 4 по 60"
-    # Shown for Correct / Fix, nothing written yet (only a confirmed parse writes set_logs).
-    datas = [
-        b.callback_data
-        for row in _messages(session)[-1].reply_markup.inline_keyboard  # type: ignore[union-attr]
-        for b in row
-    ]
-    assert any(d and d.startswith("tr:parse_ok:") for d in datas)
+    assert llm.prompts()[-1]["result_text"] == "сделал 4, 4, 4 по 60"
+    assert _last_data(session, "tr:parse_ok:")
 
 
-async def test_during_a_workout_skip_skips_the_current_block(
+async def test_the_remaining_blocks_can_change_today_and_be_carried_into_the_plan(
     dispatcher: Dispatcher,
     bot: Bot,
     db: Database,
@@ -609,17 +637,65 @@ async def test_during_a_workout_skip_skips_the_current_block(
     lang = await _lang(db, seeded.user_id)
     session_id = await _start_workout(db, settings, seeded)
 
-    llm.steps = [AssistantAction(action="skip_block")]
-    await _send(dispatcher, bot, "приседания пропускаю")
-    assert (await _logged(db, session_id))[:3] == [("barbell_back_squat", None, True)] * 3
-    assert t("train.block_skipped", lang) in [m.text for m in _messages(session)]
+    # The current block (squat) can't change any more; a later one can.
+    squat = {"op": "set_prescription", "exercise_id": "barbell_back_squat", "sets": 5}
+    pushup = {"op": "set_prescription", "exercise_id": "pushup", "sets": 2}
+    llm.steps = [
+        Call("edit_today", {"ops": [squat]}),
+        Call("edit_today", {"ops": [pushup]}),
+        say("Отжимания сегодня в 2 подхода."),
+    ]
+    await _send(dispatcher, bot, "отжиманий сегодня только 2 подхода")
+    assert [answer["ok"] for answer in llm.returns("edit_today")] == [False, True]
+    assert t("assistant.today_changed", lang) in "\n".join(_texts(session))
+    async with db.read() as conn:
+        started = await training.started_workout(conn, session_id)
+    assert started is not None
+    assert started.blocks[0].items[0].sets == 3 and started.blocks[1].items[0].sets == 2
+    assert await training.changed_mid_session(db, seeded.user_id, session_id)
+    assert len(await _bodies(db, seeded.plan_id)) == 1  # today only
+
+    await _click(dispatcher, bot, TrainAction(action="to_plan", session_id=session_id).pack())
+    assert _last_text(session).startswith(t("assistant.draft_updated", lang, name="Home plan"))
+    draft_id = PlanDraft.unpack(_last_data(session, "pd:confirm:")).decision_id
+    await _click(dispatcher, bot, PlanDraft(action="confirm", decision_id=draft_id).pack())
+    bodies = await _bodies(db, seeded.plan_id)
+    assert len(bodies) == 2 and bodies[-1].workouts[0].blocks[1].items[0].sets == 2
 
 
-async def test_block_actions_without_an_open_block_say_so(
+async def test_a_message_with_no_open_block_gets_the_tool_answer(
     dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
 ) -> None:
-    seeded = await _ready(dispatcher, bot, db)
-    llm.steps = [AssistantAction(action="log_block_as_planned")]
+    await _ready(dispatcher, bot, db)
+    llm.steps = [Call("log_current_block"), say("Сейчас нет открытой тренировки.")]
     await _send(dispatcher, bot, "done")
-    assert "current_block" not in json.loads(llm.first_prompt())["state"]
-    assert _last_text(session) == t("assistant.no_open_block", await _lang(db, seeded.user_id))
+    assert llm.returns("log_current_block")[0]["ok"] is False
+    assert "current_block" not in llm.prompts()[0]["state"]
+    assert _last_text(session).startswith("Сейчас нет открытой тренировки.")
+
+
+async def test_a_load_set_during_the_workout_still_passes_the_guards(
+    dispatcher: Dispatcher,
+    bot: Bot,
+    db: Database,
+    settings: Settings,
+    session: FakeSession,
+    llm: ScriptedLlm,
+) -> None:
+    """AGENTS.md §2 during a workout: no history for the bench press, so 100 kg is not
+    trained — the first session of an exercise is data collection (calibration)."""
+    seeded = await _ready(dispatcher, bot, db)
+    session_id = await _start_workout(db, settings, seeded)
+    bench = {
+        "op": "set_prescription",
+        "exercise_id": "dumbbell_bench_press",
+        "load": {"kind": "kg", "kg": 30},
+    }
+    llm.steps = [Call("edit_today", {"ops": [bench]}), say("Ок.")]
+    await _send(dispatcher, bot, "жим гантелей сегодня 30")
+    assert llm.returns("edit_today")[0]["notes"]
+    async with db.read() as conn:
+        started = await training.started_workout(conn, session_id)
+    assert started is not None
+    assert started.blocks[2].items[0].load.kind == "calibration"
+    assert "⚠️" in _last_text(session)

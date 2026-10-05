@@ -247,3 +247,19 @@ class LlmCallRecord:
     latency_ms: int
     ok: bool
     created_at: str
+
+
+@dataclass(frozen=True, slots=True)
+class ConversationRecord:
+    """ADR 0004: one planning or training session of the free-text assistant."""
+
+    id: int
+    user_id: int
+    kind: str  # "planning" | "training"
+    plan_id: int | None
+    workout_session_id: int | None
+    draft_decision_id: int | None
+    status: str  # "open" | "saved" | "discarded" | "closed"
+    started_at: str
+    updated_at: str
+    closed_at: str | None

@@ -229,6 +229,12 @@ def _block_load_label(item: Prescription, exercise: Exercise | None, lang: str) 
     return t("train.load_calibration", lang)
 
 
+def to_plan_markup(session_id: int, lang: str) -> InlineKeyboardMarkup:
+    """ADR 0004: after a workout changed during the workout, offer to carry the changes
+    into the plan (as a planning-session draft, saved like any other)."""
+    return _rows(_action(t("train.to_plan_button", lang), "to_plan", session_id))
+
+
 def all_calibration(block: Block) -> bool:
     """A§6.5.1: on a block where every item is a calibration load there is no weight to
     confirm, so ✅ is hidden and the weight has to be logged through ✏️."""

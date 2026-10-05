@@ -9,12 +9,18 @@ from fitme import clock
 
 
 async def insert_chat_message(
-    conn: aiosqlite.Connection, *, user_id: int, session_id: int | None, direction: str, text: str
+    conn: aiosqlite.Connection,
+    *,
+    user_id: int,
+    session_id: int | None,
+    direction: str,
+    text: str,
+    conversation_id: int | None = None,
 ) -> int:
     cursor = await conn.execute(
-        "INSERT INTO chat_messages (user_id, session_id, direction, text, created_at) "
-        "VALUES (?, ?, ?, ?, ?)",
-        (user_id, session_id, direction, text, clock.utc_now()),
+        "INSERT INTO chat_messages (user_id, session_id, direction, text, created_at, "
+        "conversation_id) VALUES (?, ?, ?, ?, ?, ?)",
+        (user_id, session_id, direction, text, clock.utc_now(), conversation_id),
     )
     assert cursor.lastrowid is not None
     return cursor.lastrowid

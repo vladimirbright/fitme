@@ -135,6 +135,7 @@ from fitme.llm.models import model_for
 from fitme.llm.usage import AgentRunOutcome, record_llm_call, run_agent
 from fitme.services import catalog as catalog_service
 from fitme.services import planning
+from fitme.services.decisions import PromptMeta, prompt_columns
 from fitme.services.llm_runtime import LlmRuntime
 from fitme.services.safety import HaltResult, halt
 
@@ -1830,7 +1831,127 @@ def _shown_parse(decision: DecisionRecord | None, *, block: int, item: int) -> P
         return None
 
 
+# --- ADR 0004: changing the remaining blocks of a started workout -----------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class EditRemainingResult:
+    status: Status
+    workout: Workout | None = None  # the judged workout now being trained
+    requested: Workout | None = None  # as asked for, before load substitution
+    errors: tuple[str, ...] = ()
+
+
+def _kg_by_exercise(workout: Workout) -> dict[str, float | None]:
+    return {item.exercise_id: item.load.kg for block in workout.blocks for item in block.items}
+
+
+async def edit_remaining(
+    db: Database,
+    settings: Settings,
+    user_id: int,
+    session_id: int,
+    edited: Workout,
+    *,
+    prompt: PromptMeta | None = None,
+    report_extra: dict[str, object] | None = None,
+) -> EditRemainingResult:
+    """Change today's workout during the workout (ADR 0004): only blocks *after* the current
+    one may differ (the current block's rows already exist, and the done ones are history).
+    The result is judged like Start judges a workout (gate, every per-prescription guard,
+    load substitution) and written as another `session_adjust`/`start` decision marked
+    `mid_session`, which `started_workout` then returns. Its `load_changes` are only the kg
+    loads that actually changed against the workout trained so far, so nothing is counted
+    twice toward the weekly cap (A§4.3). Today only: the plan is not touched."""
+    catalog = load_catalog()
+    requested = edited.model_copy(deep=True)
+    async with db.transaction() as conn:
+        ctx = await load_session(conn, user_id, session_id)
+        if ctx is None:
+            return EditRemainingResult(status=Status.NOT_FOUND)
+        if ctx.session.status != WorkoutSessionStatus.IN_PROGRESS.value:
+            return EditRemainingResult(status=Status.STALE)
+        started = await started_workout(conn, session_id)
+        if started is None:
+            return EditRemainingResult(status=Status.STALE)
+        locked = ctx.session.current_block + 1
+        if edited.blocks[:locked] != started.blocks[:locked]:
+            return EditRemainingResult(
+                status=Status.STALE, errors=("only blocks after the current one can change",)
+            )
+        snapshot = await planning.read_snapshot(conn, user_id)
+        failure = planning.gate(snapshot)
+        if failure is not None:
+            return EditRemainingResult(status=Status.REFUSED, errors=(failure[1].detail,))
+        inputs = planning.build_inputs(catalog, snapshot, settings, user_id)
+        workout = edited.model_copy(deep=True)
+        judgement = _judge_workout(workout, inputs)
+        if not judgement.ok:
+            return EditRemainingResult(
+                status=Status.REFUSED,
+                requested=requested,
+                errors=tuple(verdict.detail for verdict in judgement.failures),
+            )
+        before = _kg_by_exercise(started)
+        changed = [
+            change
+            for change in _workout_load_changes(workout, inputs)
+            if before.get(change.exercise_id) != change.to_kg
+        ]
+        await insert_decision(
+            conn,
+            user_id=user_id,
+            kind=DecisionKind.SESSION_ADJUST.value,
+            **prompt_columns(prompt),
+            content_version=content_version(),
+            user_report={
+                **(report_extra or {}),
+                "session_id": session_id,
+                "event": EVENT_START,
+                "mid_session": True,
+                "from_block": locked,
+            },
+            proposal={
+                "workout": workout.model_dump(mode="json"),
+                "load_changes": [change.model_dump(mode="json") for change in changed],
+            },
+            guards_fired=[verdict.model_dump() for verdict in judgement.fired],
+            load_changes=changed,
+        )
+    return EditRemainingResult(status=Status.OK, workout=workout, requested=requested)
+
+
+async def changed_mid_session(db: Database, user_id: int, session_id: int) -> bool:
+    """Whether the workout trained in this session was changed during it (ADR 0004): the
+    latest start decision is a `mid_session` one."""
+    async with db.read() as conn:
+        session = await get_workout_session(conn, session_id)
+        if session is None or session.user_id != user_id:
+            return False
+        decision = await get_latest_session_event_decision(
+            conn, session_id=session_id, kind=DecisionKind.SESSION_ADJUST.value, event=EVENT_START
+        )
+    return bool(decision and decision.user_report and decision.user_report.get("mid_session"))
+
+
+async def trained_workout(
+    db: Database, user_id: int, session_id: int
+) -> tuple[int, Workout] | None:
+    """`(plan_id, workout)`: the workout as finally trained in this session and the plan it
+    came from — for "transfer today's changes to the plan" (ADR 0004)."""
+    async with db.read() as conn:
+        ctx = await load_session(conn, user_id, session_id)
+        if ctx is None:
+            return None
+        started = await started_workout(conn, session_id)
+    return None if started is None else (ctx.plan_record.id, started)
+
+
 __all__ = [
+    "EditRemainingResult",
+    "changed_mid_session",
+    "edit_remaining",
+    "trained_workout",
     "ActiveSession",
     "Advance",
     "AdjustResult",

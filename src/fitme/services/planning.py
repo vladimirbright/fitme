@@ -161,6 +161,7 @@ from fitme.llm.escalation import run_with_escalation
 from fitme.llm.models import model_for
 from fitme.llm.usage import CAUSE_OUTPUT_VALIDATION, AgentRunOutcome, record_llm_call, run_agent
 from fitme.services.catalog import available_exercises
+from fitme.services.decisions import PromptMeta, prompt_columns
 from fitme.services.llm_runtime import LlmRuntime
 from fitme.services.loads import ExerciseHistory, LoadDecision, next_load
 
@@ -1740,7 +1741,112 @@ async def delete_plan(db: Database, user_id: int, plan_id: int) -> DeleteResult:
     return DeleteResult(status=DeleteStatus.OK, new_default_plan_id=new_default_plan_id)
 
 
+# --- ADR 0004: drafts from direct edits (the assistant's planning session) -------------------
+
+
+@dataclass(frozen=True, slots=True)
+class EditDraftResult:
+    """A draft round built from direct edits: `round` is set when it was written (shown with
+    Save / Close like any draft); otherwise `errors` say why nothing was written. `requested`
+    is the plan as asked for, before load substitution, so the caller can say which loads the
+    guards replaced (`round.output` is the judged plan)."""
+
+    round: PlanRoundResult | None = None
+    requested: Plan | None = None
+    errors: tuple[str, ...] = ()
+
+
+async def draft_base_plan(
+    db: Database, user_id: int, *, plan_id: int | None, draft_decision_id: int | None
+) -> Plan | None:
+    """What a planning session's next edit applies to: its current draft while that draft is
+    still the latest round, else the plan's latest version, else `None` (a new-plan session
+    with no draft yet)."""
+    async with db.read() as conn:
+        if draft_decision_id is not None:
+            decision = await get_decision(conn, draft_decision_id)
+            latest = await get_latest_plan_round_decision(conn, user_id)
+            if (
+                decision is not None
+                and decision.user_id == user_id
+                and latest is not None
+                and latest.id == decision.id
+            ):
+                plan = _draft_plan(decision)
+                if plan is not None:
+                    return plan
+        if plan_id is None:
+            return None
+        record = await get_plan(conn, plan_id)
+        if record is None or record.user_id != user_id:
+            return None
+        version = await get_latest_plan_version(conn, plan_id)
+    return None if version is None else Plan.model_validate(version.body)
+
+
+async def record_edit_draft(
+    db: Database,
+    settings: Settings,
+    user_id: int,
+    *,
+    plan: Plan,
+    plan_id: int | None,
+    user_report: dict[str, object],
+    prompt: PromptMeta | None = None,
+) -> EditDraftResult:
+    """Judge an edited plan like any model draft (A§6.4 step 4: the gate, every guard, load
+    substitution for a load-only failure, the wording check) and write it as a `plan_revise`
+    draft round, so `confirm_plan` saves it unchanged. A structural failure writes nothing:
+    the previous draft stays current. `user_report` carries `plan_id` when the draft revises
+    an existing plan."""
+    requested = plan.model_copy(deep=True)
+    judged = plan.model_copy(deep=True)
+    async with db.read() as conn:
+        snapshot = await read_snapshot(conn, user_id)
+    failure = gate(snapshot)
+    if failure is not None:
+        return EditDraftResult(requested=requested, errors=(failure[1].detail,))
+    inputs = build_inputs(load_catalog(), snapshot, settings, user_id)
+    restore_declared(judged, declared_loads_of(requested))
+    judgement = judge(judged, inputs)
+    if not judgement.ok:
+        return EditDraftResult(
+            requested=requested,
+            errors=tuple(verdict.detail for verdict in judgement.failures),
+        )
+    proposed = load_changes_for(judged, inputs.ctx)
+    report = dict(user_report)
+    if plan_id is not None:
+        report["plan_id"] = plan_id
+    async with db.transaction() as conn:
+        decision_id = await insert_decision(
+            conn,
+            user_id=user_id,
+            kind=DecisionKind.PLAN_REVISE.value,
+            **prompt_columns(prompt),
+            content_version=content_version(),
+            user_report=report,
+            proposal=draft_proposal(judged, proposed),
+            guards_fired=[verdict.model_dump() for verdict in judgement.fired],
+            load_changes=[],
+        )
+    return EditDraftResult(
+        round=PlanRoundResult(
+            decision_id=decision_id,
+            output=judged,
+            guards_fired=judgement.fired,
+            proposed_load_changes=proposed,
+            plan_id=plan_id,
+            language=snapshot.language,
+        ),
+        requested=requested,
+    )
+
+
 __all__ = [
+    "EditDraftResult",
+    "draft_base_plan",
+    "record_edit_draft",
     "ConfirmResult",
     "ConfirmStatus",
     "DeleteResult",

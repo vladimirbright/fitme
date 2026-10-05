@@ -33,8 +33,8 @@ from fitme.config.settings import Settings
 from fitme.db.connection import Database
 from fitme.i18n import t
 from fitme.services import account as account_service
+from fitme.services import conversations, training
 from fitme.services import profile as profile_service
-from fitme.services import training
 from fitme.services.llm_runtime import LlmRuntime
 from fitme.services.safety import record_incoming_text, scan_and_maybe_halt
 
@@ -56,11 +56,16 @@ async def on_free_text(
 ) -> None:
     text = message.text or message.caption or ""
     session_id = await _active_session_id(db, user_id)
-    await record_incoming_text(db, user_id=user_id, session_id=session_id, text=text)
+    chat_message_id = await record_incoming_text(
+        db, user_id=user_id, session_id=session_id, text=text
+    )
 
     snapshot = await profile_service.get_snapshot(db, user_id)
     lang = snapshot.language
     step = await profile_service.get_step(db, user_id)
+    if step is None:
+        # ADR 0004: the message belongs to the active planning/training session, if any.
+        await conversations.link_to_active(db, user_id, chat_message_id)
 
     if step == "screening_other":
         stripped = text.strip()
@@ -109,7 +114,15 @@ async def on_free_text(
 
     if settings.assistant_enabled and step is None and text.strip():
         await handle_assistant_text(
-            message, db, settings, llm, user_id, text, pending_plan_revisions, pending_train
+            message,
+            db,
+            settings,
+            llm,
+            user_id,
+            text,
+            pending_plan_revisions,
+            pending_train,
+            chat_message_id=chat_message_id,
         )
         return
 

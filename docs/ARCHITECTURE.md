@@ -175,7 +175,8 @@ plaintext.
 | `workout_sessions` | `id`, `user_id`, `plan_version_id` (nullable since migration 0007: imported sessions belong to no plan), `workout_key`, `import_hash` (nullable, unique per user; migration 0006), `status` (`draft`,`confirmed`,`in_progress`,`completed`,`aborted`,`halted`), `current_block`, `started_at`, `finished_at`, `halt_reason` | Performed trainings. |
 | `set_logs` | `id`, `session_id`, `exercise_id`, `set_index`, `planned_load_kg`, `planned_reps_min`, `planned_reps_max`, `actual_load_kg`, `actual_reps` (nullable), `skipped` (0/1), `rpe` (nullable), `source` (`button`,`free_text`,`web`,`import`), `created_at` | **Source of truth for history and historical max.** One row per **prescribed** set, created when the block is sent. A set not performed is `skipped=1` with `actual_*` NULL, so missing sets are visible. |
 | `checkins` | `id`, `user_id`, `session_id` (nullable, `ON DELETE SET NULL`), `question_key` (e.g. `area:lower_back`), `answer` (`fine`,`worse`,`pain`,`unknown`), `asked_at`, `answered_at` | Rows are created as `unknown` and updated only by an explicit answer. |
-| `chat_messages` | `id`, `user_id`, `session_id` nullable, `direction`, `text`, `created_at` | Raw text. **Deleted after `FITME_CHAT_RETENTION_DAYS`.** |
+| `chat_messages` | `id`, `user_id`, `session_id` nullable, `direction`, `text`, `created_at`, `conversation_id` nullable | Raw text, the owner's (`in`) and the assistant's replies (`out`). **Deleted after `FITME_CHAT_RETENTION_DAYS`.** |
+| `conversations` | `id`, `user_id`, `kind` (`planning`/`training`), `plan_id`, `workout_session_id`, `draft_decision_id`, `status` (`open`/`saved`/`discarded`/`closed`), `started_at`, `updated_at`, `closed_at` | ADR 0004: an assistant session. No text. Closed ones are deleted with their messages. |
 
 Bucket enums:
 
@@ -534,16 +535,19 @@ Register the command list with `setMyCommands` for each supported language.
 - Keep a persistent **⚠ Pain / feeling unwell** button on every in-workout message. It
   always triggers the halt path (§6.6).
 - Free text that no command, pending prompt or setup step claims goes to the **free-text
-  assistant** (ADR 0003), after the stop-word scan and the `/plan` gate. Specific edits (sets,
-  reps, load, rest, swap/add/remove an exercise, schedule, names, the default plan, and
-  corrections of a finished session's logged sets) are applied immediately through the
-  website editor's guards and shown as a diff with **Undo**. Over-cap or over-ceiling loads are
-  refused in chat; the website editor's explicit checkbox is the only override. "Show my
-  plan", "let's train", "new plan" or a broad redesign open the existing flows; a redesign is
-  still a draft that needs Confirm.
-- During an `in_progress` workout the assistant sees the current block and can do what its
-  buttons do: ✅ ("по плану", "done"), ✏️ (the user's **own** message goes to `result_parse`,
-  then plausibility and Correct / Fix as usual) and ⏭. Aborting stays a button only.
+  assistant** (ADR 0003, ADR 0004), after the stop-word scan and the `/plan` gate. It works
+  in **sessions** that remember their last 20 messages:
+  - **Planning**: a new plan, or changes to one plan, iterated on a draft. Each step is
+    judged like any draft and shown as a diff, with **Save** / **Whole draft** / **Close
+    without saving**. Loads above the guards are limited and the user is told. The website
+    editor's checkbox is still the only override.
+  - **Training**: from Start to the end of the workout. ✅ ("по плану"), ✏️ (the user's
+    **own** message goes to `result_parse`), ⏭, and changes to the blocks not started yet,
+    for today only. At the end the bot offers to carry those changes into the plan, as a
+    planning draft. Aborting stays a button only.
+  - The assistant uses tools and may call several in one turn. Staging tools check each
+    action at once and apply it only after the run, through the guards. Logged-set
+    corrections of finished sessions apply with **Undo**.
 
 ### 6.4 `/plan` — generate and iterate
 
@@ -856,7 +860,7 @@ One pydantic-ai `Agent` per purpose. Each has a typed output, and its prompt is 
 | `result_parse` | planned block + user text | `ParsedResults { sets: list[SetResult], safety_signal: bool, unclear: bool }` | small |
 | `plan_import` | context + `imported_text` (scrubbed) | `PlanImport{plan, unmatched} \| Refusal` | medium |
 | `recap` | planned vs actual + engine decisions | `Recap { text: str, suggestions: list[PlanChange] }` | small |
-| `assistant` | context + `state` + unprompted user text (scrubbed); read-only lookup tools | `AssistantEdits \| AssistantAction \| AssistantReply \| Refusal` (ADR 0003) | medium |
+| `assistant` | context + `state` + session `history` + user text (scrubbed); lookup and staging tools | `AssistantTurn \| Refusal` (ADR 0003, ADR 0004) | medium |
 
 - The prompt loader returns `(template_name, version, rendered_text)`. Template name and
   version go into `decisions`.
@@ -903,7 +907,8 @@ One pydantic-ai `Agent` per purpose. Each has a typed output, and its prompt is 
 
 Runs daily. It deletes:
 
-- `chat_messages` older than `FITME_CHAT_RETENTION_DAYS`;
+- `chat_messages` older than `FITME_CHAT_RETENTION_DAYS`, and `conversations` closed before
+  that cutoff;
 - expired `login_codes`, `activation_codes` and `web_sessions`.
 
 It keeps the structured training log.

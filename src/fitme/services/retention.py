@@ -13,6 +13,7 @@ from fitme import clock
 from fitme.db.connection import Database
 from fitme.db.controllers.retention import (
     purge_chat_messages_older_than,
+    purge_conversations_closed_before,
     purge_expired_activation_codes,
     purge_expired_login_codes,
     purge_expired_web_sessions,
@@ -32,6 +33,7 @@ async def purge(db: Database, *, chat_retention_days: int) -> RetentionResult:
     cutoff = clock.days_ago(chat_retention_days)
     async with db.transaction() as conn:
         chat_messages_deleted = await purge_chat_messages_older_than(conn, cutoff)
+        await purge_conversations_closed_before(conn, cutoff)
         activation_codes_deleted = await purge_expired_activation_codes(conn)
         login_codes_deleted = await purge_expired_login_codes(conn)
         web_sessions_deleted = await purge_expired_web_sessions(conn)

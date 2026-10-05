@@ -316,7 +316,7 @@ async def test_upgrade_from_0006_detaches_imports_drops_the_holder_and_unarchive
 
         applied = await migrate(db)  # the real package: 0001-0006 match by checksum
 
-        assert applied == ["0007_plans_equal.sql"]
+        assert applied == ["0007_plans_equal.sql", "0008_conversations.sql"]
         after = await _snapshot(db)
         assert after == _expected_after(before)
         # Spelled out: the holder is gone, the imported sessions belong to no plan, the

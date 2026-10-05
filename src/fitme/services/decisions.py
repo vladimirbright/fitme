@@ -10,13 +10,45 @@ JSON columns are always handled at the controller/selector boundary (A§4.6 rule
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
+from typing import TypedDict
 
 from fitme.db.connection import Database
 from fitme.db.controllers.decisions import insert_decision, insert_decision_outcome
 from fitme.domain.enums import DecisionKind
 from fitme.domain.guard_types import GuardVerdict
 from fitme.domain.models import LoadChange
+
+
+@dataclass(frozen=True, slots=True)
+class PromptMeta:
+    """ADR 0003: when an edit was *interpreted* by the `assistant` agent from the owner's
+    message, the decision records which prompt and model did it (AGENTS.md §6)."""
+
+    template_name: str
+    version: int
+    model: str
+    llm_input: Mapping[str, object] | None = None
+
+
+class PromptColumns(TypedDict):
+    prompt_template: str | None
+    prompt_version: str | None
+    model: str | None
+    llm_input: dict[str, object] | None
+
+
+def prompt_columns(prompt: PromptMeta | None) -> PromptColumns:
+    """`insert_decision`'s prompt/model columns for an edit — all `None` for a manual edit."""
+    if prompt is None:
+        return {"prompt_template": None, "prompt_version": None, "model": None, "llm_input": None}
+    return {
+        "prompt_template": prompt.template_name,
+        "prompt_version": str(prompt.version),
+        "model": prompt.model,
+        "llm_input": None if prompt.llm_input is None else dict(prompt.llm_input),
+    }
 
 
 async def record_decision(

@@ -104,6 +104,97 @@ def prescription_line(prescription: Prescription, catalog: Catalog, lang: str) -
     return line
 
 
+def _keyed(plan: Plan) -> dict[tuple[str, str, int], Prescription]:
+    """Every prescription keyed by (workout key, exercise id, occurrence in that workout)."""
+    keyed: dict[tuple[str, str, int], Prescription] = {}
+    for workout in plan.workouts:
+        seen: dict[str, int] = {}
+        for block in workout.blocks:
+            for item in block.items:
+                seen[item.exercise_id] = seen.get(item.exercise_id, 0) + 1
+                keyed[(workout.key, item.exercise_id, seen[item.exercise_id])] = item
+    return keyed
+
+
+def plan_diff_lines(before: Plan, after: Plan, catalog: Catalog, lang: str) -> list[str]:
+    """What changed between two versions of a plan, one line per change, built from the
+    plans themselves (no model text)."""
+    lines: list[str] = []
+    if before.schedule != after.schedule:
+        days = ", ".join(
+            t(
+                "assistant.schedule_day",
+                lang,
+                weekday=t(f"weekday.{day.weekday}", lang),
+                workout=day.workout_key,
+            )
+            for day in after.schedule
+        )
+        lines.append(t("assistant.schedule_changed", lang, days=days))
+    titles_before = {w.key: w.title for w in before.workouts}
+    for workout in after.workouts:
+        if titles_before.get(workout.key, workout.title) != workout.title:
+            lines.append(
+                t("assistant.title_changed", lang, workout=workout.key, title=workout.title)
+            )
+    old, new = _keyed(before), _keyed(after)
+    for key, item in new.items():
+        line = prescription_line(item, catalog, lang)
+        if key not in old:
+            lines.append(t("assistant.line_added", lang, workout=key[0], line=line))
+        elif old[key] != item:
+            lines.append(t("assistant.line_changed", lang, workout=key[0], line=line))
+    for key, item in old.items():
+        if key not in new:
+            name = exercise_name(catalog.by_id(item.exercise_id), item.exercise_id, lang)
+            lines.append(t("assistant.line_removed", lang, workout=key[0], name=name))
+    return lines
+
+
+def load_change_notes(requested: Plan, judged: Plan, catalog: Catalog, lang: str) -> list[str]:
+    """One line per load the guards replaced (ADR 0004): what was asked, what it is now."""
+    notes: list[str] = []
+    for asked_workout, judged_workout in zip(requested.workouts, judged.workouts, strict=False):
+        asked_items = [i for b in asked_workout.blocks for i in b.items]
+        judged_items = [i for b in judged_workout.blocks for i in b.items]
+        for asked, got in zip(asked_items, judged_items, strict=False):
+            if asked.exercise_id != got.exercise_id or asked.load == got.load:
+                continue
+            exercise = catalog.by_id(asked.exercise_id)
+            notes.append(
+                t(
+                    "assistant.load_limited",
+                    lang,
+                    name=exercise_name(exercise, asked.exercise_id, lang),
+                    asked=load_label(asked.load, exercise, lang),
+                    got=load_label(got.load, exercise, lang),
+                )
+            )
+    return notes
+
+
+def session_draft_markup(decision_id: int, lang: str) -> InlineKeyboardMarkup:
+    """Under a planning session's draft (ADR 0004): Save / the whole draft / Close without
+    saving. Changes are typed as messages, so there is no "Change" button."""
+    builder = InlineKeyboardBuilder()
+    builder.add(
+        InlineKeyboardButton(
+            text=t("plan.save_button", lang),
+            callback_data=PlanDraft(action="confirm", decision_id=decision_id).pack(),
+        ),
+        InlineKeyboardButton(
+            text=t("plan.view_draft_button", lang),
+            callback_data=PlanDraft(action="view", decision_id=decision_id).pack(),
+        ),
+        InlineKeyboardButton(
+            text=t("plan.close_session_button", lang),
+            callback_data=PlanDraft(action="cancel", decision_id=decision_id).pack(),
+        ),
+    )
+    builder.adjust(1)
+    return builder.as_markup()
+
+
 def render_plan_text(
     plan: Plan, *, catalog: Catalog, lang: str, title: str, unmatched: Sequence[str] = ()
 ) -> str:

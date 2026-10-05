@@ -1,6 +1,6 @@
 # ADR 0003 — Free-text assistant with read-only tools
 
-Status: accepted (2026-10-05)
+Status: accepted (2026-10-05); edits-apply-immediately superseded by ADR 0004
 
 ## Context
 
