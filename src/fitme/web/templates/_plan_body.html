@@ -40,7 +40,7 @@
     {% for item in block.items %}
     <li>
       {{ exercise_names.get(item.exercise_id, item.exercise_id) }}:
-      {{ t('plan.sets_reps', sets=item.sets, reps_min=item.reps_min, reps_max=item.reps_max) }}
+      {{ t('plan.sets_reps', sets=item.sets, reps=(item.reps_min if item.reps_min == item.reps_max else item.reps_min ~ '–' ~ item.reps_max)) }}
       @ {{ load_text(item) }}
       {% if item.note %}&mdash; {{ item.note }}{% endif %}
     </li>

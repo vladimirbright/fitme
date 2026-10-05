@@ -139,8 +139,19 @@ async def _open_flow(
     flow: assistant.OpenFlow,
     lang: str,
     pending_plan_revisions: plan_handlers.PendingRevisions,
+    pending_train: train_handlers.PendingTrains,
+    text: str,
 ) -> None:
-    if flow.action == "show_plan" and flow.plan_id is not None:
+    if flow.action in ("log_block_as_planned", "skip_block"):
+        await train_handlers.log_current_block(
+            message, db, llm, user_id, pending_train, skip=flow.action == "skip_block"
+        )
+    elif flow.action == "log_block_results":
+        # The user's own words go to the result parser, never the model's paraphrase.
+        await train_handlers.enter_current_block_results(
+            message, db, llm, user_id, text, pending_train
+        )
+    elif flow.action == "show_plan" and flow.plan_id is not None:
         await plan_handlers.show_plan(message, db, user_id, flow.plan_id, lang)
     elif flow.action == "new_plan":
         await plan_handlers.new_plan(
@@ -166,6 +177,7 @@ async def handle_assistant_text(
     user_id: int,
     text: str,
     pending_plan_revisions: plan_handlers.PendingRevisions,
+    pending_train: train_handlers.PendingTrains,
 ) -> None:
     """The free-text handler's last step (A§6.3, ADR 0003): after the stop-word scan, with
     no pending prompt. Always answers something."""
@@ -184,7 +196,18 @@ async def handle_assistant_text(
             "\n".join(lines), reply_markup=_undo_markup(outcome.undo_decision_id, lang)
         )
     elif isinstance(outcome, assistant.OpenFlow):
-        await _open_flow(message, db, settings, llm, user_id, outcome, lang, pending_plan_revisions)
+        await _open_flow(
+            message,
+            db,
+            settings,
+            llm,
+            user_id,
+            outcome,
+            lang,
+            pending_plan_revisions,
+            pending_train,
+            text,
+        )
     elif isinstance(outcome, assistant.Replied):
         await message.answer(f"{outcome.text}\n\n{t('assistant.reply_footer', lang)}")
     elif isinstance(outcome, assistant.Refused):

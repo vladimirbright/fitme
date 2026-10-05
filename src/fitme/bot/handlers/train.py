@@ -646,6 +646,75 @@ async def handle_train_text(
     return True
 
 
+# --- Entry points for the free-text assistant (ADR 0003) ------------------------------------
+# A typed "по плану" / "8, 8, 6 at 60" / "skip" during a workout does exactly what the block's
+# ✅ / ✏️ / ⏭ buttons do, for the block that is current right now.
+
+
+async def _open_block(db: Database, user_id: int) -> tuple[int, int] | None:
+    active = await training.active_session(db, user_id)
+    if active is None or active.session.status != _STATUS_IN_PROGRESS:
+        return None
+    return active.session.id, active.session.current_block
+
+
+async def log_current_block(
+    message: Message,
+    db: Database,
+    llm: LlmRuntime,
+    user_id: int,
+    pending_train: PendingTrains,
+    *,
+    skip: bool,
+) -> None:
+    """✅ (all sets at the top of the range) or ⏭ for the current block."""
+    lang = await _lang(db, user_id)
+    current = await _open_block(db, user_id)
+    if current is None:
+        await message.answer(t("assistant.no_open_block", lang))
+        return
+    session_id, block = current
+    pending_train.pop(user_id, None)
+    if skip:
+        advance = await training.skip_block(db, user_id, session_id, block)
+    else:
+        advance = await training.complete_block_as_planned(db, user_id, session_id, block)
+    if advance.status != training.Status.OK:
+        await message.answer(t("train.stale", lang))
+        return
+    await message.answer(t("train.block_skipped" if skip else "train.block_logged", lang))
+    await _show_advance(
+        message, advance, lang, db=db, llm=llm, user_id=user_id, session_id=session_id
+    )
+
+
+async def enter_current_block_results(
+    message: Message,
+    db: Database,
+    llm: LlmRuntime,
+    user_id: int,
+    text: str,
+    pending_train: PendingTrains,
+) -> None:
+    """✏️ with the user's own message as the results: the next item of the current block,
+    through `parse_results` (stop-word scan, result parser, plausibility guard) and the usual
+    Correct / Fix confirmation."""
+    lang = await _lang(db, user_id)
+    current = await _open_block(db, user_id)
+    if current is None:
+        await message.answer(t("assistant.no_open_block", lang))
+        return
+    session_id, block = current
+    prompt = await training.next_result_prompt(db, user_id, session_id, block)
+    if prompt is None:
+        await message.answer(t("train.stale", lang))
+        return
+    pending_train[user_id] = PendingTrain(
+        kind="results", session_id=session_id, block=prompt.block, item=prompt.item
+    )
+    await handle_train_text(message, db, llm, user_id, text, pending_train)
+
+
 async def handle_cancel(
     message: Message, db: Database, user_id: int, pending_train: PendingTrains
 ) -> bool:

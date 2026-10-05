@@ -44,6 +44,9 @@ that revisit.
   reply saying where it is done (`/profile`, `/export`, "Paste my plan", ...). Profile answers
   (days per week, session length, focus) are defaults, not limits. Every assistant refusal is
   logged as a `decision(kind=refusal)` with its prompt and model.
+- **Workout blocks** (prompt v3): with a started workout, `state.current_block` is sent and
+  three actions mirror the block's buttons (log as planned, enter results, skip). Results are
+  never paraphrased by the assistant: the user's message itself goes to `result_parse`.
 
 ## Consequences
 

@@ -37,7 +37,6 @@ from fitme.db.controllers.decisions import insert_decision
 from fitme.db.selectors.decisions import get_decision
 from fitme.db.selectors.plans import get_latest_plan_version, get_plan, list_plan_versions
 from fitme.db.selectors.training import (
-    get_active_workout_session,
     get_workout_session,
     list_set_logs_for_session,
     list_workout_sessions_page,
@@ -60,13 +59,13 @@ from fitme.domain.assistant import (
     SwapExercise,
 )
 from fitme.domain.catalog import Catalog, Exercise
-from fitme.domain.enums import DecisionKind, RefusalCode
+from fitme.domain.enums import DecisionKind, RefusalCode, WorkoutSessionStatus
 from fitme.domain.models import Block, Load, Plan, Prescription, Refusal, Workout
 from fitme.i18n import wording
 from fitme.llm.context import render_user_prompt, scrub
 from fitme.llm.models import model_for
 from fitme.llm.usage import record_llm_call, run_agent
-from fitme.services import log_edit, planning
+from fitme.services import log_edit, planning, training
 from fitme.services.llm_runtime import LlmRuntime
 from fitme.services.plan_edit import PromptMeta, prompt_columns, save_edit
 
@@ -365,20 +364,48 @@ Outcome = PlanEdited | LogFixed | OpenFlow | Replied | NotApplied | Refused
 # --- The message handler ----------------------------------------------------------------------
 
 
+def _current_block(active: training.ActiveSession | None) -> dict[str, object] | None:
+    """The block on screen of an `in_progress` workout, for the `*_block` actions: ids and
+    numbers only. `None` before Start (precheck/review) or with no active session."""
+    if active is None or active.session.status != WorkoutSessionStatus.IN_PROGRESS.value:
+        return None
+    index = active.session.current_block
+    if not 0 <= index < active.total_blocks:
+        return None
+    block = active.workout.blocks[index]
+    return {
+        "block": index + 1,
+        "of": active.total_blocks,
+        "exercises": [
+            {
+                "exercise_id": item.exercise_id,
+                "sets": item.sets,
+                "reps": [item.reps_min, item.reps_max],
+                "load": item.load.model_dump(mode="json"),
+            }
+            for item in block.items
+        ],
+    }
+
+
 async def _state(db: Database, user_id: int) -> dict[str, object]:
     plans = await planning.list_plans(db, user_id)
     async with db.read() as conn:
         user = await get_user(conn, user_id)
-        active = await get_active_workout_session(conn, user_id)
+    active = await training.active_session(db, user_id)
     timezone = None if user is None else user.timezone
     tz = ZoneInfo(timezone) if timezone else ZoneInfo("UTC")
-    return {
+    state: dict[str, object] = {
         "plans": [
             {"plan_id": p.id, "name": scrub(p.name), "is_default": p.is_default} for p in plans
         ],
         "today_weekday": clock.now().astimezone(tz).weekday(),
         "workout_in_progress": active is not None,
     }
+    current = _current_block(active)
+    if current is not None:
+        state["current_block"] = current
+    return state
 
 
 async def handle_message(db: Database, llm: LlmRuntime, user_id: int, text: str) -> Outcome:

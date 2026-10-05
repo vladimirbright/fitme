@@ -603,9 +603,10 @@ async def test_according_to_plan_logs_every_prescribed_set_and_completes(
 
     block = _last_text(session)
     assert "Barbell back squat" in block
-    assert block.count("Set 1: 8–10 reps @ 42.5 kg") == 1 and "Set 3: 8–10 reps @ 42.5 kg" in block
+    # One line for all sets, one explicit load, rest in minutes.
+    assert "Sets: 3 × 8–10 reps\nLoad: 42.5 kg\nRest: 1 min 30 s" in block
+    assert "Set 1:" not in block
     assert "Set the rack's safety arms" in block  # the vetted catalog instructions
-    assert t("train.rest_line", "en", rest=90) in block
     datas = _callback_datas(_sent(session)[-1])
     assert TrainAction(action="pain", session_id=session_id, block=0).pack() in datas
     assert TrainAction(action="skip", session_id=session_id, block=0).pack() in datas
@@ -616,8 +617,8 @@ async def test_according_to_plan_logs_every_prescribed_set_and_completes(
     await _click(dispatcher, bot, _last_action(session, "done"))
     block2 = _last_text(session)
     assert block2.startswith(t("train.block_title", "en", index=2, total=2))
-    assert "Set 1: 8–10 reps @ calibration: start with 2 kg each" in block2
-    assert "Set 1: 8–10 reps @ bodyweight" in block2
+    assert "Load: start with 2 kg each or lighter" in block2
+    assert "Load: bodyweight" in block2
     assert t("train.calibration_hint", "en") in block2
 
     await _click(dispatcher, bot, _last_action(session, "done"))
@@ -970,7 +971,7 @@ async def test_adjust_within_the_cap_is_applied_once_at_start_and_beyond_it_is_s
 
     # Start applies the session-only increase once: the start decision carries it.
     await _click(dispatcher, bot, _last_action(session, "start"))
-    assert "Set 2: 8–10 reps @ 42.5 kg" in _last_text(session)
+    assert "Load: 42.5 kg" in _last_text(session)
     async with db.read() as conn:
         deltas = await recent_increase_deltas(conn, user_id, _SQUAT, since=since)
         decisions = await list_decisions_for_user(conn, user_id)
@@ -1243,7 +1244,7 @@ async def test_b1_a_guard_rejected_adjustment_never_replaces_the_accepted_draft(
     await _click(dispatcher, bot, _last_action(session, "start"))
     block = _last_text(session)
     assert block.startswith(t("train.block_title", "en", index=1, total=2))
-    assert "Set 2: 8–10 reps @ 42.5 kg" in block and "Set 3" not in block
+    assert "Sets: 2 × 8–10 reps\nLoad: 42.5 kg" in block
     assert await _session_status(db, session_id) == "in_progress"
     async with db.read() as conn:
         start_decision = (await list_decisions_for_user(conn, user_id))[0]
@@ -1329,7 +1330,7 @@ async def test_b2_a_calibration_parse_is_checked_against_the_historical_max(
     await _seed_completed_session(db, user_id, version_id, loads={_SQUAT: 40.0})
     await _seed_completed_session(db, user_id, version_id, loads={_SQUAT: None})
     session_id = await _to_first_block(dispatcher, bot, session)
-    assert "calibration" in _last_text(session)
+    assert t("train.calibration_hint", "en") in _last_text(session)
     await _click(dispatcher, bot, _last_action(session, "enter"))
     llm.parse_responses.append(_parsed((1, 10, 125.0), (2, 10, 125.0), (3, 10, 125.0)))
     await _send(dispatcher, bot, "10 10 10 at 12,5")

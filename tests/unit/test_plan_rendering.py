@@ -61,7 +61,7 @@ def test_every_prescription_line_shows_an_explicit_load_in_english() -> None:
     lines = [line for line in text.splitlines() if "×" in line]
     assert len(lines) == 4
     assert all(" @ " in line for line in lines)
-    assert "Barbell back squat: 3 × 8–10 @ 42.5 kg, rest 90 s" in text
+    assert "Barbell back squat: 3 × 8–10 @ 42.5 kg, rest 1 min 30 s" in text
     assert "Dumbbell bench press: 3 × 8–10 @ 12.5 kg each" in text
     assert "Push-up: 3 × 8–10 @ bodyweight" in text
     assert "@ calibration: start with 20 kg or lighter, log what you used" in text
@@ -167,11 +167,11 @@ def test_calibration_with_a_declared_load_shows_the_hint_with_the_load_unit() ->
     )
     text = render_plan_text(plan, catalog=load_catalog(), lang="en", title="Draft:")
     assert (
-        "Barbell back squat: 3 × 5–5 @ calibration — your plan says 80 kg; start at or below it "
-        "and log what you used, rest 90 s"
+        "Barbell back squat: 3 × 5 @ calibration — your plan says 80 kg; start at or below it "
+        "and log what you used, rest 1 min 30 s"
     ) in text
     assert "@ calibration — your plan says 20 kg each; start at or below it" in text
-    assert "Push-up: 3 × 5–5 @ bodyweight" in text
+    assert "Push-up: 3 × 5 @ bodyweight" in text
     text_ru = render_plan_text(plan, catalog=load_catalog(), lang="ru", title="Черновик:")
     assert "калибровка — в вашем плане 80 кг; начните с этого веса или легче" in text_ru
     assert "в вашем плане 20 кг каждая" in text_ru
@@ -180,7 +180,7 @@ def test_calibration_with_a_declared_load_shows_the_hint_with_the_load_unit() ->
 def test_a_declared_load_next_to_a_kg_load_is_not_shown() -> None:
     plan = _one_workout_plan(_declared("barbell_back_squat", 80.0, Load(kind="kg", kg=42.5)))
     text = render_plan_text(plan, catalog=load_catalog(), lang="en", title="Draft:")
-    assert "Barbell back squat: 3 × 5–5 @ 42.5 kg, rest 90 s" in text
+    assert "Barbell back squat: 3 × 5 @ 42.5 kg, rest 1 min 30 s" in text
     assert "your plan says" not in text
 
 

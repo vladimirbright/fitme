@@ -22,7 +22,7 @@ _REAL_PROMPT_VERSIONS = {
     "result_parse": 1,
     "recap": 1,
     "plan_import": 1,
-    "assistant": 2,  # v2: refuse only medical/nutrition; profile is a default, not a limit
+    "assistant": 3,  # v2: narrow refusals; v3: log/skip the current workout block
 }
 _REAL_PROMPT_NAMES = tuple(_REAL_PROMPT_VERSIONS)
 

@@ -695,7 +695,7 @@ async def test_q3_apply_of_an_unrelated_rep_change_after_an_engine_decrease(
         Recap(text="", suggestions=[ChangeReps(exercise_id=_PUSHUP, reps_min=10, reps_max=15)])
     )
     sid = await _to_first_block(dispatcher, bot, session)
-    assert "Set 1: 8–10 reps @ 35 kg" in _last_text(session)
+    assert "Sets: 3 × 8–10 reps\nLoad: 35 kg" in _last_text(session)
     await _click(dispatcher, bot, _last_action(session, "done"))
     monkeypatch.setattr(clock, "now", lambda: _TUESDAY_NOON_UTC + timedelta(hours=2))
     await _click(dispatcher, bot, _last_action(session, "done"))

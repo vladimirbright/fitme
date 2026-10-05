@@ -176,11 +176,25 @@ class AssistantEdits(BaseModel):
 class AssistantAction(BaseModel):
     """Open an existing bot flow. `plan_id` is needed for `show_plan`/`revise_plan`.
     `request` is the owner's own words: required for `revise_plan` (the rewrite), optional
-    for `new_plan` (what the new plan should be; without it the bot asks when plans exist)."""
+    for `new_plan` (what the new plan should be; without it the bot asks when plans exist).
+    The `*_block` actions apply to the current block of the in-progress workout only."""
 
     model_config = _STRICT_CONFIG
 
-    action: Literal["show_plans", "show_plan", "new_plan", "revise_plan", "train", "stats"]
+    action: Literal[
+        "show_plans",
+        "show_plan",
+        "new_plan",
+        "revise_plan",
+        "train",
+        "stats",
+        # During an in-progress workout, for the block on screen — exactly the block's
+        # buttons (✅ / ✏️ / ⏭). `log_block_results` sends the user's *own* message to the
+        # result parser, never a model paraphrase of it.
+        "log_block_as_planned",
+        "log_block_results",
+        "skip_block",
+    ]
     plan_id: int | None = None
     request: Annotated[str, Field(max_length=REQUEST_MAX_LENGTH)] | None = None
 

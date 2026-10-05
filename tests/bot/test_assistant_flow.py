@@ -59,8 +59,10 @@ from fitme.domain.assistant import (
 )
 from fitme.domain.enums import AREA_FLAGS, RED_FLAGS, RefusalCode
 from fitme.domain.models import Block, Load, Plan, Prescription, Refusal, ScheduledDay, Workout
+from fitme.domain.results import ParsedResults, SetResult
 from fitme.i18n import t
-from fitme.llm.agents import assistant_agent, plan_generate_agent
+from fitme.llm.agents import assistant_agent, plan_generate_agent, result_parse_agent
+from fitme.services import training
 from fitme.services.identity import issue_activation_code
 from fitme.services.llm_runtime import LlmRuntime
 
@@ -73,7 +75,7 @@ class ToolStep:
     args: dict[str, Any]
 
 
-Step = ToolStep | AssistantEdits | AssistantAction | AssistantReply | Refusal | Plan
+Step = ToolStep | AssistantEdits | AssistantAction | AssistantReply | Refusal | Plan | ParsedResults
 
 
 @dataclass
@@ -92,8 +94,10 @@ class ScriptedLlm:
         step = self.steps.pop(0)
         if isinstance(step, ToolStep):
             return ModelResponse(parts=[ToolCallPart(tool_name=step.name, args=step.args)])
-        wanted = f"final_result_{type(step).__name__}"
-        assert wanted in [tool.name for tool in info.output_tools]
+        names = [tool.name for tool in info.output_tools]
+        # A union output has one tool per member; a single output type has just one.
+        wanted = f"final_result_{type(step).__name__}" if len(names) > 1 else names[0]
+        assert wanted in names
         return ModelResponse(
             parts=[ToolCallPart(tool_name=wanted, args=step.model_dump(mode="json"))]
         )
@@ -107,6 +111,9 @@ class ScriptedLlm:
                     FunctionModel(self._respond, model_name=str(model))
                 ),
                 "plan_generate": lambda model: plan_generate_agent(
+                    FunctionModel(self._respond, model_name=str(model))
+                ),
+                "result_parse": lambda model: result_parse_agent(
                     FunctionModel(self._respond, model_name=str(model))
                 ),
             },
@@ -511,3 +518,108 @@ async def test_a_typed_new_plan_asks_for_guidance_or_uses_the_words_given(
 
 def _user_prompt(request: ModelRequest) -> str:
     return next(str(p.content) for p in request.parts if p.part_kind == "user-prompt")
+
+
+async def _start_workout(db: Database, settings: Settings, seeded: Seeded) -> int:
+    created = await training.create_session(db, seeded.user_id, seeded.plan_id, "A")
+    assert isinstance(created, training.SessionCreated)
+    session_id = created.session.id
+    await training.precheck_no(db, settings, seeded.user_id, session_id)
+    started = await training.start(db, settings, seeded.user_id, session_id)
+    assert started.status == training.Status.OK
+    return session_id
+
+
+async def _logged(db: Database, session_id: int) -> list[tuple[str, int | None, bool]]:
+    async with db.read() as conn:
+        rows = await list_set_logs_for_session(conn, session_id)
+    return [(r.exercise_id, r.actual_reps, r.skipped) for r in rows]
+
+
+async def test_during_a_workout_as_planned_logs_the_current_block(
+    dispatcher: Dispatcher,
+    bot: Bot,
+    db: Database,
+    settings: Settings,
+    session: FakeSession,
+    llm: ScriptedLlm,
+) -> None:
+    """The screenshot case: "по плану" under an open block logs it (✅), it doesn't re-open
+    /train with "the workout is already in progress"."""
+    seeded = await _ready(dispatcher, bot, db)
+    lang = await _lang(db, seeded.user_id)
+    session_id = await _start_workout(db, settings, seeded)
+
+    llm.steps = [AssistantAction(action="log_block_as_planned")]
+    await _send(dispatcher, bot, "по плану")
+
+    state = json.loads(llm.first_prompt())["state"]
+    assert state["current_block"]["block"] == 1
+    assert state["current_block"]["exercises"][0]["exercise_id"] == "barbell_back_squat"
+    logged = await _logged(db, session_id)
+    assert logged[:3] == [("barbell_back_squat", 5, False)] * 3
+    assert all(reps is None for _id, reps, _skipped in logged[3:])  # next block: not yet
+    texts = [m.text for m in _messages(session)]
+    assert t("train.block_logged", lang) in texts
+    assert "Push-up" in _last_text(session)  # the next block is shown
+
+
+async def test_during_a_workout_reported_results_go_to_the_parser_verbatim(
+    dispatcher: Dispatcher,
+    bot: Bot,
+    db: Database,
+    settings: Settings,
+    session: FakeSession,
+    llm: ScriptedLlm,
+) -> None:
+    seeded = await _ready(dispatcher, bot, db)
+    await _start_workout(db, settings, seeded)
+
+    parsed = ParsedResults(
+        sets=[SetResult(set_index=i, reps=4, load_kg=60.0) for i in (1, 2, 3)],
+        safety_signal=False,
+        unclear=False,
+    )
+    llm.steps = [AssistantAction(action="log_block_results"), parsed]
+    await _send(dispatcher, bot, "сделал 4, 4, 4 по 60")
+
+    # The result parser got the user's own words, not a paraphrase.
+    parse_prompt = json.loads(
+        next(str(p.content) for p in llm.requests[-1].parts if p.part_kind == "user-prompt")
+    )
+    assert parse_prompt["result_text"] == "сделал 4, 4, 4 по 60"
+    # Shown for Correct / Fix, nothing written yet (only a confirmed parse writes set_logs).
+    datas = [
+        b.callback_data
+        for row in _messages(session)[-1].reply_markup.inline_keyboard  # type: ignore[union-attr]
+        for b in row
+    ]
+    assert any(d and d.startswith("tr:parse_ok:") for d in datas)
+
+
+async def test_during_a_workout_skip_skips_the_current_block(
+    dispatcher: Dispatcher,
+    bot: Bot,
+    db: Database,
+    settings: Settings,
+    session: FakeSession,
+    llm: ScriptedLlm,
+) -> None:
+    seeded = await _ready(dispatcher, bot, db)
+    lang = await _lang(db, seeded.user_id)
+    session_id = await _start_workout(db, settings, seeded)
+
+    llm.steps = [AssistantAction(action="skip_block")]
+    await _send(dispatcher, bot, "приседания пропускаю")
+    assert (await _logged(db, session_id))[:3] == [("barbell_back_squat", None, True)] * 3
+    assert t("train.block_skipped", lang) in [m.text for m in _messages(session)]
+
+
+async def test_block_actions_without_an_open_block_say_so(
+    dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
+) -> None:
+    seeded = await _ready(dispatcher, bot, db)
+    llm.steps = [AssistantAction(action="log_block_as_planned")]
+    await _send(dispatcher, bot, "done")
+    assert "current_block" not in json.loads(llm.first_prompt())["state"]
+    assert _last_text(session) == t("assistant.no_open_block", await _lang(db, seeded.user_id))

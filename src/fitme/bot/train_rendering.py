@@ -16,12 +16,13 @@ from fitme.bot.plan_rendering import (
     exercise_name,
     load_label,
     prescription_line,
-    prescription_load_label,
+    reps_text,
+    rest_text,
 )
 from fitme.db.records import CheckinRecord, PlanRecord
-from fitme.domain.catalog import Catalog
+from fitme.domain.catalog import Catalog, Exercise
 from fitme.domain.enums import CheckinAnswer
-from fitme.domain.models import Block, Load, Workout
+from fitme.domain.models import Block, Load, Prescription, Workout
 from fitme.domain.results import ChangeReps, ParsedResults, PlanChange, SwapExercise
 from fitme.i18n import t
 from fitme.services.recap import NextKind, RecapView
@@ -187,19 +188,18 @@ def block_text(view: BlockView, *, catalog: Catalog, lang: str) -> str:
         exercise = catalog.by_id(item.exercise_id)
         lines.append("")
         lines.append(exercise_name(exercise, item.exercise_id, lang))
-        load = prescription_load_label(item, exercise, lang)  # M8b: the declared hint, if any
-        for set_index in range(1, item.sets + 1):
-            lines.append(
-                t(
-                    "train.set_line",
-                    lang,
-                    index=set_index,
-                    reps_min=item.reps_min,
-                    reps_max=item.reps_max,
-                    load=load,
-                )
+        # One prescription has one load for every set, so the sets are stated once ("4 × 6–8")
+        # with that explicit load, instead of one identical line per set.
+        lines.append(
+            t(
+                "train.sets_line",
+                lang,
+                sets=item.sets,
+                reps=reps_text(item.reps_min, item.reps_max),
             )
-        lines.append(t("train.rest_line", lang, rest=item.rest_seconds))
+        )
+        lines.append(t("train.load_line", lang, load=_block_load_label(item, exercise, lang)))
+        lines.append(t("train.rest_line", lang, rest=rest_text(item.rest_seconds, lang)))
         if item.note:
             lines.append(item.note)
         if exercise is not None:
@@ -211,6 +211,22 @@ def block_text(view: BlockView, *, catalog: Catalog, lang: str) -> str:
     if not all_calibration(view.block):
         lines.extend(["", t("train.according_hint", lang)])
     return "\n".join(lines)
+
+
+def _block_load_label(item: Prescription, exercise: Exercise | None, lang: str) -> str:
+    """The load as one short phrase for a workout block. A calibration load says only where
+    to start ("start with 2 kg each or lighter"); how to log it is the calibration hint line
+    below, said once instead of on every set."""
+    load = item.load
+    if load.kind != "calibration":
+        return load_label(load, exercise, lang)
+    if item.declared_kg is not None:
+        declared = load_label(Load(kind="kg", kg=item.declared_kg), exercise, lang)
+        return t("train.load_calibration_declared", lang, declared=declared)
+    if exercise is not None and exercise.start.kind == "kg":
+        start = load_label(exercise.start, exercise, lang)
+        return t("train.load_calibration_from", lang, start=start)
+    return t("train.load_calibration", lang)
 
 
 def all_calibration(block: Block) -> bool:

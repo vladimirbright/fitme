@@ -541,6 +541,9 @@ Register the command list with `setMyCommands` for each supported language.
   refused in chat; the website editor's explicit checkbox is the only override. "Show my
   plan", "let's train", "new plan" or a broad redesign open the existing flows; a redesign is
   still a draft that needs Confirm.
+- During an `in_progress` workout the assistant sees the current block and can do what its
+  buttons do: ✅ ("по плану", "done"), ✏️ (the user's **own** message goes to `result_parse`,
+  then plausibility and Correct / Fix as usual) and ⏭. Aborting stays a button only.
 
 ### 6.4 `/plan` — generate and iterate
 

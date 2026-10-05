@@ -256,7 +256,7 @@ async def test_pasted_program_imports_with_hints_and_unmatched_and_confirm_saves
     assert "Понедельник: A — Присед + жим сидя" in shown
     assert "Среда: B — Румынская тяга + жим лёжа" in shown
     assert "Пятница: C — Жим штанги + выпады" in shown
-    assert f"Приседания со штангой на спине: 3 × 5–5 @ {_HINT_SQUAT}" in shown
+    assert f"Приседания со штангой на спине: 3 × 5 @ {_HINT_SQUAT}" in shown
     assert _HINT_PRESS in shown
     assert "Планка: 3 × 30–45 @ собственный вес" in shown
     assert t("plan.unmatched_title", "ru") in shown
@@ -297,11 +297,12 @@ async def test_pasted_program_imports_with_hints_and_unmatched_and_confirm_saves
     await _click(dispatcher, bot, _last_action(session, "tr:precheck_no:"))
     review = "\n".join(_texts(session)[-3:])
     assert t("train.review_title", "ru", workout_key="A", title="Присед + жим сидя") in review
-    assert f"Приседания со штангой на спине: 3 × 5–5 @ {_HINT_SQUAT}" in review
+    assert f"Приседания со штангой на спине: 3 × 5 @ {_HINT_SQUAT}" in review
     await _click(dispatcher, bot, _last_action(session, "tr:start:"))
     block = "\n".join(_texts(session)[-3:])
     assert t("train.block_title", "ru", index=1, total=5) in block
-    assert f"Подход 1: 5–5 повторений @ {_HINT_SQUAT}" in block
+    assert "Подходы: 3 × 5 повторений" in block
+    assert t("train.load_line", "ru", load="в вашем плане 80 кг; начните с него или легче") in block
     assert t("train.calibration_hint", "ru") in block
 
 

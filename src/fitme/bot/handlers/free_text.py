@@ -109,7 +109,7 @@ async def on_free_text(
 
     if settings.assistant_enabled and step is None and text.strip():
         await handle_assistant_text(
-            message, db, settings, llm, user_id, text, pending_plan_revisions
+            message, db, settings, llm, user_id, text, pending_plan_revisions, pending_train
         )
         return
 

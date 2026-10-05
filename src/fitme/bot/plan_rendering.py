@@ -34,6 +34,21 @@ def exercise_name(exercise: Exercise | None, exercise_id: str, lang: str) -> str
     return exercise.names.get(lang) or exercise.names.get("en") or exercise_id
 
 
+def rest_text(seconds: int, lang: str) -> str:
+    """Rest as people say it: "45 s", "2 min", "2 min 30 s"."""
+    minutes, rest = divmod(seconds, 60)
+    if minutes == 0:
+        return t("duration.seconds", lang, s=rest)
+    if rest == 0:
+        return t("duration.minutes", lang, m=minutes)
+    return t("duration.minutes_seconds", lang, m=minutes, s=rest)
+
+
+def reps_text(reps_min: int, reps_max: int) -> str:
+    """ "8" for a fixed count, "6–8" for a range."""
+    return str(reps_min) if reps_min == reps_max else f"{reps_min}–{reps_max}"
+
+
 def load_label(load: Load, exercise: Exercise | None, lang: str) -> str:
     """The explicit load text (A§6.4 step 5): a kg number ("each" when the catalog
     `load_unit` is `per_implement`, A§4.4 "loads are per implement"; a single implement or a
@@ -74,8 +89,7 @@ def prescription_line(prescription: Prescription, catalog: Catalog, lang: str) -
         "plan.sets_reps",
         lang,
         sets=prescription.sets,
-        reps_min=prescription.reps_min,
-        reps_max=prescription.reps_max,
+        reps=reps_text(prescription.reps_min, prescription.reps_max),
     )
     line = t(
         "plan.prescription_line",
@@ -83,7 +97,7 @@ def prescription_line(prescription: Prescription, catalog: Catalog, lang: str) -
         name=exercise_name(exercise, prescription.exercise_id, lang),
         sets_reps=sets_reps,
         load=prescription_load_label(prescription, exercise, lang),
-        rest=prescription.rest_seconds,
+        rest=rest_text(prescription.rest_seconds, lang),
     )
     if prescription.note:
         line = f"{line} — {prescription.note}"
