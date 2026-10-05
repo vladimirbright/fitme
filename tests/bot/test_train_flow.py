@@ -1035,11 +1035,13 @@ async def test_adjust_refusal_from_the_model_keeps_the_review(
 ) -> None:
     await _ready(dispatcher, bot, db)
     session_id = await _to_review(dispatcher, bot, session)
-    llm.adjust_responses.append(Refusal(code="out_of_scope", message="model text, never shown"))
+    llm.adjust_responses.append(
+        Refusal(code="out_of_scope", message="That is not something today's workout can change.")
+    )
     await _click(dispatcher, bot, _last_action(session, "adjust"))
     await _send(dispatcher, bot, "what should I eat before this")
     texts = [m.text or "" for m in _sent(session)]
-    assert t("refusal.out_of_scope", "en") in texts
+    assert "That is not something today's workout can change." in texts
     assert _last_action(session, "start").session_id == session_id
     assert await _session_status(db, session_id) == "confirmed"
 
@@ -1258,12 +1260,15 @@ async def test_b1_a_model_refusal_keeps_the_accepted_draft_and_says_so(
     await _to_review(dispatcher, bot, session)
     d1 = await _accepted_d1(dispatcher, bot, session, llm, db, user_id)
 
-    llm.adjust_responses.append(Refusal(code="out_of_scope", message="model text, never shown"))
+    llm.adjust_responses.append(
+        Refusal(code="out_of_scope", message="That is not something today's workout can change.")
+    )
     await _click(dispatcher, bot, _last_action(session, "adjust"))
     await _send(dispatcher, bot, "what should I eat")
 
     texts = [m.text or "" for m in _sent(session)]
-    assert t("refusal.out_of_scope", "en") in texts  # the change couldn't be made
+    # the change couldn't be made: the model's own (wording-checked) explanation
+    assert "That is not something today's workout can change." in texts
     review = _last_text(session)
     assert t("train.review_adjusted", "en") in review
     assert "Barbell back squat: 2 × 8–10 @ 42.5 kg" in review

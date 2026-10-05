@@ -29,6 +29,7 @@ from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message
 from fitme.bot import plan_rendering
 from fitme.bot import train_rendering as rendering
 from fitme.bot.callback_data import CheckinReply, TrainAction, TrainPick
+from fitme.bot.rendering import refusal_text
 from fitme.catalog import load_catalog
 from fitme.config.settings import Settings
 from fitme.db.connection import Database
@@ -75,9 +76,9 @@ async def _send_long(message: Message, text: str, markup: InlineKeyboardMarkup |
 
 
 async def _send_refusal(message: Message, refusal: Refusal, lang: str) -> None:
-    # AGENTS.md §2: a refusal is a valid output. Shown via the per-code i18n copy, never
-    # model text.
-    await message.answer(t(f"refusal.{refusal.code.value}", lang))
+    # AGENTS.md §2: a refusal is a valid output. Per-code copy, or the model's own wording-
+    # checked explanation for `out_of_scope` (`bot.rendering.refusal_text`).
+    await message.answer(refusal_text(refusal, lang))
 
 
 async def _send_halt(message: Message, _halt: HaltResult, lang: str) -> None:

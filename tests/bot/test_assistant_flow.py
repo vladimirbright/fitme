@@ -45,7 +45,7 @@ from fitme.db.controllers.training import (
     insert_set_log,
     insert_workout_session,
 )
-from fitme.db.selectors.decisions import get_decision
+from fitme.db.selectors.decisions import get_decision, list_decisions_for_user
 from fitme.db.selectors.plans import list_plan_versions
 from fitme.db.selectors.training import list_set_logs_for_session
 from fitme.db.selectors.users import get_telegram_account_by_telegram_user_id
@@ -449,15 +449,27 @@ async def test_an_action_opens_the_existing_flow(
     assert t("disclosure.ai", lang) in _messages(session)[-1].text
 
 
-async def test_a_refusal_is_shown_by_code_and_changes_nothing(
+async def test_a_refusal_is_logged_shows_the_model_reason_and_changes_nothing(
     dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
 ) -> None:
     seeded = await _ready(dispatcher, bot, db)
     lang = await _lang(db, seeded.user_id)
-    llm.steps = [Refusal(code=RefusalCode.OUT_OF_SCOPE, message="model text, never shown")]
+    llm.steps = [Refusal(code=RefusalCode.OUT_OF_SCOPE, message="Nutrition is out of scope.")]
     await _send(dispatcher, bot, "what should I eat?")
-    assert _last_text(session) == t("refusal.out_of_scope", lang)
+    assert _last_text(session) == "Nutrition is out of scope."
     assert len(await _bodies(db, seeded.plan_id)) == 1
+    # Logged as a refusal decision with the prompt and model that chose it.
+    async with db.read() as conn:
+        refusals = [
+            d for d in await list_decisions_for_user(conn, seeded.user_id) if d.kind == "refusal"
+        ]
+    assert len(refusals) == 1
+    assert refusals[0].prompt_template == "assistant" and refusals[0].model
+    assert refusals[0].user_report == {"source": "assistant"}
+    # A safety refusal code keeps its fixed copy even with model text attached.
+    llm.steps = [Refusal(code=RefusalCode.NEEDS_CLEARANCE, message="free-form model text")]
+    await _send(dispatcher, bot, "anything")
+    assert _last_text(session) == t("refusal.needs_clearance", lang)
 
 
 async def test_disabled_assistant_falls_back_to_the_menu_hint(

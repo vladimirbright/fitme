@@ -38,7 +38,7 @@ becomes `calibration` with the number kept as `declared_kg`; a kg that breaks th
 the ceiling is substituted with the load engine's value, and the file's number is kept as the
 `declared_kg` hint too — the plan is still saved, with the substitution reported (A§7.3: only a
 *structural* failure — an unknown or contraindicated exercise, equipment/location, or a
-schedule that does not fit `sessions_per_week` — rejects the whole plan). Every saved plan has
+schedule with no training day — rejects the whole plan). Every saved plan has
 passed `judge_import`'s own final `validate_plan` re-check. The accepted ones become `plans` +
 `plan_versions(origin = 'import')`.
 
@@ -773,7 +773,7 @@ async def _judge_plans(
     written. A LOAD-only violation (weekly cap, ceiling, no history) is substituted with the
     load engine's value in place, the file's number kept as the `declared_kg` hint, and the
     plan still resolves to "save"; a structural failure (unknown/contraindicated exercise,
-    equipment/location, schedule vs `sessions_per_week`) resolves to "rejected", as before. A
+    equipment/location, an empty schedule) resolves to "rejected", as before. A
     plan whose judged body matches an already-imported one — saved in an earlier run, or
     earlier in this same file — resolves to "duplicate", sharing that plan's
     `_PlanLinkTarget` (so two identical `[[plan]]` blocks in one file dedupe against each

@@ -97,7 +97,13 @@ async def short_stats(db: Database, user_id: int) -> ShortStats:
                 except ValueError:
                     plan_body = None
 
-    scheduled_per_week = profile.sessions_per_week if profile is not None else None
+    # The default plan's own schedule is what the user actually committed to; the profile's
+    # frequency is only the default a new plan starts from.
+    scheduled_per_week = (
+        len(plan_body.schedule)
+        if plan_body is not None and plan_body.schedule
+        else (profile.sessions_per_week if profile is not None else None)
+    )
     scheduled = _STATS_WEEKS * scheduled_per_week if scheduled_per_week is not None else 0
 
     top_lifts: list[TopLift] = []

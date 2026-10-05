@@ -31,7 +31,9 @@ from zoneinfo import ZoneInfo
 
 from fitme import clock
 from fitme.catalog import load_catalog
+from fitme.config.content import content_version
 from fitme.db.connection import Database
+from fitme.db.controllers.decisions import insert_decision
 from fitme.db.selectors.decisions import get_decision
 from fitme.db.selectors.plans import get_latest_plan_version, get_plan, list_plan_versions
 from fitme.db.selectors.training import (
@@ -58,7 +60,7 @@ from fitme.domain.assistant import (
     SwapExercise,
 )
 from fitme.domain.catalog import Catalog, Exercise
-from fitme.domain.enums import RefusalCode
+from fitme.domain.enums import DecisionKind, RefusalCode
 from fitme.domain.models import Block, Load, Plan, Prescription, Refusal, Workout
 from fitme.i18n import wording
 from fitme.llm.context import render_user_prompt, scrub
@@ -66,7 +68,7 @@ from fitme.llm.models import model_for
 from fitme.llm.usage import record_llm_call, run_agent
 from fitme.services import log_edit, planning
 from fitme.services.llm_runtime import LlmRuntime
-from fitme.services.plan_edit import PromptMeta, save_edit
+from fitme.services.plan_edit import PromptMeta, prompt_columns, save_edit
 
 AGENT_NAME = "assistant"
 SOURCE = "assistant"
@@ -409,12 +411,34 @@ async def handle_message(db: Database, llm: LlmRuntime, user_id: int, text: str)
         deps=_AssistantData(db, user_id, catalog, allowed),
         request_limit=REQUEST_LIMIT,
     )
-    # Linked to no decision: only a saved edit is a decision (it records the prompt/model).
-    await record_llm_call(db, decision_id=None, record=outcome.record)
     output = outcome.output
+    prompt = PromptMeta(
+        template_name=outcome.prompt.template_name if outcome.prompt else AGENT_NAME,
+        version=outcome.prompt.version if outcome.prompt else 0,
+        model=spec.model,
+        llm_input=rendered.payload,
+    )
 
     if isinstance(output, Refusal):
+        # A refusal is a decision (AGENTS.md §6: refusal is a valid output, logged like any
+        # other), with the prompt/model that chose it — so "why was this refused?" can be
+        # answered from the log. A provider failure (`LLM_UNAVAILABLE`) is logged the same way.
+        async with db.transaction() as conn:
+            decision_id = await insert_decision(
+                conn,
+                user_id=user_id,
+                kind=DecisionKind.REFUSAL.value,
+                **prompt_columns(prompt),
+                content_version=content_version(),
+                user_report={"source": SOURCE},
+                proposal=planning.refusal_proposal(output, None),
+                guards_fired=[],
+            )
+        await record_llm_call(db, decision_id=decision_id, record=outcome.record)
         return Refused(output)
+    # Otherwise linked to no decision here: a saved edit writes its own (with the prompt and
+    # model); a reply or an opened flow changes nothing.
+    await record_llm_call(db, decision_id=None, record=outcome.record)
     if isinstance(output, AssistantReply):
         if wording.first_forbidden_term(output.message) is not None:
             return NotApplied("assistant.not_understood")
@@ -423,12 +447,6 @@ async def handle_message(db: Database, llm: LlmRuntime, user_id: int, text: str)
         return OpenFlow(action=output.action, plan_id=output.plan_id, request=output.request)
     assert isinstance(output, AssistantEdits)
 
-    prompt = PromptMeta(
-        template_name=outcome.prompt.template_name if outcome.prompt else AGENT_NAME,
-        version=outcome.prompt.version if outcome.prompt else 0,
-        model=spec.model,
-        llm_input=rendered.payload,
-    )
     ops_json = [op.model_dump(mode="json") for op in output.ops]
     report: dict[str, object] = {"source": SOURCE, "ops": ops_json}
     fixes = [op for op in output.ops if isinstance(op, FixLoggedSet)]

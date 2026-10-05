@@ -18,6 +18,7 @@ from fitme.bot.callback_data import AssistantUndo
 from fitme.bot.handlers import plan as plan_handlers
 from fitme.bot.handlers import stats as stats_handlers
 from fitme.bot.handlers import train as train_handlers
+from fitme.bot.rendering import refusal_text
 from fitme.catalog import load_catalog
 from fitme.config.settings import Settings
 from fitme.db.connection import Database
@@ -187,8 +188,7 @@ async def handle_assistant_text(
     elif isinstance(outcome, assistant.Replied):
         await message.answer(f"{outcome.text}\n\n{t('assistant.reply_footer', lang)}")
     elif isinstance(outcome, assistant.Refused):
-        # Per-code copy, never model text (as `/plan` shows refusals).
-        await message.answer(t(f"refusal.{outcome.refusal.code.value}", lang))
+        await message.answer(refusal_text(outcome.refusal, lang))
     else:
         lines = [t(outcome.key, lang)]
         lines.extend(f"• {detail}" for detail in outcome.details)

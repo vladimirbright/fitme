@@ -336,7 +336,7 @@ async def test_stop_word_in_revise_text_halts_with_no_llm_call(
     assert llm.calls == 1
 
 
-async def test_cancel_discards_the_draft_and_llm_refusals_are_shown_by_code(
+async def test_cancel_discards_the_draft_and_out_of_scope_shows_the_model_explanation(
     dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
 ) -> None:
     user_id = await _ready(dispatcher, bot, db)
@@ -348,7 +348,12 @@ async def test_cancel_discards_the_draft_and_llm_refusals_are_shown_by_code(
     async with db.read() as conn:
         assert await list_plans_for_user(conn, user_id) == []
 
-    llm.responses.append(Refusal(code="out_of_scope", message="model text, never shown"))
+    # `out_of_scope`: the model's own explanation is shown when it passes the wording check…
+    llm.responses.append(Refusal(code="out_of_scope", message="Your profile says 3 days."))
+    await _click(dispatcher, bot, PlanMenu(action="new", plan_id=0))
+    assert _sent_messages(session)[-1].text == "Your profile says 3 days."
+    # …and falls back to the per-code copy when it doesn't (AGENTS.md §3).
+    llm.responses.append(Refusal(code="out_of_scope", message="Ask your coach about that."))
     await _click(dispatcher, bot, PlanMenu(action="new", plan_id=0))
     assert _sent_messages(session)[-1].text == t("refusal.out_of_scope", "en")
 
@@ -634,3 +639,24 @@ async def test_guidance_can_be_cancelled_and_a_stop_word_in_it_halts_with_no_llm
     assert llm.calls == 1
     async with db.read() as conn:
         assert len(await list_open_health_holds(conn, user_id)) == 1
+
+
+async def test_a_revision_with_fewer_days_than_the_profile_is_a_draft_not_a_refusal(
+    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
+) -> None:
+    """The profile's sessions per week (2 here) is a default, not a limit: "one day a week"
+    gives a 1-day draft on the first attempt, with no guard retry and no refusal."""
+    await _ready(dispatcher, bot, db)
+    llm.responses.append(make_plan())
+    draft_id = await _new_draft(dispatcher, bot, session)
+    await _click(dispatcher, bot, PlanDraft(action="change", decision_id=draft_id))
+
+    one_day = make_plan()
+    one_day.schedule = [ScheduledDay(weekday=2, workout_key="A")]
+    llm.responses.append(one_day)
+    await _send(dispatcher, bot, "only one day a week")
+
+    draft = _sent_messages(session)[-1].text or ""
+    assert draft.startswith(t("plan.draft_title", "en"))
+    assert "Wednesday: A — Full body" in draft and "Tuesday" not in draft
+    assert llm.calls == 2  # one generate + one revise attempt: nothing was retried

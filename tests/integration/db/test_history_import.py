@@ -494,17 +494,17 @@ async def test_plan_over_the_imported_ceiling_is_saved_with_engine_load_and_hint
 
 
 async def test_structurally_bad_plan_is_still_rejected(db: Database, user_id: int) -> None:
-    """A structural failure (here: the schedule doesn't match `sessions_per_week`) is not
-    something a load substitution can repair, so the whole plan is rejected, as before."""
+    """A structural failure (here: no training day at all) is not something a load
+    substitution can repair, so the whole plan is rejected, as before."""
     await seed_gym_profile(db, user_id, sessions_per_week=2)
     await run_import(db, fixture_text())
     before = await _counts(db, user_id)
 
-    report = await run_import(db, toml_with(p=plan_toml("One day only", 75.0, weekdays=(0,))))
+    report = await run_import(db, toml_with(p=plan_toml("No days", 75.0, weekdays=())))
 
     assert report.plans_saved == ()
     assert len(report.rejected) == 1
-    assert report.rejected[0].ref == "plan 'One day only'"
+    assert report.rejected[0].ref == "plan 'No days'"
     assert "plan.schedule_length" in report.rejected[0].reason
     assert (await _counts(db, user_id))["plans"] == before["plans"]
 
@@ -1026,8 +1026,8 @@ async def test_ambiguous_weekday_leaves_the_session_unlinked(db: Database, user_
 async def test_rejected_plan_links_nothing(db: Database, user_id: int) -> None:
     await seed_gym_profile(db, user_id, sessions_per_week=2)
     text = toml_with(
-        # Structurally bad: one schedule day for a 2-session-per-week profile.
-        p=plan_toml("One day only", 60.0, weekdays=(0,)),
+        # Structurally bad: no training day at all.
+        p=plan_toml("No days", 60.0, weekdays=()),
         s=session_toml("2026-08-03", ("Squat", 60, 5)),  # Monday: would infer-link if saved
     )
 

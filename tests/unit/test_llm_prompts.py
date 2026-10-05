@@ -16,13 +16,13 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 # The highest shipped version of each real agent prompt (older versions stay on disk: a
 # decision records which one it used).
 _REAL_PROMPT_VERSIONS = {
-    "plan_generate": 2,  # v2: the user's guidance and existing plans for a further plan
+    "plan_generate": 3,  # v2: guidance + existing plans; v3: profile frequency is a default
     "plan_revise": 1,
     "session_adjust": 1,
     "result_parse": 1,
     "recap": 1,
     "plan_import": 1,
-    "assistant": 1,
+    "assistant": 2,  # v2: refuse only medical/nutrition; profile is a default, not a limit
 }
 _REAL_PROMPT_NAMES = tuple(_REAL_PROMPT_VERSIONS)
 

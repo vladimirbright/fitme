@@ -36,14 +36,24 @@ that revisit.
   with Confirm/Change/Cancel, because there the model designs and the owner confirms.
 - **Same safety order as all free text** (A§6.3): saved to `chat_messages`, then the stop-word
   scan, then the gate (open hold, screening), and only then the model. Administrative actions
-  (account, export, delete, activation, profile) are out of scope and refused.
+  (export, delete, activation, profile answers) aren't done here: the reply points to the
+  command.
 - `FITME_ASSISTANT_ENABLED=false` turns the assistant off and brings back the menu hint.
+- **Refuse narrowly** (prompt v2, after the first days of use): a refusal is only for medical,
+  symptom, nutrition and bodyweight requests. Anything else the assistant can't do gets a
+  reply saying where it is done (`/profile`, `/export`, "Paste my plan", ...). Profile answers
+  (days per week, session length, focus) are defaults, not limits. Every assistant refusal is
+  logged as a `decision(kind=refusal)` with its prompt and model.
 
 ## Consequences
 
 - Still pydantic-ai: tools plus union output types are enough. LangGraph is not needed.
-- Guards stay outside the harness. `guards/` is unchanged. The new paths reuse
-  `plan_edit.blocking_errors`/`load_cap_warnings` and `guards.plausibility`.
+- Guards stay outside the harness. The new paths reuse
+  `plan_edit.blocking_errors`/`load_cap_warnings` and `guards.plausibility`. One guard was
+  relaxed alongside: `plan.schedule_length` used to require exactly the profile's days per
+  week, which made "two workouts a week" impossible without editing the profile. It now
+  only requires at least one day; the profile's frequency is the default a plan is
+  generated with.
 - Every unclaimed message now costs one LLM call (up to `REQUEST_LIMIT` model requests with
   lookups). It is recorded in `llm_calls` and visible in `/system`.
 - This is not a companion persona (AGENTS.md §7): the prompt forbids small talk, and replies

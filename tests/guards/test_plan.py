@@ -161,9 +161,18 @@ def test_open_hold_is_reflected_in_validate_plan() -> None:
     assert any(v.rule == "screening.plan_allowed" and not v.ok for v in verdicts)
 
 
-def test_schedule_length_must_match_sessions_per_week() -> None:
+def test_profile_sessions_per_week_is_a_default_not_a_rule() -> None:
+    """A plan with fewer (or more) days than the profile's frequency is allowed: the profile
+    is what a new plan defaults to, not a cap."""
     plan = _plan("barbell_back_squat", Load(kind="calibration"))
     verdicts = validate_plan(plan, _ctx(sessions_per_week=3))
+    assert all(v.ok for v in verdicts if v.rule.startswith("plan.schedule"))
+
+
+def test_schedule_needs_at_least_one_training_day() -> None:
+    plan = _plan("barbell_back_squat", Load(kind="calibration"))
+    empty = plan.model_copy(update={"schedule": []})
+    verdicts = validate_plan(empty, _ctx())
     assert any(v.rule == "plan.schedule_length" and not v.ok for v in verdicts)
 
 

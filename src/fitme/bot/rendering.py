@@ -27,10 +27,12 @@ from fitme.domain.enums import (
     Focus,
     Location,
     Preference,
+    RefusalCode,
     ScreeningFlag,
     WeightBucket,
 )
-from fitme.i18n import supported_languages, t
+from fitme.domain.models import Refusal
+from fitme.i18n import supported_languages, t, wording
 
 # A shared, language-independent list of common IANA zones (A§5.1 step 2). Kept small and the
 # same for every interface language, rather than a per-language curated list, to keep the
@@ -354,3 +356,19 @@ def summary_markup(lang: str, *, confirm_button_key: str) -> InlineKeyboardMarku
         )
     ]
     return with_extra_rows(fix, confirm_row, back_row("summary", lang, has_back=True))
+
+
+def refusal_text(refusal: Refusal, lang: str) -> str:
+    """How a refusal is shown in the bot. The per-code copy, except for `out_of_scope`,
+    where the model's own short explanation is more useful ("your profile says 3 days…")
+    and is shown when it passes the AGENTS.md §3 wording check — the same rule as an
+    assistant reply. Safety refusals (hold, clearance, screening) always use the fixed
+    copy."""
+    message = refusal.message.strip()
+    if (
+        refusal.code == RefusalCode.OUT_OF_SCOPE
+        and message
+        and wording.first_forbidden_term(message) is None
+    ):
+        return message
+    return t(f"refusal.{refusal.code.value}", lang)

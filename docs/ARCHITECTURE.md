@@ -553,7 +553,9 @@ check gates ──► build context ──► LLM: propose ──► guards ─�
 
 1. **Gates** (guards, before any LLM call): the profile is complete; there is no open
    `health_hold`; red-flag clearance is present. Any failure returns a `Refusal`, which is
-   logged as a `decision(kind=refusal)`.
+   logged as a `decision(kind=refusal)`. The bot shows a refusal by its per-code copy, except
+   `out_of_scope`, where the model's own short explanation is shown if it passes the wording
+   check (`bot.rendering.refusal_text`); safety codes always keep the fixed copy.
    **Guidance.** If the gates pass and the user already has plans, **New plan** first asks
    what the new one should be ("a gym version of my home plan", "more upper body"), with
    **Generate anyway** and **Cancel**. The answer is free text: stop-word scan first (§6.3),
@@ -671,8 +673,8 @@ timezone can't shorten a hold. The only bypass is on the operator's server shell
 
 ### 6.7 `/stats` (short)
 
-- Last 4 weeks: sessions completed vs scheduled (neutral wording, **no streaks**, no
-  shaming), total volume, top 3 lifts with current working load and change.
+- Last 4 weeks: sessions completed vs scheduled (scheduled = the default plan's days per
+  week, else the profile's; neutral wording, **no streaks**, no shaming), total volume, top 3 lifts with current working load and change.
 - Next scheduled workouts (3).
 - A link to the website for charts.
 
@@ -699,7 +701,7 @@ class GuardVerdict(BaseModel):
 | `checkins.py` | `increase_allowed(exercise, checkins, flagged_areas) -> GuardVerdict` | Check-ins are asked for **flagged** areas only (§6.5). For every area the exercise loads **that the user flagged**, the latest check-in must be `fine`. A missing, `unknown`, `worse` or `pain` answer blocks the increase (silence is not consent). Areas the user did not flag need no check-in. An exercise with empty `loads_areas` fails closed. Because the catalog contraindicates every exercise that loads a flagged area, this gate only matters for exercises with a reviewed `contraindication_exceptions` entry. It is kept as defense in depth. |
 | `stop_words.py` | `scan(text, lang) -> StopHit \| None` | Normalizes the text (casefold, strip punctuation) and matches the per-language lists in `stop_words/*.txt` (pain, dizzy, numb, chest, popped, ... and inflections). **Any match halts.** Runs before the LLM. |
 | `screening.py` | `plan_allowed(flags, holds) -> GuardVerdict`; `exercise_allowed(exercise, flags) -> GuardVerdict` | Every red flag must have an explicit `yes`/`no` answer. Missing or `unknown` → `Refusal(SCREENING_INCOMPLETE)` (silence is not consent). Red flags answered `yes` need clearance. Open holds refuse. Contraindications remove exercises. |
-| `plan.py` | `validate_plan(plan, ctx) -> list[GuardVerdict]` | Runs all the checks above (including `plan_allowed`) over every prescription, plus: catalog ids only, location and equipment fit, schedule matches frequency, reps_min ≤ reps_max, superset size. **Reference load:** an increase is measured against the exercise's **current working load**, not the historical max. When both are known, the reference is `min(current, history_max)`. **An increase already applied in the trailing 7 days is not counted twice.** If a `to_kg` from an applied `load_changes` entry for the exercise, is above that reference, the reference becomes the highest such applied `to_kg`. An applied change is discarded only when the exercise's last completed session **after** the change was **prescribed below** its `to_kg`, i.e. the user has since trained at a lower prescription. A load the user just failed at therefore cannot be restored through the lift. A skipped or lighter-logged session at the applied prescription keeps the lift, so keeping that load is a hold, not a new increase. Two kinds of applied change never lift the reference (they still count toward the weekly cap):
+| `plan.py` | `validate_plan(plan, ctx) -> list[GuardVerdict]` | Runs all the checks above (including `plan_allowed`) over every prescription, plus: catalog ids only, location and equipment fit, at least one scheduled day (the profile's frequency is the default a plan is generated with, not a rule: a plan may have fewer or more days), reps_min ≤ reps_max, superset size. **Reference load:** an increase is measured against the exercise's **current working load**, not the historical max. When both are known, the reference is `min(current, history_max)`. **An increase already applied in the trailing 7 days is not counted twice.** If a `to_kg` from an applied `load_changes` entry for the exercise, is above that reference, the reference becomes the highest such applied `to_kg`. An applied change is discarded only when the exercise's last completed session **after** the change was **prescribed below** its `to_kg`, i.e. the user has since trained at a lower prescription. A load the user just failed at therefore cannot be restored through the lift. A skipped or lighter-logged session at the applied prescription keeps the lift, so keeping that load is a hold, not a new increase. Two kinds of applied change never lift the reference (they still count toward the weekly cap):
   - **over-cap `user_edit` changes**, i.e. edits the user confirmed past the caps;
   - **changes made before a `session_delete` that removed a completed session.** Deleting logs must never raise what the system allows (§9.4). The engine's decrease rule also has priority over holding at an applied load. Keeping a confirmed load is therefore not a new increase, and only the part above it counts toward the cap. The earlier change was guarded when it was applied, and `check_ceiling` still runs as the absolute backstop. The current working load is the prescribed load of the last completed session, falling back to the active plan version's prescription. If there is history but no current load, the historical max is the reference, and the increase checks still run. Any `proposed > current` must pass `check_weekly_increment` and `increase_allowed`. `check_ceiling` always runs as an absolute backstop. |
 

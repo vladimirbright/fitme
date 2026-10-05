@@ -32,6 +32,7 @@ from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message
 
 from fitme.bot import plan_rendering as rendering
 from fitme.bot.callback_data import PlanDraft, PlanMenu
+from fitme.bot.rendering import refusal_text
 from fitme.catalog import load_catalog
 from fitme.config.settings import Settings
 from fitme.db.connection import Database
@@ -106,9 +107,9 @@ async def _show_round(
 ) -> None:
     refusal = result.refusal
     if refusal is not None:
-        # AGENTS.md §2: a refusal is a valid output. Shown via the per-code i18n copy, never
-        # model text; `llm_unavailable`'s copy is the "try again later" message.
-        await message.answer(t(f"refusal.{refusal.code.value}", lang))
+        # AGENTS.md §2: a refusal is a valid output. Per-code copy (`llm_unavailable`'s is
+        # "try again later"), or the model's own explanation for `out_of_scope`.
+        await message.answer(refusal_text(refusal, lang))
         return
     plan = result.plan
     assert plan is not None
@@ -419,7 +420,7 @@ async def _show_confirm(
     elif status == planning.ConfirmStatus.REFUSED:
         await query.answer()
         assert result.refusal is not None
-        await message.answer(t(f"refusal.{result.refusal.code.value}", lang))
+        await message.answer(refusal_text(result.refusal, lang))
     else:  # STALE, NOT_FOUND
         await query.answer(t("plan.stale_draft", lang), show_alert=True)
 

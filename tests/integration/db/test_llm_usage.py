@@ -129,7 +129,7 @@ async def test_a_function_model_run_writes_an_llm_calls_row_and_a_decisions_row(
     assert outcome.record.ok is True
     assert outcome.prompt is not None
     assert outcome.prompt.template_name == "plan_generate"
-    assert outcome.prompt.version == 2  # plan_generate.v2.md
+    assert outcome.prompt.version == 3  # plan_generate.v3.md
     assert outcome.prompt.user_prompt == rendered.text
 
     decision_id = await record_decision(
@@ -153,7 +153,7 @@ async def test_a_function_model_run_writes_an_llm_calls_row_and_a_decisions_row(
 
     assert decision is not None
     assert decision.prompt_template == "plan_generate"
-    assert decision.prompt_version == "2"
+    assert decision.prompt_version == "3"
     assert decision.model == model_id
     assert decision.content_version == content_version()
     assert decision.proposal == outcome.output.model_dump(mode="json")

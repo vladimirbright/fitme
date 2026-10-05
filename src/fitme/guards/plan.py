@@ -41,6 +41,7 @@ _LOCATION_RULE = "plan.location_fit"
 _EQUIPMENT_RULE = "plan.equipment_fit"
 _SCHEDULE_LENGTH_RULE = "plan.schedule_length"
 _SCHEDULE_KEYS_RULE = "plan.schedule_workout_keys"
+
 _REFERENCE_LOAD_RULE = "plan.reference_load"
 _KG_LOADABLE_RULE = "plan.kg_loadable"
 
@@ -165,13 +166,19 @@ def validate_plan(plan: Plan, ctx: GuardContext) -> list[GuardVerdict]:
     verdicts.append(screening.plan_allowed(ctx.flags, ctx.holds))
 
     workout_keys = {workout.key for workout in plan.workouts}
+    # The profile's `sessions_per_week` is a *default* (what a new plan is built with when
+    # the user says nothing else), not a rule: a plan the user asks for with fewer or more
+    # days — a 2-day travel plan next to a 3-day main plan — is theirs to have. Only "at
+    # least one training day" is enforced. (A weekday listed twice is allowed: it is only
+    # ambiguous for history-import session linking, which handles that itself.)
+    days = len(plan.schedule)
     verdicts.append(
         GuardVerdict(
             rule=_SCHEDULE_LENGTH_RULE,
-            ok=len(plan.schedule) == ctx.sessions_per_week,
+            ok=days >= 1,
             detail=(
-                f"schedule has {len(plan.schedule)} day(s), profile asks for "
-                f"{ctx.sessions_per_week} session(s) per week"
+                f"schedule has {days} day(s) (profile default: {ctx.sessions_per_week}); "
+                "a plan needs at least one training day"
             ),
         )
     )
