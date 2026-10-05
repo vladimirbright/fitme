@@ -77,6 +77,9 @@ class Settings(BaseSettings):
     # --- retention & guards ---
     chat_retention_days: int = Field(default=365, ge=1)
     max_weekly_increment_kg: float = Field(default=2.5, gt=0, le=10)
+    # ADR 0003: route unprompted free text to the `assistant` agent (one LLM call per
+    # message). Off: such text gets the old "use the menu" hint.
+    assistant_enabled: bool = True
 
     # --- misc ---
     prices_file: Path | None = None

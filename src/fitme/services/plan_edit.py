@@ -35,7 +35,9 @@ incomplete screening blocks editing at all, exactly like the bot.
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping
 from dataclasses import dataclass
+from typing import TypedDict
 
 from fitme.catalog import load_catalog
 from fitme.config.content import content_version
@@ -138,16 +140,55 @@ async def allowed_exercises_for_edit(db: Database, user_id: int) -> list[Exercis
 
 
 @dataclass(frozen=True, slots=True)
+class PromptMeta:
+    """ADR 0003: when an edit was *interpreted* by the `assistant` agent from the owner's
+    message, the decision records which prompt and model did it (AGENTS.md §6)."""
+
+    template_name: str
+    version: int
+    model: str
+    llm_input: Mapping[str, object] | None = None
+
+
+class PromptColumns(TypedDict):
+    prompt_template: str | None
+    prompt_version: str | None
+    model: str | None
+    llm_input: dict[str, object] | None
+
+
+def prompt_columns(prompt: PromptMeta | None) -> PromptColumns:
+    """`insert_decision`'s prompt/model columns for an edit — all `None` for a manual edit."""
+    if prompt is None:
+        return {"prompt_template": None, "prompt_version": None, "model": None, "llm_input": None}
+    return {
+        "prompt_template": prompt.template_name,
+        "prompt_version": str(prompt.version),
+        "model": prompt.model,
+        "llm_input": None if prompt.llm_input is None else dict(prompt.llm_input),
+    }
+
+
+@dataclass(frozen=True, slots=True)
 class SaveEditResult:
     ok: bool
     plan_id: int | None = None
     version: int | None = None
+    decision_id: int | None = None
     warnings: dict[str, list[str]] | None = None
     errors: list[str] | None = None
 
 
 async def save_edit(
-    db: Database, settings: Settings, user_id: int, plan_id: int, edited: Plan, *, confirmed: bool
+    db: Database,
+    settings: Settings,
+    user_id: int,
+    plan_id: int,
+    edited: Plan,
+    *,
+    confirmed: bool,
+    report_extra: Mapping[str, object] | None = None,
+    prompt: PromptMeta | None = None,
 ) -> SaveEditResult:
     """Save `edited` as a new version of `plan_id` (A§9.1). `confirmed` is the form's explicit
     "I understand this is above the configured cap" checkbox: an overridable warning (weekly
@@ -155,6 +196,9 @@ async def save_edit(
     blocking error always refuses, checkbox or not. Runs the same gate as `/plan`
     (`planning.gate`) first, for parity with the bot: an open health hold or incomplete
     screening blocks editing entirely.
+
+    `report_extra` is merged into the decision's `user_report` (e.g. `source`, the
+    assistant's ops); `prompt` fills the decision's prompt/model columns (ADR 0003).
     """
     catalog = load_catalog()
     async with db.read() as conn:
@@ -192,12 +236,10 @@ async def save_edit(
             conn,
             user_id=user_id,
             kind=DecisionKind.USER_EDIT.value,
-            prompt_template=None,
-            prompt_version=None,
-            model=None,
+            **prompt_columns(prompt),
             content_version=content_version(),
-            llm_input=None,
             user_report={
+                **(report_extra or {}),
                 "plan_id": plan_id,
                 "confirmed_over_cap": confirmed,
                 # B5: these exercises' load_changes must never lift the reference later
@@ -217,11 +259,13 @@ async def save_edit(
             origin="user_edit",
             decision_id=decision_id,
         )
-    return SaveEditResult(ok=True, plan_id=plan_id, version=version)
+    return SaveEditResult(ok=True, plan_id=plan_id, version=version, decision_id=decision_id)
 
 
 __all__ = [
+    "PromptMeta",
     "SaveEditResult",
+    "prompt_columns",
     "allowed_exercises_for_edit",
     "blocking_errors",
     "load_cap_warnings",

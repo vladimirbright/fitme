@@ -173,6 +173,24 @@ async def update_set_log_actual(
     )
 
 
+async def restore_set_log(
+    conn: aiosqlite.Connection,
+    set_log_id: int,
+    *,
+    actual_load_kg: float | None,
+    actual_reps: int | None,
+    skipped: bool,
+    source: str,
+) -> None:
+    """Put one set row back exactly as it was (ADR 0003: undoing a correction of a logged
+    set), including an unlogged (`actual_*` NULL, not skipped) or skipped row."""
+    await conn.execute(
+        "UPDATE set_logs SET actual_load_kg = ?, actual_reps = ?, skipped = ?, source = ? "
+        "WHERE id = ?",
+        (actual_load_kg, actual_reps, int(skipped), source, set_log_id),
+    )
+
+
 async def mark_set_log_skipped(conn: aiosqlite.Connection, set_log_id: int, *, source: str) -> None:
     """A prescribed set the user didn't perform (A§4.2): `skipped = 1` with both `actual_*`
     columns NULL, so it stays visible as a gap in the log."""

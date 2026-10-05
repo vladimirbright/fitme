@@ -13,21 +13,25 @@ import pytest
 from fitme.llm.prompts import PromptNotFoundError, render_prompt
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
-_REAL_PROMPT_NAMES = (
-    "plan_generate",
-    "plan_revise",
-    "session_adjust",
-    "result_parse",
-    "recap",
-    "plan_import",
-)
+# The highest shipped version of each real agent prompt (older versions stay on disk: a
+# decision records which one it used).
+_REAL_PROMPT_VERSIONS = {
+    "plan_generate": 2,  # v2: the user's guidance and existing plans for a further plan
+    "plan_revise": 1,
+    "session_adjust": 1,
+    "result_parse": 1,
+    "recap": 1,
+    "plan_import": 1,
+    "assistant": 1,
+}
+_REAL_PROMPT_NAMES = tuple(_REAL_PROMPT_VERSIONS)
 
 
 @pytest.mark.parametrize("name", _REAL_PROMPT_NAMES)
-def test_every_real_agent_prompt_loads_as_version_1(name: str) -> None:
+def test_every_real_agent_prompt_loads_at_its_current_version(name: str) -> None:
     rendered = render_prompt(name)
     assert rendered.template_name == name
-    assert rendered.version == 1
+    assert rendered.version == _REAL_PROMPT_VERSIONS[name]
     assert rendered.text  # non-empty
 
 

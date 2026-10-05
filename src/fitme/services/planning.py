@@ -155,6 +155,7 @@ from fitme.llm.context import (
     UserContext,
     build_user_context,
     render_user_prompt,
+    scrub,
 )
 from fitme.llm.escalation import run_with_escalation
 from fitme.llm.models import model_for
@@ -952,6 +953,13 @@ async def _gated_snapshot(
     return snapshot, gate(snapshot)
 
 
+async def is_gated(db: Database, user_id: int) -> bool:
+    """Whether `/plan`'s gate (A§6.4 step 1: profile, open hold, clearance) refuses right
+    now — so a front-end doesn't ask what a new plan should be only to refuse afterwards."""
+    _snapshot, failure = await _gated_snapshot(db, user_id)
+    return failure is not None
+
+
 def _no_allowed_exercises(inputs: Inputs) -> GuardVerdict | None:
     if inputs.user_context.allowed_exercise_ids:
         return None
@@ -962,11 +970,55 @@ def _no_allowed_exercises(inputs: Inputs) -> GuardVerdict | None:
     )
 
 
-async def propose_new_plan(db: Database, llm: LlmRuntime, user_id: int) -> PlanRoundResult:
+async def existing_plans_summary(db: Database, user_id: int) -> list[dict[str, object]]:
+    """What `plan_generate` may see of the user's other plans when it builds a new one:
+    scrubbed names, the default marker, workout keys/titles and exercise ids — no loads (a
+    new plan's loads come from history and the guards, never copied from another plan)."""
+    summary: list[dict[str, object]] = []
+    for record in await list_plans(db, user_id):
+        detail = await get_plan_detail(db, user_id, record.id)
+        if detail is None:
+            continue
+        summary.append(
+            {
+                "name": scrub(record.name),
+                "is_default": record.is_default,
+                "days_per_week": len(detail.plan.schedule),
+                "workouts": [
+                    {
+                        "key": workout.key,
+                        "title": scrub(workout.title),
+                        "exercise_ids": [
+                            item.exercise_id for block in workout.blocks for item in block.items
+                        ],
+                    }
+                    for workout in detail.plan.workouts
+                ],
+            }
+        )
+    return summary
+
+
+async def propose_new_plan(
+    db: Database, llm: LlmRuntime, user_id: int, *, guidance: str | None = None
+) -> PlanRoundResult:
     """A§6.4: gates → context → `plan_generate` → guards (one feedback retry) → a draft or a
-    `Refusal`. See the module docstring."""
+    `Refusal`. See the module docstring.
+
+    When the user already has plans, the front-ends ask what the new one should be first;
+    that answer is `guidance` (already stop-word-scanned by the caller, A§6.3), sent as the
+    scrubbed `user_request` together with `existing_plans_summary`. With no guidance (no
+    plans yet, or the user chose to generate anyway) the request is left out; the summary is
+    still sent whenever plans exist, so the new plan isn't a copy of one."""
     snapshot, gate_failure = await _gated_snapshot(db, user_id)
     lang = snapshot.language
+    guidance = (guidance or "").strip() or None
+    existing = await existing_plans_summary(db, user_id)
+    user_report: dict[str, object] | None = (
+        None
+        if not existing and guidance is None
+        else {"existing_plans": len(existing), "guidance": guidance is not None}
+    )
     if gate_failure is not None:
         code, verdict = gate_failure
         return await _record_refusal(
@@ -974,7 +1026,7 @@ async def propose_new_plan(db: Database, llm: LlmRuntime, user_id: int) -> PlanR
             user_id=user_id,
             refusal=refusal_for(code, lang),
             guards_fired=[verdict],
-            user_report=None,
+            user_report=user_report,
             plan_id=None,
             lang=lang,
         )
@@ -987,7 +1039,7 @@ async def propose_new_plan(db: Database, llm: LlmRuntime, user_id: int) -> PlanR
             user_id=user_id,
             refusal=refusal_for(RefusalCode.NO_SAFE_EXERCISES, lang),
             guards_fired=[empty],
-            user_report=None,
+            user_report=user_report,
             plan_id=None,
             lang=lang,
         )
@@ -996,7 +1048,12 @@ async def propose_new_plan(db: Database, llm: LlmRuntime, user_id: int) -> PlanR
     feedback: list[str] | None = None
     last: _Attempt | None = None
     for _round in range(_GENERATE_ATTEMPTS):
-        rendered = render_user_prompt(inputs.user_context, guard_feedback=feedback)
+        rendered = render_user_prompt(
+            inputs.user_context,
+            request=guidance,
+            existing_plans=existing or None,
+            guard_feedback=feedback,
+        )
         outcome = await run_agent(
             llm.factory("plan_generate"),
             spec.model,
@@ -1018,7 +1075,7 @@ async def propose_new_plan(db: Database, llm: LlmRuntime, user_id: int) -> PlanR
             outcome=outcome,
             llm_input=rendered.payload,
             judgement=judgement,
-            user_report=None,
+            user_report=user_report,
             ctx=inputs.ctx,
         )
         await record_llm_call(db, decision_id=last.decision_id, record=outcome.record)
@@ -1056,7 +1113,7 @@ async def propose_new_plan(db: Database, llm: LlmRuntime, user_id: int) -> PlanR
         user_id=user_id,
         refusal=refusal_for(RefusalCode.NO_SAFE_PLAN, lang),
         guards_fired=last.judgement.failures,
-        user_report=None,
+        user_report=user_report,
         plan_id=None,
         lang=lang,
         rejected_plan=last.output if isinstance(last.output, Plan) else None,

@@ -28,6 +28,7 @@ from pathlib import Path
 
 from pydantic import ValidationError
 from pydantic_ai.exceptions import AgentRunError, UnexpectedModelBehavior, UserError
+from pydantic_ai.usage import UsageLimits
 
 from fitme import i18n
 from fitme.db.connection import Database
@@ -242,6 +243,8 @@ async def run_agent[T](
     model_name: str,
     prices: PriceTable,
     language: str,
+    deps: object = None,
+    request_limit: int | None = None,
 ) -> AgentRunOutcome[T]:
     """Build the agent (via `agent_factory(model)`) and run it once, measuring both. `model`
     is what's actually passed to the factory (a resolved model string in production, a test
@@ -249,12 +252,18 @@ async def run_agent[T](
     `PromptInfo` — usually `str(model)`, kept separate so a test can label a `FunctionModel`
     run with a friendly name. Does **not** write to the database; call `record_llm_call` with
     the returned `record` afterwards.
+
+    `deps` is handed to the agent's tools (only `assistant` has any, ADR 0003);
+    `request_limit` caps model requests in one run, so a tool loop can't run away — hitting
+    it is a `UsageLimitExceeded` (an `AgentRunError`), i.e. the usual `LLM_UNAVAILABLE`
+    refusal.
     """
     built: BuiltAgent[T] | None = None
     start = time.monotonic()
     try:
         built = agent_factory(model)
-        result = await built.agent.run(user_prompt)
+        limits = None if request_limit is None else UsageLimits(request_limit=request_limit)
+        result = await built.agent.run(user_prompt, deps=deps, usage_limits=limits)
     except _AGENT_FAILURE_EXCEPTIONS as exc:
         latency_ms = round((time.monotonic() - start) * 1000)
         diagnosis = _diagnose_failure(exc)

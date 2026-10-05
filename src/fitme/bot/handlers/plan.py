@@ -53,13 +53,19 @@ class PendingImport:
 
 
 @dataclass(frozen=True, slots=True)
+class PendingNewPlan:
+    """The next free text describes the new plan to generate: asked when the user already
+    has plans, so the new one isn't a near-copy of them."""
+
+
+@dataclass(frozen=True, slots=True)
 class PendingRename:
     """The next free text is the new name for `plan_id` (`services.planning.rename_plan`)."""
 
     plan_id: int
 
 
-PendingPlanText = PendingRevision | PendingImport | PendingRename
+PendingPlanText = PendingRevision | PendingImport | PendingRename | PendingNewPlan
 PendingRevisions = dict[int, PendingPlanText]
 
 
@@ -127,12 +133,108 @@ async def _show_list(message: Message, db: Database, user_id: int, lang: str) ->
 
 
 async def _generate(
-    message: Message, db: Database, llm: LlmRuntime, user_id: int, lang: str
+    message: Message,
+    db: Database,
+    llm: LlmRuntime,
+    user_id: int,
+    lang: str,
+    guidance: str | None = None,
 ) -> None:
     # A short "generating" message: the model call takes a while, and the DB lock is never
     # held across it (A§4.6), so other updates keep flowing meanwhile.
     await message.answer(t("plan.generating", lang))
-    result = await planning.propose_new_plan(db, llm, user_id)
+    result = await planning.propose_new_plan(db, llm, user_id, guidance=guidance)
+    await _show_round(message, result, lang)
+
+
+async def _ask_or_generate(
+    message: Message,
+    db: Database,
+    llm: LlmRuntime,
+    user_id: int,
+    lang: str,
+    pending_plan_revisions: PendingRevisions,
+) -> None:
+    """ "New plan": with no plans yet, generate straight from the profile. With plans, first
+    ask what the new one should be — the answer arrives as free text (stop-word scan first,
+    `free_text.py`) and goes to the generator as guidance; "Generate anyway" skips it."""
+    plans = await planning.list_plans(db, user_id)
+    if not plans or await planning.is_gated(db, user_id):
+        # Nothing to tell apart, or the gate refuses anyway: go straight to the round (which
+        # logs the refusal as usual) instead of asking a question that leads nowhere.
+        await _generate(message, db, llm, user_id, lang)
+        return
+    pending_plan_revisions[user_id] = PendingNewPlan()
+    names = ", ".join(f"“{plan.name}”" for plan in plans)
+    await message.answer(
+        t("plan.new_guidance_prompt", lang, names=names),
+        reply_markup=rendering.new_plan_guidance_markup(lang),
+    )
+
+
+async def _send_detail(message: Message, detail: planning.PlanDetail, lang: str) -> None:
+    default = t("plan.default_suffix", lang) if detail.record.is_default else ""
+    title = t(
+        "plan.plan_title",
+        lang,
+        name=detail.record.name,
+        version=detail.version.version,
+        default=default,
+    )
+    await _send_plan(
+        message,
+        detail.plan,
+        title=title,
+        lang=lang,
+        markup=rendering.plan_actions_markup(detail.record, lang),
+    )
+
+
+# Entry points for the free-text assistant (`bot/handlers/assistant.py`, ADR 0003): the same
+# screens the buttons open, so a typed "show my plan" lands exactly where a tap would.
+
+
+async def show_plan_list(message: Message, db: Database, user_id: int, lang: str) -> None:
+    await _show_list(message, db, user_id, lang)
+
+
+async def show_plan(message: Message, db: Database, user_id: int, plan_id: int, lang: str) -> None:
+    detail = await planning.get_plan_detail(db, user_id, plan_id)
+    if detail is None:
+        await message.answer(t("plan.not_found", lang))
+        return
+    await _send_detail(message, detail, lang)
+
+
+async def new_plan(
+    message: Message,
+    db: Database,
+    llm: LlmRuntime,
+    user_id: int,
+    lang: str,
+    pending_plan_revisions: PendingRevisions,
+    guidance: str | None = None,
+) -> None:
+    """A typed "new plan": the user's own description is the guidance when they gave one;
+    otherwise the same as tapping New plan (ask first when plans exist)."""
+    if guidance and guidance.strip():
+        await _generate(message, db, llm, user_id, lang, guidance)
+        return
+    await _ask_or_generate(message, db, llm, user_id, lang, pending_plan_revisions)
+
+
+async def revise_plan_from_text(
+    message: Message, db: Database, llm: LlmRuntime, user_id: int, plan_id: int, text: str
+) -> None:
+    """A whole-plan rewrite stays a *draft* with Confirm/Change/Cancel (A§6.4): the model
+    designs it, so the owner confirms it — unlike a direct, specific edit."""
+    lang = await _lang(db, user_id)
+    await message.answer(t("plan.revising", lang))
+    try:
+        result = await planning.revise_plan(db, llm, user_id, planning.PlanBase(plan_id), text)
+    except planning.PlanNotFoundError:
+        await message.answer(t("plan.not_found", lang))
+        return
     await _show_round(message, result, lang)
 
 
@@ -155,6 +257,14 @@ async def on_plan_menu(
 
     if action == "new":
         await query.answer()
+        await _ask_or_generate(message, db, llm, user_id, lang, pending_plan_revisions)
+        return
+    if action == "new_skip":
+        if not isinstance(pending_plan_revisions.get(user_id), PendingNewPlan):
+            await query.answer(t("errors.stale_callback", lang))
+            return
+        await query.answer()
+        pending_plan_revisions.pop(user_id, None)
         await _generate(message, db, llm, user_id, lang)
         return
     if action == "paste":
@@ -178,21 +288,7 @@ async def on_plan_menu(
 
     if action == "view":
         await query.answer()
-        default = t("plan.default_suffix", lang) if detail.record.is_default else ""
-        title = t(
-            "plan.plan_title",
-            lang,
-            name=detail.record.name,
-            version=detail.version.version,
-            default=default,
-        )
-        await _send_plan(
-            message,
-            detail.plan,
-            title=title,
-            lang=lang,
-            markup=rendering.plan_actions_markup(detail.record, lang),
-        )
+        await _send_detail(message, detail, lang)
         return
     if action == "default":
         if await planning.set_default(db, user_id, detail.record.id):
@@ -264,6 +360,9 @@ async def on_plan_draft(
         if isinstance(pending, PendingRename):
             await message.answer(t("plan.rename_cancelled", lang))
             return
+        if isinstance(pending, PendingNewPlan):
+            await message.answer(t("plan.new_cancelled", lang))
+            return
         current = await planning.current_draft_id(db, user_id)
         if pending is not None or (decision_id and current == decision_id):
             await message.answer(t("plan.change_cancelled", lang))
@@ -334,13 +433,17 @@ async def handle_plan_text(
     pending_plan_revisions: PendingRevisions,
 ) -> bool:
     """Called by the free-text handler *after* the stop-word scan (A§6.3). Returns `True`
-    if a revision, an import (M8b) or a rename was pending and the text was consumed by it."""
+    if a revision, an import (M8b), a rename or a new plan's guidance was pending and the
+    text was consumed by it."""
     pending = pending_plan_revisions.pop(user_id, None)
     if pending is None:
         return False
     lang = await _lang(db, user_id)
     if isinstance(pending, PendingRename):
         await _rename(message, db, user_id, pending.plan_id, text, lang)
+        return True
+    if isinstance(pending, PendingNewPlan):
+        await _generate(message, db, llm, user_id, lang, text)
         return True
     if isinstance(pending, PendingImport):
         await message.answer(t("plan.importing", lang))

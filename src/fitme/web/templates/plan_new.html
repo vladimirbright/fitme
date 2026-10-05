@@ -8,6 +8,11 @@
 <p class="disclosure">{{ t('disclosure.ai') }}</p>
 <form method="post" action="/app/plans/new">
   <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  {% if existing_plans %}
+  <label for="guidance">{{ t('web.plans.new_guidance_prompt', names=existing_plans | map(attribute='name') | join(', ')) }}</label>
+  <textarea id="guidance" name="guidance" rows="4"></textarea>
+  <p><small>{{ t('web.plans.new_guidance_hint') }}</small></p>
+  {% endif %}
   <button type="submit">{{ t('web.plans.generate_button') }}</button>
 </form>
 {% endblock %}

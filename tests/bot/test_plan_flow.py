@@ -6,6 +6,7 @@ the `FakeSession`."""
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -204,6 +205,10 @@ def _last_draft_id(session: FakeSession) -> int:
 
 async def _new_draft(dispatcher: Dispatcher, bot: Bot, session: FakeSession) -> int:
     await _click(dispatcher, bot, PlanMenu(action="new", plan_id=0))
+    # With plans already there, New plan first asks what the new one should be.
+    skip = PlanMenu(action="new_skip", plan_id=0).pack()
+    if skip in _callback_datas(_sent_messages(session)[-1]):
+        await _click(dispatcher, bot, skip)
     return _last_draft_id(session)
 
 
@@ -562,3 +567,70 @@ async def test_long_plan_is_split_into_several_messages(
     assert all(len(m.text or "") <= 4096 for m in chunks)
     assert all(not _callback_datas(m) for m in chunks[:-1])
     assert _callback_datas(chunks[-1])  # the buttons ride on the last chunk
+
+
+async def _one_confirmed_plan(
+    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
+) -> int:
+    user_id = await _ready(dispatcher, bot, db)
+    llm.responses.append(make_plan(name="Home plan"))
+    draft_id = await _new_draft(dispatcher, bot, session)
+    await _click(dispatcher, bot, PlanDraft(action="confirm", decision_id=draft_id))
+    return user_id
+
+
+async def test_with_existing_plans_new_plan_asks_for_guidance_and_sends_it(
+    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
+) -> None:
+    await _one_confirmed_plan(dispatcher, bot, session, db, llm)
+    assert llm.calls == 1
+
+    await _click(dispatcher, bot, PlanMenu(action="new", plan_id=0))
+    question = _sent_messages(session)[-1]
+    assert question.text == t("plan.new_guidance_prompt", "en", names="“Home plan”")
+    assert PlanMenu(action="new_skip", plan_id=0).pack() in _callback_datas(question)
+    assert llm.calls == 1  # nothing generated yet
+
+    llm.responses.append(make_plan(name="Gym plan"))
+    await _send(dispatcher, bot, "a gym version of my home plan")
+    assert llm.calls == 2
+    payload = json.loads(llm.prompts[-1])
+    assert payload["user_request"] == "a gym version of my home plan"
+    assert [p["name"] for p in payload["existing_plans"]] == ["Home plan"]
+    workout = payload["existing_plans"][0]["workouts"][0]
+    assert workout["exercise_ids"] == ["barbell_back_squat", "dumbbell_bench_press", "pushup"]
+    assert "load" not in json.dumps(payload["existing_plans"])  # never copies loads
+    assert _sent_messages(session)[-1].text.startswith(t("plan.draft_title", "en"))
+
+
+async def test_generate_anyway_skips_guidance_but_still_sends_existing_plans(
+    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
+) -> None:
+    await _one_confirmed_plan(dispatcher, bot, session, db, llm)
+    await _click(dispatcher, bot, PlanMenu(action="new", plan_id=0))
+    llm.responses.append(make_plan(name="Other"))
+    await _click(dispatcher, bot, PlanMenu(action="new_skip", plan_id=0))
+    payload = json.loads(llm.prompts[-1])
+    assert "user_request" not in payload
+    assert [p["name"] for p in payload["existing_plans"]] == ["Home plan"]
+
+    # The guidance prompt is gone: a second "Generate anyway" tap is stale.
+    await _click(dispatcher, bot, PlanMenu(action="new_skip", plan_id=0))
+    assert _toasts(session)[-1] == t("errors.stale_callback", "en")
+    assert llm.calls == 2
+
+
+async def test_guidance_can_be_cancelled_and_a_stop_word_in_it_halts_with_no_llm_call(
+    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
+) -> None:
+    user_id = await _one_confirmed_plan(dispatcher, bot, session, db, llm)
+    await _click(dispatcher, bot, PlanMenu(action="new", plan_id=0))
+    await _click(dispatcher, bot, PlanDraft(action="cancel", decision_id=0))
+    assert _sent_messages(session)[-1].text == t("plan.new_cancelled", "en")
+
+    await _click(dispatcher, bot, PlanMenu(action="new", plan_id=0))
+    await _send(dispatcher, bot, "something like the old one, my back has sharp pain")
+    assert _sent_messages(session)[-1].text == t("halt.message", "en")
+    assert llm.calls == 1
+    async with db.read() as conn:
+        assert len(await list_open_health_holds(conn, user_id)) == 1

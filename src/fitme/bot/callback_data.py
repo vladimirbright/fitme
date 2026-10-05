@@ -91,3 +91,10 @@ class CheckinReply(CallbackData, prefix="ci"):
 
     checkin_id: int
     answer: str
+
+
+class AssistantUndo(CallbackData, prefix="au"):
+    """Undo one free-text assistant edit (ADR 0003), by the `user_edit` decision it wrote.
+    `services.assistant.undo` re-checks ownership and that nothing changed since."""
+
+    decision_id: int

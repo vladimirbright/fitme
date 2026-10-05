@@ -243,6 +243,8 @@ def render_user_prompt(
     guard_feedback: Sequence[str] | None = None,
     load_units: Mapping[str, str] | None = None,
     recap: Mapping[str, object] | None = None,
+    state: Mapping[str, object] | None = None,
+    existing_plans: Sequence[Mapping[str, object]] | None = None,
 ) -> RenderedInput:
     """Build the one `user_prompt` every agent factory's caller sends (B2: "one rendering
     path"), so `plan_generate`/`plan_revise`/`session_adjust`/`result_parse` never each grow
@@ -274,6 +276,14 @@ def render_user_prompt(
     `imported_text` (M8b `plan_import` agent) is the program the user pasted, in their own
     words — scrubbed like `request`, and sent with the full `context` (the allowed ids to map
     exercises onto, the history the guards will judge the loads against).
+    `state` (ADR 0003 `assistant` agent) is a small, already JSON-safe summary built by
+    `services.assistant` — plan ids and scrubbed names, today's weekday, whether a workout is
+    in progress. No identity fields; plan names go through `scrub()` there.
+
+    `existing_plans` (`plan_generate`, when the user already has plans) is a compact summary
+    built by `services.planning.existing_plans_summary` — scrubbed names, workout titles and
+    exercise ids — so the owner's guidance ("like my home plan, but for the gym") can refer
+    to them.
     """
     payload: dict[str, object] = {}
     if context is not None:
@@ -302,5 +312,9 @@ def render_user_prompt(
         # A§8.1 `recap`: planned vs actual per exercise plus the engine's decisions (built by
         # `services.recap`); catalog ids and numbers only — no history, no user ids.
         payload["recap"] = dict(recap)
+    if state is not None:
+        payload["state"] = dict(state)
+    if existing_plans is not None:
+        payload["existing_plans"] = [dict(plan) for plan in existing_plans]
     text = json.dumps(payload, ensure_ascii=False)
     return RenderedInput(text=text, payload=payload)

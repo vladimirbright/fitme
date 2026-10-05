@@ -104,6 +104,9 @@ def llm() -> FakeLlm:
 
 @pytest.fixture
 def dispatcher(db: Database, settings: Settings, llm: FakeLlm) -> Dispatcher:
+    # These tests prove a dropped prompt no longer consumes the next text via the plain
+    # "use the menu" hint; the free-text assistant (ADR 0003) has its own tests.
+    settings = settings.model_copy(update={"assistant_enabled": False})
     return build_dispatcher(db, settings, llm.runtime(settings))
 
 

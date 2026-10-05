@@ -14,6 +14,10 @@ regardless of whether it also halts. A hit halts (and halts the active workout s
 Also handles the owner's *edited* messages (`on_edited_message`): a stop word there halts
 too, since editing a message is just as much "the owner reporting a symptom" as sending a new
 one.
+
+Last in line (ADR 0003): with nothing pending and no setup step active, the message goes to
+the free-text assistant (`bot/handlers/assistant.py`) — unless the operator turned it off
+(`FITME_ASSISTANT_ENABLED=false`), in which case the old "use the menu" hint is shown.
 """
 
 from __future__ import annotations
@@ -21,9 +25,11 @@ from __future__ import annotations
 from aiogram import F, Router
 from aiogram.types import Message
 
+from fitme.bot.handlers.assistant import handle_assistant_text
 from fitme.bot.handlers.plan import PendingRevisions, handle_plan_text
 from fitme.bot.handlers.setup import handle_setup_free_text, show_step
 from fitme.bot.handlers.train import PendingTrains, handle_train_text
+from fitme.config.settings import Settings
 from fitme.db.connection import Database
 from fitme.i18n import t
 from fitme.services import account as account_service
@@ -41,6 +47,7 @@ async def _active_session_id(db: Database, user_id: int) -> int | None:
 async def on_free_text(
     message: Message,
     db: Database,
+    settings: Settings,
     llm: LlmRuntime,
     user_id: int,
     pending_deletes: set[int],
@@ -98,6 +105,12 @@ async def on_free_text(
         return
 
     if await handle_setup_free_text(message, db, user_id, text):
+        return
+
+    if settings.assistant_enabled and step is None and text.strip():
+        await handle_assistant_text(
+            message, db, settings, llm, user_id, text, pending_plan_revisions
+        )
         return
 
     await message.answer(t("unknown.free_text_hint", lang))

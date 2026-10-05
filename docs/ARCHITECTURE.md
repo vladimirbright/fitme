@@ -138,6 +138,7 @@ host cron. See M10.
 | `FITME_CHAT_RETENTION_DAYS` | no | default 365 |
 | `FITME_MAX_WEEKLY_INCREMENT_KG` | no | default 2.5, compound lifts (catalog can set lower) |
 | `FITME_PRICES_FILE` | no | TOML of per-model token prices for `/system` cost estimates |
+| `FITME_ASSISTANT_ENABLED` | no | default `true`: unprompted free text goes to the `assistant` agent (ADR 0003) |
 | `FITME_FORWARDED_ALLOW_IPS` | no | IPs trusted for X-Forwarded-* headers (uvicorn). Default `127.0.0.1`; in Compose, the Caddy container's address. Never `*`. |
 | `FITME_DOMAIN` | no | Public host name for the optional Caddy TLS profile. |
 | `FITME_DEV` | no | Allows a non-TLS base URL on localhost |
@@ -532,6 +533,14 @@ Register the command list with `setMyCommands` for each supported language.
   **passes the stop-word guard before anything else, including the LLM** (§7.4).
 - Keep a persistent **⚠ Pain / feeling unwell** button on every in-workout message. It
   always triggers the halt path (§6.6).
+- Free text that no command, pending prompt or setup step claims goes to the **free-text
+  assistant** (ADR 0003), after the stop-word scan and the `/plan` gate. Specific edits (sets,
+  reps, load, rest, swap/add/remove an exercise, schedule, names, the default plan, and
+  corrections of a finished session's logged sets) are applied immediately through the
+  website editor's guards and shown as a diff with **Undo**. Over-cap or over-ceiling loads are
+  refused in chat; the website editor's explicit checkbox is the only override. "Show my
+  plan", "let's train", "new plan" or a broad redesign open the existing flows; a redesign is
+  still a draft that needs Confirm.
 
 ### 6.4 `/plan` — generate and iterate
 
@@ -545,6 +554,13 @@ check gates ──► build context ──► LLM: propose ──► guards ─�
 1. **Gates** (guards, before any LLM call): the profile is complete; there is no open
    `health_hold`; red-flag clearance is present. Any failure returns a `Refusal`, which is
    logged as a `decision(kind=refusal)`.
+   **Guidance.** If the gates pass and the user already has plans, **New plan** first asks
+   what the new one should be ("a gym version of my home plan", "more upper body"), with
+   **Generate anyway** and **Cancel**. The answer is free text: stop-word scan first (§6.3),
+   then it goes to `plan_generate` as `user_request`. A compact `existing_plans` summary goes
+   with it (scrubbed names, workout titles, exercise ids, no loads) whenever plans exist, so
+   the request can refer to them and the new plan isn't a copy. The website's new-plan form
+   has the same optional field. Prompt: `plan_generate.v2.md`.
 2. **Context** (`llm/context.py`) is pseudonymized: `user <id>`, buckets, experience,
    location, equipment, preferences, focus, frequency, session length, **flag codes**, the
    **allowed exercise ids** (catalog filtered by location, equipment and contraindications),
@@ -835,6 +851,7 @@ One pydantic-ai `Agent` per purpose. Each has a typed output, and its prompt is 
 | `result_parse` | planned block + user text | `ParsedResults { sets: list[SetResult], safety_signal: bool, unclear: bool }` | small |
 | `plan_import` | context + `imported_text` (scrubbed) | `PlanImport{plan, unmatched} \| Refusal` | medium |
 | `recap` | planned vs actual + engine decisions | `Recap { text: str, suggestions: list[PlanChange] }` | small |
+| `assistant` | context + `state` + unprompted user text (scrubbed); read-only lookup tools | `AssistantEdits \| AssistantAction \| AssistantReply \| Refusal` (ADR 0003) | medium |
 
 - The prompt loader returns `(template_name, version, rendered_text)`. Template name and
   version go into `decisions`.

@@ -55,8 +55,15 @@ async def new_plan_form(
     db = get_db(request)
     settings = get_settings(request)
     snapshot = await profile_service.get_snapshot(db, session.user_id)
+    # With plans already there, the form asks what the new one should be (guidance).
+    plans = await planning.list_plans(db, session.user_id)
     return render(
-        request, "plan_new.html", lang=snapshot.language, settings=settings, session=session
+        request,
+        "plan_new.html",
+        lang=snapshot.language,
+        settings=settings,
+        session=session,
+        existing_plans=plans,
     )
 
 
@@ -114,6 +121,7 @@ async def _draft_context(
 @router.post("/new")
 async def propose_plan(
     request: Request,
+    guidance: str = Form(""),
     session: SessionState = Depends(require_user),
     _csrf: None = Depends(verify_csrf_form),
 ) -> Response:
@@ -121,7 +129,14 @@ async def propose_plan(
     llm = get_llm(request)
     settings = get_settings(request)
     snapshot = await profile_service.get_snapshot(db, session.user_id)
-    result = await planning.propose_new_plan(db, llm, session.user_id)
+    if guidance.strip():
+        # Free text on its way to the LLM: the stop-word scan first (A§6.3), as for revise.
+        halted = await scan_and_maybe_halt(
+            db, user_id=session.user_id, lang=snapshot.language, text=guidance
+        )
+        if halted is not None:
+            return await _halted_response(request, session, snapshot.language)
+    result = await planning.propose_new_plan(db, llm, session.user_id, guidance=guidance)
     return render(
         request,
         "plan_draft.html",

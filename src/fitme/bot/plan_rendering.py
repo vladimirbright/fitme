@@ -283,6 +283,25 @@ def draft_markup(decision_id: int, lang: str) -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 
+def new_plan_guidance_markup(lang: str) -> InlineKeyboardMarkup:
+    """Under the "what should the new plan be?" question: generate without guidance, or
+    Cancel (the same pending-prompt Cancel as a revision)."""
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(
+            text=t("plan.new_without_guidance_button", lang),
+            callback_data=PlanMenu(action="new_skip", plan_id=0).pack(),
+        )
+    )
+    builder.row(
+        InlineKeyboardButton(
+            text=t("plan.cancel_button", lang),
+            callback_data=PlanDraft(action="cancel", decision_id=0).pack(),
+        )
+    )
+    return builder.as_markup()
+
+
 def cancel_revision_markup(decision_id: int, lang: str) -> InlineKeyboardMarkup:
     """The single Cancel button under the "what should change?" prompt."""
     builder = InlineKeyboardBuilder()
