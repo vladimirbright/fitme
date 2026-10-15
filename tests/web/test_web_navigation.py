@@ -69,7 +69,7 @@ async def test_every_page_has_the_right_trail_back_link_and_active_tab(
     plans = await client.get("/app/plans")
     assert _crumbs(plans.text) == [("Plans", None, True)]
     assert _back(plans.text) is None
-    assert _tabs(plans.text) == ["/app/plans", "/app/trainings"]
+    assert _tabs(plans.text) == ["/app/plans", "/app/trainings", "/app/exercises"]
     assert _active_tab(plans.text) == "/app/plans"
 
     detail = await client.get(plan_href)

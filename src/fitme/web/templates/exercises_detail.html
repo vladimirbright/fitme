@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% from "_breadcrumbs.html" import crumbs with context %}
+{% block title %}{{ exercise.names.get(language, exercise.name) if exercise else t('web.error_not_found') }}{% endblock %}
+{% block breadcrumbs %}{{ crumbs([(t('web.nav.exercises'), '/app/exercises?language=' + language), (exercise.names.get(language, exercise.name) if exercise else t('web.error_not_found'), none)]) }}{% endblock %}
+{% block content %}
+{% if exercise %}
+<h1>{{ exercise.names.get(language, exercise.name) }}</h1>
+<p>{{ t('web.exercises.reference_note') }}</p>
+<p>{{ t('web.exercises.review_' + exercise.review_status) }}{% if exercise.possible_catalog_id %}: {{ exercise.possible_catalog_id }}{% endif %}</p>
+{% if exercise.duplicate_source_name %}<p>{{ t('web.exercises.duplicate_source_name') }}</p>{% endif %}
+<form method="get" action="/app/exercises/{{ exercise.id }}">
+  <label>{{ t('web.exercises.language') }}
+    <select name="language">
+      {% for code, label in language_labels.items() %}<option value="{{ code }}"{% if code == language %} selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </label>
+  <button type="submit">{{ t('web.exercises.filter') }}</button>
+</form>
+<dl>
+  <dt>{{ t('web.exercises.name_source') }}</dt><dd>{{ exercise.name_sources[language] }}</dd>
+  <dt>{{ t('web.exercises.category') }}</dt><dd>{{ exercise.category }}</dd>
+  <dt>{{ t('web.exercises.target') }}</dt><dd>{{ exercise.target }}</dd>
+  <dt>{{ t('web.exercises.equipment') }}</dt><dd>{{ exercise.equipment }}</dd>
+  {% if exercise.muscle_group %}<dt>{{ t('web.exercises.muscle_group') }}</dt><dd>{{ exercise.muscle_group }}</dd>{% endif %}
+  {% if exercise.secondary_muscles %}<dt>{{ t('web.exercises.secondary') }}</dt><dd>{{ exercise.secondary_muscles|join(', ') }}</dd>{% endif %}
+</dl>
+<h2>{{ t('web.exercises.instructions') }}</h2>
+<p>{{ instruction }}</p>
+{% else %}
+<h1>{{ t('web.error_not_found') }}</h1>
+{% endif %}
+{% endblock %}

@@ -12,6 +12,8 @@
 backups/
 fitme-export*.json
 *.export.json
+fitme-reference-exercises.json
+fitme-reference-audit.json
 deploy/restore-staging/
 
 # Python / uv

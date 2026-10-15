@@ -22,7 +22,7 @@ from fitme.services.llm_runtime import LlmRuntime
 from fitme.services.webauth import SendCode
 from fitme.web.deps import NotAuthenticated
 from fitme.web.ratelimit import SlidingWindowLimiter
-from fitme.web.routes import account, auth, plans, stats, trainings
+from fitme.web.routes import account, auth, exercises, plans, stats, trainings
 from fitme.web.security import SecurityHeadersMiddleware, validate_web_config
 
 _STATIC_DIR = Path(__file__).parent / "static"
@@ -58,6 +58,7 @@ def create_app(db: Database, settings: Settings, llm: LlmRuntime, send_code: Sen
     app.include_router(auth.router)
     app.include_router(plans.router)
     app.include_router(trainings.router)
+    app.include_router(exercises.router)
     app.include_router(stats.router)
     app.include_router(account.router)
 

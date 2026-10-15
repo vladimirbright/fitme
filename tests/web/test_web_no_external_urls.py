@@ -60,6 +60,7 @@ async def test_rendered_pages_have_no_external_urls(
         await client.get("/app/plans/new"),
         await client.get(f"/app/plans/{plan_id}/revise"),
         await client.get("/app/trainings"),
+        await client.get("/app/exercises"),
         await client.get("/app/stats"),
         await client.get("/app/account"),
     ]

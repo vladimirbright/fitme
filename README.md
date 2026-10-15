@@ -98,6 +98,23 @@ nothing), and reports every session or plan it skipped and why. Imported loads b
 historical max the safety guards check against; the import itself never counts as a load
 increase.
 
+## Optional exercise reference library
+
+The local [`fitme-reference-exercises.toml`](fitme-reference-exercises.toml) contains 1,324
+text-only entries from [base-exercises-dataset](https://github.com/tool-source/base-exercises-dataset).
+It sits beside `FITME_DB_PATH` and appears on the authenticated **Exercises** page. The
+file has names and instructions in English, Spanish, Italian, Turkish, Russian and Chinese,
+plus source attribution and a plan-review status for each entry. Spanish, Italian, Turkish
+and most Russian names are machine drafts that need language review. No media or media
+identifiers are stored. The file is gitignored because the upstream source asks readers to
+review the underlying data terms before redistribution.
+
+You can edit the TOML directly. These entries are for lookup only. The source does not
+provide Fitme's reviewed injury flags, check-in areas, location/equipment rules, load units,
+or progression limits. To make an exercise available in plans, add a reviewed entry to
+[`src/fitme/catalog/exercises.toml`](src/fitme/catalog/exercises.toml) and run
+`fitme catalog check`.
+
 ## Local development (without Docker)
 
 Requires [`uv`](https://docs.astral.sh/uv/) and Python 3.13.

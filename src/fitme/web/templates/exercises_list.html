@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% from "_breadcrumbs.html" import crumbs with context %}
+{% block title %}{{ t('web.exercises.title') }}{% endblock %}
+{% block breadcrumbs %}{{ crumbs([(t('web.nav.exercises'), none)]) }}{% endblock %}
+{% block content %}
+<h1>{{ t('web.exercises.title') }}</h1>
+<p>{{ t('web.exercises.reference_note') }}</p>
+<p><small>{{ t('web.exercises.source_note') }}</small></p>
+{% if not installed %}
+<p>{{ t('web.exercises.empty_library') }}</p>
+{% else %}
+<form method="get" action="/app/exercises" class="exercise-search">
+  <label>{{ t('web.exercises.search') }} <input type="search" name="q" value="{{ q }}" maxlength="100"></label>
+  <label>{{ t('web.exercises.category') }}
+    <select name="category">
+      <option value="">{{ t('web.exercises.all') }}</option>
+      {% for value in categories %}<option value="{{ value }}"{% if value == category %} selected{% endif %}>{{ value }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>{{ t('web.exercises.equipment') }}
+    <select name="equipment">
+      <option value="">{{ t('web.exercises.all') }}</option>
+      {% for value in equipments %}<option value="{{ value }}"{% if value == equipment %} selected{% endif %}>{{ value }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>{{ t('web.exercises.language') }}
+    <select name="language">
+      {% for code, label in language_labels.items() %}<option value="{{ code }}"{% if code == language %} selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>{{ t('web.exercises.review') }}
+    <select name="review_status">
+      <option value="">{{ t('web.exercises.all') }}</option>
+      {% for value in review_statuses %}<option value="{{ value }}"{% if value == review_status %} selected{% endif %}>{{ t('web.exercises.review_' + value) }}</option>{% endfor %}
+    </select>
+  </label>
+  <button type="submit">{{ t('web.exercises.filter') }}</button>
+</form>
+<p>{{ t('web.exercises.results', count=total) }}</p>
+{% if exercises %}
+<table>
+  <thead><tr><th>{{ t('web.exercises.name') }}</th><th>{{ t('web.exercises.category') }}</th><th>{{ t('web.exercises.target') }}</th><th>{{ t('web.exercises.equipment') }}</th><th>{{ t('web.exercises.review') }}</th></tr></thead>
+  <tbody>
+    {% for exercise in exercises %}
+    <tr><td><a href="/app/exercises/{{ exercise.id }}?language={{ language }}">{{ exercise.names.get(language, exercise.name) }}</a></td><td>{{ exercise.category }}</td><td>{{ exercise.target }}</td><td>{{ exercise.equipment }}</td><td>{{ t('web.exercises.review_' + exercise.review_status) }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+<nav class="pagination">
+  {% if page > 1 %}<a href="/app/exercises?q={{ q|urlencode }}&amp;category={{ category|urlencode }}&amp;equipment={{ equipment|urlencode }}&amp;language={{ language }}&amp;review_status={{ review_status }}&amp;page={{ page - 1 }}">{{ t('web.pagination.prev') }}</a>{% endif %}
+  <span>{{ t('web.pagination.page_of', page=page, total=total_pages) }}</span>
+  {% if page < total_pages %}<a href="/app/exercises?q={{ q|urlencode }}&amp;category={{ category|urlencode }}&amp;equipment={{ equipment|urlencode }}&amp;language={{ language }}&amp;review_status={{ review_status }}&amp;page={{ page + 1 }}">{{ t('web.pagination.next') }}</a>{% endif %}
+</nav>
+{% endif %}
+{% endif %}
+{% endblock %}
