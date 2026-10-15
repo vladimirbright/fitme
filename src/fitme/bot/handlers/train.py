@@ -105,10 +105,11 @@ async def _show_review(message: Message, view: training.ReviewView, lang: str) -
 
 
 async def _show_block(message: Message, view: training.BlockView, lang: str) -> None:
+    catalog = load_catalog()
     await _send_long(
         message,
-        rendering.block_text(view, catalog=load_catalog(), lang=lang),
-        rendering.block_markup(view, lang),
+        rendering.block_text(view, catalog=catalog, lang=lang),
+        rendering.block_markup(view, catalog=catalog, lang=lang),
     )
 
 

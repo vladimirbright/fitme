@@ -8,6 +8,7 @@ Every in-workout keyboard carries the persistent ⚠ Pain / feeling unwell butto
 from __future__ import annotations
 
 from collections.abc import Sequence
+from urllib.parse import quote_plus
 
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
@@ -241,9 +242,32 @@ def all_calibration(block: Block) -> bool:
     return all(item.load.kind == "calibration" for item in block.items)
 
 
-def block_markup(view: BlockView, lang: str) -> InlineKeyboardMarkup:
-    session_id, block = view.session_id, view.index
+_YOUTUBE_SEARCH = "https://www.youtube.com/results?search_query="
+
+
+def youtube_search_buttons(
+    block: Block, *, catalog: Catalog, lang: str
+) -> list[InlineKeyboardButton]:
+    """One "search on YouTube" link per exercise of the block: the catalog name only (no
+    user data), opened by the user's own device on tap — the server calls nothing. An
+    https youtube.com link is what the YouTube app claims, so it opens there when installed
+    (the Bot API allows no app-scheme URLs)."""
     buttons: list[InlineKeyboardButton] = []
+    for item in block.items:
+        name = exercise_name(catalog.by_id(item.exercise_id), item.exercise_id, lang)
+        query = t("workout.youtube_query", lang, name=name)
+        text = (
+            t("workout.youtube_button", lang)
+            if len(block.items) == 1
+            else t("workout.youtube_button_named", lang, name=name)
+        )
+        buttons.append(InlineKeyboardButton(text=text, url=_YOUTUBE_SEARCH + quote_plus(query)))
+    return buttons
+
+
+def block_markup(view: BlockView, *, catalog: Catalog, lang: str) -> InlineKeyboardMarkup:
+    session_id, block = view.session_id, view.index
+    buttons = youtube_search_buttons(view.block, catalog=catalog, lang=lang)
     if not all_calibration(view.block):
         buttons.append(
             _action(t("workout.according_to_plan_button", lang), "done", session_id, block=block)

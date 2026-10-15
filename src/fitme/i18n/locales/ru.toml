@@ -279,6 +279,9 @@ done = "Ваш аккаунт и все данные удалены."
 caption = "Все ваши данные в формате JSON."
 
 [workout]
+youtube_button = "▶️ Найти на YouTube"
+youtube_button_named = "▶️ YouTube: {name}"
+youtube_query = "{name} техника"
 according_to_plan_button = "✅ Сделано по плану"
 enter_results_button = "✏️ Ввести результат"
 skip_button = "⏭ Пропустить"

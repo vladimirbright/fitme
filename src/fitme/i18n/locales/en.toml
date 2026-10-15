@@ -288,6 +288,9 @@ done = "Your account and all data have been deleted."
 caption = "All your data, as JSON."
 
 [workout]
+youtube_button = "▶️ Search on YouTube"
+youtube_button_named = "▶️ YouTube: {name}"
+youtube_query = "{name} technique"
 according_to_plan_button = "✅ Done as planned"
 enter_results_button = "✏️ Enter results"
 skip_button = "⏭ Skip"
