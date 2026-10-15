@@ -142,6 +142,7 @@ host cron. See M10.
 | `FITME_FORWARDED_ALLOW_IPS` | no | IPs trusted for X-Forwarded-* headers (uvicorn). Default `127.0.0.1`; in Compose, the Caddy container's address. Never `*`. |
 | `FITME_DOMAIN` | no | Public host name for the optional Caddy TLS profile. |
 | `FITME_DEV` | no | Allows a non-TLS base URL on localhost |
+| `FITME_LOG_FORMAT` | no | `json` (default) or `text` ("time (LEVEL): message"); `make serve` sets `text` |
 | `FITME_SOURCE_URL` | no | Source repository link shown in the private-instance reply (§6.1). Default `https://github.com/vladimirbright/fitme`. Forks set their own. Also shown on the web login page (§9.1). |
 
 No secrets are committed. The reference deployment works with env vars only.

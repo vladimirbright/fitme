@@ -1,12 +1,15 @@
-"""Tests for fitme.log.JsonFormatter (A§10: one JSON object per line)."""
+"""Tests for fitme.log: JSON (A§10, one object per line) and the dev text format."""
 
 from __future__ import annotations
 
 import io
 import json
 import logging
+import re
 
-from fitme.log import JsonFormatter
+import pytest
+
+from fitme.log import LOG_FORMAT_ENV, JsonFormatter, TextFormatter, configure_logging
 
 
 def _capturing_logger(name: str) -> tuple[logging.Logger, io.StringIO]:
@@ -49,3 +52,36 @@ def test_renders_exc_info_when_present() -> None:
     payload = json.loads(stream.getvalue().splitlines()[0])
     assert payload["message"] == "something failed"
     assert "ValueError: boom" in payload["exc_info"]
+
+
+def test_text_format_is_one_readable_line_with_extras() -> None:
+    logger, stream = _capturing_logger("fitme.test.text_formatter")
+    logger.handlers[0].setFormatter(TextFormatter())
+    logger.info("decision written", extra={"decision_id": 7})
+    line = stream.getvalue().splitlines()[0]
+    assert re.fullmatch(
+        r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{6} \(INFO\): decision written decision_id=7",
+        line,
+    )
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"), [("text", "TextFormatter"), (None, "JsonFormatter")]
+)
+def test_log_format_env_picks_the_formatter(
+    monkeypatch: pytest.MonkeyPatch, value: str | None, expected: str
+) -> None:
+    if value is None:
+        monkeypatch.delenv(LOG_FORMAT_ENV, raising=False)
+    else:
+        monkeypatch.setenv(LOG_FORMAT_ENV, value)
+    root = logging.getLogger()
+    saved = list(root.handlers)
+    try:
+        configure_logging()
+        assert type(root.handlers[0].formatter).__name__ == expected
+    finally:
+        for handler in list(root.handlers):
+            root.removeHandler(handler)
+        for handler in saved:
+            root.addHandler(handler)
