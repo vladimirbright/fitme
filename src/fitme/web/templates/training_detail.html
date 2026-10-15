@@ -30,13 +30,18 @@
       <td>{{ exercise_names.get(row.exercise_id, row.exercise_id) }}</td>
       <td>{{ row.set_index }}</td>
       <td>
-        {% if row.planned_reps_min is not none %}{{ row.planned_reps_min }}&ndash;{{ row.planned_reps_max }}{% endif %}
+        {% if row.planned_reps_min is not none %}{{ row.planned_reps_min }}&ndash;{{ row.planned_reps_max }}
+        {% elif row.planned_seconds is not none %}{{ t('duration.seconds', s=row.planned_seconds) }}
+        {% elif row.planned_meters is not none %}{{ t('duration.meters', m=row.planned_meters) }}{% endif %}
         {% if row.planned_load_kg is not none %}@ {{ t('web.kg_value', value=row.planned_load_kg) }}{% endif %}
       </td>
       <td>
         {% if row.skipped %}{{ t('web.trainings.skipped') }}
-        {% elif row.actual_reps is not none %}
-          {{ row.actual_reps }} {% if row.actual_load_kg is not none %}@ {{ t('web.kg_value', value=row.actual_load_kg) }}{% endif %}
+        {% elif row.performed %}
+          {% if row.actual_reps is not none %}{{ row.actual_reps }}
+          {% elif row.actual_seconds is not none %}{{ t('duration.seconds', s=row.actual_seconds) }}
+          {% else %}{{ t('duration.meters', m=row.actual_meters) }}{% endif %}
+          {% if row.actual_load_kg is not none %}@ {{ t('web.kg_value', value=row.actual_load_kg) }}{% endif %}
         {% else %}&ndash;{% endif %}
       </td>
     </tr>

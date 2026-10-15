@@ -17,6 +17,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from fitme.bot.callback_data import PlanDraft, PlanMenu, TrainPick
 from fitme.db.records import PlanRecord
 from fitme.domain.catalog import Catalog, Exercise
+from fitme.domain.enums import Measure
 from fitme.domain.models import Load, Plan, Prescription
 from fitme.i18n import t, wording
 
@@ -47,6 +48,19 @@ def rest_text(seconds: int, lang: str) -> str:
 def reps_text(reps_min: int, reps_max: int) -> str:
     """ "8" for a fixed count, "6–8" for a range."""
     return str(reps_min) if reps_min == reps_max else f"{reps_min}–{reps_max}"
+
+
+def target_text(prescription: Prescription, lang: str) -> str:
+    """One set's target in its own measure (ADR 0009): "6–8" (reps), "30 s" / "2 min"
+    (time), "40 m" (distance)."""
+    if prescription.measure == Measure.TIME:
+        assert prescription.seconds is not None  # Prescription's validator guarantees this
+        return rest_text(prescription.seconds, lang)
+    if prescription.measure == Measure.DISTANCE:
+        assert prescription.meters is not None
+        return t("duration.meters", lang, m=prescription.meters)
+    assert prescription.reps_min is not None and prescription.reps_max is not None
+    return reps_text(prescription.reps_min, prescription.reps_max)
 
 
 def load_label(load: Load, exercise: Exercise | None, lang: str) -> str:
@@ -80,6 +94,11 @@ def prescription_load_label(
     if load.kind == "calibration" and prescription.declared_kg is not None:
         declared = load_label(Load(kind="kg", kg=prescription.declared_kg), exercise, lang)
         return t("plan.load_calibration_declared", lang, declared=declared)
+    if prescription.rir is not None:
+        # ADR 0009: a structured intensity target replaces the generic "start with X" hint.
+        if load.kind == "calibration":
+            return t("plan.load_calibration_rir", lang, rir=prescription.rir)
+        return f"{load_label(load, exercise, lang)}, {t('plan.rir', lang, rir=prescription.rir)}"
     return load_label(load, exercise, lang)
 
 
@@ -89,7 +108,7 @@ def prescription_line(prescription: Prescription, catalog: Catalog, lang: str) -
         "plan.sets_reps",
         lang,
         sets=prescription.sets,
-        reps=reps_text(prescription.reps_min, prescription.reps_max),
+        reps=target_text(prescription, lang),
     )
     line = t(
         "plan.prescription_line",

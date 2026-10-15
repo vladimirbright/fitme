@@ -51,12 +51,22 @@
         <label>{{ t('web.plans.edit_sets_label') }}
           <input type="number" name="{{ field }}sets" value="{{ item.sets }}" min="1" max="10">
         </label>
+        {% if item.measure == 'time' %}
+        <label>{{ t('web.plans.edit_seconds_label') }}
+          <input type="number" name="{{ field }}seconds" value="{{ item.seconds }}" min="5" max="3600">
+        </label>
+        {% elif item.measure == 'distance' %}
+        <label>{{ t('web.plans.edit_meters_label') }}
+          <input type="number" name="{{ field }}meters" value="{{ item.meters }}" min="5" max="2000">
+        </label>
+        {% else %}
         <label>{{ t('web.plans.edit_reps_min_label') }}
           <input type="number" name="{{ field }}reps_min" value="{{ item.reps_min }}" min="1" max="50">
         </label>
         <label>{{ t('web.plans.edit_reps_max_label') }}
           <input type="number" name="{{ field }}reps_max" value="{{ item.reps_max }}" min="1" max="50">
         </label>
+        {% endif %}
         <label>{{ t('web.plans.edit_rest_label') }}
           <input type="number" name="{{ field }}rest" value="{{ item.rest_seconds }}" min="0" max="600">
         </label>

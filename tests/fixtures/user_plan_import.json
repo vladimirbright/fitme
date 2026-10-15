@@ -225,14 +225,14 @@
               {
                 "exercise_id": "plank",
                 "sets": 3,
-                "reps_min": 30,
-                "reps_max": 45,
+                "measure": "time",
+                "seconds": 45,
                 "load": {
                   "kind": "bodyweight",
                   "kg": null
                 },
                 "rest_seconds": 60,
-                "note": "секунды",
+                "note": null,
                 "declared_kg": null
               }
             ]

@@ -166,6 +166,20 @@ class SetLogRecord:
     rpe: float | None
     source: str
     created_at: str
+    # ADR 0009: a timed or distance set's target and result; `None` on a reps set.
+    planned_seconds: int | None = None
+    planned_meters: int | None = None
+    actual_seconds: int | None = None
+    actual_meters: int | None = None
+
+    @property
+    def performed(self) -> bool:
+        """A result was logged, in whichever measure the set has."""
+        return (
+            self.actual_reps is not None
+            or self.actual_seconds is not None
+            or self.actual_meters is not None
+        )
 
 
 @dataclass(frozen=True, slots=True)

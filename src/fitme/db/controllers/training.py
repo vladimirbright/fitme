@@ -121,6 +121,10 @@ async def insert_set_log(
     skipped: bool = False,
     rpe: float | None,
     source: str,
+    planned_seconds: int | None = None,
+    planned_meters: int | None = None,
+    actual_seconds: int | None = None,
+    actual_meters: int | None = None,
 ) -> int:
     """One row per *prescribed* set (A§4.2), created when the block is sent. A set the user
     didn't perform is logged with `skipped=True` and `actual_load_kg`/`actual_reps` left
@@ -135,7 +139,8 @@ async def insert_set_log(
     cursor = await conn.execute(
         "INSERT INTO set_logs (session_id, exercise_id, set_index, planned_load_kg, "
         "planned_reps_min, planned_reps_max, actual_load_kg, actual_reps, skipped, rpe, "
-        "source, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "source, created_at, planned_seconds, planned_meters, actual_seconds, actual_meters) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (
             session_id,
             exercise_id,
@@ -149,6 +154,10 @@ async def insert_set_log(
             rpe,
             source,
             clock.utc_now(),
+            planned_seconds,
+            planned_meters,
+            actual_seconds,
+            actual_meters,
         ),
     )
     assert cursor.lastrowid is not None
@@ -160,16 +169,19 @@ async def update_set_log_actual(
     set_log_id: int,
     *,
     actual_load_kg: float | None,
-    actual_reps: int,
+    actual_reps: int | None,
     source: str,
+    actual_seconds: int | None = None,
+    actual_meters: int | None = None,
 ) -> None:
     """Record what the user actually did for one prescribed set (A§6.5 step 5: "According
-    to plan" or a confirmed `result_parse`). Clears `skipped`, since a logged set was
-    performed (the schema forbids the two together)."""
+    to plan" or a confirmed `result_parse`), in the set's measure (ADR 0009: reps, seconds
+    or meters). Clears `skipped`, since a logged set was performed (the schema forbids the
+    two together)."""
     await conn.execute(
-        "UPDATE set_logs SET actual_load_kg = ?, actual_reps = ?, skipped = 0, source = ? "
-        "WHERE id = ?",
-        (actual_load_kg, actual_reps, source, set_log_id),
+        "UPDATE set_logs SET actual_load_kg = ?, actual_reps = ?, actual_seconds = ?, "
+        "actual_meters = ?, skipped = 0, source = ? WHERE id = ?",
+        (actual_load_kg, actual_reps, actual_seconds, actual_meters, source, set_log_id),
     )
 
 
@@ -181,13 +193,23 @@ async def restore_set_log(
     actual_reps: int | None,
     skipped: bool,
     source: str,
+    actual_seconds: int | None = None,
+    actual_meters: int | None = None,
 ) -> None:
     """Put one set row back exactly as it was (ADR 0003: undoing a correction of a logged
     set), including an unlogged (`actual_*` NULL, not skipped) or skipped row."""
     await conn.execute(
-        "UPDATE set_logs SET actual_load_kg = ?, actual_reps = ?, skipped = ?, source = ? "
-        "WHERE id = ?",
-        (actual_load_kg, actual_reps, int(skipped), source, set_log_id),
+        "UPDATE set_logs SET actual_load_kg = ?, actual_reps = ?, actual_seconds = ?, "
+        "actual_meters = ?, skipped = ?, source = ? WHERE id = ?",
+        (
+            actual_load_kg,
+            actual_reps,
+            actual_seconds,
+            actual_meters,
+            int(skipped),
+            source,
+            set_log_id,
+        ),
     )
 
 
@@ -195,8 +217,8 @@ async def mark_set_log_skipped(conn: aiosqlite.Connection, set_log_id: int, *, s
     """A prescribed set the user didn't perform (A§4.2): `skipped = 1` with both `actual_*`
     columns NULL, so it stays visible as a gap in the log."""
     await conn.execute(
-        "UPDATE set_logs SET skipped = 1, actual_load_kg = NULL, actual_reps = NULL, source = ? "
-        "WHERE id = ?",
+        "UPDATE set_logs SET skipped = 1, actual_load_kg = NULL, actual_reps = NULL, "
+        "actual_seconds = NULL, actual_meters = NULL, source = ? WHERE id = ?",
         (source, set_log_id),
     )
 

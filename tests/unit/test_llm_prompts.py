@@ -18,11 +18,12 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 _REAL_PROMPT_VERSIONS = {
     "plan_generate": 4,  # v2: guidance + existing plans; v3: profile frequency is a default;
     # v4: a retrieved candidate pool with exercise_facts (ADR 0007)
-    "plan_revise": 1,
-    "session_adjust": 1,
-    "result_parse": 1,
+    # v2 (ADR 0009): structured measures — time in seconds, distance in meters
+    "plan_revise": 2,
+    "session_adjust": 2,
+    "result_parse": 2,
     "recap": 1,
-    "plan_import": 1,
+    "plan_import": 2,
     "assistant": 6,  # v4: sessions + tools (ADR 0004); v5: per-exercise logging (ADR 0005);
     # v6: find_substitutes and hybrid find_exercises (ADR 0007)
 }

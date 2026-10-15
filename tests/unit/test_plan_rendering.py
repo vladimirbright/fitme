@@ -8,6 +8,7 @@ from fitme.bot.plan_rendering import (
     TELEGRAM_MESSAGE_LIMIT,
     displayable_unmatched,
     load_label,
+    prescription_line,
     render_plan_text,
     split_message,
 )
@@ -216,3 +217,37 @@ def test_unmatched_names_with_forbidden_wording_are_dropped() -> None:
     assert "Not matched" not in render_plan_text(
         plan, catalog=load_catalog(), lang="en", title="Draft:", unmatched=["Rehab circuit"]
     )
+
+
+def test_timed_distance_and_rir_prescriptions_render_in_their_own_units() -> None:
+    """ADR 0009: "3 × 40 s", "3 × 2 min", "3 × 30 m", and a structured RIR target instead
+    of a generic "start with 2 kg" hint."""
+    catalog = load_catalog()
+
+    def line(**fields: object) -> str:
+        base: dict[str, object] = {
+            "sets": 3,
+            "load": {"kind": "bodyweight"},
+            "rest_seconds": 60,
+        }
+        return prescription_line(Prescription.model_validate({**base, **fields}), catalog, "en")
+
+    assert line(exercise_id="plank", measure="time", seconds=40).startswith("Plank: 3 × 40 s @")
+    assert "3 × 2 min @" in line(exercise_id="machine_rower", measure="time", seconds=120)
+    carry = line(
+        exercise_id="dumbbell_farmer_carry",
+        measure="distance",
+        meters=30,
+        load={"kind": "calibration"},
+        rir=3,
+    )
+    assert "3 × 30 m @ calibration: pick a weight that leaves about 3 reps in reserve" in carry
+    assert "start with" not in carry
+    bench = line(
+        exercise_id="barbell_bench_press",
+        reps_min=6,
+        reps_max=8,
+        load={"kind": "kg", "kg": 60.0},
+        rir=2,
+    )
+    assert "3 × 6–8 @ 60 kg, about 2 reps in reserve" in bench

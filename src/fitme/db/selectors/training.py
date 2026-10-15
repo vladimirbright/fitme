@@ -173,7 +173,8 @@ async def list_set_logs_for_session(
     `set_index`."""
     async with conn.execute(
         "SELECT id, session_id, exercise_id, set_index, planned_load_kg, planned_reps_min, "
-        "planned_reps_max, actual_load_kg, actual_reps, skipped, rpe, source, created_at "
+        "planned_reps_max, actual_load_kg, actual_reps, skipped, rpe, source, created_at, "
+        "planned_seconds, planned_meters, actual_seconds, actual_meters "
         "FROM set_logs WHERE session_id = ? ORDER BY id",
         (session_id,),
     ) as cursor:
@@ -193,6 +194,10 @@ async def list_set_logs_for_session(
             rpe=row[10],
             source=row[11],
             created_at=row[12],
+            planned_seconds=row[13],
+            planned_meters=row[14],
+            actual_seconds=row[15],
+            actual_meters=row[16],
         )
         for row in rows
     ]

@@ -17,6 +17,8 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, model_validator
 
 from fitme.domain.models import (
+    MAX_SET_METERS,
+    MAX_SET_SECONDS,
     NAME_MAX_LENGTH,
     TITLE_MAX_LENGTH,
     Load,
@@ -32,7 +34,9 @@ MESSAGE_MAX_LENGTH = 2000
 
 
 class SetPrescription(BaseModel):
-    """Change one exercise's numbers. Omitted fields stay as they are."""
+    """Change one exercise's numbers. Omitted fields stay as they are. ADR 0009: giving
+    `seconds` makes the sets timed, `meters` makes them distance sets, and reps make them
+    reps sets again (the other measure's target is dropped)."""
 
     model_config = _STRICT_CONFIG
 
@@ -42,14 +46,27 @@ class SetPrescription(BaseModel):
     sets: Annotated[int, Field(ge=1, le=10)] | None = None
     reps_min: Annotated[int, Field(ge=1, le=50)] | None = None
     reps_max: Annotated[int, Field(ge=1, le=50)] | None = None
+    seconds: Annotated[int, Field(ge=5, le=MAX_SET_SECONDS)] | None = None
+    meters: Annotated[int, Field(ge=5, le=MAX_SET_METERS)] | None = None
     load: Load | None = None
     rest_seconds: Annotated[int, Field(ge=0, le=600)] | None = None
 
     @model_validator(mode="after")
     def _changes_something(self) -> SetPrescription:
-        fields = (self.sets, self.reps_min, self.reps_max, self.load, self.rest_seconds)
+        fields = (
+            self.sets,
+            self.reps_min,
+            self.reps_max,
+            self.seconds,
+            self.meters,
+            self.load,
+            self.rest_seconds,
+        )
         if all(value is None for value in fields):
             raise ValueError("set_prescription must change at least one field")
+        has_reps = self.reps_min is not None or self.reps_max is not None
+        if sum((has_reps, self.seconds is not None, self.meters is not None)) > 1:
+            raise ValueError("give reps, seconds or meters, not more than one of them")
         return self
 
 
@@ -75,10 +92,21 @@ class AddExercise(BaseModel):
     workout_key: str | None = None
     exercise_id: str
     sets: Annotated[int, Field(ge=1, le=10)]
-    reps_min: Annotated[int, Field(ge=1, le=50)]
-    reps_max: Annotated[int, Field(ge=1, le=50)]
+    # ADR 0009: exactly one target — reps_min/reps_max, seconds or meters.
+    reps_min: Annotated[int, Field(ge=1, le=50)] | None = None
+    reps_max: Annotated[int, Field(ge=1, le=50)] | None = None
+    seconds: Annotated[int, Field(ge=5, le=MAX_SET_SECONDS)] | None = None
+    meters: Annotated[int, Field(ge=5, le=MAX_SET_METERS)] | None = None
     load: Load
     rest_seconds: Annotated[int, Field(ge=0, le=600)] = 90
+
+    @model_validator(mode="after")
+    def _one_target(self) -> AddExercise:
+        has_reps = self.reps_min is not None and self.reps_max is not None
+        partial_reps = (self.reps_min is None) != (self.reps_max is None)
+        if partial_reps or sum((has_reps, self.seconds is not None, self.meters is not None)) != 1:
+            raise ValueError("give reps_min and reps_max, or seconds, or meters")
+        return self
 
 
 class RemoveExercise(BaseModel):

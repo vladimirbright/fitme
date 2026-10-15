@@ -56,7 +56,7 @@ from fitme.db.selectors.plans import list_plan_versions
 from fitme.db.selectors.training import list_set_logs_for_session
 from fitme.db.selectors.users import get_telegram_account_by_telegram_user_id
 from fitme.domain.assistant import AssistantTurn
-from fitme.domain.enums import AREA_FLAGS, RED_FLAGS, RefusalCode
+from fitme.domain.enums import AREA_FLAGS, RED_FLAGS, Measure, RefusalCode
 from fitme.domain.models import Block, Load, Plan, Prescription, Refusal, ScheduledDay, Workout
 from fitme.domain.results import ParsedResults
 from fitme.i18n import t
@@ -950,3 +950,51 @@ async def test_the_assistant_finds_exercises_and_ranked_substitutes(
     assert {item["exercise_id"] for item in found} <= allowed
     assert {item["exercise_id"] for item in substitutes} <= allowed
     assert await _open_conversations(db, seeded.user_id) == []  # nothing staged
+
+
+async def test_a_timed_and_a_distance_set_are_shown_and_logged_in_their_measure(
+    dispatcher: Dispatcher,
+    bot: Bot,
+    db: Database,
+    settings: Settings,
+    session: FakeSession,
+    llm: ScriptedLlm,
+) -> None:
+    """ADR 0009: "Plank 3 × 40 s" and "Farmer carry 3 × 30 m", logged as seconds and meters
+    by Done as planned — never "3 × 1" with the duration in a note."""
+    plan = _plan()
+    plank = Prescription(
+        exercise_id="plank",
+        sets=3,
+        measure=Measure.TIME,
+        seconds=40,
+        load=Load(kind="bodyweight"),
+        rest_seconds=45,
+    )
+    carry = Prescription(
+        exercise_id="dumbbell_farmer_carry",
+        sets=3,
+        measure=Measure.DISTANCE,
+        meters=30,
+        load=Load(kind="calibration"),
+        rest_seconds=60,
+    )
+    plan.workouts[0].blocks = [
+        Block(kind="single", items=[plank]),
+        Block(kind="single", items=[carry]),
+    ]
+    seeded = await _ready(dispatcher, bot, db, plan)
+    session_id = await _start_workout(db, settings, seeded)
+
+    await training.complete_block_as_planned(db, seeded.user_id, session_id, 0)
+    await training.complete_block_as_planned(db, seeded.user_id, session_id, 1)
+
+    async with db.read() as conn:
+        rows = await list_set_logs_for_session(conn, session_id)
+    assert [(r.exercise_id, r.planned_seconds, r.actual_seconds) for r in rows[:3]] == [
+        ("plank", 40, 40)
+    ] * 3
+    assert [(r.planned_meters, r.actual_meters, r.actual_reps) for r in rows[3:]] == [
+        (30, 30, None)
+    ] * 3
+    assert all(row.performed for row in rows)

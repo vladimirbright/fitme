@@ -61,6 +61,7 @@ from fitme.domain.enums import (
     VALID_LOADS_AREAS,
     DecisionKind,
     HealthHoldReason,
+    Measure,
     RefusalCode,
     WorkoutSessionStatus,
 )
@@ -72,7 +73,14 @@ from fitme.i18n import wording
 from fitme.llm.context import render_user_prompt, scrub
 from fitme.llm.models import model_for
 from fitme.llm.usage import record_llm_call, run_agent
-from fitme.services import conversations, exercise_search, log_edit, planning, training
+from fitme.services import (
+    conversations,
+    exercise_search,
+    log_edit,
+    measures,
+    planning,
+    training,
+)
 from fitme.services.decisions import PromptMeta, prompt_columns
 from fitme.services.llm_runtime import LlmRuntime
 from fitme.services.plan_edit import save_edit
@@ -139,14 +147,22 @@ def _apply_to_workout(
         item = block.items[index].model_copy()
         if op.sets is not None:
             item.sets = op.sets
-        if op.reps_min is not None:
-            item.reps_min = op.reps_min
-        if op.reps_max is not None:
-            item.reps_max = op.reps_max
-        if op.reps_min is not None and op.reps_max is None and item.reps_max < op.reps_min:
-            item.reps_max = op.reps_min  # "do 10 reps" on a 6–8 range means 10–10
-        if op.reps_max is not None and op.reps_min is None and item.reps_min > op.reps_max:
-            item.reps_min = op.reps_max
+        if op.seconds is not None:
+            measures.set_target(item, Measure.TIME, seconds=op.seconds)
+        elif op.meters is not None:
+            measures.set_target(item, Measure.DISTANCE, meters=op.meters)
+        elif op.reps_min is not None or op.reps_max is not None:
+            reps_min = op.reps_min if op.reps_min is not None else item.reps_min
+            reps_max = op.reps_max if op.reps_max is not None else item.reps_max
+            # From a timed/distance set, one given bound is the whole range.
+            reps_min = reps_min if reps_min is not None else reps_max
+            reps_max = reps_max if reps_max is not None else reps_min
+            assert reps_min is not None and reps_max is not None
+            if op.reps_min is not None and op.reps_max is None and reps_max < op.reps_min:
+                reps_max = op.reps_min  # "do 10 reps" on a 6–8 range means 10–10
+            if op.reps_max is not None and op.reps_min is None and reps_min > op.reps_max:
+                reps_min = op.reps_max
+            measures.set_target(item, Measure.REPS, reps=(reps_min, reps_max))
         if op.load is not None:
             item.load = op.load
         if op.rest_seconds is not None:
@@ -156,25 +172,36 @@ def _apply_to_workout(
         _check_allowed(op.new_exercise_id, allowed)
         block, index = _find(workout, op.exercise_id, first_block=first_block)
         old = block.items[index]
-        _replace_item(
-            block,
-            index,
-            old.model_copy(
-                update={
-                    "exercise_id": op.new_exercise_id,
-                    "load": op.load if op.load is not None else Load(kind="calibration"),
-                    "note": None,
-                    "declared_kg": None,
-                }
-            ),
+        swapped = old.model_copy(
+            update={
+                "exercise_id": op.new_exercise_id,
+                "load": op.load if op.load is not None else Load(kind="calibration"),
+                "note": None,
+                "declared_kg": None,
+            }
         )
+        new_exercise = load_catalog().by_id(op.new_exercise_id)
+        if new_exercise is not None and swapped.measure not in new_exercise.measures:
+            # ADR 0009: a plank swapped in for a row is timed, not "3 × 8".
+            measures.set_default_target(swapped, new_exercise)
+        _replace_item(block, index, swapped)
     elif isinstance(op, AddExercise):
         _check_allowed(op.exercise_id, allowed)
+        measure = (
+            Measure.TIME
+            if op.seconds is not None
+            else Measure.DISTANCE
+            if op.meters is not None
+            else Measure.REPS
+        )
         item = Prescription(
             exercise_id=op.exercise_id,
             sets=op.sets,
+            measure=measure,
             reps_min=op.reps_min,
             reps_max=op.reps_max,
+            seconds=op.seconds,
+            meters=op.meters,
             load=op.load,
             rest_seconds=op.rest_seconds,
         )

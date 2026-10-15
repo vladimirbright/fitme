@@ -19,10 +19,11 @@ from fitme.bot.plan_rendering import (
     prescription_line,
     reps_text,
     rest_text,
+    target_text,
 )
 from fitme.db.records import CheckinRecord, PlanRecord
 from fitme.domain.catalog import Catalog, Exercise
-from fitme.domain.enums import CheckinAnswer
+from fitme.domain.enums import CheckinAnswer, Measure
 from fitme.domain.models import Block, Load, Prescription, Workout
 from fitme.domain.results import ChangeReps, ParsedResults, PlanChange, SetResult, SwapExercise
 from fitme.i18n import t
@@ -191,14 +192,19 @@ def block_text(view: BlockView, *, catalog: Catalog, lang: str) -> str:
         lines.append(exercise_name(exercise, item.exercise_id, lang))
         # One prescription has one load for every set, so the sets are stated once ("4 × 6–8")
         # with that explicit load, instead of one identical line per set.
-        lines.append(
-            t(
+        if item.measure == Measure.REPS:
+            assert item.reps_min is not None and item.reps_max is not None
+            sets_line = t(
                 "train.sets_line",
                 lang,
                 sets=item.sets,
                 reps=reps_text(item.reps_min, item.reps_max),
             )
-        )
+        else:
+            sets_line = t(
+                "train.sets_line_target", lang, sets=item.sets, target=target_text(item, lang)
+            )
+        lines.append(sets_line)
         lines.append(t("train.load_line", lang, load=_block_load_label(item, exercise, lang)))
         lines.append(t("train.rest_line", lang, rest=rest_text(item.rest_seconds, lang)))
         if item.note:
@@ -220,10 +226,15 @@ def _block_load_label(item: Prescription, exercise: Exercise | None, lang: str) 
     below, said once instead of on every set."""
     load = item.load
     if load.kind != "calibration":
-        return load_label(load, exercise, lang)
+        label = load_label(load, exercise, lang)
+        if item.rir is not None:
+            label = f"{label}, {t('plan.rir', lang, rir=item.rir)}"
+        return label
     if item.declared_kg is not None:
         declared = load_label(Load(kind="kg", kg=item.declared_kg), exercise, lang)
         return t("train.load_calibration_declared", lang, declared=declared)
+    if item.rir is not None:
+        return t("train.load_calibration_rir", lang, rir=item.rir)
     if exercise is not None and exercise.start.kind == "kg":
         start = load_label(exercise.start, exercise, lang)
         return t("train.load_calibration_from", lang, start=start)
@@ -322,26 +333,38 @@ def _set_lines(sets: Sequence[SetResult], exercise: Exercise | None, lang: str) 
     for result in sorted(sets, key=lambda item: item.set_index):
         if result.skipped:
             lines.append(t("train.parsed_set_skipped", lang, index=result.set_index))
-        elif result.load_kg is None:
-            lines.append(
-                t("train.parsed_set_no_load", lang, index=result.set_index, reps=result.reps)
-            )
         else:
-            kg = f"{result.load_kg:g}"
-            load = (
-                t("load.per_implement", lang, kg=kg)
-                if exercise is not None and exercise.load_unit == "per_implement"
-                else t("plan.load_kg", lang, kg=kg)
+            # ADR 0009: a timed or distance set reports seconds or meters, not reps.
+            target = (
+                rest_text(result.seconds, lang)
+                if result.seconds is not None
+                else t("duration.meters", lang, m=result.meters)
+                if result.meters is not None
+                else None
             )
-            lines.append(
-                t(
-                    "train.parsed_set_line",
-                    lang,
-                    index=result.set_index,
-                    reps=result.reps,
-                    load=load,
+            load = None
+            if result.load_kg is not None:
+                kg = f"{result.load_kg:g}"
+                load = (
+                    t("load.per_implement", lang, kg=kg)
+                    if exercise is not None and exercise.load_unit == "per_implement"
+                    else t("plan.load_kg", lang, kg=kg)
                 )
-            )
+            index = result.set_index
+            if target is not None:
+                lines.append(
+                    t("train.parsed_set_target", lang, index=index, target=target)
+                    if load is None
+                    else t(
+                        "train.parsed_set_target_line", lang, index=index, target=target, load=load
+                    )
+                )
+            elif load is None:
+                lines.append(t("train.parsed_set_no_load", lang, index=index, reps=result.reps))
+            else:
+                lines.append(
+                    t("train.parsed_set_line", lang, index=index, reps=result.reps, load=load)
+                )
     return lines
 
 
@@ -389,14 +412,33 @@ def recap_text(view: RecapView, *, catalog: Catalog, lang: str) -> str:
     lines = [t("recap.title", lang, workout=workout_label(view.workout)), ""]
     for item in proposal.summary:
         name = _name(catalog, item.exercise_id, lang)
-        line = t(
-            "recap.exercise_line",
-            lang,
-            name=name,
-            done=item.done_sets,
-            planned=item.planned_sets,
-            reps=item.total_reps,
-        )
+        if item.measure == Measure.TIME:
+            line = t(
+                "recap.exercise_line_target",
+                lang,
+                name=name,
+                done=item.done_sets,
+                planned=item.planned_sets,
+                total=rest_text(item.total_seconds, lang),
+            )
+        elif item.measure == Measure.DISTANCE:
+            line = t(
+                "recap.exercise_line_target",
+                lang,
+                name=name,
+                done=item.done_sets,
+                planned=item.planned_sets,
+                total=t("duration.meters", lang, m=item.total_meters),
+            )
+        else:
+            line = t(
+                "recap.exercise_line",
+                lang,
+                name=name,
+                done=item.done_sets,
+                planned=item.planned_sets,
+                reps=item.total_reps,
+            )
         if item.volume_kg > 0:
             line += t("recap.exercise_volume", lang, volume=f"{item.volume_kg:g}")
         if item.skipped_sets:

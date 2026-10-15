@@ -15,11 +15,11 @@ from typing import Any
 import pytest
 from aiogram import Bot, Dispatcher
 from aiogram.methods import AnswerCallbackQuery, SendMessage
-from conftest import FakeSession, callback_update, make_user, message_update
 from pydantic_ai.exceptions import ModelHTTPError
 from pydantic_ai.messages import ModelMessage, ModelRequest, ModelResponse, ToolCallPart
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
+from conftest import FakeSession, callback_update, make_user, message_update
 from fitme import clock
 from fitme.bot.app import build_dispatcher
 from fitme.bot.callback_data import PlanDraft, PlanMenu, TrainAction, TrainPick
@@ -258,7 +258,7 @@ async def test_pasted_program_imports_with_hints_and_unmatched_and_confirm_saves
     assert "Пятница: C — Жим штанги + выпады" in shown
     assert f"Приседания со штангой на спине: 3 × 5 @ {_HINT_SQUAT}" in shown
     assert _HINT_PRESS in shown
-    assert "Планка: 3 × 30–45 @ собственный вес" in shown
+    assert "Планка: 3 × 45 с @ собственный вес" in shown
     assert t("plan.unmatched_title", "ru") in shown
     for name in expected.unmatched:
         assert f"• {name}" in shown

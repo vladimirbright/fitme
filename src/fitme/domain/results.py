@@ -34,6 +34,10 @@ class SetResult(BaseModel):
 
     set_index: Annotated[int, Field(ge=1, le=10)]
     reps: Annotated[int, Field(ge=0, le=100)] | None = None
+    # ADR 0009: a timed set's result in seconds, a distance set's in meters (instead of
+    # `reps`; exactly one of the three for a performed set).
+    seconds: Annotated[int, Field(ge=0, le=3600)] | None = None
+    meters: Annotated[int, Field(ge=0, le=5000)] | None = None
     # gt=0: a real load is always positive. le=500: a coordinator-set plausibility ceiling —
     # no catalog exercise or realistic implement combination reaches this, so a model
     # reporting more is hallucinating, not describing a real (if extreme) lift.
@@ -42,10 +46,13 @@ class SetResult(BaseModel):
 
     @model_validator(mode="after")
     def _skipped_reports_nothing_else(self) -> SetResult:
-        if self.skipped and (self.reps is not None or self.load_kg is not None):
-            raise ValueError("a skipped set must not report reps or load")
-        if not self.skipped and self.reps is None:
-            raise ValueError("reps is required for a set that wasn't skipped")
+        reported = [v for v in (self.reps, self.seconds, self.meters) if v is not None]
+        if self.skipped and (reported or self.load_kg is not None):
+            raise ValueError("a skipped set must not report reps, seconds, meters or load")
+        if not self.skipped and len(reported) != 1:
+            raise ValueError(
+                "a set that wasn't skipped reports exactly one of reps, seconds or meters"
+            )
         return self
 
 

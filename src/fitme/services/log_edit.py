@@ -139,6 +139,14 @@ async def fix_logged_sets(
                     session_id=session_id,
                     details=(f"{fix.exercise_id} set {fix.set_number}",),
                 )
+            if row.planned_seconds is not None or row.planned_meters is not None:
+                # ADR 0009: a correction is reps (+ kg); writing reps onto a timed or distance
+                # set would replace its seconds/meters with a number in the wrong unit.
+                problems.append(
+                    f"{fix.exercise_id} set {fix.set_number}: a timed or distance set; "
+                    "only reps sets can be corrected"
+                )
+                continue
             exercise = catalog.by_id(fix.exercise_id)
             if fix.load_kg is None and (exercise is None or exercise.kg_loadable):
                 # Only reps were corrected: keep the kg already logged (or planned), like a

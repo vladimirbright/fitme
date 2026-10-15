@@ -83,18 +83,19 @@ from fitme.domain.enums import (
     CheckinAnswer,
     DecisionKind,
     HealthHoldReason,
+    Measure,
     RefusalCode,
     WorkoutSessionStatus,
 )
 from fitme.domain.guard_types import GuardVerdict
-from fitme.domain.models import Load, Plan, Prescription, Refusal, Workout
+from fitme.domain.models import Load, Plan, Refusal, Workout
 from fitme.domain.results import ChangeReps, PlanChange, SwapExercise
 from fitme.guards.plan import prescription_verdicts
 from fitme.i18n import wording
 from fitme.llm.context import render_user_prompt
 from fitme.llm.models import model_for
 from fitme.llm.usage import record_llm_call, run_agent
-from fitme.services import planning
+from fitme.services import measures, planning
 from fitme.services.llm_runtime import LlmRuntime
 from fitme.services.loads import BlockedBy, LoadDecision, LoadKind
 from fitme.services.safety import HaltResult, halt
@@ -141,14 +142,35 @@ class ExerciseSummary(BaseModel):
     planned_sets: int
     done_sets: int
     skipped_sets: int
-    planned_reps_min: int
-    planned_reps_max: int
+    # `None` for a timed or distance prescription (ADR 0009), whose target and results are
+    # the seconds/meters fields; summaries stored before ADR 0009 are all reps.
+    planned_reps_min: int | None
+    planned_reps_max: int | None
     planned_load: Load
     actual_reps: list[int | None]
     actual_kg: list[float | None]
     total_reps: int
     volume_kg: float
     new_max_kg: float | None = None
+    measure: Measure = Measure.REPS
+    planned_seconds: int | None = None
+    planned_meters: int | None = None
+    actual_seconds: list[int | None] = Field(default_factory=list)
+    actual_meters: list[int | None] = Field(default_factory=list)
+    total_seconds: int = 0
+    total_meters: int = 0
+
+
+def _recap_target(item: ExerciseSummary) -> dict[str, object]:
+    """Planned and actual per set in the prescription's own measure (ADR 0009)."""
+    if item.measure == Measure.TIME:
+        return {"planned_seconds": item.planned_seconds, "actual_seconds": item.actual_seconds}
+    if item.measure == Measure.DISTANCE:
+        return {"planned_meters": item.planned_meters, "actual_meters": item.actual_meters}
+    return {
+        "planned_reps": [item.planned_reps_min, item.planned_reps_max],
+        "actual_reps": item.actual_reps,
+    }
 
 
 class NextLoad(BaseModel):
@@ -224,7 +246,7 @@ def _summaries(
     session_max: dict[str, float] = {}
     for block, per_item in zip(workout.blocks, assigned, strict=True):
         for item, item_rows in zip(block.items, per_item, strict=True):
-            done = [row for row in item_rows if row.actual_reps is not None]
+            done = [row for row in item_rows if row.performed]
             exercise = catalog.by_id(item.exercise_id)
             implements = 2 if exercise is not None and exercise.load_unit == "per_implement" else 1
             volume = sum(
@@ -250,6 +272,13 @@ def _summaries(
                     actual_kg=[row.actual_load_kg for row in item_rows],
                     total_reps=sum(row.actual_reps for row in done if row.actual_reps is not None),
                     volume_kg=round(volume, 3),
+                    measure=item.measure,
+                    planned_seconds=item.seconds,
+                    planned_meters=item.meters,
+                    actual_seconds=[row.actual_seconds for row in item_rows],
+                    actual_meters=[row.actual_meters for row in item_rows],
+                    total_seconds=sum(row.actual_seconds or 0 for row in done),
+                    total_meters=sum(row.actual_meters or 0 for row in done),
                 )
             )
     for summary in summaries:
@@ -335,11 +364,10 @@ def _recap_input(
                 "exercise_id": item.exercise_id,
                 "load_unit": getattr(catalog.by_id(item.exercise_id), "load_unit", "total"),
                 "planned_sets": item.planned_sets,
-                "planned_reps": [item.planned_reps_min, item.planned_reps_max],
+                **_recap_target(item),
                 "planned_load": item.planned_load.model_dump(mode="json"),
                 "done_sets": item.done_sets,
                 "skipped_sets": item.skipped_sets,
-                "actual_reps": item.actual_reps,
                 "actual_kg": item.actual_kg,
                 "new_max_kg": item.new_max_kg,
             }
@@ -437,14 +465,16 @@ def _filter_suggestions(
                     )
                 )
                 continue
-            candidate = Prescription(
-                exercise_id=target.id,
-                sets=source.sets,
-                reps_min=source.reps_min,
-                reps_max=source.reps_max,
-                load=planning.engine_load(target, inputs)[0],
-                rest_seconds=source.rest_seconds,
+            candidate = source.model_copy(
+                update={
+                    "exercise_id": target.id,
+                    "load": planning.engine_load(target, inputs)[0],
+                    "note": None,
+                    "declared_kg": None,
+                }
             )
+            if candidate.measure not in target.measures:
+                measures.set_default_target(candidate, target)  # ADR 0009
         else:
             source = next((p for p in prescriptions if p.exercise_id == change.exercise_id), None)
             if source is None:
@@ -453,6 +483,18 @@ def _filter_suggestions(
                         rule=_SUGGESTION_RULE,
                         ok=False,
                         detail=f"rep change for {change.exercise_id} dropped: not in the plan",
+                    )
+                )
+                continue
+            if source.measure != Measure.REPS:
+                fired.append(
+                    GuardVerdict(
+                        rule=_SUGGESTION_RULE,
+                        ok=False,
+                        detail=(
+                            f"rep change for {change.exercise_id} dropped: it is prescribed in "
+                            f"{source.measure.value}, not reps"
+                        ),
                     )
                 )
                 continue
@@ -681,12 +723,17 @@ def _apply_change(plan: Plan, change: PlanChange, inputs: planning.Inputs) -> bo
                     prescription.exercise_id = change.to_exercise_id
                     if exercise is not None:
                         prescription.load = planning.engine_load(exercise, inputs)[0]
+                        if prescription.measure not in exercise.measures:
+                            measures.set_default_target(prescription, exercise)  # ADR 0009
                     # M8b: a declared hint belongs to the exercise the user's pasted plan
                     # named; the swapped-in exercise gets none.
                     prescription.declared_kg = None
                     changed = True
                 elif isinstance(change, ChangeReps):
-                    if prescription.exercise_id != change.exercise_id:
+                    if (
+                        prescription.exercise_id != change.exercise_id
+                        or prescription.measure != Measure.REPS
+                    ):
                         continue
                     prescription.reps_min = change.reps_min
                     prescription.reps_max = change.reps_max

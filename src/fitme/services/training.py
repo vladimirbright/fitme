@@ -989,6 +989,8 @@ async def _ensure_block_rows(
                 planned_load_kg=item.load.kg,
                 planned_reps_min=item.reps_min,
                 planned_reps_max=item.reps_max,
+                planned_seconds=item.seconds,
+                planned_meters=item.meters,
                 actual_load_kg=None,
                 actual_reps=None,
                 rpe=None,
@@ -1008,7 +1010,7 @@ def _block_view(session_id: int, workout: Workout, index: int) -> BlockView:
 
 
 def is_logged(row: SetLogRecord) -> bool:
-    return row.skipped or row.actual_reps is not None
+    return row.skipped or row.performed
 
 
 # --- Start and in-progress ------------------------------------------------------------------
@@ -1143,7 +1145,7 @@ async def current_block(db: Database, user_id: int, session_id: int) -> StartRes
 
 def _completion(rows: Sequence[SetLogRecord]) -> Completion:
     return Completion(
-        sets_logged=sum(1 for row in rows if row.actual_reps is not None),
+        sets_logged=sum(1 for row in rows if row.performed),
         sets_planned=len(rows),
     )
 
@@ -1196,9 +1198,12 @@ def loaded_flagged_areas(workout: Workout, catalog: Catalog, flagged: frozenset[
 
 
 def set_outcomes(rows: Sequence[SetLogRecord]) -> list[dict[str, object]]:
-    """Planned vs actual per set, as `decision_outcomes.outcome["sets"]` stores it."""
-    return [
-        {
+    """Planned vs actual per set, as `decision_outcomes.outcome["sets"]` stores it. A timed
+    or distance set (ADR 0009) also carries its seconds/meters; a reps set keeps the shape
+    it always had."""
+    outcomes: list[dict[str, object]] = []
+    for row in rows:
+        outcome: dict[str, object] = {
             "exercise_id": row.exercise_id,
             "set_index": row.set_index,
             "planned_load_kg": row.planned_load_kg,
@@ -1208,8 +1213,14 @@ def set_outcomes(rows: Sequence[SetLogRecord]) -> list[dict[str, object]]:
             "actual_reps": row.actual_reps,
             "skipped": row.skipped,
         }
-        for row in rows
-    ]
+        if row.planned_seconds is not None or row.actual_seconds is not None:
+            outcome["planned_seconds"] = row.planned_seconds
+            outcome["actual_seconds"] = row.actual_seconds
+        if row.planned_meters is not None or row.actual_meters is not None:
+            outcome["planned_meters"] = row.planned_meters
+            outcome["actual_meters"] = row.actual_meters
+        outcomes.append(outcome)
+    return outcomes
 
 
 async def _advance(conn: Connection, progress: _Progress) -> Advance:
@@ -1232,7 +1243,8 @@ async def complete_block_as_planned(
 ) -> Advance:
     """✅ Done as planned: actual = planned for every not-yet-logged set of the block. The
     reps logged are the top of the prescribed range (A§7.3 double progression: "according to
-    plan" means every set reached `reps_max`); a kg load is logged as the prescribed kg, a
+    plan" means every set reached `reps_max`); a timed or distance set logs its target
+    seconds or meters (ADR 0009); a kg load is logged as the prescribed kg, a
     bodyweight/calibration load as no kg (log the actual weight through "Enter results")."""
     async with db.transaction() as conn:
         status, progress = await _load_progress(conn, user_id, session_id, block=block)
@@ -1252,6 +1264,8 @@ async def complete_block_as_planned(
                     row.id,
                     actual_load_kg=item.load.kg,
                     actual_reps=item.reps_max,
+                    actual_seconds=item.seconds,
+                    actual_meters=item.meters,
                     source=_SOURCE_BUTTON,
                 )
         return await _advance(conn, progress)
@@ -1550,13 +1564,14 @@ async def confirm_results(
                 if result.skipped:
                     await mark_set_log_skipped(conn, row.id, source=_SOURCE_FREE_TEXT)
                     continue
-                assert result.reps is not None  # `SetResult` requires reps unless skipped
                 load_kg = result.load_kg if result.load_kg is not None else prescription.load.kg
                 await update_set_log_actual(
                     conn,
                     row.id,
                     actual_load_kg=load_kg,
                     actual_reps=result.reps,
+                    actual_seconds=result.seconds,
+                    actual_meters=result.meters,
                     source=_SOURCE_FREE_TEXT,
                 )
             await insert_decision_outcome(
@@ -1627,7 +1642,13 @@ def _sets_to_write(prescription: Prescription, entry: ItemLog) -> tuple[SetResul
         return tuple(SetResult(set_index=i, skipped=True) for i in indexes)
     if entry.kind == ItemLogKind.AS_PLANNED:
         return tuple(
-            SetResult(set_index=i, reps=prescription.reps_max, load_kg=prescription.load.kg)
+            SetResult(
+                set_index=i,
+                reps=prescription.reps_max,
+                seconds=prescription.seconds,
+                meters=prescription.meters,
+                load_kg=prescription.load.kg,
+            )
             for i in indexes
         )
     return tuple(sorted(entry.sets, key=lambda result: result.set_index))
@@ -1762,13 +1783,14 @@ async def log_items(
                 if result.skipped:
                     await mark_set_log_skipped(conn, row.id, source=_SOURCE_FREE_TEXT)
                 else:
-                    assert result.reps is not None
                     load_kg = result.load_kg if result.load_kg is not None else prescription.load.kg
                     await update_set_log_actual(
                         conn,
                         row.id,
                         actual_load_kg=load_kg,
                         actual_reps=result.reps,
+                        actual_seconds=result.seconds,
+                        actual_meters=result.meters,
                         source=_SOURCE_FREE_TEXT,
                     )
                 written.append(row.id)
@@ -1967,7 +1989,7 @@ def volume_kg(rows: Sequence[SetLogRecord]) -> float:
 
 async def _session_list_item(conn: Connection, session: WorkoutSessionRecord) -> SessionListItem:
     rows = await list_set_logs_for_session(conn, session.id)
-    done = sum(1 for row in rows if row.actual_reps is not None)
+    done = sum(1 for row in rows if row.performed)
     return SessionListItem(
         session=session, sets_planned=len(rows), sets_done=done, volume_kg=volume_kg(rows)
     )

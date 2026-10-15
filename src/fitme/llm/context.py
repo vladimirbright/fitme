@@ -34,6 +34,7 @@ from fitme.domain.enums import (
     Experience,
     Focus,
     Location,
+    Measure,
     Preference,
     ScreeningFlag,
     WeightBucket,
@@ -175,6 +176,10 @@ class UserContext(BaseModel):
     # (`services.catalog.available_exercises`). Prompts state this is the *only* allowed set.
     allowed_exercise_ids: list[str]
     history: list[ExerciseHistorySummary] = Field(default_factory=list)
+    # ADR 0009: the measures each allowed exercise accepts, for those not prescribed in reps
+    # by default (a plank -> ["time"], a carry -> ["distance", "time"]); every id absent here
+    # is a reps exercise. Catalog data only.
+    exercise_measures: dict[str, list[Measure]] = Field(default_factory=dict)
 
 
 def build_user_context(
@@ -194,6 +199,7 @@ def build_user_context(
     flags: Sequence[FlagSummary],
     allowed_exercise_ids: Sequence[str],
     history: Mapping[str, ExerciseHistorySummary] | Sequence[ExerciseHistorySummary] = (),
+    exercise_measures: Mapping[str, Sequence[Measure]] | None = None,
 ) -> UserContext:
     """Build a `UserContext` from already-fetched values. Pure — no I/O — and every parameter
     is named explicitly: there's no way to pass a `telegram_user_id`, `chat_id`, name, or
@@ -216,6 +222,11 @@ def build_user_context(
         flags=list(flags),
         allowed_exercise_ids=list(allowed_exercise_ids),
         history=history_list,
+        exercise_measures={
+            exercise_id: list(accepted)
+            for exercise_id, accepted in (exercise_measures or {}).items()
+            if exercise_id in allowed_exercise_ids
+        },
     )
 
 

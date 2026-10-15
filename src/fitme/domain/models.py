@@ -12,7 +12,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, model_validator
 
-from fitme.domain.enums import RefusalCode
+from fitme.domain.enums import Measure, RefusalCode
 
 _STRICT_CONFIG = ConfigDict(extra="forbid", allow_inf_nan=False)
 
@@ -125,15 +125,28 @@ class Load(BaseModel):
         return self
 
 
+MAX_SET_SECONDS = 3600
+MAX_SET_METERS = 2000
+
+
 class Prescription(BaseModel):
-    """One exercise's sets/reps/load within a `Block` (A§4.5)."""
+    """One exercise's sets and per-set target within a `Block` (A§4.5). ADR 0009: a set is
+    prescribed in exactly one `measure` — `reps` (reps_min..reps_max), `time` (`seconds`) or
+    `distance` (`meters`) — and the matching field is required while the others stay empty.
+    Bodies stored before ADR 0009 have no `measure` and parse as `reps`."""
 
     model_config = _STRICT_CONFIG
 
     exercise_id: str  # must exist in the catalog; checked by guards.plan.validate_plan
     sets: Annotated[int, Field(ge=1, le=10)]
-    reps_min: Annotated[int, Field(ge=1, le=50)]
-    reps_max: Annotated[int, Field(ge=1, le=50)]
+    measure: Measure = Measure.REPS
+    reps_min: Annotated[int, Field(ge=1, le=50)] | None = None
+    reps_max: Annotated[int, Field(ge=1, le=50)] | None = None
+    seconds: Annotated[int, Field(ge=5, le=MAX_SET_SECONDS)] | None = None
+    meters: Annotated[int, Field(ge=5, le=MAX_SET_METERS)] | None = None
+    # ADR 0009: target reps in reserve (structured intensity), mostly with a `calibration`
+    # load: "pick a weight that leaves about this many reps in reserve". Optional.
+    rir: Annotated[int, Field(ge=0, le=5)] | None = None
     load: Load
     rest_seconds: Annotated[int, Field(ge=0, le=600)]
     # Short cue; no medical language (AGENTS.md §3). Model-authored display text is trimmed
@@ -149,9 +162,25 @@ class Prescription(BaseModel):
     declared_kg: Annotated[float | None, BeforeValidator(_drop_implausible_declared_kg)] = None
 
     @model_validator(mode="after")
-    def _reps_min_le_reps_max(self) -> Prescription:
-        if self.reps_min > self.reps_max:
-            raise ValueError("reps_min must be <= reps_max")
+    def _target_matches_measure(self) -> Prescription:
+        has_reps = self.reps_min is not None or self.reps_max is not None
+        if self.measure == Measure.REPS:
+            if self.reps_min is None or self.reps_max is None:
+                raise ValueError("measure 'reps' needs reps_min and reps_max")
+            if self.reps_min > self.reps_max:
+                raise ValueError("reps_min must be <= reps_max")
+            if self.seconds is not None or self.meters is not None:
+                raise ValueError("measure 'reps' takes no seconds or meters")
+        elif self.measure == Measure.TIME:
+            if self.seconds is None:
+                raise ValueError("measure 'time' needs seconds")
+            if has_reps or self.meters is not None:
+                raise ValueError("measure 'time' takes no reps or meters")
+        else:
+            if self.meters is None:
+                raise ValueError("measure 'distance' needs meters")
+            if has_reps or self.seconds is not None:
+                raise ValueError("measure 'distance' takes no reps or seconds")
         return self
 
 

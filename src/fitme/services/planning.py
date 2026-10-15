@@ -123,6 +123,7 @@ from fitme.domain.enums import (
     Focus,
     HealthHoldReason,
     Location,
+    Measure,
     Preference,
     RefusalCode,
     ScreeningFlag,
@@ -161,7 +162,7 @@ from fitme.llm.context import (
 from fitme.llm.escalation import run_with_escalation
 from fitme.llm.models import model_for
 from fitme.llm.usage import CAUSE_OUTPUT_VALIDATION, AgentRunOutcome, record_llm_call, run_agent
-from fitme.services import exercise_search
+from fitme.services import exercise_search, measures
 from fitme.services.catalog import available_exercises
 from fitme.services.decisions import PromptMeta, prompt_columns
 from fitme.services.llm_runtime import LlmRuntime
@@ -515,6 +516,11 @@ def build_inputs(catalog: Catalog, snapshot: Snapshot, settings: Settings, user_
         flags=[FlagSummary(flag=state.flag, value=state.value) for state in snapshot.flags],
         allowed_exercise_ids=[exercise.id for exercise in allowed],
         history=_history_summaries(snapshot),
+        exercise_measures={
+            exercise.id: exercise.measures
+            for exercise in allowed
+            if exercise.measures != [Measure.REPS]
+        },
     )
     return Inputs(catalog=catalog, ctx=ctx, snapshot=snapshot, user_context=user_context)
 
@@ -602,8 +608,13 @@ def judge(plan: Plan, inputs: Inputs) -> Judgement:
     **Mutates `plan` in place** when it substitutes a load: the object the LLM returned is
     what the caller shows, logs and (later) confirms, so the repair has to land on it — and
     `llm.escalation`'s `guard_check` contract only lets a judge return verdicts. The same
-    pass sanitizes the model's display text (`_sanitize_wording`)."""
-    return _judge_with(plan, lambda: validate_plan(plan, inputs.ctx), inputs)
+    pass sanitizes the model's display text (`_sanitize_wording`) and moves any prescription
+    in a measure its exercise doesn't accept to the exercise's default (ADR 0009,
+    `services.measures`). The `/train` review (`judge_workout`) does not: a plan saved before
+    measures existed still trains as it was saved."""
+    repaired = measures.repair_measures(plan, inputs.catalog)
+    judgement = _judge_with(plan, lambda: validate_plan(plan, inputs.ctx), inputs)
+    return Judgement(verdicts=judgement.verdicts, fired=[*repaired, *judgement.fired])
 
 
 def judge_workout(workout: Workout, inputs: Inputs) -> Judgement:
@@ -1046,7 +1057,17 @@ async def _candidate_pool(
     except Exception:  # retrieval must never block plan generation (ADR 0007 fallback)
         _logger.exception("plan_generate: candidate retrieval failed; sending every allowed id")
         pool = list(context.allowed_exercise_ids)
-    narrowed = context.model_copy(update={"allowed_exercise_ids": pool})
+    pooled = set(pool)
+    narrowed = context.model_copy(
+        update={
+            "allowed_exercise_ids": pool,
+            "exercise_measures": {
+                exercise_id: accepted
+                for exercise_id, accepted in context.exercise_measures.items()
+                if exercise_id in pooled
+            },
+        }
+    )
     return narrowed, exercise_search.exercise_facts(inputs.catalog, pool, context.language)
 
 

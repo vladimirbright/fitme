@@ -12,6 +12,8 @@
     {%- endif -%}
   {%- elif item.load.kind == 'bodyweight' -%}
     {{ t('plan.load_bodyweight') }}
+  {%- elif item.rir is not none -%}
+    {{ t('plan.load_calibration_rir', rir=item.rir) }}
   {%- elif item.declared_kg is not none -%}
     {%- if load_units.get(item.exercise_id) == 'per_implement' -%}
       {{ t('plan.load_calibration_declared', declared=t('load.per_implement', kg=item.declared_kg)) }}
@@ -21,6 +23,21 @@
   {%- else -%}
     {{ t('plan.load_calibration') }}
   {%- endif -%}
+{% endmacro %}
+
+{# ADR 0009: one set's target in its own measure — "6–8", "45 s", "2 min", "40 m". #}
+{% macro seconds_text(seconds) %}
+  {%- set m = seconds // 60 -%}{%- set s = seconds % 60 -%}
+  {%- if m == 0 -%}{{ t('duration.seconds', s=s) }}
+  {%- elif s == 0 -%}{{ t('duration.minutes', m=m) }}
+  {%- else -%}{{ t('duration.minutes_seconds', m=m, s=s) }}{%- endif -%}
+{% endmacro %}
+
+{% macro target_text(item) %}
+  {%- if item.measure == 'time' -%}{{ seconds_text(item.seconds) }}
+  {%- elif item.measure == 'distance' -%}{{ t('duration.meters', m=item.meters) }}
+  {%- elif item.reps_min == item.reps_max -%}{{ item.reps_min }}
+  {%- else -%}{{ item.reps_min }}–{{ item.reps_max }}{%- endif -%}
 {% endmacro %}
 
 {% macro plan_body(plan) %}
@@ -40,7 +57,7 @@
     {% for item in block.items %}
     <li>
       {{ exercise_names.get(item.exercise_id, item.exercise_id) }}:
-      {{ t('plan.sets_reps', sets=item.sets, reps=(item.reps_min if item.reps_min == item.reps_max else item.reps_min ~ '–' ~ item.reps_max)) }}
+      {{ t('plan.sets_reps', sets=item.sets, reps=target_text(item)) }}
       @ {{ load_text(item) }}
       {% if item.note %}&mdash; {{ item.note }}{% endif %}
     </li>

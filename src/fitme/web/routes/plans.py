@@ -13,6 +13,7 @@ from starlette.responses import Response
 
 from fitme import i18n
 from fitme.db.connection import Database
+from fitme.domain.enums import Measure
 from fitme.domain.models import NAME_MAX_LENGTH, Block, Load, Plan, Prescription, Workout
 from fitme.services import plan_edit, planning, training
 from fitme.services import profile as profile_service
@@ -360,7 +361,9 @@ def _field_error(prefix: str, exc: ValidationError) -> list[str]:
     ]
 
 
-def _parse_int(form: FormData, key: str, default: int, errors: list[str]) -> int:
+def _parse_int[D: (int, int | None)](
+    form: FormData, key: str, default: D, errors: list[str]
+) -> int | D:
     """A malformed integer (non-numeric, empty) is a form error, never a crash (M9 review fix
     B1) — `int("999")`/`int("abc")` etc. are both handled here, before anything reaches a
     pydantic model; the *range* checks (e.g. `sets` 1..10) are still enforced by `Prescription`
@@ -387,8 +390,16 @@ def _parse_prescription(
     errors: list[str] = []
     exercise_id = form.get(f"{prefix}exercise", item.exercise_id)
     sets = _parse_int(form, f"{prefix}sets", item.sets, errors)
-    reps_min = _parse_int(form, f"{prefix}reps_min", item.reps_min, errors)
-    reps_max = _parse_int(form, f"{prefix}reps_max", item.reps_max, errors)
+    # ADR 0009: the form edits values, not the measure: only the item's own target fields
+    # are read (a timed set has seconds, a distance set meters, a reps set its range).
+    reps_min = reps_max = seconds = meters = None
+    if item.measure == Measure.TIME:
+        seconds = _parse_int(form, f"{prefix}seconds", item.seconds, errors)
+    elif item.measure == Measure.DISTANCE:
+        meters = _parse_int(form, f"{prefix}meters", item.meters, errors)
+    else:
+        reps_min = _parse_int(form, f"{prefix}reps_min", item.reps_min, errors)
+        reps_max = _parse_int(form, f"{prefix}reps_max", item.reps_max, errors)
     rest_seconds = _parse_int(form, f"{prefix}rest", item.rest_seconds, errors)
     load_kind_raw = form.get(f"{prefix}load_kind", item.load.kind)
     load_kind = str(load_kind_raw)
@@ -419,8 +430,12 @@ def _parse_prescription(
         prescription = Prescription(
             exercise_id=str(exercise_id),
             sets=sets,
+            measure=item.measure,
             reps_min=reps_min,
             reps_max=reps_max,
+            seconds=seconds,
+            meters=meters,
+            rir=item.rir,
             load=load,
             rest_seconds=rest_seconds,
             note=item.note,

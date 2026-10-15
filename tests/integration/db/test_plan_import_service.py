@@ -262,7 +262,7 @@ async def test_the_sample_program_imports_with_every_day_and_the_right_catalog_i
     draft = rounds[0]
     assert draft.id == result.decision_id
     assert draft.model == _settings().llm_tier_medium
-    assert draft.prompt_template == "plan_import" and draft.prompt_version == "1"
+    assert draft.prompt_template == "plan_import" and draft.prompt_version == "2"
     assert draft.llm_input == sent
     assert draft.load_changes == []  # A§4.3: a draft never counts toward the cap
     assert draft.proposal is not None
