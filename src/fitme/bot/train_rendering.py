@@ -23,10 +23,10 @@ from fitme.db.records import CheckinRecord, PlanRecord
 from fitme.domain.catalog import Catalog, Exercise
 from fitme.domain.enums import CheckinAnswer
 from fitme.domain.models import Block, Load, Prescription, Workout
-from fitme.domain.results import ChangeReps, ParsedResults, PlanChange, SwapExercise
+from fitme.domain.results import ChangeReps, ParsedResults, PlanChange, SetResult, SwapExercise
 from fitme.i18n import t
 from fitme.services.recap import NextKind, RecapView
-from fitme.services.training import BlockView, ResultPrompt, ReviewView
+from fitme.services.training import BlockView, LoggedItem, ResultPrompt, ReviewView
 
 
 def _rows(*buttons: InlineKeyboardButton) -> InlineKeyboardMarkup:
@@ -279,8 +279,20 @@ def results_implausible_text(prompt: ResultPrompt, lang: str) -> str:
 
 
 def parsed_text(prompt: ResultPrompt, parsed: ParsedResults, lang: str) -> str:
-    lines = [t("train.parsed_title", lang, name=prompt_name(prompt, lang))]
-    for result in sorted(parsed.sets, key=lambda item: item.set_index):
+    title = t("train.parsed_title", lang, name=prompt_name(prompt, lang))
+    return "\n".join([title, *_set_lines(parsed.sets, prompt.exercise, lang)])
+
+
+def logged_item_text(item: LoggedItem, lang: str) -> str:
+    """One exercise the assistant logged (ADR 0005): the sets as written."""
+    name = exercise_name(item.exercise, item.exercise_id, lang)
+    title = t("train.parsed_title", lang, name=name)
+    return "\n".join([title, *_set_lines(item.sets, item.exercise, lang)])
+
+
+def _set_lines(sets: Sequence[SetResult], exercise: Exercise | None, lang: str) -> list[str]:
+    lines: list[str] = []
+    for result in sorted(sets, key=lambda item: item.set_index):
         if result.skipped:
             lines.append(t("train.parsed_set_skipped", lang, index=result.set_index))
         elif result.load_kg is None:
@@ -291,7 +303,7 @@ def parsed_text(prompt: ResultPrompt, parsed: ParsedResults, lang: str) -> str:
             kg = f"{result.load_kg:g}"
             load = (
                 t("load.per_implement", lang, kg=kg)
-                if prompt.exercise is not None and prompt.exercise.load_unit == "per_implement"
+                if exercise is not None and exercise.load_unit == "per_implement"
                 else t("plan.load_kg", lang, kg=kg)
             )
             lines.append(
@@ -303,7 +315,7 @@ def parsed_text(prompt: ResultPrompt, parsed: ParsedResults, lang: str) -> str:
                     load=load,
                 )
             )
-    return "\n".join(lines)
+    return lines
 
 
 def parsed_markup(prompt: ResultPrompt, decision_id: int, lang: str) -> InlineKeyboardMarkup:

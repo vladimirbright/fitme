@@ -121,7 +121,6 @@ async def on_free_text(
             user_id,
             text,
             pending_plan_revisions,
-            pending_train,
             chat_message_id=chat_message_id,
         )
         return

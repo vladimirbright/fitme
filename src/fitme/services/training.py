@@ -35,11 +35,12 @@ select_plan ─► select_workout ─► precheck ─► review ⇄ adjust ─�
   one per prescribed set, planned load/reps filled, `actual_*` NULL — in the same
   transaction that advances `current_block`, so a resume finds the rows and never
   duplicates them (`assign_rows` maps existing rows back onto blocks in creation order).
-  "According to plan" writes actual = planned; "Skip" marks the block's sets `skipped=1`;
+  "Done as planned" writes actual = planned; "Skip" marks the block's sets `skipped=1`;
   "Enter results" goes stop-word scan → `result_parse` (per prescription, so `set_index`
   is unambiguous even in a superset) → `safety_signal` halts → `unclear` re-asks →
   `guards.plausibility` re-asks → shown for confirmation; only a confirmed parse writes
-  `actual_*`.
+  `actual_*`. The free-text assistant logs one exercise at a time instead (`log_items`, ADR
+  0005): no confirmation step, so the same coverage and plausibility checks must pass first.
 - **Halts** (A§6.6) all go through `services.safety.halt`, which halts the active session
   and ties the hold to it. **Abort** keeps the sets as logged.
 
@@ -104,6 +105,7 @@ from fitme.db.selectors.training import (
     count_workout_sessions_for_user,
     get_active_workout_session,
     get_workout_session,
+    historical_max_by_exercise,
     last_completed_workout_key_for_plan,
     list_checkins_for_session,
     list_set_logs_for_session,
@@ -147,6 +149,7 @@ _EVENT_ADJUST_REJECTED = "adjust_rejected"  # a rejected attempt or a refusal: l
 EVENT_START = "start"
 _EVENT_PARSE = "parse"
 _PARSE_SHOWN = "shown"
+_EVENT_ASSISTANT_LOG = "assistant_log"  # ADR 0005: logged by the assistant, no Correct step
 _ENGINE_RULE = "loads.engine"
 
 
@@ -1227,7 +1230,7 @@ async def _advance(conn: Connection, progress: _Progress) -> Advance:
 async def complete_block_as_planned(
     db: Database, user_id: int, session_id: int, block: int
 ) -> Advance:
-    """✅ According to plan: actual = planned for every not-yet-logged set of the block. The
+    """✅ Done as planned: actual = planned for every not-yet-logged set of the block. The
     reps logged are the top of the prescribed range (A§7.3 double progression: "according to
     plan" means every set reached `reps_max`); a kg load is logged as the prescribed kg, a
     bodyweight/calibration load as no kg (log the actual weight through "Enter results")."""
@@ -1567,6 +1570,251 @@ async def confirm_results(
         if next_prompt is not None:
             return ConfirmResults(status=Status.OK, next_prompt=next_prompt)
         return ConfirmResults(status=Status.OK, advance=await _advance(conn, progress))
+
+
+# --- One exercise of the current block, from the assistant (ADR 0005) -----------------------
+
+
+class ItemLogKind(StrEnum):
+    AS_PLANNED = "as_planned"  # like ✅: every set at the top of the range, prescribed load
+    SKIPPED = "skipped"  # like ⏭
+    RESULTS = "results"  # the user's own numbers, one entry per prescribed set
+
+
+@dataclass(frozen=True, slots=True)
+class ItemLog:
+    """One exercise of the current block, as the assistant staged it. Logged without a
+    Correct/Fix step, so it must pass the same checks a confirmed parse does: the exercise is
+    in the current block and not logged yet, every prescribed set is named exactly once, and
+    every load passes `guards.plausibility`."""
+
+    exercise_id: str
+    kind: ItemLogKind
+    sets: tuple[SetResult, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
+class LoggedItem:
+    exercise_id: str
+    exercise: Exercise | None
+    sets: tuple[SetResult, ...]  # what was written, one per prescribed set
+
+
+@dataclass(frozen=True, slots=True)
+class LogItemsResult:
+    status: Status
+    error: str | None = None  # why nothing was written (machine text, for the model)
+    logged: tuple[LoggedItem, ...] = ()
+    advance: Advance | None = None  # the block is complete
+    block: BlockView | None = None  # the block is still open (part of a superset logged)
+
+
+@dataclass(frozen=True, slots=True)
+class _ResolvedLog:
+    item: int
+    entry: ItemLog
+    sets: tuple[SetResult, ...]
+    verdicts: tuple[GuardVerdict, ...]
+
+
+def _item_open(rows: Sequence[SetLogRecord]) -> bool:
+    return not rows or any(not is_logged(row) for row in rows)
+
+
+def _sets_to_write(prescription: Prescription, entry: ItemLog) -> tuple[SetResult, ...]:
+    indexes = range(1, prescription.sets + 1)
+    if entry.kind == ItemLogKind.SKIPPED:
+        return tuple(SetResult(set_index=i, skipped=True) for i in indexes)
+    if entry.kind == ItemLogKind.AS_PLANNED:
+        return tuple(
+            SetResult(set_index=i, reps=prescription.reps_max, load_kg=prescription.load.kg)
+            for i in indexes
+        )
+    return tuple(sorted(entry.sets, key=lambda result: result.set_index))
+
+
+def _resolve_logs(
+    progress: _Progress,
+    block: int,
+    entries: Sequence[ItemLog],
+    catalog: Catalog,
+    history_max: dict[str, float],
+) -> tuple[list[_ResolvedLog], str | None]:
+    """Match each entry to an open exercise of `block` and check it, in order. The first
+    problem is returned (and nothing is to be written)."""
+    items = progress.workout.blocks[block].items
+    taken: set[int] = set()
+    resolved: list[_ResolvedLog] = []
+    for entry in entries:
+        index = next(
+            (
+                i
+                for i, (item, rows) in enumerate(zip(items, progress.assigned[block], strict=True))
+                if i not in taken and item.exercise_id == entry.exercise_id and _item_open(rows)
+            ),
+            None,
+        )
+        if index is None:
+            open_ids = [
+                item.exercise_id
+                for i, (item, rows) in enumerate(zip(items, progress.assigned[block], strict=True))
+                if i not in taken and _item_open(rows)
+            ]
+            return [], (
+                f"{entry.exercise_id} is not an open exercise of the current block "
+                f"(open: {', '.join(open_ids) or 'none'})"
+            )
+        prescription = items[index]
+        exercise = catalog.by_id(prescription.exercise_id)
+        verdicts: list[GuardVerdict] = []
+        if entry.kind == ItemLogKind.AS_PLANNED and prescription.load.kind == "calibration":
+            return [], (
+                f"{entry.exercise_id} is a calibration load: log the weight actually used "
+                "with log_exercise_results"
+            )
+        if entry.kind == ItemLogKind.RESULTS:
+            if not _covers_every_set(entry.sets, prescription.sets):
+                return [], (
+                    f"{entry.exercise_id}: name every prescribed set exactly once, set_index "
+                    f"1..{prescription.sets} (a set not done is skipped)"
+                )
+            if prescription.load.kind == "calibration" and any(
+                not result.skipped and result.load_kg is None for result in entry.sets
+            ):
+                return [], (
+                    f"{entry.exercise_id} is a calibration load: give the weight used for "
+                    "every set done, or ask the user for it"
+                )
+            if exercise is not None:
+                verdicts = check_parsed_results(
+                    exercise,
+                    prescription.load,
+                    entry.sets,
+                    history_max_kg=history_max.get(exercise.id),
+                )
+                failed = [verdict.detail for verdict in verdicts if not verdict.ok]
+                if failed:
+                    return [], (
+                        f"{entry.exercise_id}: implausible load, ask the user to check it "
+                        f"({'; '.join(failed)})"
+                    )
+        taken.add(index)
+        resolved.append(
+            _ResolvedLog(
+                item=index,
+                entry=entry,
+                sets=_sets_to_write(prescription, entry),
+                verdicts=tuple(verdicts),
+            )
+        )
+    return resolved, None
+
+
+async def check_item_logs(
+    db: Database, user_id: int, session_id: int, block: int, entries: Sequence[ItemLog]
+) -> str | None:
+    """What would stop `log_items` from writing `entries` right now, or `None`: checked as
+    the assistant stages each one, so it can correct itself in the same turn."""
+    async with db.read() as conn:
+        status, progress = await _load_progress(conn, user_id, session_id, block=block)
+        history_max = await historical_max_by_exercise(conn, user_id)
+    if progress is None:
+        return f"no open workout block ({status.value})"
+    return _resolve_logs(progress, block, entries, load_catalog(), history_max)[1]
+
+
+async def log_items(
+    db: Database,
+    user_id: int,
+    session_id: int,
+    block: int,
+    entries: Sequence[ItemLog],
+    *,
+    prompt: PromptMeta,
+    report_extra: dict[str, object],
+) -> LogItemsResult:
+    """Write the staged exercises of the current block, all or nothing, re-checked in the
+    transaction. Each one is a `result_parse` decision (`event = assistant_log`, the
+    assistant's prompt and model, the plausibility verdicts) with its outcome; then the
+    block advances once every exercise in it is logged."""
+    catalog = load_catalog()
+    async with db.transaction() as conn:
+        status, progress = await _load_progress(conn, user_id, session_id, block=block)
+        if progress is None:
+            return LogItemsResult(status=status)
+        await _ensure_block_rows(conn, session_id, progress.workout, block)
+        progress = (await _load_progress(conn, user_id, session_id, block=block))[1]
+        assert progress is not None
+        history_max = await historical_max_by_exercise(conn, user_id)
+        resolved, problem = _resolve_logs(progress, block, entries, catalog, history_max)
+        if problem is not None:
+            return LogItemsResult(status=Status.STALE, error=problem)
+        logged: list[LoggedItem] = []
+        for log in resolved:
+            prescription = progress.workout.blocks[block].items[log.item]
+            rows = progress.assigned[block][log.item]
+            by_index = {row.set_index: row for row in rows}
+            written: list[int] = []
+            for result in log.sets:
+                row = by_index.get(result.set_index)
+                if row is None or is_logged(row):
+                    continue
+                if result.skipped:
+                    await mark_set_log_skipped(conn, row.id, source=_SOURCE_FREE_TEXT)
+                else:
+                    assert result.reps is not None
+                    load_kg = result.load_kg if result.load_kg is not None else prescription.load.kg
+                    await update_set_log_actual(
+                        conn,
+                        row.id,
+                        actual_load_kg=load_kg,
+                        actual_reps=result.reps,
+                        source=_SOURCE_FREE_TEXT,
+                    )
+                written.append(row.id)
+            decision_id = await insert_decision(
+                conn,
+                user_id=user_id,
+                kind=DecisionKind.RESULT_PARSE.value,
+                **prompt_columns(prompt),
+                content_version=content_version(),
+                user_report={
+                    **report_extra,
+                    "session_id": session_id,
+                    "event": _EVENT_ASSISTANT_LOG,
+                    "block": block,
+                    "item": log.item,
+                    "logged_as": log.entry.kind.value,
+                },
+                proposal={
+                    "verdict": "logged",
+                    "sets": [result.model_dump(mode="json") for result in log.sets],
+                },
+                guards_fired=[verdict.model_dump() for verdict in log.verdicts],
+            )
+            await insert_decision_outcome(
+                conn,
+                decision_id=decision_id,
+                outcome={"confirmed": True, "set_log_ids": written},
+            )
+            logged.append(
+                LoggedItem(
+                    exercise_id=prescription.exercise_id,
+                    exercise=catalog.by_id(prescription.exercise_id),
+                    sets=log.sets,
+                )
+            )
+        progress = (await _load_progress(conn, user_id, session_id, block=block))[1]
+        assert progress is not None
+        if _next_item(progress, block, catalog) is not None:
+            return LogItemsResult(
+                status=Status.OK,
+                logged=tuple(logged),
+                block=_block_view(session_id, progress.workout, block),
+            )
+        return LogItemsResult(
+            status=Status.OK, logged=tuple(logged), advance=await _advance(conn, progress)
+        )
 
 
 # --- Delete (A§9.4, website) -------------------------------------------------------------------

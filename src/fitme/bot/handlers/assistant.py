@@ -7,7 +7,9 @@ stop-word scan (A§6.3) — a halting message never reaches this module. The ass
 words come first (wording-checked in the service, marked as AI-generated), then every effect
 in order, each built from the data, never from model text: a draft as a diff with Save / the
 whole draft / Close, today's changed blocks, corrected sets with Undo, and the existing
-screens for redesigns, new plans, block logging, stats.
+screens for redesigns, new plans, stats; exercises logged during a workout with the next
+block (the sets written are listed only when the assistant's reply is empty); or, when the
+model reported a safety concern, only the fixed halt message.
 """
 
 from __future__ import annotations
@@ -120,10 +122,9 @@ async def _show_item(
     settings: Settings,
     llm: LlmRuntime,
     user_id: int,
-    text: str,
     lang: str,
     pending_plan_revisions: plan_handlers.PendingRevisions,
-    pending_train: train_handlers.PendingTrains,
+    replied: bool,
 ) -> None:
     if isinstance(item, assistant.DraftUpdated):
         await plan_handlers.show_edit_draft(message, item.result, item.before, lang)
@@ -147,15 +148,12 @@ async def _show_item(
         await plan_handlers.new_plan(
             message, db, llm, user_id, lang, pending_plan_revisions, guidance=item.guidance
         )
-    elif isinstance(item, assistant.RunLogBlock):
-        await train_handlers.log_current_block(
-            message, db, llm, user_id, pending_train, skip=item.skip
+    elif isinstance(item, assistant.ExercisesLogged):
+        await train_handlers.show_logged(
+            message, db, llm, user_id, item.session_id, item.result, announce=not replied
         )
-    elif isinstance(item, assistant.RunEnterResults):
-        # The user's own words go to the result parser, never the model's paraphrase.
-        await train_handlers.enter_current_block_results(
-            message, db, llm, user_id, text, pending_train
-        )
+    elif isinstance(item, assistant.Halted):
+        await message.answer(t("halt.message", lang))
     elif isinstance(item, assistant.RunShow):
         await _show_view(
             message, item, db=db, settings=settings, llm=llm, user_id=user_id, lang=lang
@@ -192,7 +190,6 @@ async def handle_assistant_text(
     user_id: int,
     text: str,
     pending_plan_revisions: plan_handlers.PendingRevisions,
-    pending_train: train_handlers.PendingTrains,
     *,
     chat_message_id: int | None = None,
 ) -> None:
@@ -215,10 +212,9 @@ async def handle_assistant_text(
             settings=settings,
             llm=llm,
             user_id=user_id,
-            text=text,
             lang=lang,
             pending_plan_revisions=pending_plan_revisions,
-            pending_train=pending_train,
+            replied=bool(result.message),
         )
     if not result.message and not result.items:
         await message.answer(t("assistant.not_understood", lang))

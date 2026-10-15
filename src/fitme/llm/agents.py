@@ -36,7 +36,7 @@ from fitme.domain.assistant import (
     WorkoutOp,
 )
 from fitme.domain.models import PlanImportProposal, PlanProposal, SessionAdjustProposal
-from fitme.domain.results import ParsedResults, Recap
+from fitme.domain.results import ParsedResults, Recap, SetResult
 from fitme.llm.models import model_settings_for, output_retries_for
 from fitme.llm.prompts import render_prompt
 
@@ -173,9 +173,15 @@ class AssistantTools(Protocol):
         self, session_id: int, fixes: list[FixLoggedSet]
     ) -> dict[str, object]: ...
 
-    async def log_current_block(self, skip: bool) -> dict[str, object]: ...
+    async def log_exercise_as_planned(self, exercise_id: str) -> dict[str, object]: ...
 
-    async def enter_current_block_results(self) -> dict[str, object]: ...
+    async def skip_exercise(self, exercise_id: str) -> dict[str, object]: ...
+
+    async def log_exercise_results(
+        self, exercise_id: str, sets: list[SetResult]
+    ) -> dict[str, object]: ...
+
+    async def report_safety_concern(self) -> dict[str, object]: ...
 
     async def edit_today(self, ops: list[AnyWorkoutOp]) -> dict[str, object]: ...
 
@@ -285,17 +291,34 @@ async def _fix_logged_sets(ctx: Deps, session_id: int, fixes: list[FixLoggedSet]
 # --- Training session (a started workout) ----------------------------------------------------
 
 
-async def _log_current_block(ctx: Deps, skip: bool = False) -> object:
-    """The block on screen: done as prescribed (`skip` false — "по плану", "done", "+"), or
-    skipped (`skip` true). Same as the block's ✅ / ⏭ buttons."""
-    return _NO_DATA if ctx.deps is None else await ctx.deps.log_current_block(skip)
+async def _log_exercise_as_planned(ctx: Deps, exercise_id: str) -> object:
+    """One exercise of the block on screen done as planned ("по плану", "done", "+"): every
+    set is logged at the top of the rep range with the prescribed load, like the ✅ Done as
+    planned button. Not for a calibration load (the weight used is needed). In a superset,
+    call it once per exercise the user confirmed."""
+    return _NO_DATA if ctx.deps is None else await ctx.deps.log_exercise_as_planned(exercise_id)
 
 
-async def _enter_current_block_results(ctx: Deps) -> object:
-    """The user reports what they actually did on the block on screen (reps, kg). Don't parse
-    it: the app sends the user's own message to the result parser, then asks them to
-    confirm."""
-    return _NO_DATA if ctx.deps is None else await ctx.deps.enter_current_block_results()
+async def _skip_exercise(ctx: Deps, exercise_id: str) -> object:
+    """One exercise of the block on screen skipped: every set not done, like ⏭."""
+    return _NO_DATA if ctx.deps is None else await ctx.deps.skip_exercise(exercise_id)
+
+
+async def _log_exercise_results(ctx: Deps, exercise_id: str, sets: list[SetResult]) -> object:
+    """One exercise of the block on screen with the numbers the user reported: one entry per
+    prescribed set (`set_index` 1..sets), exactly as reported; a set not done is `skipped`.
+    `load_kg` null means the prescribed load. Logged at once if it passes the checks; an
+    implausible number is refused, so ask the user instead of guessing."""
+    if ctx.deps is None:
+        return _NO_DATA
+    return await ctx.deps.log_exercise_results(exercise_id, list(sets))
+
+
+async def _report_safety_concern(ctx: Deps) -> object:
+    """The user reports pain (not ordinary muscle soreness), dizziness, numbness, chest
+    discomfort, a popped or snapped feeling, trouble breathing or fainting, in any wording,
+    during a workout. Stops the workout; nothing else from this turn is applied."""
+    return _NO_DATA if ctx.deps is None else await ctx.deps.report_safety_concern()
 
 
 async def _edit_today(ctx: Deps, ops: list[WorkoutOp]) -> object:
@@ -332,8 +355,10 @@ _ASSISTANT_TOOLS: tuple[Tool[Any], ...] = (
     Tool(_rename_plan, name="rename_plan"),
     Tool(_set_default_plan, name="set_default_plan"),
     Tool(_fix_logged_sets, name="fix_logged_sets"),
-    Tool(_log_current_block, name="log_current_block"),
-    Tool(_enter_current_block_results, name="enter_current_block_results"),
+    Tool(_log_exercise_as_planned, name="log_exercise_as_planned"),
+    Tool(_skip_exercise, name="skip_exercise"),
+    Tool(_log_exercise_results, name="log_exercise_results"),
+    Tool(_report_safety_concern, name="report_safety_concern"),
     Tool(_edit_today, name="edit_today"),
     Tool(_show, name="show"),
 )

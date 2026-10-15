@@ -541,9 +541,12 @@ Register the command list with `setMyCommands` for each supported language.
     judged like any draft and shown as a diff, with **Save** / **Whole draft** / **Close
     without saving**. Loads above the guards are limited and the user is told. The website
     editor's checkbox is still the only override.
-  - **Training**: from Start to the end of the workout. ✅ ("по плану"), ✏️ (the user's
-    **own** message goes to `result_parse`), ⏭, and changes to the blocks not started yet,
-    for today only. At the end the bot offers to carry those changes into the plan, as a
+  - **Training**: from Start to the end of the workout. Each exercise of the current block
+    (one at a time in a superset) can be logged as planned ("по плану"), with the user's
+    numbers, or skipped. It is written at once, without Correct / Fix, but only after the
+    coverage and plausibility checks pass (ADR 0005). A safety concern that the stop words
+    missed halts the workout. Changes to the blocks not started yet apply for today
+    only. At the end the bot offers to carry those changes into the plan, as a
     planning draft. Aborting stays a button only.
   - The assistant uses tools and may call several in one turn. Staging tools check each
     action at once and apply it only after the run, through the guards. Logged-set
@@ -613,9 +616,9 @@ select_plan ─► select_workout ─► precheck ─► review ─► in_progre
 5. **In progress.** Send one block at a time (a single exercise or a superset):
    - exercise name, vetted catalog instructions, sets × reps, **explicit load for every
      set** ("3 × 8 @ 42.5 kg"), rest time;
-   - buttons: **✅ According to plan**, **✏️ Enter results**, **⏭ Skip**, **⚠ Pain /
+   - buttons: **✅ Done as planned**, **✏️ Enter results**, **⏭ Skip**, **⚠ Pain /
      feeling unwell**.
-   - **According to plan** writes `set_logs` with actual = planned.
+   - **Done as planned** writes `set_logs` with actual = planned.
    - **Enter results** takes free text ("8,8,6 at 42.5, last set hard"):
      stop-word guard → `result_parse` agent (output: `list[SetResult]` +
      `safety_signal: bool`) → show the parsed table → **Correct** / **Fix**. Only a
@@ -655,8 +658,8 @@ select_plan ─► select_workout ─► precheck ─► review ─► in_progre
 - **Adjust drafts.** Only guard-accepted adjust attempts can become the current draft
   (`event=adjust`). Rejected attempts and refusals are logged as `event=adjust_rejected`,
   and the last accepted draft stays in effect.
-- **"✅ According to plan"** logs every set at the top of the rep range. The button copy
-  says so ("All sets at the top of the range"); otherwise the user enters results.
+- **"✅ Done as planned"** logs every set at the top of the rep range. The hint under every
+  block says so; otherwise the user enters results (ADR 0005).
 - **Start and Save judge today's workout**, not the whole plan: the gate plus
   per-prescription verdicts. They use train-specific refusal copy.
 

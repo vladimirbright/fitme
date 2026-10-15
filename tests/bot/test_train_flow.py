@@ -1473,7 +1473,9 @@ async def test_a_calibration_block_hides_the_all_sets_button(
     block2 = _last_text(session)  # bench calibration + push-up bodyweight: ✅ stays
     assert t("train.according_hint", "en") in block2
     assert any(d.startswith("tr:done:") for d in _callback_datas(_sent(session)[-1]))
-    assert t("workout.according_to_plan_button", "en") == "✅ All sets at the top of the range"
+    # The button says "Done as planned"; the hint under every block says what it logs.
+    assert t("workout.according_to_plan_button", "en") == "✅ Done as planned"
+    assert "top of the rep range" in t("train.according_hint", "en")
     await _seed_completed_session(db, user_id, version_id, loads={_SQUAT: 40.0})
 
 

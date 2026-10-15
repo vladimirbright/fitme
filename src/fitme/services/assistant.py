@@ -15,8 +15,10 @@ saved it and run the stop-word scan, A§6.3):
 4. **Apply** what was staged, after the run, through the same code as the buttons: a plan
    edit becomes a draft round of the planning session (`planning.record_edit_draft`, judged
    like any draft; "Save" is `planning.confirm_plan`); a change of today's workout is
-   `training.edit_remaining`; a logged-set fix is `log_edit.fix_logged_sets` (with Undo).
-   Redesigns, new plans, block logging and screens are handed to the bot's existing flows.
+   `training.edit_remaining`; a logged-set fix is `log_edit.fix_logged_sets` (with Undo);
+   exercises of the current block are `training.log_items` (ADR 0005). A safety concern the
+   model reports halts the workout instead, and nothing else is applied (A§7.2: the model can
+   only add a halt). Redesigns, new plans and screens are handed to the bot's existing flows.
 
 The model never writes to the database; every write goes through the functions above.
 """
@@ -55,8 +57,16 @@ from fitme.domain.assistant import (
     SwapExercise,
 )
 from fitme.domain.catalog import Catalog
-from fitme.domain.enums import DecisionKind, RefusalCode, WorkoutSessionStatus
+from fitme.domain.enums import (
+    DecisionKind,
+    HealthHoldReason,
+    RefusalCode,
+    WorkoutSessionStatus,
+)
 from fitme.domain.models import Block, Load, Plan, Prescription, Refusal, Workout
+from fitme.domain.results import SetResult
+from fitme.guards import stop_words
+from fitme.guards.layering import combine_with_llm_signal
 from fitme.i18n import wording
 from fitme.llm.context import render_user_prompt, scrub
 from fitme.llm.models import model_for
@@ -65,6 +75,7 @@ from fitme.services import conversations, log_edit, planning, training
 from fitme.services.decisions import PromptMeta, prompt_columns
 from fitme.services.llm_runtime import LlmRuntime
 from fitme.services.plan_edit import save_edit
+from fitme.services.safety import HaltResult, halt
 
 AGENT_NAME = "assistant"
 SOURCE = "assistant"
@@ -286,13 +297,18 @@ class RunNewPlan:
 
 
 @dataclass(frozen=True, slots=True)
-class RunLogBlock:
-    skip: bool
+class ExercisesLogged:
+    """Exercises of the current block logged from the message (ADR 0005), or why not."""
+
+    session_id: int
+    result: training.LogItemsResult
 
 
 @dataclass(frozen=True, slots=True)
-class RunEnterResults:
-    pass
+class Halted:
+    """The model reported a safety concern during the workout: halted, nothing applied."""
+
+    halt: HaltResult
 
 
 @dataclass(frozen=True, slots=True)
@@ -310,8 +326,8 @@ Item = (
     | DraftSaved
     | RunRewrite
     | RunNewPlan
-    | RunLogBlock
-    | RunEnterResults
+    | ExercisesLogged
+    | Halted
     | RunShow
 )
 
@@ -343,7 +359,9 @@ class _Staged:
     new_plan: RunNewPlan | None = None
     save: bool = False
     discard: bool = False
-    block: RunLogBlock | RunEnterResults | None = None
+    logs: list[training.ItemLog] = field(default_factory=list)
+    log_block: tuple[int, int] | None = None  # (session id, block) the logs belong to
+    halt: bool = False
     shows: list[RunShow] = field(default_factory=list)
 
 
@@ -654,21 +672,44 @@ class _Turn:
             return None
         return active.session.id, active.session.current_block
 
-    async def log_current_block(self, skip: bool) -> dict[str, object]:
-        if self._open_block() is None:
+    async def _stage_log(self, entry: training.ItemLog) -> dict[str, object]:
+        open_block = self._open_block()
+        if open_block is None:
             return _error("no workout block is open")
-        if self.staged.block is not None:
-            return _error("one block action per turn")
-        self.staged.block = RunLogBlock(skip=skip)
+        session_id, block = open_block
+        problem = await training.check_item_logs(
+            self._db, self._user_id, session_id, block, [*self.staged.logs, entry]
+        )
+        if problem is not None:
+            return _error(problem)
+        self.staged.logs.append(entry)
+        self.staged.log_block = open_block
         return _ok()
 
-    async def enter_current_block_results(self) -> dict[str, object]:
+    async def log_exercise_as_planned(self, exercise_id: str) -> dict[str, object]:
+        return await self._stage_log(
+            training.ItemLog(exercise_id=exercise_id, kind=training.ItemLogKind.AS_PLANNED)
+        )
+
+    async def skip_exercise(self, exercise_id: str) -> dict[str, object]:
+        return await self._stage_log(
+            training.ItemLog(exercise_id=exercise_id, kind=training.ItemLogKind.SKIPPED)
+        )
+
+    async def log_exercise_results(
+        self, exercise_id: str, sets: list[SetResult]
+    ) -> dict[str, object]:
+        return await self._stage_log(
+            training.ItemLog(
+                exercise_id=exercise_id, kind=training.ItemLogKind.RESULTS, sets=tuple(sets)
+            )
+        )
+
+    async def report_safety_concern(self) -> dict[str, object]:
         if self._open_block() is None:
-            return _error("no workout block is open")
-        if self.staged.block is not None:
-            return _error("one block action per turn")
-        self.staged.block = RunEnterResults()
-        return _ok(staged="the user's message goes to the result parser after this turn")
+            return _error("no workout is in progress")
+        self.staged.halt = True
+        return _ok(staged="the workout stops after this turn; nothing else is applied")
 
     async def edit_today(self, ops: list[AnyWorkoutOp]) -> dict[str, object]:
         open_block = self._open_block()
@@ -853,6 +894,13 @@ async def handle_message(
         llm_input=rendered.payload,
     )
 
+    if turn.staged.halt:
+        # A reported safety concern wins over everything else the run did or said, a refusal
+        # included; the fixed halt message replaces the model's words (A§6.6).
+        halted = await _halt(db, user_id)
+        await record_llm_call(db, decision_id=halted.halt.decision_id, record=outcome.record)
+        return TurnResult(items=(halted,))
+
     if isinstance(output, Refusal):
         # A refusal is a decision (AGENTS.md §6), with the prompt/model that chose it. Nothing
         # staged is applied: a refused (or failed) run changes nothing.
@@ -888,6 +936,20 @@ async def handle_message(
             await conversations.link_incoming(db, chat_message_id, ended_in.id)
         await conversations.record_outgoing(db, user_id, ended_in.id, message)
     return TurnResult(message=message or None, items=tuple(items))
+
+
+async def _halt(db: Database, user_id: int) -> Halted:
+    """A§6.6 with the model's signal as the trigger, layered on the stop-word verdict the
+    message already passed (A§7.2)."""
+    verdict = combine_with_llm_signal(stop_words.to_verdict(None), True)
+    halted = await halt(
+        db,
+        user_id=user_id,
+        reason=HealthHoldReason.LLM_SAFETY_SIGNAL,
+        guards_fired=[verdict],
+        user_report={"trigger": "llm_safety_signal", "event": "halt", "source": SOURCE},
+    )
+    return Halted(halted)
 
 
 async def _apply(
@@ -976,12 +1038,18 @@ async def _apply(
         await conversations.close_planning(db, user_id, status="discarded")
         items.append(Notice("assistant.draft_discarded"))
 
+    # After today's edit, so the next block shown is the edited one.
+    if staged.logs and staged.log_block is not None:
+        session_id, block = staged.log_block
+        logged = await training.log_items(
+            db, user_id, session_id, block, staged.logs, prompt=prompt, report_extra=report
+        )
+        items.append(ExercisesLogged(session_id, logged))
+
     if staged.rewrite is not None:
         items.append(staged.rewrite)
     if staged.new_plan is not None:
         items.append(staged.new_plan)
-    if staged.block is not None:
-        items.append(staged.block)
     items.extend(staged.shows)
     return items
 
@@ -1048,12 +1116,12 @@ async def undo(db: Database, llm: LlmRuntime, user_id: int, decision_id: int) ->
 __all__ = [
     "DraftSaved",
     "DraftUpdated",
+    "ExercisesLogged",
+    "Halted",
     "Item",
     "LogFixed",
     "Notice",
     "OpError",
-    "RunEnterResults",
-    "RunLogBlock",
     "RunNewPlan",
     "RunRewrite",
     "RunShow",

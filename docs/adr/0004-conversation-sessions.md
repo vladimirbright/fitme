@@ -1,6 +1,7 @@
 # ADR 0004 — Conversation sessions and a tool-using assistant
 
-Status: accepted (2026-10-05). Supersedes the "edits apply immediately" part of ADR 0003.
+Status: accepted (2026-10-05). Supersedes the "edits apply immediately" part of ADR 0003. Block
+logging tools superseded by ADR 0005 (per-exercise logging).
 
 ## Context
 
