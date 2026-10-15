@@ -1,0 +1,13 @@
+id = "standing_hip_circles"
+names = { en = "Standing hip circles", ru = "Круговые движения тазом стоя" }
+kind = "mobility"
+pattern = "mobility"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["hip", "lower_back"]
+contraindicated_by = ["hip_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand with feet comfortably apart. Move the hips in slow circles in both directions.", ru = "Встаньте, удобно расставив стопы. Медленно вращайте тазом в обе стороны." }
+load_step_kg = 1.0

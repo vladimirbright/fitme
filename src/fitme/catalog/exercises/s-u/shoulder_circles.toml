@@ -1,0 +1,13 @@
+id = "shoulder_circles"
+names = { en = "Shoulder circles", ru = "Круговые движения плечами" }
+kind = "mobility"
+pattern = "mobility"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "neck"]
+contraindicated_by = ["shoulder_injury_current", "neck_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand upright with arms relaxed. Roll the shoulders slowly forward and backward.", ru = "Встаньте прямо, расслабив руки. Медленно вращайте плечами вперёд и назад." }
+load_step_kg = 1.0

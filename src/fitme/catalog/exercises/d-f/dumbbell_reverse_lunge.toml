@@ -1,0 +1,13 @@
+id = "dumbbell_reverse_lunge"
+names = { en = "Dumbbell reverse lunge", ru = "Выпады назад с гантелями" }
+kind = "compound"
+pattern = "squat"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "ankle", "lower_back"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Hold light dumbbells at the sides. Step back and lower under control; return to standing. Keep the front knee tracking over the front foot.", ru = "Держите лёгкие гантели по бокам. Сделайте шаг назад и плавно опуститесь; вернитесь в стойку. Колено передней ноги остаётся над стопой передней ноги." }
+load_step_kg = 1.0

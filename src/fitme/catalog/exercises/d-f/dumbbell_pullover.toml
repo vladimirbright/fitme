@@ -1,0 +1,12 @@
+id = "dumbbell_pullover"
+names = { en = "Dumbbell pullover", ru = "Пуловер с гантелью" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie lengthwise on a flat bench, head supported and feet on the floor. Hold one dumbbell with both hands under the top plate, arms above your chest and elbows slightly bent. Lower it in an arc behind your head only as far as is comfortable, keeping your lower back on the bench, then bring it back over your chest. Use a light weight.", ru = "Лягте вдоль горизонтальной скамьи, голова на скамье, стопы на полу. Возьмите одну гантель обеими руками под верхний диск, руки над грудью, локти слегка согнуты. Опустите гантель по дуге за голову в комфортной амплитуде, не отрывая поясницу от скамьи, затем верните её над грудью. Берите лёгкий вес." }

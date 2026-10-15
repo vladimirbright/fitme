@@ -1,0 +1,13 @@
+id = "mobility_calf_stretch_wall"
+names = { en = "Wall calf stretch", ru = "Растяжка икр у стены" }
+kind = "mobility"
+pattern = "mobility"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["ankle"]
+contraindicated_by = ["ankle_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand facing a wall with hands on it at shoulder height. Step one foot back, keep that leg straight and the heel down, and bend the front knee until you feel a gentle pull in the back calf. Hold 20-30 seconds, then switch legs.", ru = "Встаньте лицом к стене, руки на стене на уровне плеч. Отведите одну ногу назад, держите её прямой, пятка на полу, и согните переднее колено до лёгкого натяжения в задней икре. Удерживайте 20-30 секунд, затем смените ногу." }
+load_step_kg = 1.0

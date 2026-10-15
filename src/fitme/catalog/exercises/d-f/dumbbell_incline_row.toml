@@ -1,0 +1,14 @@
+id = "dumbbell_incline_row"
+names = { en = "Chest-supported dumbbell row", ru = "Тяга гантелей лёжа грудью на наклонной скамье" }
+search = { en = "incline bench dumbbell row", ru = "тяга гантелей на наклонной скамье" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Set a bench to a 30-45 degree incline and lie chest-down on it, a dumbbell in each hand hanging below you. Row the dumbbells up toward your ribs, elbows close to the body, then lower fully under control. Keep your chest on the pad and your head in line with your spine.", ru = "Установите скамью под углом 30-45 градусов и лягте на неё грудью, в руках по гантели, они свободно свисают. Тяните гантели вверх к рёбрам, локти близко к корпусу, затем полностью опускайте под контролем. Грудь прижата к скамье, голова на одной линии с позвоночником." }
+load_step_kg = 1.0

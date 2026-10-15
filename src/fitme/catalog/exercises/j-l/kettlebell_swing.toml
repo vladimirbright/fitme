@@ -1,0 +1,15 @@
+id = "kettlebell_swing"
+names = { en = "Kettlebell swing", ru = "Мах гирей" }
+kind = "cardio"
+pattern = "conditioning"
+equipment = ["kettlebell"]
+load_unit = "single_implement"
+# Conditioning, but loaded with a real kettlebell: its kg matters, so it stays kg-loadable.
+kg_loadable = true
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip", "shoulder"]
+contraindicated_by = ["lower_back_injury_current", "hernia", "shoulder_injury_current", "hip_injury_current"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 8.0 }
+instructions = { en = "Stand with the kettlebell in front of you, feet shoulder-width. Hinge at the hips to swing it back between your legs, then drive your hips forward to swing it up to chest height. Let it swing back down and repeat.", ru = "Встаньте, гиря перед вами, ноги на ширине плеч. Наклонитесь в тазобедренном суставе, отправляя гирю назад между ног, затем резко разогните таз, чтобы гиря взлетела до уровня груди. Дайте ей качнуться обратно и повторите." }
+load_step_kg = 2.0

@@ -1,0 +1,13 @@
+id = "band_pallof_press"
+names = { en = "Band Pallof press", ru = "Жим Паллофа с лентой" }
+search = { en = "band pallof press", ru = "жим паллофа с лентой" }
+kind = "isolation"
+pattern = "core"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "shoulder"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Anchor the band at chest height, stand side-on to it and step away until it is taut, both hands at your chest. Press your hands straight out in front of you without letting the band turn your torso, then bring them back. Finish all reps on one side before switching.", ru = "Закрепите ленту на уровне груди, встаньте к ней боком и отойдите до натяжения, обе руки у груди. Выжмите руки вперёд, не позволяя ленте разворачивать корпус, затем верните. Выполните все повторения на одну сторону, затем смените." }

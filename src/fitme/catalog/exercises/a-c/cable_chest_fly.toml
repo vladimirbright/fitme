@@ -1,0 +1,13 @@
+id = "cable_chest_fly"
+names = { en = "Cable chest fly", ru = "Сведение рук в кроссовере" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set both stacks to their lowest setting. Bring the hands together in front of the chest.", ru = "Установите минимальный вес на обоих блоках. Сводите руки перед грудью." }
+load_step_kg = 1.0

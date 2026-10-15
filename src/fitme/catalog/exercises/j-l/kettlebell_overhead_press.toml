@@ -1,0 +1,13 @@
+id = "kettlebell_overhead_press"
+names = { en = "Kettlebell overhead press", ru = "Жим гири над головой" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["kettlebell"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia", "neck_injury_current"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 4.0 }
+instructions = { en = "Rack the kettlebell against your forearm at shoulder height. Press it straight overhead until your arm is extended, then lower it back to the rack position. Complete all reps on one side before switching.", ru = "Удерживайте гирю у плеча, прижав к предплечью. Выжмите её строго вверх до полного выпрямления руки, затем опустите обратно. Выполните все повторения на одну сторону, затем смените." }
+load_step_kg = 2.0

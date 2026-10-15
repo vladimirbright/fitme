@@ -1,0 +1,12 @@
+id = "pushup"
+names = { en = "Push-up", ru = "Отжимания от пола" }
+kind = "bodyweight"
+pattern = "horizontal_push"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Hands slightly wider than shoulders, body in a straight line from head to heels. Lower your chest to just above the floor, then press back up.", ru = "Руки чуть шире плеч, тело образует прямую линию от головы до пяток. Опуститесь грудью почти до пола, затем выжмите обратно вверх." }

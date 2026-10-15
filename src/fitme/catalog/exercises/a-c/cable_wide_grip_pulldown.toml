@@ -1,0 +1,13 @@
+id = "cable_wide_grip_pulldown"
+names = { en = "Wide-grip lat pulldown", ru = "Тяга верхнего блока широким хватом" }
+kind = "compound"
+pattern = "vertical_pull"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit tall and take a wide overhand grip on the bar. Pull the bar down to your collarbones, driving the elbows down, keeping the torso upright without leaning back.", ru = "Сядьте прямо и возьмитесь за гриф широким хватом сверху. Тяните гриф к ключицам, опуская локти вниз, сохраняя корпус вертикально, не заваливаясь назад." }
+load_step_kg = 2.5

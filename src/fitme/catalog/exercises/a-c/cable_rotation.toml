@@ -1,0 +1,13 @@
+id = "cable_rotation"
+names = { en = "Cable rotation", ru = "Ротации на блоке" }
+kind = "isolation"
+pattern = "core"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set the cable at chest height and stand side-on to the stack, arms extended in front of you. Rotate your torso to pull the handle across your body, keeping your hips facing forward, then return under control. Complete all reps on one side before switching.", ru = "Установите блок на уровне груди и встаньте боком к тренажёру, руки вытянуты перед собой. Поворачивайте корпус, проводя рукоять перед собой, таз остаётся неподвижным, затем возвращайтесь под контролем. Выполните все повторения на одну сторону, затем смените." }
+load_step_kg = 1.0

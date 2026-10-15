@@ -1,0 +1,14 @@
+id = "cable_straight_arm_pulldown"
+names = { en = "Cable straight-arm pulldown", ru = "Тяга верхнего блока прямыми руками" }
+search = { en = "straight arm pulldown", ru = "пуловер на верхнем блоке" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Stand facing a high cable with a straight bar, hands shoulder-width, arms nearly straight, a slight hip hinge and soft knees. Sweep the bar in an arc down to your thighs, keeping the elbows fixed. Return slowly to shoulder height. Keep the ribs down and do not lean into the weight.", ru = "Встаньте лицом к верхнему блоку с прямой рукоятью, хват на ширине плеч, руки почти прямые, лёгкий наклон корпуса, колени слегка согнуты. Ведите рукоять дугой вниз к бёдрам, не меняя угол в локтях. Медленно вернитесь на уровень плеч. Рёбра опущены, не наваливайтесь на вес." }
+load_step_kg = 1.0

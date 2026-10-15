@@ -1,0 +1,13 @@
+id = "pike_pushup"
+names = { en = "Pike push-up", ru = "Отжимания в упоре согнувшись" }
+search = { en = "pike push-up", ru = "пайк отжимания" }
+kind = "bodyweight"
+pattern = "vertical_push"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Start in a downward-dog position, hips high, hands and feet on the floor. Bend the elbows to lower the top of your head toward the floor, then press back up.", ru = "Примите позу перевёрнутой буквы V, таз высоко, руки и стопы на полу. Согните локти, опуская макушку к полу, затем выжмите обратно." }

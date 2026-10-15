@@ -1,0 +1,13 @@
+id = "machine_assisted_pull_up"
+names = { en = "Assisted pull-up machine", ru = "Подтягивание в гравитроне" }
+kind = "compound"
+pattern = "vertical_pull"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia", "neck_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set a high assistance level. Pull the chest toward the handles; descend slowly.", ru = "Установите высокий уровень помощи. Подтяните грудь к рукоятям; опускайтесь медленно." }
+load_step_kg = 2.5

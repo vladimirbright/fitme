@@ -43,7 +43,7 @@ is absent, your profile's timezone is used, and UTC if there is none yet.
 ```
 
 The explicit map from the names in your file to catalog exercise ids
-(`src/fitme/catalog/exercises.toml`). A name is matched exactly (case, spaces and all). A
+(`src/fitme/catalog/exercises/`). A name is matched exactly (case, spaces and all). A
 catalog id may also be used directly as an exercise name. **Nothing is guessed:** an
 exercise name that is neither an alias nor a catalog id is reported, and every session or
 plan that uses it is skipped whole, never partially, so that adding the alias later imports

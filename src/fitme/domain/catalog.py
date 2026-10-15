@@ -1,6 +1,6 @@
 """Exercise catalog domain model (A§4.4).
 
-Loading `exercises.toml` from disk is M3 (`fitme.catalog`); this module only defines and
+Loading `catalog/exercises/` from disk is M3 (`fitme.catalog`); this module only defines and
 validates its shape, so guards and their tests can build a `Catalog` in memory without any
 file I/O.
 """
@@ -185,8 +185,8 @@ class Exercise(BaseModel):
 
 
 class Catalog(BaseModel):
-    """The whole `exercises.toml` file (A§4.4): `[[exercise]]` maps to this model's
-    `exercise` field, matching what `tomllib.load()` produces exactly."""
+    """The whole catalog (A§4.4): `exercise` holds one entry per
+    `exercises/<range>/<id>.toml` file, each exactly what `tomllib.load()` produces."""
 
     model_config = _STRICT_CONFIG
 

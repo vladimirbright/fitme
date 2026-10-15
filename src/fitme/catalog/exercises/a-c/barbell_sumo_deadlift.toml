@@ -1,0 +1,12 @@
+id = "barbell_sumo_deadlift"
+names = { en = "Barbell sumo deadlift", ru = "Тяга сумо со штангой" }
+kind = "compound"
+pattern = "hinge"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip", "knee"]
+contraindicated_by = ["lower_back_injury_current", "hernia", "hip_injury_current", "knee_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Stand wide with toes turned out and the bar over mid-foot; use full-size plates or blocks so the bar sits at standard deadlift height. Sit the hips down and grip the bar inside your knees, back flat and chest up. Push the floor apart and stand, hips and shoulders rising together. Keep the bar close to your legs on the way up and down.", ru = "Встаньте широко, носки развёрнуты, гриф над серединой стопы; используйте диски полного диаметра или подставки, чтобы гриф был на стандартной высоте. Опустите таз и возьмите гриф хватом между коленями, спина прямая, грудь развёрнута. Встаньте, как бы разводя пол стопами в стороны; таз и плечи поднимаются одновременно. Ведите гриф близко к ногам при подъёме и опускании." }

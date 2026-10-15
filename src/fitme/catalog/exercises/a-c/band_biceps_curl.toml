@@ -1,0 +1,13 @@
+id = "band_biceps_curl"
+names = { en = "Band biceps curl", ru = "Сгибания рук с эспандером на бицепс" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Stand or sit with both feet on a light band, holding its ends palms up. Curl the hands to the shoulders, then lower slowly. Keep the elbows beside the torso.", ru = "Встаньте или сядьте, поставив обе стопы на лёгкий эспандер, концы держите ладонями вверх. Согните руки к плечам, затем медленно опустите. Локти держите у корпуса." }
+load_step_kg = 1.0

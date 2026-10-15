@@ -1,0 +1,13 @@
+id = "bodyweight_table_row"
+names = { en = "Table inverted row", ru = "Австралийские подтягивания под столом" }
+search = { en = "inverted row under a table", ru = "австралийские подтягивания под столом" }
+kind = "bodyweight"
+pattern = "horizontal_pull"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Lie under a sturdy table (or hold the edge of a low, stable surface), body straight, heels on the floor. Pull your chest up toward the table edge, then lower back down under control. Use a sturdy table that can't tip or slide.", ru = "Лягте под устойчивым столом (или возьмитесь за край низкой устойчивой поверхности), тело прямое, пятки на полу. Подтяните грудь к краю стола, затем опуститесь под контролем. Используйте устойчивый стол, который не опрокинется и не сдвинется." }

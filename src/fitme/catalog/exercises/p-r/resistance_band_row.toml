@@ -1,0 +1,12 @@
+id = "resistance_band_row"
+names = { en = "Resistance band row", ru = "Тяга эспандера к поясу" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "shoulder", "elbow_wrist", "hip"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Anchor the band in front of you at chest height, or loop it around a sturdy post. Sit or stand tall, pull both handles toward your ribs, squeezing the shoulder blades, then return under control.", ru = "Закрепите ленту впереди на уровне груди или оберните вокруг устойчивой опоры. Сидя или стоя с прямой спиной, подтяните рукоятки к рёбрам, сводя лопатки, затем верните под контролем." }

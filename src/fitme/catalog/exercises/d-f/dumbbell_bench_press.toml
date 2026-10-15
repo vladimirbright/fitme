@@ -1,0 +1,12 @@
+id = "dumbbell_bench_press"
+names = { en = "Dumbbell bench press", ru = "Жим гантелей лёжа" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie on the bench, a dumbbell in each hand over your chest. Lower them to the sides of your chest with elbows at roughly 45 degrees, then press back up. Lower only until the upper arm is roughly parallel to the floor.", ru = "Лягте на скамью, гантели в руках над грудью. Опустите их по бокам груди, локти под углом примерно 45 градусов, затем выжмите обратно вверх. Опускайте гантели только до параллели плеча с полом." }

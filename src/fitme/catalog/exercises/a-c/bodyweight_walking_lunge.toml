@@ -1,0 +1,12 @@
+id = "bodyweight_walking_lunge"
+names = { en = "Bodyweight walking lunge", ru = "Выпады в ходьбе с собственным весом" }
+kind = "bodyweight"
+pattern = "squat"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["knee", "hip", "ankle"]
+contraindicated_by = ["knee_injury_current", "ankle_injury_current", "hip_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Clear a few metres of floor. Take a long step forward and bend both knees until the back knee nears the floor. Drive through the front foot and bring the rear foot past it into the next step. Keep the front knee in line with the toes; shorten the step if balance wavers.", ru = "Освободите несколько метров пола. Сделайте широкий шаг вперёд и согните обе ноги, пока заднее колено не окажется близко к полу. Оттолкнитесь передней ногой и перенесите заднюю ногу вперёд в следующий шаг. Переднее колено смотрит по линии носка; если теряете равновесие, укоротите шаг." }

@@ -1,0 +1,13 @@
+id = "dumbbell_deadlift"
+names = { en = "Dumbbell deadlift", ru = "Становая тяга с гантелями" }
+kind = "compound"
+pattern = "hinge"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip", "knee"]
+contraindicated_by = ["lower_back_injury_current", "hernia", "hip_injury_current", "knee_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand with feet hip-width, a dumbbell in each hand at your sides. Bend the knees and hinge at the hips to lower the dumbbells along your legs to about mid-shin, back flat. Stand up by driving the floor away. Do not round the back.", ru = "Встаньте, ноги на ширине таза, по гантели в каждой руке сбоку. Согните колени и наклонитесь в бёдрах, опуская гантели вдоль ног примерно до середины голени, спина прямая. Встаньте, отталкиваясь от пола. Не округляйте спину." }
+load_step_kg = 1.0

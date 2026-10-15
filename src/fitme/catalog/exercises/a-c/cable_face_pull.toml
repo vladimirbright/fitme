@@ -1,0 +1,14 @@
+id = "cable_face_pull"
+names = { en = "Cable face pull", ru = "Тяга каната к лицу" }
+search = { en = "cable face pull", ru = "фейс пулл на блоке" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set the lightest resistance. Pull the rope toward the face with elbows wide.", ru = "Установите минимальное сопротивление. Тяните канат к лицу, разводя локти в стороны." }
+load_step_kg = 1.0

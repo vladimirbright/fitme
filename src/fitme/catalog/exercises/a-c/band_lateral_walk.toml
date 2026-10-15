@@ -1,0 +1,13 @@
+id = "band_lateral_walk"
+names = { en = "Band lateral walk", ru = "Боковые шаги с лентой на лодыжках" }
+search = { en = "lateral band walk", ru = "боковые шаги с мини-лентой" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["hip", "knee"]
+contraindicated_by = ["hip_injury_current", "knee_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Put a loop band around the ankles, feet shoulder-width, knees slightly bent. Step sideways keeping tension on the band, then bring the other foot in without letting the band go slack. Walk both directions.", ru = "Наденьте мини-ленту на лодыжки, ноги на ширине плеч, колени слегка согнуты. Шагайте в сторону, сохраняя натяжение ленты, приставляйте вторую ногу, не ослабляя ленту. Идите в обе стороны." }

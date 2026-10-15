@@ -111,7 +111,7 @@ def _build_parser() -> argparse.ArgumentParser:
     catalog_parser = subparsers.add_parser("catalog", help="Exercise catalog maintenance.")
     catalog_subparsers = catalog_parser.add_subparsers(dest="catalog_command", required=True)
     catalog_subparsers.add_parser(
-        "check", help="Validate exercises.toml and locales; print content_version."
+        "check", help="Validate the exercise catalog and locales; print content_version."
     )
 
     llm_parser = subparsers.add_parser("llm", help="LLM evaluation tools.")

@@ -1,0 +1,19 @@
+# Carries (this suitcase carry and kettlebell_farmer_carry.toml) declare elbow_wrist in loads_areas
+# because gripping and supporting a heavy implement for the whole walk is the point of the
+# exercise — the grip/forearm is genuinely loaded, unlike lunges, step-ups or RDLs elsewhere in
+# the catalog, where dumbbells are only held as passive resistance and grip isn't what's being
+# trained or tested.
+id = "dumbbell_suitcase_carry"
+names = { en = "Dumbbell suitcase carry", ru = "Ходьба с гантелью в одной руке" }
+search = { en = "dumbbell suitcase carry", ru = "suitcase carry с гантелью" }
+kind = "compound"
+pattern = "core"
+equipment = ["dumbbells"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "hip"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Hold one light dumbbell at the side. Walk slowly with shoulders level.", ru = "Держите лёгкую гантель сбоку. Идите медленно, сохраняя плечи на одном уровне." }
+load_step_kg = 1.0

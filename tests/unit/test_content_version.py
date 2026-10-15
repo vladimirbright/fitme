@@ -34,7 +34,11 @@ def fake_resources(
     """Fakes the five package roots `content_version` reads, each an ordinary directory under
     `tmp_path`. `root` stands in for the top-level `fitme` package: `root / "prompts"`
     doesn't exist yet, matching the real repo before M4."""
-    catalog_dir = _make_dir(tmp_path, "catalog", {"exercises.toml": "exercise v1"})
+    catalog_dir = _make_dir(
+        tmp_path,
+        "catalog",
+        {"exercises/a-c/a_one.toml": "exercise v1", "exercises/README.md": "not hashed"},
+    )
     stop_words_dir = _make_dir(tmp_path, "stop_words", {"en.txt": "pain", "ru.txt": "боль"})
     guards_dir = _make_dir(
         tmp_path,
@@ -90,7 +94,8 @@ def test_content_version_changes_when_the_catalog_file_changes(
     fake_resources: dict[str, pathlib.Path],
 ) -> None:
     before = content_module.content_version()
-    (fake_resources["catalog"] / "exercises.toml").write_text("exercise v2", encoding="utf-8")
+    exercise = fake_resources["catalog"] / "exercises" / "a-c" / "a_one.toml"
+    exercise.write_text("exercise v2", encoding="utf-8")
     after = content_module.content_version()
     assert before != after
 
@@ -234,16 +239,25 @@ def test_no_hashed_path_starts_with_i18n(fake_resources: dict[str, pathlib.Path]
     assert not any(path.startswith("i18n/") for path in paths), paths
 
 
+def test_content_version_changes_when_a_catalog_file_is_added(
+    fake_resources: dict[str, pathlib.Path],
+) -> None:
+    before = content_module.content_version()
+    added = fake_resources["catalog"] / "exercises" / "d-f" / "dumbbell_two.toml"
+    added.parent.mkdir()
+    added.write_text("exercise v1", encoding="utf-8")
+    assert content_module.content_version() != before
+
+
 def test_every_hashed_path_matches_the_a4_8_allow_list(
     fake_resources: dict[str, pathlib.Path],
 ) -> None:
-    """A§4.8 names exactly six kinds of guard-relevant content: `catalog/exercises.toml`,
+    """A§4.8 names exactly six kinds of guard-relevant content: `catalog/exercises/**/*.toml`,
     `guards/stop_words/*.txt`, `prompts/*.md`, `guards/**/*.py`, the three `domain/*.py`
     logic files, and `services/loads.py`. Every path `_hashed_files()` yields must fall into
     one of those — a stray path (e.g. a locale file, or something under a package this
     function was never told to walk) would be a silent scope-creep bug."""
     allowed_exact = {
-        "catalog/exercises.toml",
         "domain/catalog.py",
         "domain/enums.py",
         "domain/models.py",
@@ -254,4 +268,7 @@ def test_every_hashed_path_matches_the_a4_8_allow_list(
             continue
         is_guard_file = path.startswith("guards/") and path.endswith((".py", ".txt"))
         is_prompt_file = path.startswith("prompts/") and path.endswith(".md")
-        assert is_guard_file or is_prompt_file, f"{path!r} is not in the A§4.8 allow list"
+        is_catalog_file = path.startswith("catalog/exercises/") and path.endswith(".toml")
+        assert is_guard_file or is_prompt_file or is_catalog_file, (
+            f"{path!r} is not in the A§4.8 allow list"
+        )

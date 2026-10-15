@@ -1,0 +1,13 @@
+id = "machine_incline_chest_press"
+names = { en = "Machine incline chest press", ru = "Наклонный жим от груди в тренажёре" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the lightest resistance and adjust the seat so the handles sit at upper-chest height, back against the pad. Press the handles forward and up until your arms are extended, then return under control. Keep your shoulders down and your feet flat on the floor.", ru = "Установите минимальное сопротивление и отрегулируйте сиденье так, чтобы рукояти были на уровне верха груди, спина прижата к спинке. Выжмите рукояти вперёд и вверх до выпрямления рук, затем вернитесь под контролем. Плечи опущены, стопы стоят на полу." }
+load_step_kg = 2.5

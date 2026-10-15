@@ -1,0 +1,13 @@
+id = "machine_skierg"
+names = { en = "SkiErg", ru = "Лыжный тренажёр (SkiErg)" }
+kind = "cardio"
+pattern = "conditioning"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "lower_back_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Hinge at the hips and pull the handles down with arms only slightly bent. Start with short intervals and build up gradually; if the shoulder feels uncomfortable, shorten the pulling range.", ru = "Наклонитесь от таза и тяните рукояти вниз почти прямыми руками. Начинайте с коротких интервалов и постепенно увеличивайте их; если ощущается дискомфорт в плече — сократите амплитуду тяги." }
+load_step_kg = 1.0

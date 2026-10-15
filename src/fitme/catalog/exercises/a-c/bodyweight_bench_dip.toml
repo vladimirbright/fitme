@@ -1,0 +1,13 @@
+id = "bodyweight_bench_dip"
+names = { en = "Bench dip", ru = "Обратные отжимания от скамьи" }
+kind = "bodyweight"
+pattern = "vertical_push"
+equipment = ["bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Sit on the edge of a stable bench, hands beside the hips, fingers forward. Slide off the edge, knees bent and feet flat. Bend the elbows to about 90 degrees, keeping the back close to the bench, then press back up. Do not lower deeper than that.", ru = "Сядьте на край устойчивой скамьи, ладони рядом с бёдрами, пальцы вперёд. Сдвиньтесь с края, колени согнуты, стопы на полу. Согните локти примерно до 90 градусов, держа спину близко к скамье, затем выжмитесь вверх. Не опускайтесь ниже." }
+load_step_kg = 1.0

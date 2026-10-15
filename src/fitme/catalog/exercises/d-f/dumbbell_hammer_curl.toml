@@ -1,0 +1,13 @@
+id = "dumbbell_hammer_curl"
+names = { en = "Dumbbell hammer curl", ru = "Сгибания рук с гантелями хватом «молот»" }
+search = { en = "dumbbell hammer curl", ru = "молотки с гантелями" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand holding a dumbbell in each hand at your sides, palms facing your thighs. Keeping the palms facing inward, curl the weights toward your shoulders without moving your elbows, then lower under control.", ru = "Встаньте, держа гантели по бокам, ладони смотрят на бёдра. Не меняя положения кистей, согните руки, поднимая гантели к плечам, не двигая локтями, затем опустите под контролем." }

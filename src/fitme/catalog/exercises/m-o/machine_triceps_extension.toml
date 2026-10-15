@@ -1,0 +1,13 @@
+id = "machine_triceps_extension"
+names = { en = "Machine triceps extension", ru = "Разгибания на трицепс в тренажёре" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["elbow_wrist", "shoulder"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set the lightest resistance and adjust the seat so the upper arms rest on the pad. Hold the handles and straighten the arms, then return under control. Keep the shoulders down.", ru = "Установите минимальное сопротивление и отрегулируйте сиденье так, чтобы руки выше локтей лежали на опоре. Возьмитесь за рукояти и выпрямите руки, затем подконтрольно вернитесь. Плечи опущены." }
+load_step_kg = 1.0

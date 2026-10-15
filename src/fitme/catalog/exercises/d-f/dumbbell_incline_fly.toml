@@ -1,0 +1,12 @@
+id = "dumbbell_incline_fly"
+names = { en = "Incline dumbbell fly", ru = "Разводка гантелей на наклонной скамье" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Set the bench to a modest incline and lie back with a dumbbell in each hand above your chest, palms facing each other, elbows slightly bent. Open your arms out to the sides in an arc until your hands are about chest level, then bring them back together. Keep the elbow bend fixed and use light weights.", ru = "Установите небольшой наклон скамьи и лягте, гантели над грудью, ладони смотрят друг на друга, локти слегка согнуты. Разведите руки в стороны по дуге примерно до уровня груди, затем сведите обратно. Угол в локтях не меняйте, берите лёгкий вес." }

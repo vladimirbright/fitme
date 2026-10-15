@@ -1,0 +1,13 @@
+id = "doorframe_row"
+names = { en = "Doorframe row", ru = "Тяга у дверного проёма" }
+search = { en = "doorframe row exercise", ru = "тяга в дверном проёме упражнение" }
+kind = "bodyweight"
+pattern = "horizontal_pull"
+equipment = []
+load_unit = "total"
+locations = ["apartment_no_equipment", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Hold both sides of a sturdy, open doorframe near shoulder height. Lean your weight back with arms extended, then pull your chest toward the frame and back to start.", ru = "Возьмитесь за обе стороны устойчивого открытого дверного проёма на уровне плеч. Отклонитесь назад с прямыми руками, затем подтяните грудь к проёму и вернитесь в исходное положение." }

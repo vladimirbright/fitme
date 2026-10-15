@@ -1,0 +1,13 @@
+id = "dumbbell_forward_lunge"
+names = { en = "Dumbbell forward lunge", ru = "Выпады вперёд с гантелями" }
+kind = "compound"
+pattern = "squat"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "ankle", "lower_back"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Hold light dumbbells at the sides. Step forward and lower under control until the front thigh is about parallel, then push back to standing. Alternate legs. Keep the front knee over the front foot.", ru = "Держите лёгкие гантели по бокам. Сделайте шаг вперёд и плавно опуститесь, пока бедро передней ноги не станет примерно параллельно полу, затем оттолкнитесь и вернитесь в стойку. Чередуйте ноги. Колено передней ноги остаётся над стопой." }
+load_step_kg = 1.0

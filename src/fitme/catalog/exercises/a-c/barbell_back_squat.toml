@@ -1,0 +1,12 @@
+id = "barbell_back_squat"
+names = { en = "Barbell back squat", ru = "Приседания со штангой на спине" }
+kind = "compound"
+pattern = "squat"
+equipment = ["barbell", "rack"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "lower_back", "hip", "neck"]
+contraindicated_by = ["knee_injury_current", "lower_back_injury_current", "hernia", "hip_injury_current", "neck_injury_current"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Set the bar on the rack at shoulder height. Step under it, unrack, and walk back. Feet shoulder-width, toes slightly out. Sit down and back, knees tracking over your toes, until your thighs are at least parallel to the floor. Drive back up through the whole foot. Set the rack's safety arms just below the lowest point of the movement. Warm up in small steps; avoid 10+ kg jumps between warm-up sets.", ru = "Установите штангу на стойке на высоте плеч. Зайдите под неё, снимите со стойки и отойдите назад. Ноги на ширине плеч, носки чуть развёрнуты. Присядьте вниз и назад, колени двигаются по линии носков, до параллели бёдер с полом или ниже. Встаньте, отталкиваясь всей стопой. Установите страховочные упоры чуть ниже нижней точки движения. Увеличивайте вес в разминке небольшими шагами; избегайте скачков в 10+ кг между разминочными подходами." }

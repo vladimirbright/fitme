@@ -1,0 +1,13 @@
+id = "machine_pec_deck"
+names = { en = "Pec deck (machine fly)", ru = "Сведения в тренажёре «бабочка»" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set the lightest resistance and adjust the handles so your arms start level with your chest. Bring your hands together in front of you, then return under control without letting the stretch go past chest level.", ru = "Установите минимальное сопротивление и отрегулируйте рукояти на уровне груди. Сведите руки перед собой, затем возвращайтесь под контролем, не растягиваясь глубже уровня груди." }
+load_step_kg = 1.0

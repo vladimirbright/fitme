@@ -1,0 +1,14 @@
+id = "cable_wood_chop"
+names = { en = "Cable wood chop", ru = "Диагональная тяга блока" }
+search = { en = "cable wood chop", ru = "дровосек на блоке" }
+kind = "compound"
+pattern = "core"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "lower_back", "hip"]
+contraindicated_by = ["shoulder_injury_current", "lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the lightest resistance. Turn the torso gradually as the handle travels across the body.", ru = "Установите минимальное сопротивление. Плавно поворачивайте корпус, ведя рукоять по диагонали." }
+load_step_kg = 2.5

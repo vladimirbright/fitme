@@ -1,0 +1,12 @@
+id = "dumbbell_zottman_curl"
+names = { en = "Dumbbell Zottman curl", ru = "Сгибания Зоттмана с гантелями" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand holding a dumbbell in each hand, palms up. Curl both up to the shoulders, turn the palms down at the top, and lower slowly. Turn the palms back up at the bottom. Keep the elbows beside the torso and use a light weight.", ru = "Встаньте, держа по гантели в каждой руке, ладони вверх. Поднимите обе гантели к плечам, вверху поверните ладони вниз и медленно опускайте. Внизу снова поверните ладони вверх. Локти держите у корпуса, вес берите лёгкий." }

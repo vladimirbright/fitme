@@ -1,0 +1,13 @@
+id = "cable_standing_chest_press"
+names = { en = "Cable standing chest press", ru = "Жим от груди стоя на блоке" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set both pulleys at chest height with the lightest weight. Stand facing away from the stack, a handle in each hand, and step forward until there is tension, one foot ahead of the other. Press both handles forward until your arms are straight, then return under control without letting the weight stack touch down.", ru = "Установите оба блока на уровне груди и выставьте минимальный вес. Встаньте спиной к тренажёру, по рукояти в каждой руке, и шагните вперёд до натяжения, одна нога впереди другой. Выжмите рукояти вперёд до прямых рук, затем вернитесь под контролем, не давая грузу опуститься до упора." }
+load_step_kg = 2.5

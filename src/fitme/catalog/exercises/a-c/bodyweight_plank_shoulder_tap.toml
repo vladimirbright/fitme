@@ -1,0 +1,12 @@
+id = "bodyweight_plank_shoulder_tap"
+names = { en = "Plank shoulder tap", ru = "Касание плеча в планке" }
+kind = "bodyweight"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Hold a high plank, hands under shoulders, feet a little wider than hip width. Lift one hand and tap the opposite shoulder, then switch. Keep your hips from rocking side to side.", ru = "Примите высокую планку: руки под плечами, стопы чуть шире таза. Поднимите одну руку и коснитесь противоположного плеча, затем смените руку. Не раскачивайте таз из стороны в сторону." }

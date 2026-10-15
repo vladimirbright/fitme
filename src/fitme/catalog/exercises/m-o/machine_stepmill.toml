@@ -1,0 +1,13 @@
+id = "machine_stepmill"
+names = { en = "Stair climber machine", ru = "Тренажёр-лестница" }
+kind = "cardio"
+pattern = "conditioning"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["hip", "knee", "ankle"]
+contraindicated_by = ["hip_injury_current", "knee_injury_current", "ankle_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Start at a slow speed and rest your fingertips lightly on the rails. Stand tall and place your whole foot on each step. Keep a pace you can sustain while talking, for about 10-15 minutes, and do not lean your weight on the rails.", ru = "Начните с медленной скорости, легко касаясь поручней кончиками пальцев. Держите корпус прямо и ставьте стопу на ступень целиком. Выбирайте темп, при котором можно разговаривать, около 10-15 минут, не повисая на поручнях." }
+load_step_kg = 1.0

@@ -1,0 +1,12 @@
+id = "dumbbell_seated_rear_delt_raise"
+names = { en = "Seated bent-over rear delt raise", ru = "Разведения на заднюю дельту в наклоне сидя" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit on the edge of a bench, chest resting on your thighs, a dumbbell in each hand under your knees. With thumbs up, raise the dumbbells out to the sides using your shoulder blades, pausing briefly at the top, then lower under control.", ru = "Сядьте на край скамьи, грудью на бёдрах, гантели в руках под коленями. Большие пальцы вверх, поднимайте гантели в стороны за счёт лопаток, с короткой паузой наверху, затем опускайте под контролем." }

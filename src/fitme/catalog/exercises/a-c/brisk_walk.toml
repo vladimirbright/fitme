@@ -1,0 +1,13 @@
+id = "brisk_walk"
+names = { en = "Brisk walk", ru = "Ходьба в бодром темпе" }
+kind = "cardio"
+pattern = "conditioning"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["hip", "knee", "ankle"]
+contraindicated_by = ["hip_injury_current", "knee_injury_current", "ankle_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Walk at a steady, purposeful pace. Let the arms swing naturally.", ru = "Идите в ровном бодром темпе. Двигайте руками естественно." }
+load_step_kg = 1.0

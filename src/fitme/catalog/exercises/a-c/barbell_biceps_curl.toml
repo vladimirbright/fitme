@@ -1,0 +1,13 @@
+id = "barbell_biceps_curl"
+names = { en = "Barbell biceps curl", ru = "Сгибания рук со штангой на бицепс" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 2.5
+# Calibration, not the empty 20 kg bar: too heavy a first curl for a novice.
+start = { kind = "calibration" }
+instructions = { en = "Stand tall holding the bar with an underhand grip, hands shoulder-width apart, elbows beside your torso. Curl the bar toward your shoulders without swinging, then lower it under control.", ru = "Встаньте ровно, держите гриф обратным хватом на ширине плеч, локти у корпуса. Согните руки, поднимая гриф к плечам без раскачки, затем опустите под контролем." }

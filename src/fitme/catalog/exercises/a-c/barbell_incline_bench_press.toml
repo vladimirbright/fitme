@@ -1,0 +1,12 @@
+id = "barbell_incline_bench_press"
+names = { en = "Barbell incline bench press", ru = "Жим штанги на наклонной скамье" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["barbell", "rack", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Set the bench to a modest incline and the bar on the rack. Lie back with feet flat on the floor, take a grip slightly wider than your shoulders, and unrack the bar over your upper chest. Lower it under control to the upper chest with elbows at roughly 45 degrees, then press back up. Set the rack's safety arms just below the lowest point of the movement.", ru = "Установите скамью с небольшим наклоном, штангу положите на стойку. Лягте, стопы на полу, возьмитесь за гриф чуть шире плеч и снимите штангу над верхней частью груди. Под контролем опустите её к верхней части груди, локти под углом примерно 45 градусов, затем выжмите обратно вверх. Установите страховочные упоры чуть ниже нижней точки движения." }

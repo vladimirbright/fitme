@@ -1,0 +1,13 @@
+id = "cable_seated_row"
+names = { en = "Cable seated row", ru = "Тяга нижнего блока сидя" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit at the low cable with feet on the footplates, knees slightly bent, and hold the handle with arms extended. Keep your chest tall and your back flat. Pull the handle to your lower ribs, drawing the elbows back, then return slowly without rounding forward. Avoid swinging the torso to move the weight.", ru = "Сядьте у нижнего блока, ступни на упорах, колени слегка согнуты, руки вытянуты к рукояти. Грудь раскрыта, спина прямая. Тяните рукоять к низу рёбер, отводя локти назад, затем медленно возвращайте, не округляя спину. Не раскачивайте корпус, чтобы сдвинуть вес." }
+load_step_kg = 2.5

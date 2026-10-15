@@ -1,0 +1,13 @@
+id = "dumbbell_side_bend"
+names = { en = "Dumbbell side bend", ru = "Наклоны в сторону с гантелью" }
+kind = "isolation"
+pattern = "core"
+equipment = ["dumbbells"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "hernia", "shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand tall holding one dumbbell at your side. Slowly bend sideways toward the weighted side, then return upright using your side muscles. Keep your hips square and your chest facing forward. Complete all reps on one side before switching.", ru = "Встаньте прямо, гантель в одной руке вдоль корпуса. Медленно наклонитесь в сторону гантели, затем вернитесь в вертикальное положение. Таз неподвижен, грудь смотрит вперёд. Выполните все повторения на одну сторону, затем смените." }
+load_step_kg = 1.0

@@ -1,0 +1,12 @@
+id = "barbell_deadlift"
+names = { en = "Barbell deadlift", ru = "Становая тяга со штангой" }
+kind = "compound"
+pattern = "hinge"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip", "knee"]
+contraindicated_by = ["lower_back_injury_current", "hernia", "hip_injury_current", "knee_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Stand with feet hip-width, bar over mid-foot. Bend the knees and hinge at the hips to grip the bar just outside your shins. Keep the back flat, chest up, and stand up by driving the floor away, hips and shoulders rising together. Use plates large enough to bring the bar to standard deadlift height, or set it on blocks, before your first working set.", ru = "Встаньте, ноги на ширине таза, гриф над серединой стопы. Согните колени и наклонитесь, возьмите гриф чуть шире голеней. Спина прямая, грудь развёрнута. Встаньте, отталкиваясь от пола, бёдра и плечи поднимаются одновременно. Используйте диски достаточного диаметра, чтобы гриф находился на стандартной высоте для тяги, либо поставьте его на подставки перед первым рабочим подходом." }

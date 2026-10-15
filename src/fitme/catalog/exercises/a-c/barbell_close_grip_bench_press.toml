@@ -1,0 +1,12 @@
+id = "barbell_close_grip_bench_press"
+names = { en = "Barbell close-grip bench press", ru = "Жим штанги лёжа узким хватом" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["barbell", "rack", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Lie on the bench, feet flat on the floor. Hands about shoulder-width or a little inside it. Unrack and hold the bar over your chest. Bring it down to the lower chest with elbows tucked, pause briefly, then press up. Set the rack's safety arms just below the lowest point of the movement.", ru = "Лягте на скамью, стопы на полу. Хват на ширине плеч или чуть уже. Снимите штангу со стойки и удерживайте над грудью. Опустите к нижней части груди, локти прижаты, сделайте короткую паузу и выжмите вверх. Установите страховочные упоры чуть ниже нижней точки движения." }

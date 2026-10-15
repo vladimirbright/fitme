@@ -1,0 +1,13 @@
+id = "band_external_rotation"
+names = { en = "Band external rotation", ru = "Наружные ротации с резинкой" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "A light shoulder warm-up drill. Loop a light band around a sturdy anchor at elbow height. Pin your elbow to your side at 90 degrees and slowly rotate your forearm outward, then return under control.", ru = "Лёгкое разминочное упражнение для плеч. Закрепите лёгкую ленту на прочной опоре на уровне локтя. Прижмите локоть к боку под углом 90 градусов и медленно разворачивайте предплечье наружу, затем возвращайте под контролем." }
+load_step_kg = 1.0

@@ -1,0 +1,13 @@
+id = "low_bar_inverted_row"
+names = { en = "Low bar inverted row", ru = "Австралийские подтягивания на низкой перекладине" }
+search = { en = "inverted row", ru = "австралийские подтягивания" }
+kind = "bodyweight"
+pattern = "horizontal_pull"
+equipment = ["pull_up_bar"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Set a bar or rings at hip height. Lie underneath with heels on the floor, body straight, hands on the bar. Pull your chest up to the bar, then lower back down under control.", ru = "Расположите перекладину или кольца на уровне таза. Лягте под ней, пятки на полу, тело прямое, руки на перекладине. Подтяните грудь к перекладине, затем опуститесь под контролем." }

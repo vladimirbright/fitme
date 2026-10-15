@@ -1,0 +1,13 @@
+id = "mobility_shoulder_band_dislocate"
+names = { en = "Band shoulder dislocate", ru = "Растяжка плеч с эспандером" }
+search = { en = "band shoulder dislocates", ru = "выкруты плеч с резинкой" }
+kind = "mobility"
+pattern = "mobility"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Hold a band with a wide overhand grip in front of your thighs. Keeping your arms straight, raise the band overhead and continue behind you, then reverse. Use a wide enough grip that the movement stays comfortable.", ru = "Держите ленту широким хватом сверху перед бёдрами. Не сгибая руки, поднимите ленту над головой и продолжайте движение за спину, затем верните обратно. Держите хват достаточно широко, чтобы движение оставалось комфортным." }

@@ -1,0 +1,13 @@
+id = "machine_hip_abduction"
+names = { en = "Seated hip abduction", ru = "Разведение ног сидя в тренажёре" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["hip"]
+contraindicated_by = ["hip_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set the lightest resistance. Sit with your back on the pad and push the legs apart smoothly, then bring them back slowly. Avoid swinging the weight.", ru = "Установите минимальное сопротивление. Сядьте спиной к спинке, плавно разведите ноги в стороны и медленно верните. Избегайте раскачки веса." }
+load_step_kg = 1.0

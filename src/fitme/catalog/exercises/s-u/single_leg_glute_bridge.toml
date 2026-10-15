@@ -1,0 +1,13 @@
+id = "single_leg_glute_bridge"
+names = { en = "Single-leg glute bridge", ru = "Ягодичный мостик на одной ноге" }
+kind = "bodyweight"
+pattern = "hinge"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["hip", "lower_back"]
+contraindicated_by = ["hip_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Keep one foot on the floor and lift the other leg. Raise the hips without turning the pelvis.", ru = "Оставьте одну стопу на полу, другую ногу поднимите. Поднимайте таз, не разворачивая его." }
+load_step_kg = 1.0

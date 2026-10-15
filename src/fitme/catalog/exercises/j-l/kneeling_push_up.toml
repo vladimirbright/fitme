@@ -1,0 +1,13 @@
+id = "kneeling_push_up"
+names = { en = "Kneeling push-up", ru = "Отжимания с колен" }
+kind = "bodyweight"
+pattern = "horizontal_push"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Kneel on a mat or other soft surface with hands slightly wider than shoulders and a straight line from head to knees. Lower your chest to just above the floor, then press back up without letting the hips sag.", ru = "Встаньте на колени на коврик или другую мягкую поверхность, руки чуть шире плеч, тело образует прямую линию от головы до колен. Опуститесь грудью почти до пола, затем отожмитесь вверх, не прогибаясь в пояснице." }
+load_step_kg = 1.0

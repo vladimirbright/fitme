@@ -1,0 +1,12 @@
+id = "bodyweight_bear_crawl"
+names = { en = "Bear crawl", ru = "Медвежья походка" }
+kind = "cardio"
+pattern = "conditioning"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["elbow_wrist", "shoulder", "knee", "hip", "lower_back"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current", "knee_injury_current", "hip_injury_current", "lower_back_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Start on hands and knees, hands under shoulders, then lift the knees just off the floor with a flat back. Move the opposite hand and foot forward together, alternating sides. Keep a slow, steady pace on a clear, non-slip surface.", ru = "Встаньте на четвереньки, руки под плечами, затем слегка оторвите колени от пола, спина ровная. Одновременно переставляйте противоположные руку и ногу вперёд, чередуя стороны. Двигайтесь медленно и ровно по свободной нескользкой поверхности." }

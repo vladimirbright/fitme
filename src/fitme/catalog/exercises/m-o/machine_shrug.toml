@@ -1,0 +1,15 @@
+id = "machine_shrug"
+names = { en = "Machine shrug", ru = "Шраги в тренажёре" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "neck", "elbow_wrist", "lower_back"]
+# Conservative: the shrug load hangs from the shoulder girdle and passes down the spine to the
+# seat, and heavy shrugs are braced, so lower back and hernia are covered like other spinal loading.
+contraindicated_by = ["shoulder_injury_current", "neck_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the lightest resistance and sit with your back against the pad, arms straight, handles in your hands. Lift your shoulders straight up toward your ears, pause briefly, then lower slowly. Keep your arms straight and do not roll the shoulders.", ru = "Установите минимальное сопротивление, сядьте спиной к подушке, руки прямые, ручки в ладонях. Поднимите плечи строго вверх к ушам, ненадолго задержитесь и медленно опустите. Руки остаются прямыми, плечами не вращайте." }
+load_step_kg = 2.5

@@ -1,0 +1,13 @@
+id = "cable_neutral_grip_pulldown"
+names = { en = "Neutral-grip lat pulldown", ru = "Тяга верхнего блока нейтральным хватом" }
+kind = "compound"
+pattern = "vertical_pull"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit tall with a neutral-grip bar, palms facing each other, hands shoulder-width. Pull the bar down to the upper chest, squeezing the shoulder blades down, then let it rise under control.", ru = "Сядьте прямо, возьмитесь за рукоять нейтральным хватом, ладони смотрят друг на друга, руки на ширине плеч. Тяните рукоять к верху груди, сводя лопатки вниз, затем отпускайте под контролем." }
+load_step_kg = 2.5

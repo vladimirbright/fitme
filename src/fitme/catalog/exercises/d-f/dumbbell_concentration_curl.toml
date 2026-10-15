@@ -1,0 +1,12 @@
+id = "dumbbell_concentration_curl"
+names = { en = "Dumbbell concentration curl", ru = "Концентрированное сгибание с гантелью" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit on a bench with feet wide and one dumbbell in your hand, the back of your upper arm resting against the inside of your thigh. Curl the weight toward your shoulder without swinging, then lower under control. Finish all reps, then switch arms.", ru = "Сядьте на скамью, ноги широко, в руке гантель, локоть упирается во внутреннюю сторону бедра. Согните руку, поднимая гантель к плечу без раскачки, затем опустите под контролем. Выполните все повторения и смените руку." }

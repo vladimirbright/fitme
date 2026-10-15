@@ -1,0 +1,13 @@
+id = "bodyweight_split_squat"
+names = { en = "Bodyweight split squat", ru = "Приседания в разножке" }
+kind = "bodyweight"
+pattern = "squat"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["knee", "hip", "ankle"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand with one foot forward. Lower straight down, then rise without changing the stance.", ru = "Поставьте одну ногу впереди. Опуститесь вертикально вниз, затем поднимитесь, сохраняя стойку." }
+load_step_kg = 1.0

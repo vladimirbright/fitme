@@ -1,0 +1,13 @@
+id = "machine_seated_calf_raise"
+names = { en = "Seated calf raise", ru = "Подъём на носки сидя в тренажёре" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["ankle", "knee"]
+contraindicated_by = ["ankle_injury_current", "knee_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Adjust the seat so the pad rests on your lower thighs and the balls of your feet are on the platform. Lower the heels for a gentle stretch, then press up as high as you can. Pause briefly, then lower slowly. Use a load you can control through the full range.", ru = "Отрегулируйте сиденье так, чтобы валик лежал на нижней части бёдер, а передняя часть стопы стояла на платформе. Опустите пятки до лёгкого растяжения, затем поднимитесь на носки как можно выше. Кратко задержитесь и медленно опустите пятки. Берите вес, который можно контролировать во всей амплитуде." }
+load_step_kg = 1.0

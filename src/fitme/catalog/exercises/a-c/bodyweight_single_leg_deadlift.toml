@@ -1,0 +1,12 @@
+id = "bodyweight_single_leg_deadlift"
+names = { en = "Bodyweight single-leg deadlift", ru = "Становая тяга на одной ноге с собственным весом" }
+kind = "bodyweight"
+pattern = "hinge"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back", "hip", "ankle"]
+contraindicated_by = ["lower_back_injury_current", "ankle_injury_current", "hip_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Stand on one leg. Hinge forward at the hips, extending the other leg straight back for balance, until your torso is close to parallel with the floor. Return to standing.", ru = "Встаньте на одну ногу. Наклонитесь вперёд, отводя другую ногу прямо назад для баланса, пока корпус не станет почти параллелен полу. Вернитесь в исходное положение." }

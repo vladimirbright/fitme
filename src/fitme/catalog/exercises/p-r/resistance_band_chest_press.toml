@@ -1,0 +1,12 @@
+id = "resistance_band_chest_press"
+names = { en = "Resistance band chest press", ru = "Жим от груди с эспандером" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Anchor the band behind you at chest height. Hold one end in each hand, step forward until there's tension, then press both hands forward until your arms are extended.", ru = "Закрепите ленту сзади на уровне груди. Возьмитесь за концы, отойдите вперёд до натяжения, затем выжмите руки вперёд до полного выпрямления." }

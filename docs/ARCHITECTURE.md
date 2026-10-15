@@ -73,7 +73,7 @@ fitme/
 │   │   └── selectors/         # R: one module per aggregate/read model (plans.py, stats.py, export.py, ...)
 │   ├── llm/                   # pydantic-ai agents, prompt loader, pseudonymizer, usage accounting
 │   ├── prompts/               # versioned prompt templates (*.v1.md)
-│   ├── catalog/               # exercises.toml — the only exercises the system may prescribe
+│   ├── catalog/               # exercises/<range>/<id>.toml — the only exercises the system may prescribe
 │   ├── services/              # use cases; orchestrate domain + guards + llm + db
 │   ├── bot/                   # aiogram routers, keyboards, middlewares
 │   │   └── handlers/
@@ -238,13 +238,15 @@ other applying decision (`progression`, `session_adjust` when applied, `user_edi
 Enforce immutability in the controller layer: `plan_versions`, `decisions` and
 `decision_outcomes` have no update or delete methods, except the full-account delete (§8.3).
 
-### 4.4 Exercise catalog (`src/fitme/catalog/exercises.toml`)
+### 4.4 Exercise catalog (`src/fitme/catalog/exercises/`)
 
 The system may only prescribe catalog exercises. Loaded at startup and validated with a
 pydantic model. There is no DB table: `set_logs.exercise_id` references the catalog `id`.
+One file per exercise, `exercises/<range>/<id>.toml`, ranged by the id's first letter
+(`a-c`, `d-f`, …); the file's top-level keys are the exercise (ADR 0006). Shown below as one
+file, `exercises/a-c/barbell_back_squat.toml`:
 
 ```toml
-[[exercise]]
 id = "barbell_back_squat"
 names = { en = "Barbell back squat", ru = "Приседания со штангой на спине" }
 kind = "compound"                    # compound | isolation | bodyweight | cardio | mobility
@@ -418,7 +420,7 @@ The reasons:
 - Every instance gets the same vetted content without a seeding step.
 
 **Content version.** At startup, `config/content.py` computes a SHA-256 over the
-**guard-relevant** content, in sorted path order: `exercises.toml`,
+**guard-relevant** content, in sorted path order: `catalog/exercises/**/*.toml`,
 `guards/stop_words/*.txt`, `prompts/*.md`, **and the guard and catalog-logic source files**
 (`guards/**/*.py`, `domain/catalog.py`, `domain/enums.py`, `domain/models.py`,
 `services/loads.py`). Each file contributes
@@ -1093,7 +1095,7 @@ session's recap, using the same service.
 | `fitme history import PATH [--dry-run]` | Import past sessions and plans (TOML/JSON; `-` = stdin). Idempotent. See `docs/import-format.md`. |
 | `fitme health` | Healthcheck: DB opens, no pending migrations, settings valid. No network. |
 | `fitme backup --out DIR [--keep N]` | Online SQLite backup (mode 0600), keeping the newest N. |
-| `fitme catalog check` | Validate `exercises.toml` and locales (all keys present in all languages); print `content_version`. |
+| `fitme catalog check` | Validate the exercise catalog and locales (all keys present in all languages); print `content_version`. |
 
 Uses stdlib `argparse`.
 

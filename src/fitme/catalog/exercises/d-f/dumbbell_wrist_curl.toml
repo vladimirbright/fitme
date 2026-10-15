@@ -1,0 +1,12 @@
+id = "dumbbell_wrist_curl"
+names = { en = "Dumbbell wrist curl", ru = "Сгибания запястий с гантелями" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit on a bench holding a dumbbell in each hand, palms up, forearms resting on your thighs with the wrists past the knees. Curl the weights up by bending only the wrists, then lower slowly. Use a light weight and a controlled pace.", ru = "Сядьте на скамью, в каждой руке по гантели ладонями вверх, предплечья лежат на бёдрах, кисти свисают за колени. Поднимите гантели, сгибая только запястья, затем медленно опустите. Берите небольшой вес и двигайтесь подконтрольно." }

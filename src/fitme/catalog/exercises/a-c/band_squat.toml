@@ -1,0 +1,13 @@
+id = "band_squat"
+names = { en = "Band squat", ru = "Приседания с эспандером" }
+kind = "compound"
+pattern = "squat"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "lower_back"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "calibration" }
+instructions = { en = "Stand on a light band and hold its ends near the shoulders. Squat and rise smoothly.", ru = "Наступите на лёгкий эспандер, держа его концы у плеч. Плавно присядьте и встаньте." }
+load_step_kg = 1.0

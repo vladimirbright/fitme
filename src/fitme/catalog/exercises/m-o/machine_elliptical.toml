@@ -1,0 +1,13 @@
+id = "machine_elliptical"
+names = { en = "Elliptical machine", ru = "Эллиптический тренажёр" }
+kind = "cardio"
+pattern = "conditioning"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["hip", "knee", "ankle"]
+contraindicated_by = ["hip_injury_current", "knee_injury_current", "ankle_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Step onto the pedals, hold the handles lightly and set a low-to-moderate resistance. Keep your posture tall and your whole foot on the pedal. Move at an even pace you can sustain while talking, for about 15-20 minutes.", ru = "Встаньте на педали, слегка держась за рукояти, и установите низкое или среднее сопротивление. Держите корпус прямо, стопы целиком на педалях. Двигайтесь в ровном темпе, при котором можно разговаривать, около 15-20 минут." }
+load_step_kg = 1.0

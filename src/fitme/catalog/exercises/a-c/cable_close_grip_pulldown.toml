@@ -1,0 +1,13 @@
+id = "cable_close_grip_pulldown"
+names = { en = "Close-grip lat pulldown (V-handle)", ru = "Тяга верхнего блока узким хватом" }
+kind = "compound"
+pattern = "vertical_pull"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit tall at the cable station with a close V-handle attachment, thighs secured under the pad. Pull the handle down to the upper chest, elbows moving down along the body, then let it rise under control without leaning back more than slightly.", ru = "Сядьте прямо у блочного тренажёра с узкой V-образной рукоятью, бёдра зафиксированы под валиками. Тяните рукоять к верху груди, локти двигаются вниз вдоль корпуса, затем отпускайте под контролем, отклоняясь назад не более чем слегка." }
+load_step_kg = 2.5

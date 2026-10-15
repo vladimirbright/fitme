@@ -1,0 +1,13 @@
+id = "dumbbell_step_up"
+names = { en = "Dumbbell step-up", ru = "Зашагивание с гантелями" }
+kind = "compound"
+pattern = "squat"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "ankle", "lower_back"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Use a low stable step. Place the whole foot on it and stand before stepping down.", ru = "Выберите низкую устойчивую платформу. Поставьте на неё всю стопу, поднимитесь и сойдите." }
+load_step_kg = 1.0

@@ -1,0 +1,12 @@
+id = "plank"
+names = { en = "Plank", ru = "Планка" }
+kind = "bodyweight"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Forearms and toes on the floor, body in a straight line from head to heels. Brace your core and hold the position without letting your hips sag or pike.", ru = "Предплечья и носки стоп на полу, тело образует прямую линию от головы до пяток. Напрягите корпус и удерживайте положение, не опуская и не поднимая таз." }

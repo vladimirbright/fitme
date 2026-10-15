@@ -1,0 +1,12 @@
+id = "dumbbell_floor_press"
+names = { en = "Dumbbell floor press", ru = "Жим гантелей с пола" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie on the floor, knees bent, a dumbbell in each hand at chest height. Press the dumbbells straight up until your arms are extended, then lower until your upper arms touch the floor.", ru = "Лягте на пол, колени согнуты, гантели в руках на уровне груди. Выжмите гантели вверх до полного выпрямления рук, затем опустите, пока плечи не коснутся пола." }

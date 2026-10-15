@@ -1,0 +1,13 @@
+id = "decline_push_up"
+names = { en = "Decline push-up", ru = "Отжимания с ногами на возвышении" }
+kind = "bodyweight"
+pattern = "horizontal_push"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Place feet on a stable low surface. Lower the chest toward the floor; press up.", ru = "Поставьте стопы на невысокую устойчивую опору. Опустите грудь к полу; отожмитесь." }
+load_step_kg = 1.0

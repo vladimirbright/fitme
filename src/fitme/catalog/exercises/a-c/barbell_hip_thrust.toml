@@ -1,0 +1,13 @@
+id = "barbell_hip_thrust"
+names = { en = "Barbell hip thrust", ru = "Подъём таза со штангой" }
+kind = "compound"
+pattern = "hinge"
+equipment = ["barbell", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["hip", "lower_back", "knee"]
+contraindicated_by = ["hip_injury_current", "lower_back_injury_current", "knee_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Rest the upper back on the bench. Roll the bar over your hips (use a pad) and hold it in place, then lift the hips until the torso and thighs align.", ru = "Обопритесь верхней частью спины о скамью. Закатите гриф на таз (используйте подкладку) и удерживайте его, затем поднимите таз, выравнивая корпус и бёдра." }
+load_step_kg = 2.5

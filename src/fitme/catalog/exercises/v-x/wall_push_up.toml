@@ -1,0 +1,13 @@
+id = "wall_push_up"
+names = { en = "Wall push-up", ru = "Отжимания от стены" }
+kind = "bodyweight"
+pattern = "horizontal_push"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Place palms on a wall at chest height. Bend the elbows to approach the wall, then press away.", ru = "Поставьте ладони на стену на уровне груди. Согните локти, приблизьтесь к стене и оттолкнитесь." }
+load_step_kg = 1.0

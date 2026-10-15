@@ -1,0 +1,12 @@
+id = "dumbbell_triceps_extension"
+names = { en = "Dumbbell triceps extension", ru = "Разгибания рук с гантелью на трицепс" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Hold one dumbbell overhead with both hands, arms extended. Bend your elbows to lower the weight behind your head, then extend back up.", ru = "Держите одну гантель над головой двумя руками, руки прямые. Согните локти, опуская гантель за голову, затем выпрямите руки обратно." }

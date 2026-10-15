@@ -1,0 +1,12 @@
+id = "barbell_overhead_press"
+names = { en = "Barbell overhead press", ru = "Жим штанги стоя" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["barbell", "rack"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "neck", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Bar at shoulder height, hands just outside shoulder width. Brace your core and press the bar straight overhead until your arms are extended, then lower it back to your shoulders. Set the rack's safety arms just below the lowest point of the movement.", ru = "Гриф на уровне плеч, хват чуть шире плеч. Напрягите корпус и выжмите штангу строго вверх до полного выпрямления рук, затем опустите обратно к плечам. Установите страховочные упоры чуть ниже нижней точки движения." }

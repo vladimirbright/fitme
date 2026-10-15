@@ -1,0 +1,12 @@
+id = "dumbbell_calf_raise"
+names = { en = "Dumbbell standing calf raise", ru = "Подъём на носки стоя с гантелями" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["ankle"]
+contraindicated_by = ["ankle_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand holding a dumbbell in each hand at your sides, feet hip-width. Rise onto the balls of your feet, pause briefly, then lower your heels slowly. Hold a wall or rail if you need balance.", ru = "Встаньте, держа по гантели в опущенных руках, ноги на ширине таза. Поднимитесь на носки, коротко задержитесь и медленно опустите пятки. При необходимости держитесь за стену или опору." }

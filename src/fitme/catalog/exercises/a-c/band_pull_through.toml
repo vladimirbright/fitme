@@ -1,0 +1,14 @@
+id = "band_pull_through"
+names = { en = "Band pull-through", ru = "Тяга эспандера между ног" }
+search = { en = "band pull through", ru = "протяжка между ног с резинкой" }
+kind = "compound"
+pattern = "hinge"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["hip", "lower_back"]
+contraindicated_by = ["hip_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "calibration" }
+instructions = { en = "Anchor a band low and stand facing away, holding it between your legs. Step forward to put tension on the band. Push the hips back with a flat back and soft knees, then drive the hips forward to stand. Keep the arms long.", ru = "Закрепите эспандер низко и встаньте к нему спиной, взяв его между ног. Сделайте шаг вперёд, чтобы создать натяжение. Отведите таз назад, спина прямая, колени слегка согнуты, затем выведите таз вперёд и выпрямитесь. Руки остаются прямыми." }
+load_step_kg = 1.0

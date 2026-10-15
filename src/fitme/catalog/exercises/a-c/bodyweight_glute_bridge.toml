@@ -1,0 +1,12 @@
+id = "bodyweight_glute_bridge"
+names = { en = "Glute bridge", ru = "Ягодичный мостик" }
+kind = "bodyweight"
+pattern = "hinge"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on your back, knees bent, feet flat on the floor. Squeeze the glutes and lift your hips until your body forms a straight line from shoulders to knees, then lower back down.", ru = "Лягте на спину, колени согнуты, стопы на полу. Напрягите ягодицы и поднимите таз, пока тело не образует прямую линию от плеч до колен, затем опуститесь." }

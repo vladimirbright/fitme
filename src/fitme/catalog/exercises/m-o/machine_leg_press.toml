@@ -1,0 +1,13 @@
+id = "machine_leg_press"
+names = { en = "Machine leg press", ru = "Жим ногами в тренажёре" }
+kind = "compound"
+pattern = "squat"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["knee", "hip", "lower_back"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the lightest resistance. Press through the whole foot; lower with control. Keep the lower back flat on the pad throughout; stop the descent at the point where it would start to round.", ru = "Установите минимальное сопротивление. Надавите всей стопой; опускайте платформу плавно. Держите поясницу прижатой к спинке на всём протяжении; останавливайте опускание платформы в точке, где поясница начала бы скругляться." }
+load_step_kg = 2.5

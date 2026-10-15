@@ -1,0 +1,13 @@
+id = "machine_shoulder_press"
+names = { en = "Machine shoulder press", ru = "Жим вверх в тренажёре" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia", "neck_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the lightest resistance. Press upward without leaning back.", ru = "Установите минимальное сопротивление. Выжимайте рукояти вверх, не отклоняясь назад." }
+load_step_kg = 2.5

@@ -1,0 +1,12 @@
+id = "bodyweight_burpee"
+names = { en = "Burpee", ru = "Бёрпи" }
+kind = "cardio"
+pattern = "conditioning"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["knee", "ankle", "shoulder", "lower_back", "elbow_wrist"]
+contraindicated_by = ["knee_injury_current", "ankle_injury_current", "shoulder_injury_current", "lower_back_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "From standing, squat down and place your hands on the floor. Jump your feet back to a plank, then jump them back in, and jump up with arms overhead.", ru = "Из положения стоя присядьте и поставьте руки на пол. Прыжком уведите ноги назад в упор лёжа, затем прыжком верните их обратно и подпрыгните вверх, поднимая руки над головой." }

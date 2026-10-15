@@ -1,0 +1,13 @@
+id = "cable_front_raise"
+names = { en = "Cable front raise", ru = "Подъём перед собой на нижнем блоке" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Attach a short straight bar to a low pulley and stand facing away from the stack, the cable running between your feet. Hold the bar in front of your thighs with both hands, palms down. With arms nearly straight, raise it forward to shoulder height, then lower slowly. Don't lean back or swing.", ru = "Закрепите короткую прямую рукоять на нижнем блоке и встаньте спиной к тренажёру так, чтобы трос проходил между ног. Держите рукоять перед бёдрами двумя руками, ладонями вниз. Почти прямыми руками поднимите её вперёд до уровня плеч, затем медленно опустите. Не отклоняйтесь назад и не раскачивайтесь." }
+load_step_kg = 1.0

@@ -1,4 +1,4 @@
-"""`fitme catalog check` (A§11, IMPLEMENTATION_PLAN M3): validate `exercises.toml` and the
+"""`fitme catalog check` (A§11, IMPLEMENTATION_PLAN M3): validate the exercise catalog and the
 locale files, then print `content_version`.
 
 This is reference-data validation, not an application use case, so — like
@@ -7,7 +7,7 @@ This is reference-data validation, not an application use case, so — like
 than through a `services/` use case of its own. It needs no `Settings` and no database.
 
 Strict on purpose (coordinator note, M3 round 2): a later batch of catalog content is merged
-straight into `exercises.toml` without a person re-deriving every invariant by hand, and this
+straight into the catalog without a person re-deriving every invariant by hand, and this
 command (run in `make check`) is what has to catch a mistake in it.
 """
 
@@ -181,14 +181,14 @@ def catalog_check(*, load: Callable[[], Catalog] = load_catalog) -> int:
     content problem (a broken catalog fixture, a missing locale key) — those are reported as
     problems, not exceptions.
 
-    `load` defaults to the real `exercises.toml` (`fitme.catalog.load_catalog`); tests pass a
+    `load` defaults to the real catalog (`fitme.catalog.load_catalog`); tests pass a
     stand-in that raises on a broken fixture, to exercise this function's error handling
     without touching the shipped catalog file.
     """
     try:
         catalog = load()
     except (ValidationError, tomllib.TOMLDecodeError, OSError) as exc:
-        print(f"fitme catalog check: exercises.toml is invalid: {exc}", file=sys.stderr)
+        print(f"fitme catalog check: the exercise catalog is invalid: {exc}", file=sys.stderr)
         return 1
 
     problems = (

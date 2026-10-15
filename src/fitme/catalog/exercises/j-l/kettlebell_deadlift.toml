@@ -1,0 +1,13 @@
+id = "kettlebell_deadlift"
+names = { en = "Kettlebell deadlift", ru = "Становая тяга с гирей" }
+kind = "compound"
+pattern = "hinge"
+equipment = ["kettlebell"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hernia", "hip_injury_current"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 4.0 }
+instructions = { en = "Place the kettlebell between your feet. Hinge at the hips, grip the handle, back flat. Stand up by driving through the floor, then lower it back down with the same hinge.", ru = "Поставьте гирю между стоп. Наклонившись в тазобедренном суставе, возьмитесь за ручку, спина прямая. Встаньте, отталкиваясь от пола, затем опустите гирю тем же движением." }
+load_step_kg = 2.0

@@ -1,0 +1,13 @@
+id = "band_lat_pulldown"
+names = { en = "Band lat pulldown", ru = "Тяга эспандера сверху" }
+kind = "compound"
+pattern = "vertical_pull"
+equipment = ["resistance_bands", "pull_up_bar"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "calibration" }
+instructions = { en = "Loop a light band over a secure bar. Pull the ends toward the upper chest.", ru = "Закрепите лёгкий эспандер на прочной перекладине. Тяните концы к верхней части груди." }
+load_step_kg = 1.0

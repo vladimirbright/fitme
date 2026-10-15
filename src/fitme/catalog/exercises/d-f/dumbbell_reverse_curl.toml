@@ -1,0 +1,12 @@
+id = "dumbbell_reverse_curl"
+names = { en = "Dumbbell reverse curl", ru = "Сгибания рук с гантелями обратным хватом" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand holding a dumbbell in each hand, arms extended, palms facing down. Curl the weights toward your shoulders, keeping your wrists straight and elbows by your sides. Lower under control with a lighter weight than you would use for a regular curl.", ru = "Встаньте, в каждой руке гантель, руки опущены, ладони смотрят вниз. Поднимайте гантели к плечам, запястья прямые, локти у корпуса. Опускайте под контролем; берите вес легче, чем для обычных сгибаний." }

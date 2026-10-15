@@ -1,0 +1,12 @@
+id = "bodyweight_crunch"
+names = { en = "Crunch", ru = "Скручивания на полу" }
+kind = "bodyweight"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back", "neck"]
+contraindicated_by = ["lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on your back, knees bent, feet flat, hands lightly at your temples or crossed on your chest. Curl your shoulders off the floor, then lower back down slowly. Keep your neck relaxed and do not pull on your head.", ru = "Лягте на спину, колени согнуты, стопы на полу, руки у висков или скрещены на груди. Оторвите плечи от пола, затем медленно опуститесь. Шея расслаблена, не тяните голову руками." }

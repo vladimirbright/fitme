@@ -1,0 +1,14 @@
+id = "bird_dog"
+names = { en = "Bird dog", ru = "Вытягивание разноимённых руки и ноги" }
+search = { en = "bird dog exercise", ru = "упражнение птица-собака" }
+kind = "bodyweight"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "hip"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Start on hands and knees. Extend opposite arm and leg without turning the torso.", ru = "Встаньте на четвереньки. Вытяните противоположные руку и ногу, не разворачивая корпус." }
+load_step_kg = 1.0

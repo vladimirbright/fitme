@@ -1,0 +1,12 @@
+id = "barbell_bent_over_row"
+names = { en = "Barbell bent-over row", ru = "Тяга штанги в наклоне" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "hernia", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Hinge forward at the hips with a flat back, bar hanging at arm's length. Pull the bar toward your lower ribs, squeezing the shoulder blades together, then lower it under control. Keep the working weight clearly below your squat; a bent-over hinge already asks a lot from the lower back.", ru = "Наклонитесь вперёд в тазобедренном суставе, спина прямая, гриф на вытянутых руках. Подтяните гриф к низу груди, сводя лопатки, затем опустите под контролем. Держите рабочий вес заметно ниже приседа — поясница и так активно работает в наклоне." }

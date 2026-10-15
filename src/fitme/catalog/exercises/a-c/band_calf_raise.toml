@@ -1,0 +1,12 @@
+id = "band_calf_raise"
+names = { en = "Band calf raise", ru = "Подъём на носки с лентой" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["ankle"]
+contraindicated_by = ["ankle_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Stand with the middle of a band under both feet and hold the ends in your hands. Rise onto the balls of your feet, pause, then lower your heels slowly. Make sure the band sits flat under your feet.", ru = "Встаньте, расположив середину ленты под обеими стопами, концы держите в руках. Поднимитесь на носки, задержитесь и медленно опустите пятки. Следите, чтобы лента лежала под стопами ровно." }

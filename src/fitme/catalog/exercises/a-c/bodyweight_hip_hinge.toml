@@ -1,0 +1,14 @@
+id = "bodyweight_hip_hinge"
+names = { en = "Bodyweight hip hinge", ru = "Наклоны с отведением таза" }
+search = { en = "bodyweight hip hinge drill", ru = "хип хинж упражнение" }
+kind = "bodyweight"
+pattern = "hinge"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["hip", "lower_back"]
+contraindicated_by = ["hip_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand with knees slightly bent. Move the hips back while the torso leans forward; stand again.", ru = "Встаньте, слегка согнув колени. Отведите таз назад, наклоняя корпус; затем выпрямитесь." }
+load_step_kg = 1.0

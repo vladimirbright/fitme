@@ -1,0 +1,12 @@
+id = "dumbbell_incline_curl"
+names = { en = "Seated incline dumbbell curl", ru = "Сгибания на бицепс сидя на наклонной скамье" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit on a bench set to about 45 degrees, back and head resting against it, a dumbbell in each hand hanging straight down. Curl the dumbbells toward your shoulders without moving your elbows, then lower under control. If the shoulder feels tight, raise the backrest a little.", ru = "Сядьте на скамью, установленную примерно под 45 градусов, спина и затылок прижаты, гантели свободно свисают вниз. Сгибайте руки, поднимая гантели к плечам, не двигая локтями, затем опускайте под контролем. Если тянет плечо — увеличьте угол наклона спинки." }

@@ -1,0 +1,14 @@
+id = "band_front_raise"
+names = { en = "Band front raise", ru = "Подъём рук перед собой с эспандером" }
+search = { en = "band front raise", ru = "подъём рук перед собой с резинкой" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Stand on the middle of a light band and hold the ends in front of your thighs, palms down. With arms nearly straight, raise your hands forward to shoulder height, then lower under control. Keep your ribs down and don't lean back.", ru = "Встаньте на середину лёгкого эспандера, концы держите перед бёдрами ладонями вниз. Почти прямыми руками поднимите кисти вперёд до уровня плеч, затем опустите под контролем. Рёбра опущены, не отклоняйтесь назад." }
+load_step_kg = 1.0

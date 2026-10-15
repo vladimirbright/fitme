@@ -112,7 +112,7 @@ review the underlying data terms before redistribution.
 You can edit the TOML directly. These entries are for lookup only. The source does not
 provide Fitme's reviewed injury flags, check-in areas, location/equipment rules, load units,
 or progression limits. To make an exercise available in plans, add a reviewed entry to
-[`src/fitme/catalog/exercises.toml`](src/fitme/catalog/exercises.toml) and run
+[`src/fitme/catalog/exercises/`](src/fitme/catalog/exercises/) and run
 `fitme catalog check`.
 
 ## Local development (without Docker)

@@ -1,0 +1,12 @@
+id = "dumbbell_row"
+names = { en = "Dumbbell row", ru = "Тяга гантели в наклоне" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["dumbbells", "bench"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Support your knee and hand on a bench, back flat. Row the dumbbell up to your hip, elbow close to your body, then lower it under control. Complete all reps on one side before switching. Keep the torso still — no twisting to help the weight up.", ru = "Обопритесь коленом и рукой о скамью, спина прямая. Подтяните гантель к бедру, локоть близко к корпусу, затем опустите под контролем. Выполните все повторения на одну сторону, затем смените. Корпус неподвижен — не скручивайтесь, помогая себе поднять вес." }

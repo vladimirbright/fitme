@@ -1,0 +1,13 @@
+id = "mobility_ankle_dorsiflexion"
+names = { en = "Ankle dorsiflexion drill", ru = "Упражнение на подвижность голеностопа" }
+search = { en = "ankle dorsiflexion mobility drill", ru = "мобильность голеностопа упражнение" }
+kind = "mobility"
+pattern = "mobility"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["ankle"]
+contraindicated_by = ["ankle_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Facing a wall in a half-kneeling position, drive your front knee toward the wall while keeping your heel on the floor, then return. Move slowly and within a comfortable range.", ru = "Встаньте лицом к стене в полувыпаде. Двигайте переднее колено к стене, не отрывая пятку от пола, затем вернитесь. Двигайтесь медленно, в комфортной амплитуде." }

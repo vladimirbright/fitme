@@ -1,0 +1,14 @@
+id = "cable_kneeling_crunch"
+names = { en = "Cable kneeling crunch", ru = "Скручивания на блоке на коленях" }
+search = { en = "cable crunch", ru = "скручивания на блоке" }
+kind = "isolation"
+pattern = "core"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["lower_back", "neck"]
+contraindicated_by = ["lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Attach a rope to a high pulley and kneel facing the stack, rope held beside your head. Keep your hips still and curl your ribs toward your pelvis. Return with control. Use a light load; do not pull with your arms.", ru = "Закрепите канат на верхнем блоке и встаньте на колени лицом к тренажёру, канат у головы. Таз неподвижен, сворачивайте корпус, приближая рёбра к тазу. Вернитесь под контролем. Берите лёгкий вес и не тяните руками." }
+load_step_kg = 1.0

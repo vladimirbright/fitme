@@ -1,0 +1,13 @@
+id = "machine_upright_bike"
+names = { en = "Upright bike", ru = "Велотренажёр" }
+kind = "cardio"
+pattern = "conditioning"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["hip", "knee"]
+contraindicated_by = ["hip_injury_current", "knee_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set a light-to-moderate resistance and ride at an easy, conversational pace for about 15-20 minutes.", ru = "Установите лёгкое или среднее сопротивление и крутите педали в спокойном темпе, при котором можно разговаривать, около 15-20 минут." }
+load_step_kg = 1.0

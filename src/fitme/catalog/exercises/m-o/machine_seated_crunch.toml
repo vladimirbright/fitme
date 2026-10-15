@@ -1,0 +1,13 @@
+id = "machine_seated_crunch"
+names = { en = "Machine seated crunch", ru = "Скручивания сидя в тренажёре" }
+kind = "isolation"
+pattern = "core"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["lower_back", "neck"]
+contraindicated_by = ["lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Adjust the seat and set the lightest resistance. Hold the handles and curl your torso forward, then return slowly without letting the weight stack drop. Move with your abs, not by pulling with your arms.", ru = "Настройте сиденье и установите минимальное сопротивление. Держась за рукояти, скруглите корпус вперёд, затем медленно вернитесь, не бросая плиты. Работайте прессом, а не тяните руками." }
+load_step_kg = 1.0

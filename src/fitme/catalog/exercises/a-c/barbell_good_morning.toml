@@ -1,0 +1,13 @@
+id = "barbell_good_morning"
+names = { en = "Barbell good morning", ru = "Наклоны со штангой на спине" }
+search = { en = "barbell good morning", ru = "гуд морнинг со штангой" }
+kind = "compound"
+pattern = "hinge"
+equipment = ["barbell", "rack"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip", "neck"]
+contraindicated_by = ["lower_back_injury_current", "hernia", "hip_injury_current", "neck_injury_current"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Bar on the upper back, as in a squat. Feet hip-width, knees softly bent. Push the hips back and hinge forward until your torso is close to parallel with the floor, then reverse the motion to stand back up. Set the rack's safety arms just below the lowest point of the movement.", ru = "Штанга на верхней части спины, как в приседаниях. Ноги на ширине таза, колени слегка согнуты. Отведите таз назад и наклоните корпус вперёд, пока он не станет почти параллелен полу, затем вернитесь в исходное положение. Установите страховочные упоры чуть ниже нижней точки движения." }

@@ -1,0 +1,14 @@
+id = "kettlebell_farmer_carry"
+names = { en = "Kettlebell farmer carry", ru = "Ходьба с гирями в руках" }
+search = { en = "kettlebell farmer carry", ru = "прогулка фермера с гирями" }
+kind = "compound"
+pattern = "core"
+equipment = ["kettlebell"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "hip"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 4.0 }
+instructions = { en = "Hold light kettlebells at the sides. Take short steps with the torso upright.", ru = "Держите лёгкие гири по бокам. Идите короткими шагами, сохраняя корпус вертикальным." }
+load_step_kg = 2.0

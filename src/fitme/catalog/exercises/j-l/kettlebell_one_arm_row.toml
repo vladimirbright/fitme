@@ -1,0 +1,13 @@
+id = "kettlebell_one_arm_row"
+names = { en = "One-arm kettlebell row", ru = "Тяга гири одной рукой" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["kettlebell"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "hip"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 4.0 }
+instructions = { en = "Hinge with one hand resting on the thigh. Pull the kettlebell toward the hip.", ru = "Наклонитесь за счёт таза, опираясь одной рукой о бедро. Тяните гирю к тазу." }
+load_step_kg = 2.0

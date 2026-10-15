@@ -1,0 +1,12 @@
+id = "bodyweight_side_lying_hip_abduction"
+names = { en = "Side-lying hip abduction", ru = "Отведение ноги лёжа на боку" }
+kind = "isolation"
+pattern = "accessory"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["hip"]
+contraindicated_by = ["hip_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on one side, head resting on the bottom arm, legs straight in one line. Lift the top leg up and slightly back with the toes facing forward and the hips stacked. Lower slowly; switch sides after the set.", ru = "Лягте на бок, голова на нижней руке, ноги прямые на одной линии. Поднимите верхнюю ногу вверх и чуть назад, носок смотрит вперёд, таз не заваливается. Медленно опустите; после подхода смените сторону." }

@@ -1,0 +1,12 @@
+id = "barbell_romanian_deadlift"
+names = { en = "Barbell Romanian deadlift", ru = "Румынская тяга со штангой" }
+kind = "compound"
+pattern = "hinge"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hernia", "hip_injury_current"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Hold the bar at hip height, feet hip-width. Push your hips back, keeping the bar close to your legs and knees only slightly bent, until you feel a stretch in the hamstrings. Drive the hips forward to stand back up. Leave a couple of reps in reserve rather than grinding out the last one.", ru = "Держите штангу на уровне бёдер, ноги на ширине таза. Отведите таз назад, гриф скользит вдоль ног, колени чуть согнуты, пока не почувствуете растяжение задней поверхности бедра. Верните таз вперёд, чтобы встать. Оставляйте пару повторений в запасе, не доводите подход до отказа." }

@@ -1,0 +1,12 @@
+id = "bodyweight_three_quarter_sit_up"
+names = { en = "3/4 sit-up", ru = "Подъём корпуса на 3/4" }
+kind = "bodyweight"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back", "neck"]
+contraindicated_by = ["lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on your back, knees bent, feet flat, fingertips lightly at your temples. Curl your shoulders and upper back off the floor until your torso is at roughly 45 degrees. Lower with control. Do not pull on your neck.", ru = "Лягте на спину, колени согнуты, стопы на полу, пальцы слегка касаются висков. Оторвите плечи и верх спины от пола и поднимите корпус примерно до 45 градусов. Опуститесь под контролем. Не тяните голову руками." }

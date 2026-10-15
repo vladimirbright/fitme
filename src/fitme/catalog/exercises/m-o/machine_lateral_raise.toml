@@ -1,0 +1,13 @@
+id = "machine_lateral_raise"
+names = { en = "Machine lateral raise", ru = "Разведение рук в стороны в тренажёре" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set the lightest resistance and adjust the seat so your shoulders line up with the machine's pivot, pads resting on the outside of your upper arms. Raise your arms out to the sides to shoulder height, then lower slowly without letting the stack touch down.", ru = "Установите минимальное сопротивление и отрегулируйте сиденье так, чтобы плечевые суставы были на одной оси с осью вращения тренажёра, а валики упирались в руки снаружи выше локтя. Поднимите руки в стороны до уровня плеч, затем медленно опустите, не давая плитам лечь на место." }
+load_step_kg = 1.0

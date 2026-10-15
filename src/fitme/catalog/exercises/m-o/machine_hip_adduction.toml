@@ -1,0 +1,13 @@
+id = "machine_hip_adduction"
+names = { en = "Seated hip adduction", ru = "Сведение ног сидя в тренажёре" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["hip"]
+contraindicated_by = ["hip_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set the lightest resistance and a comfortable starting width. Sit with your back on the pad, bring the legs together smoothly, then open them slowly. Avoid swinging the weight.", ru = "Установите минимальное сопротивление и комфортную начальную ширину. Сядьте спиной к спинке, плавно сведите ноги и медленно разведите. Избегайте раскачки веса." }
+load_step_kg = 1.0

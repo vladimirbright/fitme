@@ -1,0 +1,13 @@
+id = "machine_reverse_grip_pulldown"
+names = { en = "Reverse-grip lat pulldown", ru = "Тяга верхнего блока обратным хватом" }
+kind = "compound"
+pattern = "vertical_pull"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the lightest resistance and secure your thighs under the pads. Take the handles with an underhand grip about shoulder-width. Pull them to the upper chest with elbows moving down and back, then let them rise under control. Avoid swinging the torso back.", ru = "Установите минимальное сопротивление и зафиксируйте бёдра под валиками. Возьмитесь за рукояти хватом снизу примерно на ширине плеч. Тяните их к верху груди, опуская локти вниз и назад, затем отпускайте под контролем. Не раскачивайте корпус назад." }
+load_step_kg = 2.5

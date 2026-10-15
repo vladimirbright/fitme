@@ -1,7 +1,7 @@
 """Loads versioned prompt templates from `src/fitme/prompts/<name>.v<N>.md` (A§4.8, A§8.1).
 
 Prompts are plain files, not inline strings (AGENTS.md §9), shipped as package data the same
-way `catalog/exercises.toml` and `i18n/locales/*.toml` already are (proven by
+way `catalog/exercises/` and `i18n/locales/*.toml` already are (proven by
 `config/content.py`'s own hashing walk), so `src/fitme/prompts/` needs no `__init__.py` —
 `importlib.resources.files("fitme") / "prompts"` reaches it as a plain subdirectory of the
 `fitme` package, and hatchling's `packages = ["src/fitme"]` includes every file under it in

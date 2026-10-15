@@ -1,0 +1,13 @@
+id = "machine_calf_raise"
+names = { en = "Machine calf raise", ru = "Подъём на носки в тренажёре" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["ankle", "knee"]
+contraindicated_by = ["ankle_injury_current", "knee_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set the lightest resistance. Rise onto the toes; lower the heels slowly.", ru = "Установите минимальное сопротивление. Поднимитесь на носки; медленно опустите пятки." }
+load_step_kg = 1.0

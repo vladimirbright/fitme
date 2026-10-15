@@ -156,7 +156,7 @@ def test_no_params_returns_the_template_byte_for_byte_even_with_literal_braces(
 
 def test_prompts_are_shipped_in_the_built_wheel(tmp_path: Path) -> None:
     """Builds the real wheel (offline, hatchling; ~0.2s in a warm environment) and checks
-    every `src/fitme/prompts/*.md` file made it in, the same way `catalog/exercises.toml` and
+    every `src/fitme/prompts/*.md` file made it in, the same way `catalog/exercises/` and
     `i18n/locales/*.toml` already do.
 
     `--offline` means this needs the build backend (hatchling) already in uv's cache; a

@@ -67,7 +67,7 @@ bot, web, cli ──► services ──► guards, llm, db ──► domain
   pseudonymizes everything sent to the provider (no Telegram ids, names, or screening notes).
 - `prompts/<name>.vN.md` — versioned prompt files. Change behaviour by adding a new version,
   and record the version in decisions.
-- Reference data lives in version-controlled files, not SQLite: `catalog/exercises.toml` (the
+- Reference data lives in version-controlled files, not SQLite: `catalog/exercises/<range>/<id>.toml` (one file per exercise; the
   only exercises that may be prescribed), `guards/stop_words/*.txt`, prompts, `i18n/locales/*.toml`.
   `config/content.py` hashes guard-relevant files (catalog, stop words, prompts, guard and
   catalog-logic sources) into `content_version`, written to every `decisions` row.

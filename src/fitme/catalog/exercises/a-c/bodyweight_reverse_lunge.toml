@@ -1,0 +1,12 @@
+id = "bodyweight_reverse_lunge"
+names = { en = "Bodyweight reverse lunge", ru = "Обратные выпады с собственным весом" }
+kind = "bodyweight"
+pattern = "squat"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["knee", "hip", "ankle"]
+contraindicated_by = ["knee_injury_current", "ankle_injury_current", "hip_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Step one foot back, lower the back knee toward the floor while the front thigh comes to about parallel, then push back up to standing. Alternate legs.", ru = "Сделайте шаг одной ногой назад, опустите заднее колено к полу, пока бедро передней ноги не станет параллельно полу, затем вернитесь в исходное положение. Чередуйте ноги." }

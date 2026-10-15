@@ -1,0 +1,12 @@
+id = "bodyweight_heel_touch"
+names = { en = "Alternating heel touch", ru = "Попеременное касание пяток" }
+kind = "bodyweight"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back", "neck"]
+contraindicated_by = ["lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on your back, knees bent, feet flat, arms along your sides. Lift your shoulders slightly and reach one hand toward the same-side heel, then the other. Keep movements small and controlled.", ru = "Лягте на спину, колени согнуты, стопы на полу, руки вдоль тела. Слегка приподнимите плечи и потянитесь рукой к пятке той же стороны, затем другой. Движения небольшие и подконтрольные." }

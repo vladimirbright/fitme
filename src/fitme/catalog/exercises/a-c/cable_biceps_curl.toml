@@ -1,0 +1,13 @@
+id = "cable_biceps_curl"
+names = { en = "Cable biceps curl", ru = "Сгибание рук на нижнем блоке" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set the lightest resistance. Keep elbows still as the handles rise.", ru = "Установите минимальное сопротивление. Поднимайте рукоять, не двигая локтями." }
+load_step_kg = 1.0

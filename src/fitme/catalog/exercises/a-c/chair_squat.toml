@@ -1,0 +1,13 @@
+id = "chair_squat"
+names = { en = "Chair squat", ru = "Приседания до стула" }
+kind = "bodyweight"
+pattern = "squat"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["knee", "hip"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand in front of a stable chair. Touch the seat lightly with the hips, then stand.", ru = "Встаньте перед устойчивым стулом. Слегка коснитесь сиденья тазом, затем встаньте." }
+load_step_kg = 1.0

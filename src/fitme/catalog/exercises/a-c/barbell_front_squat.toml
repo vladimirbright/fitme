@@ -1,0 +1,12 @@
+id = "barbell_front_squat"
+names = { en = "Barbell front squat", ru = "Фронтальные приседания со штангой" }
+kind = "compound"
+pattern = "squat"
+equipment = ["barbell", "rack"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "lower_back", "hip", "shoulder", "neck"]
+contraindicated_by = ["knee_injury_current", "lower_back_injury_current", "hernia", "shoulder_injury_current", "elbow_wrist_injury_current", "hip_injury_current", "neck_injury_current"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Rest the bar across the front of your shoulders, elbows lifted, fingertips light on the bar. Feet shoulder-width. Sit down and back, torso upright and elbows up, until your thighs are at least parallel to the floor. Stand back up through the whole foot. Set the rack's safety arms just below the lowest point of the movement.", ru = "Расположите штангу на передних дельтах, локти подняты вперёд, пальцы слегка придерживают гриф. Ноги на ширине плеч. Присядьте вниз и назад, корпус вертикально, локти вверх, до параллели бёдер с полом или ниже. Встаньте, отталкиваясь всей стопой. Установите страховочные упоры чуть ниже нижней точки движения." }

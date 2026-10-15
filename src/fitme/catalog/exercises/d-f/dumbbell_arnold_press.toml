@@ -1,0 +1,12 @@
+id = "dumbbell_arnold_press"
+names = { en = "Seated dumbbell Arnold press", ru = "Жим Арнольда сидя" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia", "neck_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit on a bench with an upright backrest, dumbbells in front of your shoulders, palms facing you. Press up while turning your palms forward until your arms are extended, then lower and turn your palms back toward you. Keep your back against the pad.", ru = "Сядьте на скамью с вертикальной спинкой, гантели перед плечами, ладони обращены к вам. Выжимайте вверх, разворачивая ладони вперёд, до выпрямления рук, затем опускайте, возвращая ладони к себе. Спина прижата к спинке." }

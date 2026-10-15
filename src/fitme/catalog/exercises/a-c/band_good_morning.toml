@@ -1,0 +1,14 @@
+id = "band_good_morning"
+names = { en = "Band good morning", ru = "Наклоны с эспандером" }
+search = { en = "band good morning", ru = "гуд морнинг с резинкой" }
+kind = "compound"
+pattern = "hinge"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["hip", "lower_back"]
+contraindicated_by = ["hip_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "calibration" }
+instructions = { en = "Stand on a light band with its loop over the shoulders. Move the hips back, then stand.", ru = "Наступите на лёгкий эспандер и заведите петлю за плечи. Отведите таз назад, затем выпрямитесь." }
+load_step_kg = 1.0

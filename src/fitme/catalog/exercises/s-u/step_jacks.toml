@@ -1,0 +1,13 @@
+id = "step_jacks"
+names = { en = "Step jacks", ru = "Шаги в стороны с подъёмом рук" }
+kind = "cardio"
+pattern = "conditioning"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["hip", "knee", "ankle", "shoulder"]
+contraindicated_by = ["hip_injury_current", "knee_injury_current", "ankle_injury_current", "shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Step one foot out as the arms rise. Step back and alternate sides.", ru = "Шагните одной ногой в сторону, поднимая руки. Вернитесь и смените сторону." }
+load_step_kg = 1.0

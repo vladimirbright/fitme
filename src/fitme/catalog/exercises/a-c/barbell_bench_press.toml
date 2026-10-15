@@ -1,0 +1,12 @@
+id = "barbell_bench_press"
+names = { en = "Barbell bench press", ru = "Жим штанги лёжа" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["barbell", "rack", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Lie on the bench, feet flat on the floor, bar over your chest. Unrack, lower the bar to the mid-chest with elbows at roughly 45 degrees, then press it back up. Set the rack's safety arms just below the lowest point of the movement. Pause briefly on the chest instead of bouncing the bar up.", ru = "Лягте на скамью, стопы на полу, гриф над грудью. Снимите штангу со стойки, опустите к середине груди, локти под углом примерно 45 градусов, затем выжмите обратно вверх. Установите страховочные упоры чуть ниже нижней точки движения. Делайте короткую паузу на груди вместо отбива штанги вверх." }

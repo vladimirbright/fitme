@@ -1,0 +1,13 @@
+id = "dumbbell_squat"
+names = { en = "Dumbbell squat", ru = "Приседания с гантелями" }
+kind = "compound"
+pattern = "squat"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "lower_back"]
+contraindicated_by = ["knee_injury_current", "hernia", "hip_injury_current", "lower_back_injury_current"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Hold light dumbbells at your sides, feet shoulder-width. Sit down and back with the chest up, then stand through the whole foot. Keep the knees tracking over the toes.", ru = "Держите лёгкие гантели по бокам, ноги на ширине плеч. Присядьте вниз и назад, грудь поднята, затем встаньте, опираясь на всю стопу. Колени движутся по линии носков." }
+load_step_kg = 1.0

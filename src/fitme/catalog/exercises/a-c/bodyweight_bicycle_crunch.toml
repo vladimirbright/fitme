@@ -1,0 +1,13 @@
+id = "bodyweight_bicycle_crunch"
+names = { en = "Bicycle crunch", ru = "Велосипед (скручивания)" }
+search = { en = "bicycle crunch", ru = "скручивания велосипед" }
+kind = "bodyweight"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back", "neck"]
+contraindicated_by = ["lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on your back, hands beside your head, knees lifted. Bring one elbow toward the opposite knee while the other leg extends, then switch in a steady pedaling rhythm. Keep your lower back pressed down and do not pull on your neck.", ru = "Лягте на спину, пальцы у висков, колени подняты. Тяните локоть к противоположному колену, пока другая нога вытягивается, затем меняйте стороны в ровном темпе. Поясница прижата к полу, голову руками не тяните." }

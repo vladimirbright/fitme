@@ -1,0 +1,13 @@
+id = "kettlebell_russian_twist"
+names = { en = "Kettlebell Russian twist", ru = "Русские скручивания с гирей" }
+kind = "isolation"
+pattern = "core"
+equipment = ["kettlebell"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back"]
+contraindicated_by = ["lower_back_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 4.0 }
+instructions = { en = "Sit with knees bent, leaning back slightly, feet on the floor or lifted. Hold the kettlebell with both hands and rotate your torso to tap it on the floor beside each hip.", ru = "Сядьте, колени согнуты, слегка откиньтесь назад, стопы на полу или приподняты. Держите гирю двумя руками и поворачивайте корпус, касаясь ею пола у каждого бедра." }
+load_step_kg = 2.0

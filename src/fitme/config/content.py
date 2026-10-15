@@ -2,8 +2,9 @@
 guard-logic files, so a past `decisions` row can be tied back to exactly what the guards saw
 at the time (`git log -S <hash>`, or by recomputing this function at a given commit).
 
-Hashed: `catalog/exercises.toml`, `guards/stop_words/*.txt`, `prompts/*.md` (the directory
-doesn't exist until M4; absent or empty contributes nothing), `guards/**/*.py`, `domain/
+Hashed: `catalog/exercises/**/*.toml` (one file per exercise, ADR 0006),
+`guards/stop_words/*.txt`, `prompts/*.md` (the directory doesn't exist until M4; absent or
+empty contributes nothing), `guards/**/*.py`, `domain/
 catalog.py` + `domain/enums.py` + `domain/models.py` (the catalog-logic and domain-model
 source that decides what a guard sees and what shape it validates), and `services/loads.py`
 (the M4-round update to A§4.8 — the load engine decides every kg value a guard ever checks,
@@ -21,8 +22,9 @@ import importlib.resources
 from collections.abc import Iterable
 from importlib.resources.abc import Traversable
 
+from fitme.catalog import exercise_files
+
 _CATALOG_PACKAGE = "fitme.catalog"
-_CATALOG_FILENAME = "exercises.toml"
 _STOP_WORDS_PACKAGE = "fitme.guards.stop_words"
 _GUARDS_PACKAGE = "fitme.guards"
 _DOMAIN_PACKAGE = "fitme.domain"
@@ -58,10 +60,8 @@ def _walk(root: Traversable, prefix: str, suffix: str) -> list[tuple[str, Traver
 
 def _hashed_files() -> Iterable[tuple[str, Traversable]]:
     """Every guard-relevant `(relative_path, item)` pair, unsorted (the caller sorts)."""
-    yield (
-        f"catalog/{_CATALOG_FILENAME}",
-        importlib.resources.files(_CATALOG_PACKAGE) / _CATALOG_FILENAME,
-    )
+    for path, item in exercise_files(importlib.resources.files(_CATALOG_PACKAGE)):
+        yield f"catalog/{path}", item
     yield from _walk(importlib.resources.files(_STOP_WORDS_PACKAGE), "guards/stop_words", ".txt")
     yield from _walk(
         importlib.resources.files(_ROOT_PACKAGE) / _PROMPTS_SUBDIR, _PROMPTS_SUBDIR, ".md"

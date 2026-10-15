@@ -1,0 +1,13 @@
+id = "single_leg_sit_to_stand"
+names = { en = "Single-leg sit-to-stand", ru = "Вставание со стула на одной ноге" }
+kind = "bodyweight"
+pattern = "squat"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["knee", "hip", "ankle"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Sit on a stable chair with one foot planted. Stand with that leg, using the other foot lightly if needed.", ru = "Сядьте на устойчивый стул, поставив одну стопу на пол. Встаньте на этой ноге, при необходимости слегка помогая второй." }
+load_step_kg = 1.0

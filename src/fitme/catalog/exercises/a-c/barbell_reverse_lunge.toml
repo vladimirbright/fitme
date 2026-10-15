@@ -1,0 +1,12 @@
+id = "barbell_reverse_lunge"
+names = { en = "Barbell reverse lunge", ru = "Выпады назад со штангой" }
+kind = "compound"
+pattern = "squat"
+equipment = ["barbell", "rack"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "ankle", "lower_back", "neck"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current", "lower_back_injury_current", "hernia", "neck_injury_current"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Set the bar at shoulder height in the rack, unrack it onto your upper back and step back into clear space. Step one foot back and lower until the front thigh is about parallel to the floor, torso upright. Push through the front foot to return, then switch legs. If your balance shifts, bring the feet together before the next rep.", ru = "Установите штангу на стойке на высоте плеч, снимите её на верхнюю часть спины и отойдите на свободное место. Шагните одной ногой назад и опуститесь, пока бедро передней ноги не станет примерно параллельно полу, корпус прямой. Оттолкнитесь передней ногой, вернитесь и смените ногу. Если теряете равновесие, поставьте стопы вместе перед следующим повтором." }

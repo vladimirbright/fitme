@@ -16,13 +16,18 @@ language, and project-posture rules are binding.
   each with names and instructions in `en`, `es`, `it`, `tr`, `ru`, and `zh`. It is gitignored.
   Spanish, Italian, Turkish, and 1,301 Russian names are machine drafts. The source
   instructions have not passed Fitme safety review.
-- `src/fitme/catalog/exercises.toml` is the **only** catalog the plan generator may use. It
-  currently has 114 reviewed entries. Its schema is defined by
+- `src/fitme/catalog/exercises/` is the **only** catalog the plan generator may use: one
+  file per exercise, `<range>/<id>.toml` (ADR 0006; field notes in its `README.md`). It
+  currently has 190 reviewed entries. Its schema is defined by
   `src/fitme/domain/catalog.py`, and its allowed enum values are in
   `src/fitme/domain/enums.py`. Read nearby entries before editing it.
 - The reference marks 23 name-only possible catalog matches, 146 entries needing equipment
   review, and 1,155 needing safety review. Twelve records have a duplicate English source
   name. These markers identify work; they do not prove that entries are equivalent or safe.
+- A first triage pass (2026-10-15) gave every entry `triage = "alias" | "promoted" |
+  "lookup_only"`, with `catalog_id`, `related_catalog_id`, `lookup_only_reasons` and
+  `pending_language_review`. Its en/ru review was model-only. Treat these fields as a starting
+  point to re-check, not as settled decisions.
 - The source repository is `https://github.com/tool-source/base-exercises-dataset`; Chinese
   names came from `https://github.com/muxuezzz/exercises-dataset-zh-cn`. Keep the source
   data local until its redistribution terms have been resolved.
@@ -49,11 +54,11 @@ language, and project-posture rules are binding.
    or `zh` name and instruction to that same entry only after checking that the translation
    describes the catalog's actual variant and its safety cues. Do not create a second
    plannable entry for an alias.
-5. For a genuinely new exercise, add it to `src/fitme/catalog/exercises.toml` only when
+5. For a genuinely new exercise, add it as a new file in `src/fitme/catalog/exercises/` only when
    you can independently justify **every** required plan field: `kind`, `pattern`, complete
    `equipment`, `load_unit`, `locations`, `loads_areas`, `contraindicated_by`,
-   `increment_kg`, conservative `start`, and reviewed `instructions`. Use six-language
-   `names` and `instructions` for a newly promoted entry. Check `kg_loadable` and
+   `increment_kg`, conservative `start`, and reviewed `instructions`. Give a newly promoted
+   entry `en` and `ru` `names` and `instructions`, the app's two languages. Check `kg_loadable` and
    `load_step_kg` semantics, especially for dumbbells, kettlebells, bands, bodyweight,
    cardio, and machines. Use a stable new ID that does not collide with an existing one.
    Never derive injury flags or safe loading from the source's target muscle alone.

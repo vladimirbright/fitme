@@ -1,0 +1,12 @@
+id = "barbell_standing_calf_raise"
+names = { en = "Barbell standing calf raise", ru = "Подъём на носки стоя со штангой" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["barbell", "rack"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["ankle", "knee", "lower_back", "neck"]
+contraindicated_by = ["ankle_injury_current", "knee_injury_current", "lower_back_injury_current", "hernia", "neck_injury_current"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Set the bar on the rack at shoulder height, step under it, unrack and take a small step back. Feet hip-width. Rise onto the balls of your feet, pause, then lower your heels slowly. Re-rack the bar before you step away.", ru = "Установите штангу на стойке на высоте плеч, зайдите под неё, снимите со стойки и сделайте небольшой шаг назад. Ноги на ширине таза. Поднимитесь на носки, задержитесь и медленно опустите пятки. Верните штангу на стойку, прежде чем отойти." }

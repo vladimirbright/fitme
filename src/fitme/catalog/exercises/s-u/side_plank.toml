@@ -1,0 +1,12 @@
+id = "side_plank"
+names = { en = "Side plank", ru = "Боковая планка" }
+kind = "bodyweight"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on your side, propped up on one forearm, feet stacked. Lift your hips so your body forms a straight line, and hold. Repeat on the other side.", ru = "Лягте на бок, опираясь на предплечье, стопы одна на другой. Поднимите таз, чтобы тело образовало прямую линию, и удерживайте. Повторите на другую сторону." }

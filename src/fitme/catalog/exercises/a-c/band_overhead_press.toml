@@ -1,0 +1,13 @@
+id = "band_overhead_press"
+names = { en = "Band overhead press", ru = "Жим эспандера вверх" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia", "neck_injury_current"]
+increment_kg = 2.0
+start = { kind = "calibration" }
+instructions = { en = "Stand on a light band with hands at shoulder height. Press up without leaning back.", ru = "Наступите на лёгкий эспандер, держа руки у плеч. Выжимайте вверх, не отклоняясь назад." }
+load_step_kg = 1.0

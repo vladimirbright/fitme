@@ -1,0 +1,12 @@
+id = "barbell_deficit_deadlift"
+names = { en = "Deficit deadlift", ru = "Становая тяга с дефицита" }
+kind = "compound"
+pattern = "hinge"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip", "knee"]
+contraindicated_by = ["lower_back_injury_current", "hernia", "hip_injury_current", "knee_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Stand on a small deficit (a weight plate, about 2-3 cm), feet hip-width, bar over mid-foot. Hinge down with a flat back to grip the bar just outside your shins, then drive through the floor to stand, hips and shoulders rising together. Warm up in small steps rather than large jumps between sets.", ru = "Встаньте на невысокую подставку (блин высотой 2-3 см), ноги на ширине таза, гриф над серединой стопы. Наклонитесь с прямой спиной и возьмите гриф чуть шире голеней, затем встаньте, отталкиваясь от пола, бёдра и плечи поднимаются одновременно. Увеличивайте вес в разминке небольшими шагами, без резких скачков." }

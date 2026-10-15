@@ -1,0 +1,12 @@
+id = "dumbbell_seated_french_press"
+names = { en = "Seated dumbbell French press", ru = "Французский жим сидя с гантелью" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit with your back supported, holding one dumbbell with both hands behind your head, elbows pointing up and close together. Lower it behind your head only as far as feels comfortable, then extend your arms back up.", ru = "Сядьте, спина опирается на спинку, держите одну гантель двумя руками за головой, локти смотрят вверх и находятся близко друг к другу. Опускайте гантель за голову настолько, насколько комфортно, затем выпрямляйте руки обратно вверх." }

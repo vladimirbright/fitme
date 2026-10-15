@@ -1,0 +1,12 @@
+id = "barbell_shrug"
+names = { en = "Barbell shrug", ru = "Шраги со штангой" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "neck", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "neck_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Stand with the bar hanging in front of your thighs, hands just outside the hips, arms straight. Lift the shoulders straight up toward the ears, without bending the elbows or rolling the shoulders. Lower slowly to full stretch. Keep the neck still and the load light enough for a smooth, controlled movement.", ru = "Встаньте, штанга висит перед бёдрами, хват чуть шире таза, руки прямые. Поднимите плечи строго вверх к ушам, не сгибая локти и не вращая плечами. Медленно опустите до полного растяжения. Шея неподвижна, вес такой, чтобы движение оставалось плавным и контролируемым." }

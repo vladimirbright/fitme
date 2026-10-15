@@ -14,7 +14,7 @@ docker compose exec -T fitme fitme history import - < my.import.toml   # Docker
 The dry-run report lists every session or plan it would skip, and why. Fix those and run
 it again; re-importing is safe because identical sessions are skipped. The exercise list at
 the end was generated from the catalog. If the catalog changes, regenerate it with
-`make catalog` or copy it from `src/fitme/catalog/exercises.toml`.
+`make catalog` or copy it from the files in `src/fitme/catalog/exercises/`.
 
 ---
 

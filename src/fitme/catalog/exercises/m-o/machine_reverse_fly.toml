@@ -1,0 +1,13 @@
+id = "machine_reverse_fly"
+names = { en = "Machine reverse fly", ru = "Обратные разведения в тренажёре" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set the lightest resistance and adjust the seat so the handles are at shoulder height, chest against the pad. With arms slightly bent, move the handles back and out, then return slowly. Keep your shoulders down and away from your ears.", ru = "Установите минимальное сопротивление и отрегулируйте сиденье так, чтобы рукояти были на уровне плеч, грудь прижата к упору. Слегка согнутыми руками отведите рукояти назад и в стороны, затем медленно верните. Плечи опущены, не поднимайте их к ушам." }
+load_step_kg = 1.0

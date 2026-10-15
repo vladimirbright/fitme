@@ -1,0 +1,13 @@
+id = "cable_side_bend"
+names = { en = "Cable side bend", ru = "Боковые наклоны на блоке" }
+kind = "isolation"
+pattern = "core"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["lower_back"]
+contraindicated_by = ["lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set the cable low and stand side-on, handle in the near hand. Bend sideways away from the stack in a small range, then return upright. Keep your hips and chest facing forward. Finish all reps on one side before switching.", ru = "Установите блок внизу и встаньте боком, рукоять в ближней руке. Наклонитесь в сторону от тренажёра в небольшой амплитуде и вернитесь. Таз и грудь смотрят вперёд. Выполните все повторения на одну сторону, затем смените." }
+load_step_kg = 1.0

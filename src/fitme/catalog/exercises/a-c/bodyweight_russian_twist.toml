@@ -1,0 +1,12 @@
+id = "bodyweight_russian_twist"
+names = { en = "Bodyweight Russian twist", ru = "Русские скручивания без веса" }
+kind = "bodyweight"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Sit with knees bent and heels on the floor, leaning back slightly with a long spine. Clasp your hands in front of your chest and rotate your torso to one side, then the other. Move slowly and keep your chest tall.", ru = "Сядьте, колени согнуты, пятки на полу, слегка откиньтесь назад, спина ровная. Сцепите руки перед грудью и поворачивайте корпус в одну сторону, затем в другую. Двигайтесь медленно, грудь держите раскрытой." }

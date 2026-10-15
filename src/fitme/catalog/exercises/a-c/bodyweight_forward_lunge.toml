@@ -1,0 +1,12 @@
+id = "bodyweight_forward_lunge"
+names = { en = "Bodyweight forward lunge", ru = "Выпады вперёд с собственным весом" }
+kind = "bodyweight"
+pattern = "squat"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["knee", "hip", "ankle"]
+contraindicated_by = ["knee_injury_current", "ankle_injury_current", "hip_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Stand tall with your hands on the waist. Step forward and lower until the front thigh is about parallel, then push back to standing. Alternate legs. Keep the front knee over the front foot.", ru = "Встаньте прямо, руки на поясе. Сделайте шаг вперёд и опуститесь, пока бедро передней ноги не станет примерно параллельно полу, затем оттолкнитесь и вернитесь в стойку. Чередуйте ноги. Колено передней ноги остаётся над стопой." }

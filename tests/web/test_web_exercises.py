@@ -20,7 +20,7 @@ async def test_library_requires_login_and_displays_local_toml(
 ) -> None:
     settings.db_path = tmp_path / "fitme.db"
     reference_path(settings.db_path).write_text(
-        '''planning_status = "reference_only"
+        """planning_status = "reference_only"
 
 [[exercise]]
 id = "0001"
@@ -54,7 +54,7 @@ it = "Muoviti lentamente."
 tr = "Yavaş hareket et."
 ru = "Двигайтесь медленно."
 zh = "缓慢移动。"
-''',
+""",
         encoding="utf-8",
     )
     response = await client.get("/app/exercises", follow_redirects=False)

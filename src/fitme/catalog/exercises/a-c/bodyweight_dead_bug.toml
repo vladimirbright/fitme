@@ -1,0 +1,12 @@
+id = "bodyweight_dead_bug"
+names = { en = "Dead bug", ru = "Мёртвый жук" }
+kind = "bodyweight"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back"]
+contraindicated_by = ["lower_back_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on your back, arms reaching toward the ceiling, knees bent at 90 degrees above your hips. Slowly lower one arm and the opposite leg toward the floor, keeping your lower back flat, then return and switch sides.", ru = "Лягте на спину, руки вытянуты к потолку, колени согнуты под 90 градусов над тазом. Медленно опустите одну руку и противоположную ногу к полу, не отрывая поясницу от пола, затем вернитесь и смените сторону." }

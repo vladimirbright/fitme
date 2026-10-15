@@ -1,0 +1,12 @@
+id = "barbell_seated_overhead_press"
+names = { en = "Seated barbell overhead press", ru = "Жим штанги над головой сидя" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["barbell", "rack", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia", "neck_injury_current"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Place an upright bench inside the rack and set the bar at about shoulder height when seated. Grip just outside shoulder width. Unrack, press the bar straight overhead until your arms are extended, then lower to your collarbone. Set the rack's safety arms below the bar's lowest point.", ru = "Поставьте вертикальную скамью внутри стойки, гриф на высоте плеч в положении сидя. Хват чуть шире плеч. Снимите штангу, выжмите её вверх до выпрямления рук, затем опустите к ключицам. Установите страховочные упоры ниже нижней точки грифа." }

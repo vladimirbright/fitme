@@ -1,0 +1,13 @@
+id = "dumbbell_triceps_kickback"
+names = { en = "Dumbbell triceps kickback", ru = "Разгибания рук с гантелями в наклоне" }
+search = { en = "dumbbell triceps kickback", ru = "кикбэк с гантелями" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder", "lower_back"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Hold a dumbbell in each hand, bend your knees slightly and hinge forward with a flat back. Pin your upper arms against your sides, elbows bent. Straighten your arms back, then bend them again under control without moving your upper arms.", ru = "Возьмите по гантели в руки, слегка согните колени и наклонитесь вперёд с ровной спиной. Прижмите локти к корпусу, руки согнуты. Выпрямите руки назад, затем снова согните под контролем, не отводя локти от корпуса." }

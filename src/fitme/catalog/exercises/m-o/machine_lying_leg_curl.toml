@@ -1,0 +1,13 @@
+id = "machine_lying_leg_curl"
+names = { en = "Lying leg curl", ru = "Сгибание ног лёжа" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["knee"]
+contraindicated_by = ["knee_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set the lightest resistance. Lie face down with the pad just above your heels. Bend the knees without lifting the hips, then lower slowly.", ru = "Установите минимальное сопротивление. Лягте лицом вниз, валик чуть выше пяток. Сгибайте колени, не отрывая таз от скамьи, затем медленно опустите." }
+load_step_kg = 1.0

@@ -1,0 +1,12 @@
+id = "band_pull_apart"
+names = { en = "Band pull-apart", ru = "Разведение эспандера перед собой" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Hold the band with both hands at chest height, arms extended, palms down. Pull the band apart by moving your hands out to the sides, squeezing your shoulder blades together, then return under control.", ru = "Держите ленту двумя руками на уровне груди, руки прямые, ладони вниз. Разведите руки в стороны, растягивая ленту и сводя лопатки, затем верните под контролем." }

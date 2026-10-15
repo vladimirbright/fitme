@@ -1,0 +1,13 @@
+id = "dumbbell_shrug"
+names = { en = "Dumbbell shrug", ru = "Шраги с гантелями" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "neck", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "neck_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand tall holding a dumbbell in each hand at your sides, arms straight. Lift your shoulders straight up toward your ears, pause briefly, then lower under control. Keep the arms straight and avoid rolling the shoulders or tilting the head forward.", ru = "Встаньте прямо, в руках по гантели вдоль корпуса, руки прямые. Поднимите плечи строго вверх к ушам, коротко задержитесь, затем опустите под контролем. Руки остаются прямыми, не крутите плечами и не наклоняйте голову вперёд." }
+load_step_kg = 1.0

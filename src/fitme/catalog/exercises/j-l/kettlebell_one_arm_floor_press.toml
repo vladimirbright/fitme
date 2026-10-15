@@ -1,0 +1,13 @@
+id = "kettlebell_one_arm_floor_press"
+names = { en = "Kettlebell one-arm floor press", ru = "Жим гири одной рукой с пола" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["kettlebell"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 4.0 }
+instructions = { en = "Lie on the floor, knees bent, and bring the kettlebell to your chest with both hands, then press it up with one arm, wrist straight. Lower it until your upper arm touches the floor, then press straight up. Finish all reps on one side before switching.", ru = "Лягте на пол, колени согнуты, подведите гирю к груди двумя руками и выжмите её вверх одной рукой, запястье прямое. Опустите её, пока плечо не коснётся пола, затем выжмите строго вверх. Выполните все повторения на одну сторону, затем смените руку." }
+load_step_kg = 2.0

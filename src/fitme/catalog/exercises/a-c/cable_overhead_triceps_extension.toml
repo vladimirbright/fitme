@@ -1,0 +1,13 @@
+id = "cable_overhead_triceps_extension"
+names = { en = "Cable overhead triceps extension", ru = "Разгибания рук над головой в блоке" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set the lightest resistance on a high pulley with a rope. Turn your back to the stack in a split stance, rope held above your head, upper arms beside your ears. Let your hands travel back by bending only at the elbows, as far as feels comfortable, then straighten the arms. Keep your ribs down and avoid arching your lower back.", ru = "Установите минимальное сопротивление на верхнем блоке с канатной рукоятью. Встаньте спиной к блоку в разножку, канат над головой, плечи у ушей. Сгибая только локти, отведите кисти назад настолько, насколько комфортно, затем выпрямите руки. Не прогибайтесь в пояснице." }
+load_step_kg = 1.0

@@ -1,0 +1,12 @@
+id = "dumbbell_lying_triceps_extension"
+names = { en = "Dumbbell lying triceps extension", ru = "Разгибания рук с гантелями лёжа на трицепс" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie on a bench, a dumbbell in each hand, arms straight above your chest, palms facing each other. Bend only the elbows to lower the weights beside your head, then straighten the arms. Use a light weight and keep a firm grip.", ru = "Лягте на скамью, в каждой руке гантель, руки прямые над грудью, ладони смотрят друг на друга. Сгибайте только локти, опуская гантели по сторонам от головы, затем разогните руки. Берите лёгкий вес и держите гантели крепко." }

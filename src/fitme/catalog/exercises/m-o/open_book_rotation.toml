@@ -1,0 +1,14 @@
+id = "open_book_rotation"
+names = { en = "Side-lying torso rotation", ru = "Поворот корпуса лёжа на боку" }
+search = { en = "open book stretch", ru = "упражнение открытая книга" }
+kind = "mobility"
+pattern = "mobility"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on one side with knees bent. Open the upper arm toward the other side, then return.", ru = "Лягте на бок, согнув колени. Отведите верхнюю руку в противоположную сторону, затем верните." }
+load_step_kg = 1.0
