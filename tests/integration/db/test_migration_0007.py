@@ -321,6 +321,7 @@ async def test_upgrade_from_0006_detaches_imports_drops_the_holder_and_unarchive
             "0008_conversations.sql",
             "0009_catalog_search.sql",
             "0010_set_measures.sql",
+            "0011_exclusions_and_sport.sql",
         ]
         after = await _snapshot(db)
         assert after == _expected_after(before)

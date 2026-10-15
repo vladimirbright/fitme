@@ -17,7 +17,7 @@ from fitme import clock
 from fitme.catalog import load_catalog
 from fitme.config.settings import Settings
 from fitme.db.connection import Database
-from fitme.db.controllers.profile import upsert_profile, upsert_screening_flag
+from fitme.db.controllers.profile import insert_exclusion, upsert_profile, upsert_screening_flag
 from fitme.db.controllers.training import (
     answer_checkin,
     insert_checkin,
@@ -334,6 +334,27 @@ async def test_pseudonymized_prompt_never_carries_forbidden_values(
     assert "telegram" not in sent and "chat_id" not in sent and "screening_notes" not in sent
     assert f'"user_id": {user_id}' in llm.prompts[0]
     assert _SQUAT in sent  # an allowed catalog id
+
+
+async def test_an_excluded_exercise_is_never_offered_and_a_plan_naming_it_is_refused(
+    db: Database, user_id: int
+) -> None:
+    """ADR 0009: "no squats" is enforced in code — absent from the model's allowed ids, and a
+    plan that names a squat anyway fails `plan.excluded`, is retried and then refused."""
+    await seed_profile(db, user_id)
+    async with db.transaction() as conn:
+        await insert_exclusion(conn, user_id=user_id, kind="pattern", value="squat")
+    llm = FakeLlm([make_plan(), make_plan()])  # both name the back squat
+
+    result = await planning.propose_new_plan(db, llm.runtime(), user_id)
+
+    assert result.refusal is not None and result.refusal.code == RefusalCode.NO_SAFE_PLAN
+    first = json.loads(llm.prompts[0])
+    assert _SQUAT not in first["context"]["allowed_exercise_ids"]
+    assert first["context"]["exclusions"] == ["pattern:squat"]
+    assert "plan.excluded" not in llm.prompts[0] and _SQUAT in llm.prompts[1]
+    rounds = await decisions(db, user_id)
+    assert any(g["rule"] == "plan.excluded" and not g["ok"] for g in rounds[0].guards_fired)
 
 
 async def test_non_catalog_exercise_is_rejected_retried_then_refused(

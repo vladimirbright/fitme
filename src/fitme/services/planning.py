@@ -69,7 +69,7 @@ from __future__ import annotations
 import logging
 import math
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import timedelta
 from enum import StrEnum
 from typing import Any
@@ -88,7 +88,13 @@ from fitme.db.controllers.plans import (
     set_default_plan,
 )
 from fitme.db.controllers.training import abort_sessions_for_plan, detach_sessions_for_plan
-from fitme.db.records import DecisionRecord, PlanRecord, PlanVersionRecord, SessionOutcome
+from fitme.db.records import (
+    DecisionRecord,
+    ExclusionRecord,
+    PlanRecord,
+    PlanVersionRecord,
+    SessionOutcome,
+)
 from fitme.db.selectors.decisions import (
     applied_to_kg_by_exercise,
     get_decision,
@@ -104,7 +110,7 @@ from fitme.db.selectors.plans import (
     list_plan_versions,
     list_plans_for_user,
 )
-from fitme.db.selectors.profile import get_profile, list_screening_flags
+from fitme.db.selectors.profile import get_profile, list_exclusions, list_screening_flags
 from fitme.db.selectors.training import (
     historical_max_by_exercise,
     latest_checkin_answers,
@@ -127,6 +133,7 @@ from fitme.domain.enums import (
     Preference,
     RefusalCode,
     ScreeningFlag,
+    Sport,
     WeightBucket,
 )
 from fitme.domain.guard_types import GuardVerdict
@@ -162,7 +169,7 @@ from fitme.llm.context import (
 from fitme.llm.escalation import run_with_escalation
 from fitme.llm.models import model_for
 from fitme.llm.usage import CAUSE_OUTPUT_VALIDATION, AgentRunOutcome, record_llm_call, run_agent
-from fitme.services import exercise_search, measures
+from fitme.services import exclusions, exercise_search, measures
 from fitme.services.catalog import available_exercises
 from fitme.services.decisions import PromptMeta, prompt_columns
 from fitme.services.llm_runtime import LlmRuntime
@@ -282,6 +289,9 @@ class _CompleteProfile:
     equipment: frozenset[Equipment]
     sessions_per_week: int
     session_minutes: int
+    # ADR 0009: other sport training; `None` when never answered (read as no sport).
+    sport: Sport | None = None
+    sport_sessions_per_week: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -296,6 +306,8 @@ class Snapshot:
     increases_7d: dict[str, list[float]]
     applied_to_kg_7d: dict[str, float]  # A§7: applied this week, not counted twice
     active_plan: Plan | None  # the default plan's latest version, if any
+    # ADR 0009: the user's hard exclusions (stored rows; `exclusions.resolve` gives the ids).
+    exclusions: list[ExclusionRecord] = field(default_factory=list)
 
 
 def _since_7d() -> str:
@@ -324,6 +336,7 @@ async def read_snapshot(conn: Connection, user_id: int) -> Snapshot:
     since_7d = _since_7d()
     increases = await recent_increase_deltas_by_exercise(conn, user_id, since=since_7d)
     applied = await applied_to_kg_by_exercise(conn, user_id, since=since_7d)
+    exclusion_rows = await list_exclusions(conn, user_id)
 
     active_plan: Plan | None = None
     default_plan = await get_default_plan(conn, user_id)
@@ -371,6 +384,8 @@ async def read_snapshot(conn: Connection, user_id: int) -> Snapshot:
             equipment=equipment,
             sessions_per_week=profile_record.sessions_per_week,
             session_minutes=profile_record.session_minutes,
+            sport=Sport(profile_record.sport) if profile_record.sport else None,
+            sport_sessions_per_week=profile_record.sport_sessions_per_week,
         )
 
     return Snapshot(
@@ -384,6 +399,7 @@ async def read_snapshot(conn: Connection, user_id: int) -> Snapshot:
         increases_7d=increases,
         applied_to_kg_7d=applied,
         active_plan=active_plan,
+        exclusions=exclusion_rows,
     )
 
 
@@ -481,6 +497,7 @@ def _history_summaries(snapshot: Snapshot) -> list[ExerciseHistorySummary]:
 def build_inputs(catalog: Catalog, snapshot: Snapshot, settings: Settings, user_id: int) -> Inputs:
     profile = snapshot.profile
     assert profile is not None  # the gate ran first
+    excluded = exclusions.resolve(snapshot.exclusions, catalog)
     ctx = GuardContext(
         catalog=catalog,
         flags=snapshot.flags,
@@ -496,9 +513,15 @@ def build_inputs(catalog: Catalog, snapshot: Snapshot, settings: Settings, user_
         checkins=snapshot.checkins,
         weekly_cap_kg=_weekly_caps(catalog, settings),
         default_weekly_cap_kg=settings.max_weekly_increment_kg,
+        excluded_exercise_ids=excluded,
     )
     allowed = available_exercises(
-        catalog, profile.location, profile.equipment, snapshot.flags, profile.experience
+        catalog,
+        profile.location,
+        profile.equipment,
+        snapshot.flags,
+        profile.experience,
+        excluded=excluded,
     )
     user_context = build_user_context(
         user_id=user_id,
@@ -521,6 +544,9 @@ def build_inputs(catalog: Catalog, snapshot: Snapshot, settings: Settings, user_
             for exercise in allowed
             if exercise.measures != [Measure.REPS]
         },
+        sport=profile.sport,
+        sport_sessions_per_week=profile.sport_sessions_per_week,
+        exclusions=[f"{row.kind}:{row.value}" for row in snapshot.exclusions],
     )
     return Inputs(catalog=catalog, ctx=ctx, snapshot=snapshot, user_context=user_context)
 

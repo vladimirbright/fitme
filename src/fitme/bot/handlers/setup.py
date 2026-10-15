@@ -11,13 +11,22 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from aiogram import Router
 from aiogram.filters import Command
-from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message
+from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
 
 from fitme.bot import rendering
-from fitme.bot.callback_data import ProfileFix, SetupChoice, SetupNav, SetupToggle
+from fitme.bot.callback_data import (
+    ExclusionRemove,
+    ProfileFix,
+    SetupChoice,
+    SetupNav,
+    SetupToggle,
+)
+from fitme.bot.keyboards import with_extra_rows
+from fitme.catalog import load_catalog
 from fitme.db.connection import Database
 from fitme.domain.enums import ScreeningFlag
 from fitme.i18n import t
+from fitme.services import exclusions
 from fitme.services import profile as profile_service
 from fitme.services.profile import ProfileSnapshot
 
@@ -50,6 +59,10 @@ def _current_value(step: str, snapshot: ProfileSnapshot) -> str | None:
         "location": profile.location,
         "frequency": str(profile.sessions_per_week) if profile.sessions_per_week else None,
         "session_length": str(profile.session_minutes) if profile.session_minutes else None,
+        "sport": profile.sport,
+        "sport_frequency": (
+            str(profile.sport_sessions_per_week) if profile.sport_sessions_per_week else None
+        ),
     }
     return mapping.get(step)
 
@@ -154,6 +167,12 @@ async def _apply_choice(db: Database, user_id: int, step: str, value: str) -> No
         await profile_service.update_profile_fields(db, user_id, sessions_per_week=int(value))
     elif step == "session_length":
         await profile_service.update_profile_fields(db, user_id, session_minutes=int(value))
+    elif step == "sport":
+        # "No other sport" clears a frequency answered for an earlier sport.
+        extra: dict[str, object] = {"sport_sessions_per_week": None} if value == "none" else {}
+        await profile_service.update_profile_fields(db, user_id, sport=value, **extra)
+    elif step == "sport_frequency":
+        await profile_service.update_profile_fields(db, user_id, sport_sessions_per_week=int(value))
     elif step in profile_service.STEP_TO_RED_FLAG:
         flag = profile_service.STEP_TO_RED_FLAG[step]
         await profile_service.set_screening_flag(db, user_id, flag, value)
@@ -318,7 +337,42 @@ async def cmd_profile(message: Message, db: Database, user_id: int) -> None:
         title_key="profile.title",
     )
     text = f"{text}\n\n{t('profile.fix_hint', snapshot.language)}"
-    await message.answer(text, reply_markup=rendering.fix_buttons_markup(snapshot.language))
+    exclusion_text, markup = await _exclusions_view(db, user_id, snapshot.language)
+    await message.answer(f"{text}\n\n{exclusion_text}", reply_markup=markup)
+
+
+async def _exclusions_view(
+    db: Database, user_id: int, lang: str
+) -> tuple[str, InlineKeyboardMarkup]:
+    """ADR 0009: the hard exclusions under the profile, one remove button each."""
+    rows = await exclusions.list_for_user(db, user_id)
+    catalog = load_catalog()
+    labels = [(row.id, exclusions.label(row.kind, row.value, catalog, lang)) for row in rows]
+    lines = [t("profile.exclusions_title", lang), *(f"• {label}" for _, label in labels)]
+    text = "\n".join(lines) if labels else t("profile.exclusions_hint", lang)
+    buttons = [
+        [
+            InlineKeyboardButton(
+                text=t("profile.exclusion_remove_button", lang, name=label),
+                callback_data=ExclusionRemove(exclusion_id=exclusion_id).pack(),
+            )
+        ]
+        for exclusion_id, label in labels
+    ]
+    return text, with_extra_rows(rendering.fix_buttons_markup(lang), *buttons)
+
+
+async def on_exclusion_remove(
+    query: CallbackQuery, callback_data: ExclusionRemove, db: Database, user_id: int
+) -> None:
+    lang = (await profile_service.get_snapshot(db, user_id)).language
+    rows = {row.id: row for row in await exclusions.list_for_user(db, user_id)}
+    row = rows.get(callback_data.exclusion_id)
+    if row is None or not await exclusions.remove(db, user_id, row.id):
+        await _toast_stale(query, lang)
+        return
+    label = exclusions.label(row.kind, row.value, load_catalog(), lang)
+    await query.answer(t("profile.exclusion_removed", lang, name=label))
 
 
 async def on_profile_fix(
@@ -350,4 +404,5 @@ def build_router() -> Router:
     router.callback_query.register(on_setup_toggle, SetupToggle.filter())
     router.callback_query.register(on_setup_nav, SetupNav.filter())
     router.callback_query.register(on_profile_fix, ProfileFix.filter())
+    router.callback_query.register(on_exclusion_remove, ExclusionRemove.filter())
     return router

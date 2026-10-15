@@ -32,6 +32,8 @@ async def upsert_profile(
     session_minutes: int | None,
     focus: str | None,
     completed_at: datetime | None,
+    sport: str | None = None,
+    sport_sessions_per_week: int | None = None,
 ) -> None:
     """Create or replace the user's profile row. Setup saves answers step by step (A§5), so
     this is called repeatedly with an increasingly complete set of fields."""
@@ -40,8 +42,8 @@ async def upsert_profile(
         INSERT INTO profiles (
             user_id, age_bucket, weight_bucket, experience, barbell_experience,
             preferences, location, equipment, sessions_per_week, session_minutes,
-            focus, completed_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            focus, completed_at, updated_at, sport, sport_sessions_per_week
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT (user_id) DO UPDATE SET
             age_bucket = excluded.age_bucket,
             weight_bucket = excluded.weight_bucket,
@@ -54,7 +56,9 @@ async def upsert_profile(
             session_minutes = excluded.session_minutes,
             focus = excluded.focus,
             completed_at = excluded.completed_at,
-            updated_at = excluded.updated_at
+            updated_at = excluded.updated_at,
+            sport = excluded.sport,
+            sport_sessions_per_week = excluded.sport_sessions_per_week
         """,
         (
             user_id,
@@ -70,6 +74,8 @@ async def upsert_profile(
             focus,
             None if completed_at is None else clock.format_timestamp(completed_at),
             clock.utc_now(),
+            sport,
+            sport_sessions_per_week,
         ),
     )
 
@@ -120,3 +126,23 @@ async def upsert_setup_progress(
 async def delete_setup_progress(conn: aiosqlite.Connection, user_id: int) -> None:
     """Called once the questionnaire is confirmed: there is nothing left to resume."""
     await conn.execute("DELETE FROM setup_progress WHERE user_id = ?", (user_id,))
+
+
+async def insert_exclusion(
+    conn: aiosqlite.Connection, *, user_id: int, kind: str, value: str
+) -> int | None:
+    """ADR 0009: add one hard exclusion; `None` when the same one already exists."""
+    cursor = await conn.execute(
+        "INSERT OR IGNORE INTO exercise_exclusions (user_id, kind, value, created_at) "
+        "VALUES (?, ?, ?, ?)",
+        (user_id, kind, value, clock.utc_now()),
+    )
+    return cursor.lastrowid if cursor.rowcount else None
+
+
+async def delete_exclusion(conn: aiosqlite.Connection, *, user_id: int, exclusion_id: int) -> bool:
+    """Remove one of the user's exclusions; whether a row was removed."""
+    cursor = await conn.execute(
+        "DELETE FROM exercise_exclusions WHERE id = ? AND user_id = ?", (exclusion_id, user_id)
+    )
+    return cursor.rowcount > 0

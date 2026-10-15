@@ -29,6 +29,7 @@ from fitme.domain.enums import (
     Preference,
     RefusalCode,
     ScreeningFlag,
+    Sport,
     WeightBucket,
 )
 from fitme.domain.models import Refusal
@@ -55,6 +56,7 @@ _LANGUAGE_LABELS: dict[str, str] = {"en": "English", "ru": "Русский"}
 
 FREQUENCY_CHOICES: tuple[str, ...] = tuple(str(n) for n in range(1, 7))
 SESSION_LENGTH_CHOICES: tuple[str, ...] = ("30", "45", "60", "90")
+SPORT_FREQUENCY_CHOICES: tuple[str, ...] = tuple(str(n) for n in range(1, 8))
 
 _AREA_FLAG_ORDER: tuple[ScreeningFlag, ...] = tuple(f for f in ScreeningFlag if f in AREA_FLAGS)
 AREA_CHOICES: tuple[str, ...] = tuple(f.value for f in _AREA_FLAG_ORDER)
@@ -72,6 +74,7 @@ _ENUM_TABLE_STEPS: dict[str, tuple[str, tuple[str, ...]]] = {
     "preferences": ("preference", tuple(v.value for v in Preference)),
     "focus": ("focus", tuple(v.value for v in Focus)),
     "location": ("location", tuple(v.value for v in Location)),
+    "sport": ("sport", tuple(v.value for v in Sport)),
     "equipment": ("equipment", EQUIPMENT_CHOICES),
     "screening_areas": ("screening_area_flag", AREA_CHOICES),
 }
@@ -85,7 +88,7 @@ def choice_label(step: str, value: str, lang: str) -> str:
         return _LANGUAGE_LABELS.get(value, value)
     if step == "timezone":
         return value
-    if step == "frequency":
+    if step in ("frequency", "sport_frequency"):
         return t("profile.frequency_value", lang, n=value)
     if step == "session_length":
         return t("setup.session_length.minutes_suffix", lang, n=value)
@@ -100,6 +103,8 @@ def choices_for(step: str) -> tuple[str, ...]:
         return COMMON_TIMEZONES
     if step == "frequency":
         return FREQUENCY_CHOICES
+    if step == "sport_frequency":
+        return SPORT_FREQUENCY_CHOICES
     if step == "session_length":
         return SESSION_LENGTH_CHOICES
     return _ENUM_TABLE_STEPS[step][1]
@@ -219,6 +224,8 @@ _PROMPT_KEYS: dict[str, str] = {
     "equipment": "setup.equipment.prompt",
     "frequency": "setup.frequency.prompt",
     "session_length": "setup.session_length.prompt",
+    "sport": "setup.sport.prompt",
+    "sport_frequency": "setup.sport_frequency.prompt",
 }
 
 
@@ -245,6 +252,7 @@ _FIELD_ORDER: tuple[str, ...] = (
     "equipment",
     "frequency",
     "session_length",
+    "sport",
 )
 
 
@@ -311,6 +319,13 @@ def _field_value_text(
             if profile.session_minutes
             else not_set
         )
+    if field == "sport":
+        if not profile.sport:
+            return not_set
+        label = choice_label("sport", profile.sport, lang)
+        if profile.sport == Sport.NONE.value or not profile.sport_sessions_per_week:
+            return label
+        return t("profile.sport_value", lang, sport=label, n=profile.sport_sessions_per_week)
     raise ValueError(f"unknown profile field {field!r}")  # pragma: no cover - defensive
 
 

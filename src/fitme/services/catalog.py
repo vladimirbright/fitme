@@ -33,6 +33,7 @@ def available_exercises(
     equipment: frozenset[Equipment],
     flags: Sequence[ScreeningFlagState],
     experience: Experience | None = None,
+    excluded: frozenset[str] = frozenset(),
 ) -> list[Exercise]:
     """The catalog exercises usable for this `location` + `equipment` + `flags` combination:
     fits the location, every piece of required equipment is in `equipment`, and no active
@@ -42,7 +43,8 @@ def available_exercises(
     profile's own selection for `home_equipment`, or
     `fitme.domain.catalog.LOCATION_DEFAULT_EQUIPMENT` for every other location).
     `advanced` exercises need `experience` of two years or more
-    (`guards.experience.exercise_level_allowed`); left out, they are excluded.
+    (`guards.experience.exercise_level_allowed`); left out, they are excluded. `excluded`
+    is the user's hard exclusions (ADR 0009, `services.exclusions.resolve`).
     """
     return [
         exercise
@@ -51,4 +53,5 @@ def available_exercises(
         and all(item in equipment for item in exercise.equipment)
         and exercise_allowed(exercise, flags).ok
         and exercise_level_allowed(exercise, experience).ok
+        and exercise.id not in excluded
     ]

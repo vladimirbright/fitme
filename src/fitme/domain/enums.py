@@ -77,6 +77,21 @@ class Focus(StrEnum):
     CONDITIONING = "conditioning"
 
 
+class Sport(StrEnum):
+    """ADR 0009: training the user does outside this app (`profiles.sport`). `NONE` is an
+    explicit answer; a profile set up before the question existed has no value at all."""
+
+    NONE = "none"
+    BOXING_MARTIAL_ARTS = "boxing_martial_arts"
+    RUNNING = "running"
+    CYCLING = "cycling"
+    SWIMMING = "swimming"
+    TEAM_SPORT = "team_sport"
+    RACKET_SPORT = "racket_sport"
+    CLIMBING = "climbing"
+    OTHER = "other"
+
+
 class Location(StrEnum):
     PUBLIC_GYM = "public_gym"
     STUDIO_GYM = "studio_gym"

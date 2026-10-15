@@ -5,10 +5,10 @@ stale callbacks are ignored, and a restart mid-setup resumes at the same step.""
 from __future__ import annotations
 
 from aiogram import Bot, Dispatcher
-from conftest import FakeSession, callback_update, make_user, message_update
 
+from conftest import FakeSession, callback_update, make_user, message_update
 from fitme.bot.app import build_dispatcher
-from fitme.bot.callback_data import SetupChoice, SetupNav, SetupToggle
+from fitme.bot.callback_data import ProfileFix, SetupChoice, SetupNav, SetupToggle
 from fitme.config.settings import Settings
 from fitme.db.connection import Database
 from fitme.db.selectors.profile import (
@@ -78,6 +78,8 @@ async def _run_full_setup_with_no_red_flags(dispatcher: Dispatcher, bot: Bot, db
     await _click(dispatcher, bot, SetupNav(step="equipment", action="next"))
     await _click(dispatcher, bot, SetupChoice(step="frequency", value="3"))
     await _click(dispatcher, bot, SetupChoice(step="session_length", value="45"))
+    await _click(dispatcher, bot, SetupChoice(step="sport", value="boxing_martial_arts"))
+    await _click(dispatcher, bot, SetupChoice(step="sport_frequency", value="3"))
     await _click(dispatcher, bot, SetupNav(step="summary", action="next"))
     return user_id
 
@@ -98,6 +100,7 @@ async def test_full_setup_run_stores_canonical_enum_values(
     assert profile.experience == "6m_2y"
     assert profile.barbell_experience == "some"
     assert profile.preferences == ["full_body"]
+    assert (profile.sport, profile.sport_sessions_per_week) == ("boxing_martial_arts", 3)
     assert profile.focus == "strength"
     assert profile.location == "home_equipment"
     assert profile.equipment == ["dumbbells"]
@@ -318,3 +321,22 @@ async def test_skip_never_downgrades_yes_but_a_profile_reset_allows_it(
         flag = await get_screening_flag(conn, user_id, "other_unlisted")
     assert flag is not None
     assert flag.value == "no"  # a deliberate reset does allow the change
+
+
+async def test_no_other_sport_skips_the_frequency_and_clears_an_earlier_one(
+    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database
+) -> None:
+    """ADR 0009: the sport frequency is asked only for a sport, and "No other sport" clears
+    the frequency answered for an earlier one."""
+    user_id = await _run_full_setup_with_no_red_flags(dispatcher, bot, db)
+    owner = make_user(OWNER_CHAT_ID)
+    await dispatcher.feed_update(
+        bot, callback_update(user=owner, chat_id=OWNER_CHAT_ID, data=ProfileFix(field="sport"))
+    )
+    await _click(dispatcher, bot, SetupChoice(step="sport", value="none"))
+    async with db.read() as conn:
+        progress = await get_setup_progress(conn, user_id)
+        profile = await get_profile(conn, user_id)
+    assert progress is not None and progress.step == "summary"
+    assert profile is not None
+    assert (profile.sport, profile.sport_sessions_per_week) == ("none", None)

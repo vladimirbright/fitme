@@ -173,6 +173,10 @@ class AssistantTools(Protocol):
 
     async def set_default_plan(self, plan_id: int) -> dict[str, object]: ...
 
+    async def add_exclusion(self, kind: str, value: str) -> dict[str, object]: ...
+
+    async def remove_exclusion(self, exclusion_id: int) -> dict[str, object]: ...
+
     async def fix_logged_sets(
         self, session_id: int, fixes: list[FixLoggedSet]
     ) -> dict[str, object]: ...
@@ -294,6 +298,22 @@ async def _set_default_plan(ctx: Deps, plan_id: int) -> object:
     return _NO_DATA if ctx.deps is None else await ctx.deps.set_default_plan(plan_id)
 
 
+async def _add_exclusion(ctx: Deps, kind: str, value: str) -> object:
+    """Never prescribe something again (a hard exclusion, kept until removed): `kind`
+    `pattern` with a movement pattern (`squat` covers squats, lunges and step-ups; `hinge`,
+    `horizontal_push`, `horizontal_pull`, `vertical_push`, `vertical_pull`, `core`,
+    `conditioning`, `mobility`, `accessory`), `exercise` with one catalog id, or `name` with a
+    word every matching exercise's id or name contains ("lunge", "jump"). The answer lists
+    how many exercises it removes and examples: say them to the user. Only for what the user
+    asked to exclude; a preference, not a health judgement."""
+    return _NO_DATA if ctx.deps is None else await ctx.deps.add_exclusion(kind, value)
+
+
+async def _remove_exclusion(ctx: Deps, exclusion_id: int) -> object:
+    """Remove one of the user's exclusions (ids are in `state.exclusions`)."""
+    return _NO_DATA if ctx.deps is None else await ctx.deps.remove_exclusion(exclusion_id)
+
+
 # --- Training log ---------------------------------------------------------------------------
 
 
@@ -372,6 +392,8 @@ _ASSISTANT_TOOLS: tuple[Tool[Any], ...] = (
     Tool(_discard_draft, name="discard_draft"),
     Tool(_rename_plan, name="rename_plan"),
     Tool(_set_default_plan, name="set_default_plan"),
+    Tool(_add_exclusion, name="add_exclusion"),
+    Tool(_remove_exclusion, name="remove_exclusion"),
     Tool(_fix_logged_sets, name="fix_logged_sets"),
     Tool(_log_exercise_as_planned, name="log_exercise_as_planned"),
     Tool(_skip_exercise, name="skip_exercise"),

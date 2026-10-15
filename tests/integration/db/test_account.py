@@ -19,6 +19,7 @@ from fitme.db.controllers.conversations import insert_conversation
 from fitme.db.controllers.decisions import insert_decision, insert_decision_outcome, insert_llm_call
 from fitme.db.controllers.plans import insert_plan, insert_plan_version
 from fitme.db.controllers.profile import (
+    insert_exclusion,
     insert_screening_note,
     upsert_profile,
     upsert_screening_flag,
@@ -57,6 +58,7 @@ _EXPECTED_TABLES = {
     "checkins",
     "chat_messages",
     "conversations",
+    "exercise_exclusions",
     "decision_outcomes",
     "llm_calls",
 }
@@ -183,6 +185,7 @@ async def _seed_every_table(db: Database, user_id: int) -> int:
             conn, user_id=user_id, reason="stop_word", source_session_id=session_id
         )
         await insert_checkin(conn, user_id=user_id, session_id=session_id, question_key="area:knee")
+        await insert_exclusion(conn, user_id=user_id, kind="pattern", value="squat")
         conversation_id = await insert_conversation(
             conn,
             user_id=user_id,

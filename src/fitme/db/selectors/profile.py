@@ -7,6 +7,7 @@ import json
 import aiosqlite
 
 from fitme.db.records import (
+    ExclusionRecord,
     ProfileRecord,
     ScreeningFlagRecord,
     ScreeningNoteRecord,
@@ -15,7 +16,8 @@ from fitme.db.records import (
 
 _PROFILE_COLUMNS = (
     "user_id, age_bucket, weight_bucket, experience, barbell_experience, preferences, "
-    "location, equipment, sessions_per_week, session_minutes, focus, completed_at, updated_at"
+    "location, equipment, sessions_per_week, session_minutes, focus, completed_at, updated_at, "
+    "sport, sport_sessions_per_week"
 )
 
 
@@ -34,6 +36,8 @@ def _profile_from_row(row: aiosqlite.Row) -> ProfileRecord:
         focus=row[10],
         completed_at=row[11],
         updated_at=row[12],
+        sport=row[13],
+        sport_sessions_per_week=row[14],
     )
 
 
@@ -113,3 +117,17 @@ async def get_setup_progress(
     return SetupProgressRecord(
         user_id=row[0], step=row[1], data=json.loads(row[2]), updated_at=row[3]
     )
+
+
+async def list_exclusions(conn: aiosqlite.Connection, user_id: int) -> list[ExclusionRecord]:
+    """ADR 0009: the user's hard exercise exclusions, oldest first."""
+    async with conn.execute(
+        "SELECT id, user_id, kind, value, created_at FROM exercise_exclusions "
+        "WHERE user_id = ? ORDER BY id",
+        (user_id,),
+    ) as cursor:
+        rows = await cursor.fetchall()
+    return [
+        ExclusionRecord(id=row[0], user_id=row[1], kind=row[2], value=row[3], created_at=row[4])
+        for row in rows
+    ]

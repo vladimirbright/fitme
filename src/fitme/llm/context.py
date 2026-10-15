@@ -37,6 +37,7 @@ from fitme.domain.enums import (
     Measure,
     Preference,
     ScreeningFlag,
+    Sport,
     WeightBucket,
 )
 from fitme.domain.models import Block, Plan, Workout
@@ -180,6 +181,13 @@ class UserContext(BaseModel):
     # by default (a plank -> ["time"], a carry -> ["distance", "time"]); every id absent here
     # is a reps exercise. Catalog data only.
     exercise_measures: dict[str, list[Measure]] = Field(default_factory=dict)
+    # ADR 0009: training outside this app (e.g. boxing 3x a week), so the plan's load leaves
+    # room for it; `None` when never answered.
+    sport: Sport | None = None
+    sport_sessions_per_week: int | None = None
+    # ADR 0009: the user's hard exclusions as `kind:value` ("pattern:squat", "name:lunge").
+    # Already applied to `allowed_exercise_ids`; listed so the model knows why they're absent.
+    exclusions: list[str] = Field(default_factory=list)
 
 
 def build_user_context(
@@ -200,6 +208,9 @@ def build_user_context(
     allowed_exercise_ids: Sequence[str],
     history: Mapping[str, ExerciseHistorySummary] | Sequence[ExerciseHistorySummary] = (),
     exercise_measures: Mapping[str, Sequence[Measure]] | None = None,
+    sport: Sport | None = None,
+    sport_sessions_per_week: int | None = None,
+    exclusions: Sequence[str] = (),
 ) -> UserContext:
     """Build a `UserContext` from already-fetched values. Pure — no I/O — and every parameter
     is named explicitly: there's no way to pass a `telegram_user_id`, `chat_id`, name, or
@@ -227,6 +238,11 @@ def build_user_context(
             for exercise_id, accepted in (exercise_measures or {}).items()
             if exercise_id in allowed_exercise_ids
         },
+        sport=sport,
+        sport_sessions_per_week=sport_sessions_per_week
+        if sport not in (None, Sport.NONE)
+        else None,
+        exclusions=list(exclusions),
     )
 
 

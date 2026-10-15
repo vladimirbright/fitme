@@ -61,7 +61,7 @@ from fitme.domain.models import Block, Load, Plan, Prescription, Refusal, Schedu
 from fitme.domain.results import ParsedResults
 from fitme.i18n import t
 from fitme.llm.agents import assistant_agent, plan_generate_agent, result_parse_agent
-from fitme.services import planning, training
+from fitme.services import exclusions, planning, training
 from fitme.services import profile as profile_service
 from fitme.services.identity import issue_activation_code
 from fitme.services.llm_runtime import LlmRuntime
@@ -998,3 +998,38 @@ async def test_a_timed_and_a_distance_set_are_shown_and_logged_in_their_measure(
         (30, 30, None)
     ] * 3
     assert all(row.performed for row in rows)
+
+
+async def test_no_squats_is_stored_as_an_exclusion_and_shown_with_what_it_covers(
+    dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
+) -> None:
+    """ADR 0009: the assistant stages the exclusion; it is stored after the turn, reported
+    with examples, listed in the next turn's state, and removable from /profile."""
+    seeded = await _ready(dispatcher, bot, db)
+    llm.steps = [
+        Call("add_exclusion", {"kind": "pattern", "value": "squat"}),
+        Call("add_exclusion", {"kind": "pattern", "value": "legs"}),
+        say("Исключил приседания и выпады."),
+    ]
+    await _send(dispatcher, bot, "без приседаний и выпадов")
+
+    added, invalid = llm.returns("add_exclusion")
+    assert added["ok"] is True and added["excludes"] > 10
+    assert invalid["ok"] is False
+    stored = await exclusions.list_for_user(db, seeded.user_id)
+    assert [(row.kind, row.value) for row in stored] == [("pattern", "squat")]
+    lang = await _lang(db, seeded.user_id)
+    label = t("enum.pattern.squat", lang)
+    assert t("assistant.exclusion_added", lang, name=label) in "\n".join(_texts(session))
+
+    llm.steps = [say("ok")]
+    await _send(dispatcher, bot, "что исключено?")
+    state = llm.prompts()[-1]["state"]
+    assert state["exclusions"] == [
+        {"exclusion_id": stored[0].id, "kind": "pattern", "value": "squat"}
+    ]
+
+    await _send(dispatcher, bot, "/profile")
+    remove = _last_data(session, "xr:")
+    await _click(dispatcher, bot, remove)
+    assert await exclusions.list_for_user(db, seeded.user_id) == []

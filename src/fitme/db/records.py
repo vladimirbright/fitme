@@ -71,6 +71,20 @@ class ProfileRecord:
     focus: str | None
     completed_at: str | None
     updated_at: str
+    # ADR 0009: other sport training (`None` before migration 0011 or never answered).
+    sport: str | None = None
+    sport_sessions_per_week: int | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class ExclusionRecord:
+    """ADR 0009: one hard exclusion (`kind` pattern | exercise | name)."""
+
+    id: int
+    user_id: int
+    kind: str
+    value: str
+    created_at: str
 
 
 @dataclass(frozen=True, slots=True)

@@ -37,6 +37,13 @@ class ProfileFix(CallbackData, prefix="pf"):
     field: str
 
 
+class ExclusionRemove(CallbackData, prefix="xr"):
+    """`/profile`: remove one hard exclusion (ADR 0009), by its row id; the service checks it
+    belongs to this user."""
+
+    exclusion_id: int
+
+
 class HoldClear(CallbackData, prefix="hc"):
     hold_id: int
 

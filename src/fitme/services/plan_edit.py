@@ -51,7 +51,7 @@ from fitme.domain.guard_types import GuardVerdict
 from fitme.domain.models import MAX_IMPLEMENT_KG, MAX_TOTAL_KG, LoadChange, Plan
 from fitme.guards.context import GuardContext
 from fitme.guards.plan import prescription_verdicts
-from fitme.services import planning
+from fitme.services import exclusions, planning
 from fitme.services.catalog import available_exercises
 from fitme.services.decisions import PromptMeta, prompt_columns
 
@@ -134,12 +134,14 @@ async def allowed_exercises_for_edit(db: Database, user_id: int) -> list[Exercis
         snapshot = await planning.read_snapshot(conn, user_id)
     if snapshot.profile is None:
         return None
+    catalog = load_catalog()
     return available_exercises(
-        load_catalog(),
+        catalog,
         snapshot.profile.location,
         snapshot.profile.equipment,
         snapshot.flags,
         snapshot.profile.experience,
+        excluded=exclusions.resolve(snapshot.exclusions, catalog),
     )
 
 

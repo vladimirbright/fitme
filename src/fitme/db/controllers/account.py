@@ -31,6 +31,7 @@ async def delete_user_data(conn: aiosqlite.Connection, user_id: int) -> None:
     # ADR 0004: sessions reference plans/workout_sessions/decisions; nothing references them
     # once chat_messages are gone.
     await conn.execute("DELETE FROM conversations WHERE user_id = ?", (user_id,))
+    await conn.execute("DELETE FROM exercise_exclusions WHERE user_id = ?", (user_id,))
     await conn.execute("DELETE FROM checkins WHERE user_id = ?", (user_id,))
     await conn.execute("DELETE FROM health_holds WHERE user_id = ?", (user_id,))
     await conn.execute("DELETE FROM workout_sessions WHERE user_id = ?", (user_id,))

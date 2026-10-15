@@ -11,6 +11,26 @@
 </section>
 
 <section>
+  <h2>{{ t('profile.exclusions_title') }}</h2>
+  {% if exclusions %}
+  <ul>
+    {% for item in exclusions %}
+    <li>
+      {{ item.label }}
+      <form method="post" action="/app/account/exclusions/remove" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="exclusion_id" value="{{ item.id }}">
+        <button type="submit">{{ t('web.account.exclusion_remove_button') }}</button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>{{ t('profile.exclusions_hint') }}</p>
+  {% endif %}
+</section>
+
+<section>
   <h2>{{ t('web.account.sessions_title') }}</h2>
   <ul>
     {% for item in sessions %}

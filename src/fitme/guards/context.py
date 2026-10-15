@@ -66,6 +66,9 @@ class GuardContext:
     # exercise has no entry (AGENTS.md §2: default 2.5 kg, catalog/config may set lower).
     weekly_cap_kg: Mapping[str, float] = field(default_factory=dict)
     default_weekly_cap_kg: float = 2.5
+    # ADR 0009: catalog ids the user's hard exclusions remove (`services.exclusions.resolve`);
+    # `guards.plan.validate_plan` rejects a plan naming one (`plan.excluded`).
+    excluded_exercise_ids: frozenset[str] = frozenset()
 
     @property
     def flagged_areas(self) -> frozenset[str]:

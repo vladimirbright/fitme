@@ -29,7 +29,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from zoneinfo import ZoneInfo
 
-from fitme import clock
+from fitme import clock, i18n
 from fitme.catalog import load_catalog
 from fitme.config.content import content_version
 from fitme.config.settings import Settings
@@ -75,6 +75,7 @@ from fitme.llm.models import model_for
 from fitme.llm.usage import record_llm_call, run_agent
 from fitme.services import (
     conversations,
+    exclusions,
     exercise_search,
     log_edit,
     measures,
@@ -370,6 +371,10 @@ class TurnResult:
     refusal: Refusal | None = None
 
 
+# How many matching exercises an exclusion names back (to the model and to the user).
+_EXAMPLES = 5
+
+
 @dataclass
 class _Staged:
     """What a run staged, applied in `_apply` after it."""
@@ -383,6 +388,8 @@ class _Staged:
     fixes: tuple[int, list[FixLoggedSet]] | None = None
     renames: list[tuple[int, str]] = field(default_factory=list)
     default_plan_id: int | None = None
+    exclusions_added: list[exclusions.ExclusionPreview] = field(default_factory=list)
+    exclusions_removed: list[int] = field(default_factory=list)
     rewrite: RunRewrite | None = None
     new_plan: RunNewPlan | None = None
     save: bool = False
@@ -447,6 +454,10 @@ class _Turn:
         self._planning = planning_session
         self._workout = workout
         self.staged = _Staged()
+
+    @property
+    def language(self) -> str:
+        return self._inputs.snapshot.language
 
     async def _draft_is_current(self, record: ConversationRecord | None) -> bool:
         if record is None or record.draft_decision_id is None:
@@ -725,6 +736,34 @@ class _Turn:
         self.staged.default_plan_id = plan_id
         return _ok()
 
+    # --- exclusions (ADR 0009)
+
+    async def add_exclusion(self, kind: str, value: str) -> dict[str, object]:
+        try:
+            found = exclusions.preview(kind, value, self._catalog)
+        except exclusions.InvalidExclusionError as exc:
+            return _error(str(exc))
+        if not found.exercise_ids:
+            return _error("that matches no catalog exercise; nothing to exclude")
+        self.staged.exclusions_added.append(found)
+        names = [self._catalog_name(exercise_id) for exercise_id in found.exercise_ids[:_EXAMPLES]]
+        return _ok(
+            staged=f"{found.kind.value}:{found.value}",
+            excludes=len(found.exercise_ids),
+            examples=names,
+        )
+
+    async def remove_exclusion(self, exclusion_id: int) -> dict[str, object]:
+        known = {row.id for row in await exclusions.list_for_user(self._db, self._user_id)}
+        if exclusion_id not in known:
+            return _error(f"no exclusion {exclusion_id}")
+        self.staged.exclusions_removed.append(exclusion_id)
+        return _ok()
+
+    def _catalog_name(self, exercise_id: str) -> str:
+        exercise = self._catalog.by_id(exercise_id)
+        return exercise.names.get("en", exercise_id) if exercise is not None else exercise_id
+
     # --- training log
 
     async def fix_logged_sets(
@@ -891,6 +930,12 @@ async def _state(
         "today_weekday": clock.now().astimezone(tz).weekday(),
         "workout_in_progress": active is not None,
         "session": None if conversation is None else conversation.kind,
+        # ADR 0009: the user's hard exclusions, for `remove_exclusion` and for explaining
+        # why an exercise is never offered.
+        "exclusions": [
+            {"exclusion_id": row.id, "kind": row.kind, "value": row.value}
+            for row in await exclusions.list_for_user(db, user_id)
+        ],
     }
     current = _current_block(active)
     if current is not None:
@@ -1039,6 +1084,36 @@ async def _halt(db: Database, user_id: int) -> Halted:
     return Halted(halted)
 
 
+async def _apply_exclusions(
+    db: Database, user_id: int, staged: _Staged, *, lang: str
+) -> list[Item]:
+    catalog = load_catalog()
+    items: list[Item] = []
+    rows = {row.id: row for row in await exclusions.list_for_user(db, user_id)}
+    for exclusion_id in staged.exclusions_removed:
+        row = rows.get(exclusion_id)
+        if row is not None and await exclusions.remove(db, user_id, exclusion_id):
+            label = exclusions.label(row.kind, row.value, catalog, lang)
+            items.append(Notice("assistant.exclusion_removed", name=label))
+    for found in staged.exclusions_added:
+        label = exclusions.label(found.kind, found.value, catalog, lang)
+        added = await exclusions.add(db, user_id, found.kind.value, found.value, catalog)
+        if not added:
+            items.append(Notice("assistant.exclusion_exists", name=label))
+            continue
+        names = [
+            name
+            for exercise_id in found.exercise_ids[:_EXAMPLES]
+            if (exercise := catalog.by_id(exercise_id)) is not None
+            for name in [exercise.names.get(lang) or exercise.names.get("en", exercise_id)]
+        ]
+        if len(found.exercise_ids) > _EXAMPLES:
+            more = len(found.exercise_ids) - _EXAMPLES
+            names.append(i18n.t("assistant.exclusion_more", lang, count=more))
+        items.append(Notice("assistant.exclusion_added", name=label, details=tuple(names)))
+    return items
+
+
 async def _apply(
     db: Database, settings: Settings, user_id: int, turn: _Turn, *, prompt: PromptMeta
 ) -> list[Item]:
@@ -1047,6 +1122,10 @@ async def _apply(
     staged = turn.staged
     items: list[Item] = []
     report: dict[str, object] = {"source": SOURCE}
+
+    # ADR 0009: exclusions first, so a redesign or new plan staged in the same turn (run by
+    # the bot after this) already leaves the excluded exercises out.
+    items.extend(await _apply_exclusions(db, user_id, staged, lang=turn.language))
 
     if staged.draft_plan is not None:
         plan_id = staged.draft_plan_id

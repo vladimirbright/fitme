@@ -16,7 +16,13 @@ from fitme.domain.enums import (
 from fitme.domain.models import Block, Load, Plan, Prescription, ScheduledDay, Workout
 from fitme.domain.screening import ScreeningFlagState
 from fitme.guards.context import GuardContext
-from fitme.guards.plan import LOAD_RULES, load_verdicts, reference_load_kg, validate_plan
+from fitme.guards.plan import (
+    LOAD_RULES,
+    load_verdicts,
+    reference_load_kg,
+    validate_plan,
+    validate_workout,
+)
 
 _SQUAT = Exercise.model_validate(
     {
@@ -429,3 +435,20 @@ def test_a_kg_load_on_a_non_kg_loadable_exercise_is_a_load_violation() -> None:
     failing = [v for v in verdicts if not v.ok]
     assert [v.rule for v in failing] == ["plan.kg_loadable"]
     assert all(v.ok for v in validate_plan(_plan("pushup", Load(kind="bodyweight")), _ctx()))
+
+
+def test_an_excluded_exercise_is_rejected_in_a_plan() -> None:
+    """ADR 0009: a hard exclusion is enforced in code, not left to the prompt."""
+    plan = _plan("barbell_back_squat", Load(kind="calibration"))
+    ctx = _ctx(excluded_exercise_ids=frozenset({"barbell_back_squat"}))
+    verdicts = validate_plan(plan, ctx)
+    assert any(v.rule == "plan.excluded" and not v.ok for v in verdicts)
+    assert not any(v.rule == "plan.excluded" for v in validate_plan(plan, _ctx()))
+
+
+def test_an_exclusion_does_not_block_a_saved_workout_trained_today() -> None:
+    """Plan-level only: a plan saved before the exclusion still trains as saved."""
+    plan = _plan("barbell_back_squat", Load(kind="calibration"))
+    ctx = _ctx(excluded_exercise_ids=frozenset({"barbell_back_squat"}))
+    verdicts = validate_workout(plan.workouts[0], ctx)
+    assert not any(v.rule == "plan.excluded" for v in verdicts)

@@ -44,6 +44,7 @@ _SCHEDULE_KEYS_RULE = "plan.schedule_workout_keys"
 
 _REFERENCE_LOAD_RULE = "plan.reference_load"
 _KG_LOADABLE_RULE = "plan.kg_loadable"
+_EXCLUDED_RULE = "plan.excluded"
 
 # Every rule `load_verdicts` can emit (A§7.3 "when an LLM proposes a load ... a violating
 # proposal is rejected, and the engine's value is used"): a failing verdict with one of these
@@ -197,8 +198,26 @@ def validate_plan(plan: Plan, ctx: GuardContext) -> list[GuardVerdict]:
 
     for workout in plan.workouts:
         verdicts.extend(_workout_prescription_verdicts(workout, ctx))
+        verdicts.extend(_excluded_verdicts(workout, ctx))
 
     return verdicts
+
+
+def _excluded_verdicts(workout: Workout, ctx: GuardContext) -> list[GuardVerdict]:
+    """ADR 0009: an exercise the user excluded is never in a plan (only failures are
+    reported). Plan-level only: `validate_workout` (a saved workout trained today) doesn't
+    run it, so a plan saved before the exclusion still trains as saved, while every new or
+    edited plan has to leave the exercise out."""
+    return [
+        GuardVerdict(
+            rule=_EXCLUDED_RULE,
+            ok=False,
+            detail=f"{prescription.exercise_id}: excluded by the user's own exclusions",
+        )
+        for block in workout.blocks
+        for prescription in block.items
+        if prescription.exercise_id in ctx.excluded_exercise_ids
+    ]
 
 
 def validate_workout(workout: Workout, ctx: GuardContext) -> list[GuardVerdict]:

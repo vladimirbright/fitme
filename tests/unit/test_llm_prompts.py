@@ -24,8 +24,8 @@ _REAL_PROMPT_VERSIONS = {
     "result_parse": 2,
     "recap": 1,
     "plan_import": 2,
-    "assistant": 6,  # v4: sessions + tools (ADR 0004); v5: per-exercise logging (ADR 0005);
-    # v6: find_substitutes and hybrid find_exercises (ADR 0007)
+    "assistant": 7,  # v4: sessions + tools (ADR 0004); v5: per-exercise logging (ADR 0005);
+    # v6: find_substitutes and hybrid find_exercises (ADR 0007); v7: exclusions, measures (0009)
 }
 _REAL_PROMPT_NAMES = tuple(_REAL_PROMPT_VERSIONS)
 

@@ -9,9 +9,10 @@ import json
 from fastapi import APIRouter, Depends, Form, Request
 from starlette.responses import Response
 
+from fitme.catalog import load_catalog
 from fitme.services import account as account_service
+from fitme.services import exclusions, webauth
 from fitme.services import profile as profile_service
-from fitme.services import webauth
 from fitme.services.webauth import SessionState
 from fitme.web.deps import get_db, get_settings, redirect, render, require_user, verify_csrf_form
 from fitme.web.security import clear_session_cookie
@@ -19,6 +20,15 @@ from fitme.web.security import clear_session_cookie
 router = APIRouter(prefix="/app/account")
 
 _DELETE_CONFIRMATION = "DELETE"
+
+
+async def _exclusion_rows(request: Request, user_id: int, lang: str) -> list[dict[str, object]]:
+    """ADR 0009: the user's hard exclusions, labelled for display."""
+    catalog = load_catalog()
+    return [
+        {"id": row.id, "label": exclusions.label(row.kind, row.value, catalog, lang)}
+        for row in await exclusions.list_for_user(get_db(request), user_id)
+    ]
 
 
 @router.get("")
@@ -35,7 +45,19 @@ async def account_page(request: Request, session: SessionState = Depends(require
         session=session,
         sessions=sessions,
         current_id_hash=session.id_hash,
+        exclusions=await _exclusion_rows(request, session.user_id, snapshot.language),
     )
+
+
+@router.post("/exclusions/remove")
+async def remove_exclusion(
+    request: Request,
+    exclusion_id: int = Form(...),
+    session: SessionState = Depends(require_user),
+    _csrf: None = Depends(verify_csrf_form),
+) -> Response:
+    await exclusions.remove(get_db(request), session.user_id, exclusion_id)
+    return redirect("/app/account")
 
 
 @router.get("/export")
@@ -70,6 +92,7 @@ async def delete_account(
             session=session,
             sessions=sessions,
             current_id_hash=session.id_hash,
+            exclusions=await _exclusion_rows(request, session.user_id, snapshot.language),
             delete_error=True,
         )
     await account_service.delete_user(db, session.user_id)

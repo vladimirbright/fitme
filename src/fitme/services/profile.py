@@ -42,6 +42,7 @@ from fitme.domain.enums import (
     RED_FLAGS,
     Location,
     ScreeningFlag,
+    Sport,
 )
 
 # --- Step order (A§5.1) --------------------------------------------------------------------
@@ -77,6 +78,8 @@ STEP_ORDER: tuple[str, ...] = (
     "equipment",
     "frequency",
     "session_length",
+    "sport",
+    "sport_frequency",
     "summary",
 )
 
@@ -95,6 +98,7 @@ FIELD_TO_STEP: dict[str, str] = {
     "equipment": "equipment",
     "frequency": "frequency",
     "session_length": "session_length",
+    "sport": "sport",
 }
 
 
@@ -102,11 +106,14 @@ FIELD_TO_STEP: dict[str, str] = {
 class StepContext:
     location: str | None
     needs_clearance: bool
+    sport: str | None = None
 
 
 def _visible(step: str, ctx: StepContext) -> bool:
     if step == "screening_clearance":
         return ctx.needs_clearance
+    if step == "sport_frequency":
+        return ctx.sport is not None and ctx.sport != Sport.NONE.value
     if step == "equipment":
         return ctx.location == Location.HOME_EQUIPMENT.value
     return True
@@ -174,7 +181,8 @@ async def build_step_context(db: Database, user_id: int) -> StepContext:
     snapshot = await get_snapshot(db, user_id)
     flag_values = {ScreeningFlag(f.flag): f.value for f in snapshot.flags}
     location = snapshot.profile.location if snapshot.profile is not None else None
-    return StepContext(location=location, needs_clearance=needs_clearance(flag_values))
+    sport = snapshot.profile.sport if snapshot.profile is not None else None
+    return StepContext(location=location, needs_clearance=needs_clearance(flag_values), sport=sport)
 
 
 # --- Setup progress marker -------------------------------------------------------------------
@@ -225,6 +233,8 @@ def _profile_updates(profile: ProfileRecord | None) -> dict[str, object]:
             "session_minutes": None,
             "focus": None,
             "completed_at": None,
+            "sport": None,
+            "sport_sessions_per_week": None,
         }
     return {
         "age_bucket": profile.age_bucket,
@@ -240,6 +250,8 @@ def _profile_updates(profile: ProfileRecord | None) -> dict[str, object]:
         "completed_at": (
             None if profile.completed_at is None else clock.parse_timestamp(profile.completed_at)
         ),
+        "sport": profile.sport,
+        "sport_sessions_per_week": profile.sport_sessions_per_week,
     }
 
 
