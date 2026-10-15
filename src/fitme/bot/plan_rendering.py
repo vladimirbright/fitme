@@ -14,7 +14,7 @@ from collections.abc import Sequence
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from fitme.bot.callback_data import PlanDraft, PlanMenu
+from fitme.bot.callback_data import PlanDraft, PlanMenu, TrainPick
 from fitme.db.records import PlanRecord
 from fitme.domain.catalog import Catalog, Exercise
 from fitme.domain.models import Load, Plan, Prescription
@@ -309,9 +309,10 @@ def plan_list_markup(plans: Sequence[PlanRecord], lang: str) -> InlineKeyboardMa
 
 
 def plan_actions_markup(record: PlanRecord, lang: str) -> InlineKeyboardMarkup:
-    """Set default / Rename / Revise (A§6.2) for one plan, plus New plan, Paste and Back.
-    Every plan offers every action (A§4.3: all plans are equal); only the default plan
-    lacks "Set default", since it already is."""
+    """Set default / Rename / Revise (A§6.2) for one plan, plus New plan, Paste, Back and,
+    last, Start training (the `/train` suggestion for this plan). Every plan offers every
+    action (A§4.3: all plans are equal); only the default plan lacks "Set default", since it
+    already is."""
     builder = InlineKeyboardBuilder()
     if not record.is_default:
         builder.add(
@@ -342,6 +343,10 @@ def plan_actions_markup(record: PlanRecord, lang: str) -> InlineKeyboardMarkup:
         InlineKeyboardButton(
             text=t("plan.back_to_list_button", lang),
             callback_data=PlanMenu(action="list", plan_id=0).pack(),
+        ),
+        InlineKeyboardButton(
+            text=t("plan.start_training_button", lang),
+            callback_data=TrainPick(kind="plan", plan_id=record.id).pack(),
         ),
     )
     builder.adjust(1)

@@ -406,6 +406,7 @@ list_hint = "Нажмите на план, чтобы выбрать дейст�
 new_button = "Новый план"
 paste_button = "Вставить мой план"
 back_to_list_button = "К списку планов"
+start_training_button = "Начать тренировку"
 view_button = "Показать"
 set_default_button = "Сделать основным"
 revise_button = "Изменить"
