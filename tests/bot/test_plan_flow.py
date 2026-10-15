@@ -13,10 +13,10 @@ from typing import Any
 import pytest
 from aiogram import Bot, Dispatcher
 from aiogram.methods import AnswerCallbackQuery, SendMessage
-from conftest import FakeSession, callback_update, make_user, message_update
 from pydantic_ai.messages import ModelMessage, ModelRequest, ModelResponse, ToolCallPart
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
+from conftest import FakeSession, callback_update, make_user, message_update
 from fitme import clock
 from fitme.bot.app import build_dispatcher
 from fitme.bot.callback_data import PlanDraft, PlanMenu, TrainPick
@@ -400,9 +400,7 @@ async def test_view_set_default_and_revise_from_the_list(
     assert datas[-1] == TrainPick(kind="plan", plan_id=two.id).pack()
     await _click(dispatcher, bot, TrainPick(kind="plan", plan_id=two.id))
     suggestion = _sent_messages(session)[-1]
-    assert TrainPick(kind="workout", plan_id=two.id, key="A").pack() in _callback_datas(
-        suggestion
-    )
+    assert TrainPick(kind="workout", plan_id=two.id, key="A").pack() in _callback_datas(suggestion)
 
     await _click(dispatcher, bot, PlanMenu(action="default", plan_id=two.id))
     assert _toasts(session)[-1] == t("plan.default_set", "en", name="Two")
