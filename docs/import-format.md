@@ -235,8 +235,7 @@ a date, a weight or a rep count.
    name, what `kg` means, whether it takes a `kg` at all):
 
    ```sh
-   uv run python -c 'from fitme.catalog import load_catalog
-   for e in load_catalog().exercise: print(e.id, e.names["en"], e.load_unit or "-", "kg" if e.kg_loadable else "no kg", sep=" | ")' > catalog.txt
+   make catalog-list          # writes catalog.txt; CATALOG_OUT=path to write elsewhere
    ```
 
 2. **Give the LLM four things**: this file (`docs/import-format.md`), the sample

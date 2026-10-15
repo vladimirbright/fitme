@@ -4,12 +4,13 @@
 # independent of .env, so this is applied only to $(FITME), never to `test`.
 FITME := uv run $(if $(wildcard .env),--env-file .env) fitme
 OUT ?= fitme-export.json
+CATALOG_OUT ?= catalog.txt
 # macOS: keep the machine awake while serving. Empty on Linux (no caffeinate), so the
 # command runs unchanged there.
 CAFFEINATE := $(shell command -v caffeinate >/dev/null 2>&1 && echo caffeinate -s)
 
 .DEFAULT_GOAL := help
-.PHONY: help install lock migrate serve activate test lint fmt typecheck catalog check export delete purge unhold hold-clear import-history llm-eval clean docker-build up down logs backup activate-docker unhold-docker
+.PHONY: help install lock migrate serve activate test lint fmt typecheck catalog catalog-list check export delete purge unhold hold-clear import-history llm-eval clean docker-build up down logs backup activate-docker unhold-docker
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -44,6 +45,9 @@ typecheck: ## Type-check with mypy
 
 catalog: ## Validate catalog + locales, print content_version
 	$(FITME) catalog check
+
+catalog-list: ## Write catalog ids/names/load units to $(CATALOG_OUT) (for LLM import conversion)
+	uv run python -c 'from fitme.catalog import load_catalog; [print(e.id, e.names["en"], e.load_unit or "-", "kg" if e.kg_loadable else "no kg", sep=" | ") for e in load_catalog().exercise]' > $(CATALOG_OUT)
 
 check: lint typecheck catalog test ## lint + typecheck + catalog + test (run before commit)
 
