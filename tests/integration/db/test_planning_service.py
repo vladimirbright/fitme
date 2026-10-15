@@ -159,8 +159,15 @@ async def seed_checkins_fine(db: Database, user_id: int, areas: tuple[str, ...])
 
 
 async def seed_completed_squat_session(
-    db: Database, user_id: int, plan_version_id: int, *, planned_kg: float, reps: int
+    db: Database,
+    user_id: int,
+    plan_version_id: int,
+    *,
+    planned_kg: float | None,
+    reps: int,
+    actual_kg: float | None = None,
 ) -> None:
+    """`planned_kg=None` is a calibration session; `actual_kg` defaults to `planned_kg`."""
     async with db.transaction() as conn:
         session_id = await insert_workout_session(
             conn,
@@ -178,7 +185,7 @@ async def seed_completed_squat_session(
                 planned_load_kg=planned_kg,
                 planned_reps_min=5,
                 planned_reps_max=8,
-                actual_load_kg=planned_kg,
+                actual_load_kg=planned_kg if actual_kg is None else actual_kg,
                 actual_reps=reps,
                 rpe=None,
                 source="button",
@@ -647,6 +654,37 @@ async def test_after_the_window_keeping_the_load_counts_as_a_fresh_increase(
     assert confirm_decision.load_changes == [
         {"exercise_id": _SQUAT, "from_kg": 40.0, "to_kg": 42.5}
     ]
+
+
+async def test_after_a_calibration_session_the_logged_load_is_not_an_increase(
+    db: Database, user_id: int
+) -> None:
+    """A§7.3: after a calibration session the next prescription is the logged load, a hold.
+    The guards must agree: with the active plan still at 40 and a later calibration session
+    logged at 45, keeping 45 is not a +5 over the stale 40 (which the cap would reject, and
+    the engine's own hold at 45 with it, refusing every plan)."""
+    plan_id = await _saved_plan_with_squat_history(db, user_id)
+    held = await planning.revise_plan(
+        db,
+        FakeLlm([make_plan(squat_load=Load(kind="kg", kg=40.0))]).runtime(),
+        user_id,
+        planning.PlanBase(plan_id=plan_id),
+        "keep 40",
+    )
+    confirmed = await planning.confirm_plan(db, _settings(), user_id, held.decision_id)
+    assert confirmed.status == planning.ConfirmStatus.SAVED
+    assert confirmed.plan_version_id is not None
+    await seed_completed_squat_session(
+        db, user_id, confirmed.plan_version_id, planned_kg=None, actual_kg=45.0, reps=5
+    )
+    llm = FakeLlm([make_plan(squat_load=Load(kind="kg", kg=45.0), name="Next")])
+
+    result = await planning.propose_new_plan(db, llm.runtime(), user_id)
+
+    assert llm.calls == 1
+    assert _squat_load(result.plan) == Load(kind="kg", kg=45.0)
+    assert not any(g.rule == "progression.weekly_cap" for g in result.guards_fired)
+    assert result.proposed_load_changes == []
 
 
 async def test_kg_on_a_non_kg_loadable_exercise_is_replaced_without_a_retry(

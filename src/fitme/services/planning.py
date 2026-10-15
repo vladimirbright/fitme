@@ -67,6 +67,7 @@ becomes `version n+1` of that plan.
 from __future__ import annotations
 
 import logging
+import math
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import timedelta
@@ -414,7 +415,10 @@ def gate(snapshot: Snapshot) -> tuple[RefusalCode, GuardVerdict] | None:
 def _current_loads(snapshot: Snapshot) -> dict[str, float]:
     """A§7 current working load: the prescribed load of the exercise's last completed
     session, falling back to the active plan version's prescription (the lowest one, if the
-    plan lists the exercise more than once: the conservative reference)."""
+    plan lists the exercise more than once: the conservative reference). When that last
+    session was a calibration (no prescribed load), the load the user logged is the current
+    load: A§7.3 prescribes the next session at it as a hold, so the guards must not measure
+    the engine's own hold as an increase over a stale plan prescription."""
     current: dict[str, float] = {}
     if snapshot.active_plan is not None:
         for workout in snapshot.active_plan.workouts:
@@ -426,8 +430,13 @@ def _current_loads(snapshot: Snapshot) -> dict[str, float]:
                     known = current.get(prescription.exercise_id)
                     current[prescription.exercise_id] = kg if known is None else min(known, kg)
     for exercise_id, outcomes in snapshot.outcomes.items():
-        if outcomes and outcomes[0].planned_load_kg is not None:
-            current[exercise_id] = outcomes[0].planned_load_kg
+        if not outcomes:
+            continue
+        last = outcomes[0]
+        if last.planned_load_kg is not None:
+            current[exercise_id] = last.planned_load_kg
+        elif last.load_kg is not None and math.isfinite(last.load_kg) and last.load_kg > 0:
+            current[exercise_id] = last.load_kg
     return current
 
 
@@ -839,6 +848,11 @@ async def _record_refusal(
     lang: str,
     rejected_plan: Plan | None = None,
 ) -> PlanRoundResult:
+    _logger.warning(
+        "plan refused (%s): %s",
+        refusal.code.value,
+        "; ".join(f"{v.rule}: {v.detail}" for v in guards_fired if not v.ok) or "no failing guard",
+    )
     async with db.transaction() as conn:
         decision_id = await write_refusal_decision(
             conn,
