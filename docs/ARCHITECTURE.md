@@ -143,6 +143,7 @@ host cron. See M10.
 | `FITME_DOMAIN` | no | Public host name for the optional Caddy TLS profile. |
 | `FITME_DEV` | no | Allows a non-TLS base URL on localhost |
 | `FITME_LOG_FORMAT` | no | `json` (default) or `text` ("time (LEVEL): message"); `make serve` sets `text` |
+| `FITME_LOG_LEVEL` | no | level of the app's own `fitme.*` loggers (default: INFO, like everything else); `make serve` sets `DEBUG` |
 | `FITME_SOURCE_URL` | no | Source repository link shown in the private-instance reply (§6.1). Default `https://github.com/vladimirbright/fitme`. Forks set their own. Also shown on the web login page (§9.1). |
 | `OPENAI_API_KEY` / `FITME_EMBEDDINGS_API_KEY` | no | Embeddings key for `fitme catalog index` (ADR 0007); the server needs it only with `FITME_EMBEDDINGS_QUERY=true` |
 | `FITME_EMBEDDINGS_MODEL` / `FITME_EMBEDDINGS_BASE_URL` | no | Default `text-embedding-3-small` at `https://api.openai.com/v1`; any OpenAI-compatible endpoint |

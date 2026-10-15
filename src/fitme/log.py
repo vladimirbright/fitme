@@ -3,7 +3,9 @@
 Structured logs go to stdout as one JSON object per line, so they compose well with
 journald or any log collector. `FITME_LOG_FORMAT=text` switches to one readable line per
 record instead ("2026-10-15 14:03:12.123456 (INFO): message key=value"), for a dev console
-(`make serve` sets it). Callers must never pass health values, message text or
+(`make serve` sets it). `FITME_LOG_LEVEL` (e.g. `DEBUG`) sets the level of the app's own
+`fitme.*` loggers only, leaving third-party libraries at INFO; `make serve` sets `DEBUG` for
+local runs. Callers must never pass health values, message text or
 Telegram ids as the log message or as `extra` fields at INFO level; log ids and event names
 instead.
 """
@@ -84,13 +86,15 @@ class TextFormatter(logging.Formatter):
 
 
 LOG_FORMAT_ENV = "FITME_LOG_FORMAT"
+LOG_LEVEL_ENV = "FITME_LOG_LEVEL"
 
 
 def configure_logging(level: int = logging.INFO) -> None:
     """Install a single stream handler on the root logger, replacing any existing ones: JSON,
-    or text when `FITME_LOG_FORMAT=text`. Read from the environment directly, since logging
-    is set up before the settings are loaded (and `fitme` commands that need no settings
-    log too)."""
+    or text when `FITME_LOG_FORMAT=text`; `FITME_LOG_LEVEL` sets the `fitme` logger's level
+    (unset: inherits `level`; an unknown name raises). Read from the environment directly,
+    since logging is set up before the settings are loaded (and `fitme` commands that need
+    no settings log too)."""
     root = logging.getLogger()
     root.setLevel(level)
     for existing in list(root.handlers):
@@ -99,3 +103,5 @@ def configure_logging(level: int = logging.INFO) -> None:
     text = os.environ.get(LOG_FORMAT_ENV, "json").strip().lower() == "text"
     handler.setFormatter(TextFormatter() if text else JsonFormatter())
     root.addHandler(handler)
+    app_level = os.environ.get(LOG_LEVEL_ENV, "").strip().upper()
+    logging.getLogger("fitme").setLevel(app_level or logging.NOTSET)

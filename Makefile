@@ -24,8 +24,8 @@ lock: ## Update uv.lock
 migrate: ## Apply pending SQL migrations
 	$(FITME) db upgrade
 
-serve: ## Run bot + web + retention job (text logs; kept awake with caffeinate on macOS)
-	FITME_LOG_FORMAT=text $(CAFFEINATE) $(FITME) serve
+serve: ## Run bot + web + retention job (text logs, app debug; kept awake with caffeinate on macOS)
+	FITME_LOG_FORMAT=text FITME_LOG_LEVEL=DEBUG $(CAFFEINATE) $(FITME) serve
 
 activate: ## Print a one-time Telegram activation code
 	$(FITME) activate

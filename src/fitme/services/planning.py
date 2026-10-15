@@ -848,7 +848,7 @@ async def _record_refusal(
     lang: str,
     rejected_plan: Plan | None = None,
 ) -> PlanRoundResult:
-    _logger.warning(
+    _logger.debug(
         "plan refused (%s): %s",
         refusal.code.value,
         "; ".join(f"{v.rule}: {v.detail}" for v in guards_fired if not v.ok) or "no failing guard",

@@ -9,7 +9,7 @@ import re
 
 import pytest
 
-from fitme.log import LOG_FORMAT_ENV, JsonFormatter, TextFormatter, configure_logging
+from fitme.log import LOG_FORMAT_ENV, LOG_LEVEL_ENV, JsonFormatter, TextFormatter, configure_logging
 
 
 def _capturing_logger(name: str) -> tuple[logging.Logger, io.StringIO]:
@@ -81,6 +81,29 @@ def test_log_format_env_picks_the_formatter(
         configure_logging()
         assert type(root.handlers[0].formatter).__name__ == expected
     finally:
+        for handler in list(root.handlers):
+            root.removeHandler(handler)
+        for handler in saved:
+            root.addHandler(handler)
+
+
+@pytest.mark.parametrize(("value", "expected"), [("debug", logging.DEBUG), (None, logging.NOTSET)])
+def test_log_level_env_sets_only_the_app_loggers(
+    monkeypatch: pytest.MonkeyPatch, value: str | None, expected: int
+) -> None:
+    if value is None:
+        monkeypatch.delenv(LOG_LEVEL_ENV, raising=False)
+    else:
+        monkeypatch.setenv(LOG_LEVEL_ENV, value)
+    root = logging.getLogger()
+    saved = list(root.handlers)
+    try:
+        configure_logging()
+        assert logging.getLogger("fitme").level == expected
+        assert root.level == logging.INFO
+        assert logging.getLogger("aiogram").getEffectiveLevel() == logging.INFO
+    finally:
+        logging.getLogger("fitme").setLevel(logging.NOTSET)
         for handler in list(root.handlers):
             root.removeHandler(handler)
         for handler in saved:
