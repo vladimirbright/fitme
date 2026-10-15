@@ -36,6 +36,7 @@ from fitme.domain.enums import (
     Location,
     Measure,
     Preference,
+    Quality,
     ScreeningFlag,
     Sport,
     WeightBucket,
@@ -274,6 +275,7 @@ def render_user_prompt(
     existing_plans: Sequence[Mapping[str, object]] | None = None,
     history: Sequence[tuple[str, str]] | None = None,
     exercise_facts: Sequence[Mapping[str, object]] | None = None,
+    requested_qualities: Sequence[Quality] | None = None,
 ) -> RenderedInput:
     """Build the one `user_prompt` every agent factory's caller sends (B2: "one rendering
     path"), so `plan_generate`/`plan_revise`/`session_adjust`/`result_parse` never each grow
@@ -360,5 +362,9 @@ def render_user_prompt(
         ]
     if exercise_facts is not None:
         payload["exercise_facts"] = [dict(fact) for fact in exercise_facts]
+    if requested_qualities:
+        # ADR 0009: what the request (and the other sport, focus, preferences) asks for, read
+        # deterministically by `exercise_search.requested_qualities`.
+        payload["requested_qualities"] = [quality.value for quality in requested_qualities]
     text = json.dumps(payload, ensure_ascii=False)
     return RenderedInput(text=text, payload=payload)

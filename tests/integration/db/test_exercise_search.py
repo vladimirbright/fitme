@@ -17,9 +17,12 @@ from fitme.domain.enums import (
     Equipment,
     ExerciseKind,
     ExercisePattern,
+    Focus,
     Location,
     Preference,
+    Quality,
     ScreeningFlag,
+    Sport,
 )
 from fitme.domain.screening import ScreeningFlagState
 from fitme.llm.embeddings import EmbeddingError
@@ -343,6 +346,8 @@ def test_exercise_facts_describe_each_id_without_safety_fields() -> None:
             "equipment": ["dumbbells", "bench"],
             "load_unit": "per_implement",
             "kg_loadable": True,
+            "qualities": ["strength", "hypertrophy"],
+            "measures": ["reps"],
         }
     ]
 
@@ -359,3 +364,53 @@ async def test_a_negated_request_does_not_boost_what_it_rules_out(
     plain = await es.plan_candidates(db, runtime, _gym())
     for request in ("no squats please", "без приседаний"):
         assert await es.plan_candidates(db, runtime, _gym(), request=request) == plain
+
+
+# --- ADR 0009: request reading and quality-aware pools --------------------------------------
+
+_BOXING_REQUEST = (
+    "Поддерживающая тренировка для бокса. Развиваем силу удара, выносливость, скорость "
+    "перемешения. Давай только бой с тенью будем делать после разминки, а не суперсетами"
+)
+
+
+def test_a_negation_drops_only_its_own_clause() -> None:
+    positive = es.positive_request(_BOXING_REQUEST)
+    assert "бой с тенью" in positive and "после разминки" in positive
+    assert "суперсет" not in positive
+    assert es.positive_request("без приседаний и выпадов") == ""
+    assert es.positive_request("no squats please") == ""
+
+
+def test_the_boxing_request_asks_for_power_footwork_and_conditioning() -> None:
+    qualities = es.requested_qualities(_BOXING_REQUEST)
+    assert {
+        Quality.POWER,
+        Quality.ROTATIONAL_POWER,
+        Quality.AGILITY,
+        Quality.CONDITIONING,
+    } <= set(qualities)
+    assert es.requested_qualities("без прыжков") == []
+    assert es.requested_qualities(None, sport=Sport.BOXING_MARTIAL_ARTS)[0] == Quality.POWER
+    assert es.requested_qualities(None, focus=Focus.MUSCLE) == [Quality.HYPERTROPHY]
+
+
+async def test_a_boxing_pool_offers_drills_that_train_each_requested_quality(
+    db: Database, tmp_path: Path
+) -> None:
+    """The observed failure: a 40-exercise pool with no shadow boxing, no jump rope and no
+    throws, because the request's "а не суперсетами" switched request matching off."""
+    runtime = await _runtime(db, tmp_path, vectors=False)
+    catalog = load_catalog()
+    qualities = es.requested_qualities(_BOXING_REQUEST, sport=Sport.BOXING_MARTIAL_ARTS)
+    pool = await es.plan_candidates(
+        db, runtime, _gym(), request=_BOXING_REQUEST, qualities=qualities
+    )
+    assert "bodyweight_shadow_boxing_hook" in pool
+    for quality in qualities:
+        trained = [i for i in pool if quality in catalog.by_id(i).qualities]  # type: ignore[union-attr]
+        assert trained, quality
+    assert any(
+        Quality.ROTATIONAL_POWER in catalog.by_id(i).qualities  # type: ignore[union-attr]
+        for i in pool
+    )

@@ -131,6 +131,7 @@ from fitme.domain.enums import (
     Location,
     Measure,
     Preference,
+    Quality,
     RefusalCode,
     ScreeningFlag,
     Sport,
@@ -1055,8 +1056,18 @@ async def existing_plans_summary(db: Database, user_id: int) -> list[dict[str, o
     return summary
 
 
+def request_qualities(inputs: Inputs, guidance: str | None) -> list[Quality]:
+    """ADR 0009: the physical qualities this request asks for (the request's words, the
+    other sport, focus and preferences), in order; feeds the candidate pool, the planner's
+    `requested_qualities` and the goal/exercise check."""
+    context = inputs.user_context
+    return exercise_search.requested_qualities(
+        guidance, focus=context.focus, preferences=context.preferences, sport=context.sport
+    )
+
+
 async def _candidate_pool(
-    db: Database, inputs: Inputs, guidance: str | None
+    db: Database, inputs: Inputs, guidance: str | None, qualities: Sequence[Quality] = ()
 ) -> tuple[UserContext, list[dict[str, object]]]:
     """ADR 0007: the exercises `plan_generate` sees — a balanced pool retrieved from the
     allowed set (`exercise_search.plan_candidates`), with their catalog facts. Only the
@@ -1079,6 +1090,7 @@ async def _candidate_pool(
             preferences=context.preferences,
             focus=context.focus,
             request=guidance,
+            qualities=qualities,
         )
     except Exception:  # retrieval must never block plan generation (ADR 0007 fallback)
         _logger.exception("plan_generate: candidate retrieval failed; sending every allowed id")
@@ -1142,7 +1154,8 @@ async def propose_new_plan(
             lang=lang,
         )
 
-    pool_context, facts = await _candidate_pool(db, inputs, guidance)
+    qualities = request_qualities(inputs, guidance)
+    pool_context, facts = await _candidate_pool(db, inputs, guidance, qualities)
     spec = model_for("plan_generate", llm.settings)
     feedback: list[str] | None = None
     last: _Attempt | None = None
@@ -1153,6 +1166,7 @@ async def propose_new_plan(
             existing_plans=existing or None,
             guard_feedback=feedback,
             exercise_facts=facts,
+            requested_qualities=qualities,
         )
         outcome = await run_agent(
             llm.factory("plan_generate"),

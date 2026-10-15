@@ -53,7 +53,7 @@ from fitme.config.embeddings import EmbeddingSettings
 from fitme.db.connection import Database
 from fitme.db.selectors.catalog_search import FtsQueryError, all_embeddings, fts_match
 from fitme.domain.catalog import Catalog, Exercise
-from fitme.domain.enums import ExerciseKind, ExercisePattern, Focus, Preference
+from fitme.domain.enums import ExerciseKind, ExercisePattern, Focus, Preference, Quality, Sport
 from fitme.llm.embeddings import Embedder, EmbeddingError, OpenAICompatibleEmbedder, embed_query
 from fitme.services.catalog_index import documents
 from fitme.services.vector_index import VectorError, VectorIndex, normalize
@@ -221,6 +221,113 @@ _PATTERN_WORDS: dict[ExercisePattern, frozenset[str]] = {
         "accessory": "arms biceps triceps calves forearms руки бицепс трицепс икры предплечья",
     }.items()
 }
+
+
+# --- Request reading (ADR 0009) ------------------------------------------------------------
+
+# A clause ends at punctuation or a contrast ("a не", "but"); a negation word removes the rest
+# of its clause, so "после разминки, а не суперсетами" keeps "после разминки" and "без
+# приседаний" contributes nothing, instead of the whole request being ignored.
+_CLAUSE_SPLIT_RE = re.compile(r"[.,;:!?\n]+|\s(?:а|но|but)\s", re.UNICODE)
+
+
+def positive_request(text: str) -> str:
+    """`text` without its negated parts: what the user asked *for*, safe to rank by. The
+    model still reads the whole request; this only feeds lexical matching."""
+    kept: list[str] = []
+    for clause in _CLAUSE_SPLIT_RE.split(_fold(text)):
+        match = _NEGATION_RE.search(clause)
+        part = clause[: match.start()] if match is not None else clause
+        if part.strip():
+            kept.append(part.strip())
+    return ". ".join(kept)
+
+
+# Words (folded stems, matched as prefixes of the request's words) that ask for a physical
+# quality. Small and explicit on purpose: what a request names, not a sports-science model.
+_QUALITY_WORDS: dict[Quality, tuple[str, ...]] = {
+    Quality.STRENGTH: ("strength", "strong", "сил", "силов"),
+    Quality.HYPERTROPHY: ("hypertroph", "muscle", "mass", "bodybuild", "гипертроф", "масс", "мышц"),
+    Quality.POWER: (
+        "power", "explosiv", "jump", "plyo", "punch", "kick", "sprint",
+        "взрыв", "мощн", "прыж", "прыг", "плиометр", "удар", "спринт",
+    ),
+    Quality.ROTATIONAL_POWER: (
+        "punch", "rotation", "throw", "удар", "ротац", "вращ", "бросок", "броск",
+    ),
+    Quality.CORE_STABILITY: ("core", "stabil", "anti-rot", "корпус", "стабил", "пресс"),
+    Quality.AGILITY: (
+        "agil", "footwork", "foot speed", "quick", "speed", "coordinat", "shadow",
+        "ловк", "скорост", "перемещ", "координац", "работа ног", "бой с тенью",
+    ),
+    Quality.MUSCULAR_ENDURANCE: ("muscular endurance", "high rep", "силовая выносл", "многоповтор"),
+    Quality.CONDITIONING: (
+        "conditioning", "endurance", "cardio", "stamina", "hiit", "interval",
+        "выносл", "кардио", "дыхал", "интервал",
+    ),
+    Quality.MOBILITY: (
+        "mobility", "flexib", "stretch", "warm-up", "warmup",
+        "мобильн", "гибк", "растяж", "размин",
+    ),
+}  # fmt: skip
+
+# What a sport practised outside the app asks of supporting training (ADR 0009). Boxing:
+# punching power is rotational and explosive, footwork is agility, rounds are conditioning.
+_SPORT_QUALITIES: dict[Sport, tuple[Quality, ...]] = {
+    Sport.BOXING_MARTIAL_ARTS: (
+        Quality.POWER,
+        Quality.ROTATIONAL_POWER,
+        Quality.AGILITY,
+        Quality.CORE_STABILITY,
+        Quality.CONDITIONING,
+    ),
+    Sport.RUNNING: (Quality.STRENGTH, Quality.CORE_STABILITY, Quality.MOBILITY),
+    Sport.CYCLING: (Quality.STRENGTH, Quality.CORE_STABILITY, Quality.MOBILITY),
+    Sport.SWIMMING: (Quality.STRENGTH, Quality.CORE_STABILITY, Quality.MOBILITY),
+    Sport.TEAM_SPORT: (Quality.POWER, Quality.AGILITY, Quality.STRENGTH),
+    Sport.RACKET_SPORT: (Quality.AGILITY, Quality.ROTATIONAL_POWER, Quality.CORE_STABILITY),
+    Sport.CLIMBING: (Quality.STRENGTH, Quality.CORE_STABILITY, Quality.MOBILITY),
+}
+
+
+def requested_qualities(
+    text: str | None,
+    *,
+    focus: Focus | None = None,
+    preferences: Sequence[Preference] = (),
+    sport: Sport | None = None,
+) -> list[Quality]:
+    """The qualities a plan request asks for, most specific first: what the request text
+    names (its negated parts left out), then the other sport, then focus and preferences.
+    Empty for a request that names none and no sport: the planner's default balance."""
+    found: list[Quality] = []
+
+    def add(quality: Quality) -> None:
+        if quality not in found:
+            found.append(quality)
+
+    if text:
+        positive = positive_request(text)
+        words = _TOKEN_RE.findall(positive)
+        for quality, stems in _QUALITY_WORDS.items():
+            for stem in stems:
+                if (" " in stem and stem in positive) or any(w.startswith(stem) for w in words):
+                    add(quality)
+                    break
+    if sport is not None:
+        for quality in _SPORT_QUALITIES.get(sport, ()):
+            add(quality)
+    if focus == Focus.STRENGTH:
+        add(Quality.STRENGTH)
+    elif focus == Focus.MUSCLE:
+        add(Quality.HYPERTROPHY)
+    elif focus == Focus.CONDITIONING:
+        add(Quality.CONDITIONING)
+    if Preference.MOBILITY in preferences:
+        add(Quality.MOBILITY)
+    if Preference.CONDITIONING in preferences:
+        add(Quality.CONDITIONING)
+    return found
 
 
 def pattern_matches(text: str) -> list[ExercisePattern]:
@@ -454,6 +561,8 @@ def find_substitutes(
 # below (40 in total; up to about 50 when the request names patterns, plus exercises with
 # history).
 POOL_SIZE = 40
+# ADR 0009: exercises guaranteed per requested quality (beyond the pattern quotas).
+_QUALITY_QUOTA = 4
 _BASE_QUOTA: dict[ExercisePattern, int] = {
     ExercisePattern.SQUAT: 4,
     ExercisePattern.HINGE: 4,
@@ -511,6 +620,7 @@ async def plan_candidates(
     focus: Focus = Focus.GENERAL_FITNESS,
     request: str | None = None,
     size: int = POOL_SIZE,
+    qualities: Sequence[Quality] = (),
 ) -> list[str]:
     """A balanced pool of allowed exercise ids for `plan_generate`: every movement pattern
     the allowed set offers, compound before isolation, varied equipment, exercises the
@@ -521,11 +631,12 @@ async def plan_candidates(
         return [exercise.id for exercise in allowed]
     allowed_ids = {exercise.id for exercise in allowed}
     relevance: dict[str, int] = {}
-    # A negated request ("no squats", "без приседаний") must not boost what it rules out;
-    # lexical matching can't read a negation, so such a request leaves the pool structural.
-    # The model still reads the request itself.
-    if request and request.strip() and not _NEGATION_RE.search(_fold(request)):
-        hits = await search(db, runtime, allowed, ExerciseQuery(text=request, limit=size))
+    # ADR 0009: only what the request asks *for* is ranked — a negated part ("без
+    # приседаний", "а не суперсетами") is dropped, never boosted, and no longer switches the
+    # whole request off. The model still reads the request itself.
+    positive = positive_request(request) if request else ""
+    if positive.strip():
+        hits = await search(db, runtime, allowed, ExerciseQuery(text=positive, limit=size))
         relevance = {hit.exercise_id: rank for rank, hit in enumerate(hits)}
     chosen: list[str] = [exercise_id for exercise_id in history_ids if exercise_id in allowed_ids]
     chosen = list(dict.fromkeys(chosen))
@@ -559,6 +670,23 @@ async def plan_candidates(
             if exercise.id not in chosen:
                 chosen.append(exercise.id)
                 taken += 1
+    # ADR 0009: every requested quality gets exercises that *directly* train it (catalog
+    # `qualities`), request matches and history first, on top of the pattern quotas — a
+    # "foot speed" day must have footwork drills to choose from, not only squats.
+    for quality in qualities:
+        members = sorted(
+            (exercise for exercise in allowed if quality in exercise.qualities),
+            key=lambda exercise: (
+                0 if exercise.id in relevance else 1,
+                0 if exercise.id in chosen else 1,
+                exercise.qualities.index(quality),
+                relevance.get(exercise.id, 0),
+                exercise.id,
+            ),
+        )
+        for exercise in _diverse(members)[:_QUALITY_QUOTA]:
+            if exercise.id not in chosen:
+                chosen.append(exercise.id)
     for exercise_id in sorted(relevance, key=relevance.__getitem__):
         if len(chosen) >= size:
             break
@@ -587,6 +715,9 @@ def exercise_facts(
                 "equipment": [item.value for item in exercise.equipment],
                 "load_unit": exercise.load_unit,
                 "kg_loadable": exercise.kg_loadable,
+                # ADR 0009: what it directly trains, and how a set is measured.
+                "qualities": [quality.value for quality in exercise.qualities],
+                "measures": [measure.value for measure in exercise.measures],
             }
         )
     return facts
