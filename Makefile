@@ -10,7 +10,7 @@ CATALOG_OUT ?= catalog.txt
 CAFFEINATE := $(shell command -v caffeinate >/dev/null 2>&1 && echo caffeinate -s)
 
 .DEFAULT_GOAL := help
-.PHONY: help install lock migrate serve activate test lint fmt typecheck catalog catalog-list check export delete purge unhold hold-clear import-history llm-eval clean docker-build up down logs backup activate-docker unhold-docker
+.PHONY: help install lock migrate serve activate test lint fmt typecheck catalog catalog-list catalog-index check export delete purge unhold hold-clear import-history llm-eval clean docker-build up down logs backup activate-docker unhold-docker
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -48,6 +48,9 @@ catalog: ## Validate catalog + locales, print content_version
 
 catalog-list: ## Write catalog ids/names/load units to $(CATALOG_OUT) (for LLM import conversion)
 	uv run python -c 'from fitme.catalog import load_catalog; [print(e.id, e.names["en"], e.load_unit or "-", "kg" if e.kg_loadable else "no kg", sep=" | ") for e in load_catalog().exercise]' > $(CATALOG_OUT)
+
+catalog-index: ## Embed new/changed exercises into the shipped search index (needs OPENAI_API_KEY in .env)
+	$(FITME) catalog index
 
 check: lint typecheck catalog test ## lint + typecheck + catalog + test (run before commit)
 

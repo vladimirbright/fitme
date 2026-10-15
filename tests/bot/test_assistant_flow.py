@@ -19,7 +19,6 @@ from typing import Any
 import pytest
 from aiogram import Bot, Dispatcher
 from aiogram.methods import SendMessage
-from conftest import FakeSession, callback_update, make_user, message_update
 from pydantic_ai.messages import (
     ModelMessage,
     ModelRequest,
@@ -29,9 +28,12 @@ from pydantic_ai.messages import (
 )
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
+from conftest import FakeSession, callback_update, make_user, message_update
 from fitme import clock
 from fitme.bot.app import build_dispatcher
 from fitme.bot.callback_data import PlanDraft, TrainAction
+from fitme.catalog import load_catalog
+from fitme.cli.commands import sync_search_index
 from fitme.config.content import content_version
 from fitme.config.settings import Settings
 from fitme.db.connection import Database
@@ -59,8 +61,8 @@ from fitme.domain.models import Block, Load, Plan, Prescription, Refusal, Schedu
 from fitme.domain.results import ParsedResults
 from fitme.i18n import t
 from fitme.llm.agents import assistant_agent, plan_generate_agent, result_parse_agent
+from fitme.services import planning, training
 from fitme.services import profile as profile_service
-from fitme.services import training
 from fitme.services.identity import issue_activation_code
 from fitme.services.llm_runtime import LlmRuntime
 
@@ -881,3 +883,51 @@ async def test_a_load_set_during_the_workout_still_passes_the_guards(
     assert started is not None
     assert started.blocks[2].items[0].load.kind == "calibration"
     assert "⚠️" in _last_text(session)
+
+
+async def test_the_assistant_finds_exercises_and_ranked_substitutes(
+    dispatcher: Dispatcher,
+    bot: Bot,
+    db: Database,
+    session: FakeSession,
+    llm: ScriptedLlm,
+    settings: Settings,
+) -> None:
+    """ADR 0007: `find_exercises` is hybrid search over the allowed set, and
+    `find_substitutes` ranks allowed replacements; neither stages anything."""
+    seeded = await _ready(dispatcher, bot, db)
+    await sync_search_index(db)
+    llm.steps = [
+        Call("find_exercises", {"query": "жим гантелей"}),
+        Call(
+            "find_substitutes",
+            {"exercise_id": "barbell_back_squat", "avoid_areas": ["lower_back"]},
+        ),
+        Call("find_substitutes", {"exercise_id": "no_such_id", "avoid_areas": []}),
+        Call("find_substitutes", {"exercise_id": "barbell_back_squat", "avoid_areas": ["toe"]}),
+        say("Вот варианты."),
+    ]
+    await _send(dispatcher, bot, "чем заменить присед, чтобы не грузить поясницу?")
+
+    found = llm.returns("find_exercises")[0]
+    assert found and found[0]["exercise_id"] == "dumbbell_bench_press"
+    substitutes, unknown, bad_area = llm.returns("find_substitutes")
+    catalog = load_catalog()
+    assert substitutes and substitutes[0]["close"] is True
+    for item in substitutes:
+        exercise = catalog.by_id(item["exercise_id"])
+        assert exercise is not None and "lower_back" not in exercise.loads_areas
+        assert item["exercise_id"] != "barbell_back_squat"
+    assert "error" in unknown and "error" in bad_area
+    # ADR 0007: every result is something this user may already do (location, equipment,
+    # screening) — retrieval only orders the allowed set.
+    async with db.read() as conn:
+        snapshot = await planning.read_snapshot(conn, seeded.user_id)
+    allowed = set(
+        planning.build_inputs(
+            catalog, snapshot, settings, seeded.user_id
+        ).user_context.allowed_exercise_ids
+    )
+    assert {item["exercise_id"] for item in found} <= allowed
+    assert {item["exercise_id"] for item in substitutes} <= allowed
+    assert await _open_conversations(db, seeded.user_id) == []  # nothing staged

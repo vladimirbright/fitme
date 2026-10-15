@@ -18,6 +18,10 @@ Telegram id, chat id, name, or your screening notes. See
 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) §8.2 for the exact scope and its documented
 limits.
 
+Exercise search uses embeddings that are computed once on the operator's machine from the
+public catalog text (`make catalog-index`) and shipped with the code. With the default
+`FITME_EMBEDDINGS_QUERY=false` nothing you type is sent to an embeddings provider.
+
 ## Quick start (Docker Compose)
 
 Requires Docker with the Compose plugin.
@@ -115,6 +119,39 @@ or progression limits. To make an exercise available in plans, add a reviewed en
 [`src/fitme/catalog/exercises/`](src/fitme/catalog/exercises/) and run
 `fitme catalog check`.
 
+## Exercise search and substitutes
+
+The catalog in [`src/fitme/catalog/exercises/`](src/fitme/catalog/exercises/) is the only
+source of exercise data. A derived search index sits beside it
+(`src/fitme/catalog/search_index.sqlite`) and ships with the code; `fitme serve` imports it at
+startup together with a full-text index built from the catalog (ADR 0007).
+
+After editing the catalog, refresh the embeddings and commit the index file:
+
+```sh
+make catalog-index                       # embeds only new or changed exercises
+uv run fitme catalog reindex --force     # re-embed everything (e.g. after a model change)
+make catalog                             # catalog check, also reports the index status
+```
+
+`make catalog-index` needs `OPENAI_API_KEY` (or `FITME_EMBEDDINGS_API_KEY`) in `.env`; see
+`.env.example` for the model and endpoint settings. The server needs no key.
+
+Search and substitutes from the command line, filtered like a plan would be:
+
+```sh
+uv run fitme catalog search "жим гантелей"
+uv run fitme catalog search "back" --location home_equipment --equipment pull_up_bar,resistance_bands
+uv run fitme catalog search --pattern vertical_pull --kind bodyweight --location outdoor
+uv run fitme catalog search "chest exercises without a bench" --semantic   # one provider call
+uv run fitme catalog substitutes barbell_bench_press --location home_equipment --equipment dumbbells,bench
+uv run fitme catalog substitutes barbell_bent_over_row --avoid-area lower_back
+```
+
+The same retrieval builds the exercise pool `plan_generate` chooses from, and gives the
+Telegram assistant `find_exercises` and `find_substitutes`. It only ranks exercises already
+allowed for your location, equipment and screening; the safety guards still check every plan.
+
 ## Local development (without Docker)
 
 Requires [`uv`](https://docs.astral.sh/uv/) and Python 3.13.
@@ -140,6 +177,8 @@ committing).
 | `serve` | Run bot + web + retention job (local dev) |
 | `activate` | Print a one-time Telegram activation code (local dev) |
 | `test` / `lint` / `fmt` / `typecheck` / `catalog` / `check` | Local dev QA |
+| `catalog-index` | Embed new/changed exercises into the shipped search index (needs `OPENAI_API_KEY`) |
+| `catalog-list` | Write catalog ids/names/load units to `CATALOG_OUT` (for LLM import conversion) |
 | `export` / `delete` / `purge` | Data lifecycle (local dev; A§8.3/§8.4) |
 | `unhold` / `hold-clear` | Clear open health holds (local dev; operator bypass) |
 | `import-history` | Import past trainings/plans from `FILE=` (local dev; `DRY=1` to only report) |

@@ -9,6 +9,8 @@
 *.sqlite
 *.sqlite3
 *.sqlite-*
+# ADR 0007: the derived catalog search index ships with the code (no user data).
+!src/fitme/catalog/search_index.sqlite
 backups/
 fitme-export*.json
 *.export.json

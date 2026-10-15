@@ -144,6 +144,9 @@ host cron. See M10.
 | `FITME_DEV` | no | Allows a non-TLS base URL on localhost |
 | `FITME_LOG_FORMAT` | no | `json` (default) or `text` ("time (LEVEL): message"); `make serve` sets `text` |
 | `FITME_SOURCE_URL` | no | Source repository link shown in the private-instance reply (§6.1). Default `https://github.com/vladimirbright/fitme`. Forks set their own. Also shown on the web login page (§9.1). |
+| `OPENAI_API_KEY` / `FITME_EMBEDDINGS_API_KEY` | no | Embeddings key for `fitme catalog index` (ADR 0007); the server needs it only with `FITME_EMBEDDINGS_QUERY=true` |
+| `FITME_EMBEDDINGS_MODEL` / `FITME_EMBEDDINGS_BASE_URL` | no | Default `text-embedding-3-small` at `https://api.openai.com/v1`; any OpenAI-compatible endpoint |
+| `FITME_EMBEDDINGS_QUERY` | no | default `false`: embed free-text search queries at request time |
 
 No secrets are committed. The reference deployment works with env vars only.
 
@@ -279,6 +282,12 @@ Catalog invariants, enforced by `fitme catalog check` and tests:
 - **Safety cues:** barbell rack and bench exercises include a cue to set safety arms. The
   barbell deadlift starts at `calibration`, with the bar at standard height.
 - **No internal references** ("A§", "AGENTS") in user-visible names or instructions.
+
+**Search (ADR 0007).** Derived, rebuildable indexes sit next to the catalog: the shipped
+embedding file `catalog/search_index.sqlite` (built by `fitme catalog index`) and, in the app
+DB, `catalog_search_fts` and `catalog_embeddings` (migration 0009, refreshed at startup).
+`services/exercise_search.py` ranks an already-filtered allowed set for free-text search,
+substitutes and `plan_generate`'s candidate pool; it never adds an exercise.
 
 The catalog holds roughly 100 exercises covering every location in §5.1 (hand-written plus reviewed generated candidates). Pick
 calibration start loads conservatively: an empty bar, the lightest dumbbell/machine stack, or
@@ -1095,7 +1104,10 @@ session's recap, using the same service.
 | `fitme history import PATH [--dry-run]` | Import past sessions and plans (TOML/JSON; `-` = stdin). Idempotent. See `docs/import-format.md`. |
 | `fitme health` | Healthcheck: DB opens, no pending migrations, settings valid. No network. |
 | `fitme backup --out DIR [--keep N]` | Online SQLite backup (mode 0600), keeping the newest N. |
-| `fitme catalog check` | Validate the exercise catalog and locales (all keys present in all languages); print `content_version`. |
+| `fitme catalog check` | Validate the exercise catalog and locales (all keys present in all languages); print `content_version` and the search index status. |
+| `fitme catalog index [--force]` / `reindex` | Embed new or changed exercises into `catalog/search_index.sqlite` (ADR 0007). Needs an embeddings key. |
+| `fitme catalog search [TEXT] [--pattern] [--kind] [--location] [--equipment] [--flag] [--avoid-area] [--semantic]` | Hybrid catalog search over the allowed set. |
+| `fitme catalog substitutes ID [--location] [--equipment] [--flag] [--avoid-area]` | Ranked allowed replacements for one exercise. |
 
 Uses stdlib `argparse`.
 

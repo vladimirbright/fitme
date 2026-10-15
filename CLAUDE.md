@@ -20,6 +20,7 @@ uv run pytest tests/guards/test_ceiling.py::test_name   # single test
 make lint / make fmt          # ruff check / ruff format + --fix
 make typecheck                # mypy src (strict on fitme.domain.* and fitme.guards.*)
 make catalog                  # fitme catalog check: validate catalog + locales, print content_version
+make catalog-index            # re-embed changed exercises into catalog/search_index.sqlite (needs OPENAI_API_KEY)
 make migrate / make serve     # apply migrations / run bot + web + retention in one process
 ```
 
@@ -75,6 +76,10 @@ bot, web, cli ──► services ──► guards, llm, db ──► domain
   message is stored and passes the stop-word scan **before** anything else, including the LLM.
   Unclaimed free text goes to the tool-using assistant, which works inside a single active
   conversation session (planning or training) and stages actions that apply only after guards.
+- Catalog search (ADR 0007): `services/exercise_search.py` ranks an allowed set (exact,
+  FTS5, pattern words, shipped embeddings); it never adds an exercise. After a catalog edit
+  run `make catalog-index` and commit `catalog/search_index.sqlite`, or
+  `test_catalog_index.py` fails.
 - `web/` — server-rendered Jinja2 + vanilla JS, no build step, no CDNs.
 
 User-visible copy (locales, catalog names/instructions, model-authored plan text) is checked

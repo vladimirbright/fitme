@@ -155,6 +155,10 @@ class AssistantTools(Protocol):
 
     async def find_exercises(self, query: str) -> list[dict[str, object]]: ...
 
+    async def find_substitutes(
+        self, exercise_id: str, avoid_areas: list[str]
+    ) -> list[dict[str, object]] | dict[str, object]: ...
+
     async def edit_plan(self, plan_id: int | None, ops: list[AnyPlanOp]) -> dict[str, object]: ...
 
     async def rewrite_plan(self, plan_id: int | None, request: str) -> dict[str, object]: ...
@@ -220,9 +224,19 @@ async def _get_session(ctx: Deps, session_id: int) -> object:
 
 
 async def _find_exercises(ctx: Deps, query: str) -> object:
-    """Allowed catalog exercises whose id or name contains `query` (any language). Use it to
-    map an exercise the user names to an allowed `exercise_id`."""
+    """Allowed catalog exercises matching `query`, best first: an exercise name or part of
+    one, or a body region ("back", "грудь"), in any language. Use it to map what the user
+    names to an allowed `exercise_id`."""
     return _NO_DATA if ctx.deps is None else await ctx.deps.find_exercises(query)
+
+
+async def _find_substitutes(ctx: Deps, exercise_id: str, avoid_areas: list[str]) -> object:
+    """Allowed replacements for `exercise_id`, closest first; `close` marks the same movement
+    with comparable mechanics. `avoid_areas`: catalog body areas the replacement must not
+    load (`neck`, `shoulder`, `elbow_wrist`, `lower_back`, `hip`, `knee`, `ankle`), or []."""
+    if ctx.deps is None:
+        return _NO_DATA
+    return await ctx.deps.find_substitutes(exercise_id, avoid_areas)
 
 
 # --- Planning session -----------------------------------------------------------------------
@@ -347,6 +361,7 @@ _ASSISTANT_TOOLS: tuple[Tool[Any], ...] = (
     Tool(_list_recent_sessions, name="list_recent_sessions"),
     Tool(_get_session, name="get_session"),
     Tool(_find_exercises, name="find_exercises"),
+    Tool(_find_substitutes, name="find_substitutes"),
     Tool(_edit_plan, name="edit_plan"),
     Tool(_rewrite_plan, name="rewrite_plan"),
     Tool(_new_plan, name="new_plan"),

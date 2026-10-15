@@ -28,11 +28,14 @@ from aiogram.exceptions import AiogramError, TelegramUnauthorizedError
 
 from fitme.bot.app import build_dispatcher
 from fitme.bot.commands import register_commands
+from fitme.catalog import load_catalog
 from fitme.config.settings import Settings, SettingsError
 from fitme.db.backup import BackupError, create_backup
 from fitme.db.connection import Database, DatabaseUnavailableError, open_database
 from fitme.db.migrate import migrate, pending_migrations
+from fitme.db.search_index_file import SearchIndexFileError
 from fitme.llm import models as llm_models
+from fitme.services import catalog_index, exercise_search
 from fitme.services import history_import as history_import_service
 from fitme.services.account import delete_user, export_user, get_single_user
 from fitme.services.identity import issue_activation_code
@@ -423,6 +426,25 @@ async def _serve_concurrently(
         _logger.info("retention loop stopped")
 
 
+async def sync_search_index(db: Database) -> None:
+    """ADR 0007: rebuild the derived catalog search tables from the catalog and the shipped
+    index file, then load the vectors once. No provider call. A missing or unreadable index
+    file only disables semantic ranking; the server still starts."""
+    catalog = load_catalog()
+    try:
+        report = await catalog_index.sync_database(db, catalog, catalog_index.default_index_path())
+    except SearchIndexFileError as exc:
+        _logger.warning("search index file unreadable (%s); semantic ranking is off", exc)
+        report = await catalog_index.sync_database(db, catalog, None)
+    if report.skipped:
+        _logger.warning(
+            "search index: %d embeddings stale or unknown; run `make catalog-index`",
+            len(report.skipped),
+        )
+    runtime = await exercise_search.load_runtime(db, catalog)
+    _logger.info("search index: %d exercises, %d vectors", report.fts_rows, len(runtime.vectors))
+
+
 async def serve_async(settings: Settings) -> int:
     """`fitme serve` (A§3, A§9, A§11): opens the database once (closed last, so the process
     exits cleanly on a signal or an error), then runs the bot (long polling), the website
@@ -440,6 +462,7 @@ async def serve_async(settings: Settings) -> int:
     if db is None:
         return 1
     try:
+        await sync_search_index(db)
         bot = Bot(token=settings.telegram_bot_token.get_secret_value())
         try:
             # M10 review (B4): a rejected token must fail fast with one clear line, not a

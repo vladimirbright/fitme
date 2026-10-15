@@ -263,3 +263,16 @@ class ConversationRecord:
     started_at: str
     updated_at: str
     closed_at: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class EmbeddingRecord:
+    """ADR 0007: one exercise's search embedding, in the app DB or the shipped index file.
+    `embedding` is little-endian float32, L2-normalized, `dimensions` values long."""
+
+    exercise_id: str
+    model: str
+    content_hash: str
+    dimensions: int
+    embedding: bytes
+    updated_at: str

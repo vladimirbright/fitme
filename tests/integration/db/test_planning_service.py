@@ -14,6 +14,7 @@ from pydantic_ai.messages import ModelMessage, ModelRequest, ModelResponse, Tool
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
 from fitme import clock
+from fitme.catalog import load_catalog
 from fitme.config.settings import Settings
 from fitme.db.connection import Database
 from fitme.db.controllers.profile import upsert_profile, upsert_screening_flag
@@ -43,7 +44,7 @@ from fitme.domain.models import (
     Workout,
 )
 from fitme.llm.agents import plan_generate_agent, plan_revise_agent
-from fitme.services import planning
+from fitme.services import exercise_search, planning
 from fitme.services.llm_runtime import LlmRuntime
 
 _EPOCH = "1970-01-01T00:00:00.000000Z"
@@ -275,7 +276,7 @@ async def test_valid_plan_is_a_draft_then_version_1_on_confirm(db: Database, use
     decision = rounds[0]
     assert decision.id == result.decision_id
     assert decision.model == _settings().llm_tier_large
-    assert decision.prompt_template == "plan_generate" and decision.prompt_version == "3"
+    assert decision.prompt_template == "plan_generate" and decision.prompt_version == "4"
     assert decision.guards_fired  # the gate verdict at least
     assert decision.proposal is not None
     assert Plan.model_validate(decision.proposal["plan"]) == result.plan
@@ -1250,3 +1251,51 @@ async def test_generate_never_keeps_a_models_declared_kg(db: Database, user_id: 
         for block in workout.blocks
         for item in block.items
     )
+
+
+# --- ADR 0007: retrieval pool ----------------------------------------------------------------
+
+
+async def test_plan_generate_sees_a_retrieved_pool_with_facts_and_the_guards_see_all(
+    db: Database, user_id: int, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    await seed_profile(db, user_id)
+    async with db.read() as conn:
+        snapshot = await planning.read_snapshot(conn, user_id)
+    full = planning.build_inputs(load_catalog(), snapshot, _settings(), user_id)
+    allowed = full.user_context.allowed_exercise_ids
+    assert len(allowed) > exercise_search.POOL_SIZE  # the home setup is narrowed
+    llm = FakeLlm([make_plan()])
+
+    result = await planning.propose_new_plan(db, llm.runtime(), user_id, guidance="more chest work")
+
+    assert result.plan is not None
+    sent = json.loads(llm.prompts[0])
+    pool = sent["context"]["allowed_exercise_ids"]
+    assert set(pool) < set(allowed)
+    assert _SQUAT in pool  # the plan's own exercise stays reachable
+    assert [fact["id"] for fact in sent["exercise_facts"]] == pool
+    patterns = {fact["pattern"] for fact in sent["exercise_facts"]}
+    catalog = load_catalog()
+    assert patterns == {catalog.by_id(i).pattern.value for i in allowed}  # type: ignore[union-attr]
+
+
+async def test_plan_generate_falls_back_to_every_allowed_id_when_retrieval_fails(
+    db: Database, user_id: int, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    await seed_profile(db, user_id)
+
+    async def broken(*args: object, **kwargs: object) -> list[str]:
+        raise RuntimeError("index unavailable")
+
+    monkeypatch.setattr(exercise_search, "plan_candidates", broken)
+    llm = FakeLlm([make_plan()])
+    result = await planning.propose_new_plan(db, llm.runtime(), user_id)
+
+    assert result.plan is not None
+    async with db.read() as conn:
+        snapshot = await planning.read_snapshot(conn, user_id)
+    full = planning.build_inputs(load_catalog(), snapshot, _settings(), user_id)
+    sent = json.loads(llm.prompts[0])
+    assert sent["context"]["allowed_exercise_ids"] == full.user_context.allowed_exercise_ids
+    assert len(sent["exercise_facts"]) == len(full.user_context.allowed_exercise_ids)

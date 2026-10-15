@@ -246,6 +246,7 @@ def render_user_prompt(
     state: Mapping[str, object] | None = None,
     existing_plans: Sequence[Mapping[str, object]] | None = None,
     history: Sequence[tuple[str, str]] | None = None,
+    exercise_facts: Sequence[Mapping[str, object]] | None = None,
 ) -> RenderedInput:
     """Build the one `user_prompt` every agent factory's caller sends (B2: "one rendering
     path"), so `plan_generate`/`plan_revise`/`session_adjust`/`result_parse` never each grow
@@ -289,6 +290,10 @@ def render_user_prompt(
     `history` (ADR 0004 `assistant`) is the open session's last turns as `(role, text)`,
     `role` "user" or "assistant", oldest first. The user's turns are free text and go through
     `scrub()` like `request`; the assistant's are what this app sent.
+
+    `exercise_facts` (ADR 0007, `plan_generate`) describes each id in `allowed_exercise_ids`:
+    catalog name, kind, movement pattern, equipment and load unit, built by
+    `services.exercise_search.exercise_facts`. Catalog data only.
     """
     payload: dict[str, object] = {}
     if context is not None:
@@ -326,5 +331,7 @@ def render_user_prompt(
             {"role": role, "text": scrub(text) if role == "user" else text}
             for role, text in history
         ]
+    if exercise_facts is not None:
+        payload["exercise_facts"] = [dict(fact) for fact in exercise_facts]
     text = json.dumps(payload, ensure_ascii=False)
     return RenderedInput(text=text, payload=payload)

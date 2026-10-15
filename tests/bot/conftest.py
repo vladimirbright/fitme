@@ -167,7 +167,9 @@ async def all_table_row_counts(db: Database) -> dict[str, int]:
         db.read() as conn,
         conn.execute(
             "SELECT name FROM sqlite_master WHERE type = 'table' "
-            "AND name NOT LIKE 'sqlite_%' AND name != 'schema_migrations'"
+            "AND name NOT LIKE 'sqlite_%' AND name != 'schema_migrations' "
+            # ADR 0007: derived catalog search indexes, no user data.
+            "AND name NOT LIKE 'catalog\\_%' ESCAPE '\\'"
         ) as cursor,
     ):
         tables = [row[0] for row in await cursor.fetchall()]

@@ -160,6 +160,7 @@ from fitme.llm.context import (
 from fitme.llm.escalation import run_with_escalation
 from fitme.llm.models import model_for
 from fitme.llm.usage import CAUSE_OUTPUT_VALIDATION, AgentRunOutcome, record_llm_call, run_agent
+from fitme.services import exercise_search
 from fitme.services.catalog import available_exercises
 from fitme.services.decisions import PromptMeta, prompt_columns
 from fitme.services.llm_runtime import LlmRuntime
@@ -1000,6 +1001,38 @@ async def existing_plans_summary(db: Database, user_id: int) -> list[dict[str, o
     return summary
 
 
+async def _candidate_pool(
+    db: Database, inputs: Inputs, guidance: str | None
+) -> tuple[UserContext, list[dict[str, object]]]:
+    """ADR 0007: the exercises `plan_generate` sees — a balanced pool retrieved from the
+    allowed set (`exercise_search.plan_candidates`), with their catalog facts. Only the
+    model's view narrows: the guards still judge against everything the user may do
+    (`inputs.ctx`), and a retrieval failure falls back to the whole allowed set."""
+    context = inputs.user_context
+    allowed = [
+        exercise
+        for exercise_id in context.allowed_exercise_ids
+        if (exercise := inputs.catalog.by_id(exercise_id)) is not None
+    ]
+    history_ids = sorted(set(inputs.snapshot.history_max) | set(inputs.snapshot.outcomes))
+    try:
+        runtime = await exercise_search.runtime_for(db, inputs.catalog)
+        pool = await exercise_search.plan_candidates(
+            db,
+            runtime,
+            allowed,
+            history_ids=history_ids,
+            preferences=context.preferences,
+            focus=context.focus,
+            request=guidance,
+        )
+    except Exception:  # retrieval must never block plan generation (ADR 0007 fallback)
+        _logger.exception("plan_generate: candidate retrieval failed; sending every allowed id")
+        pool = list(context.allowed_exercise_ids)
+    narrowed = context.model_copy(update={"allowed_exercise_ids": pool})
+    return narrowed, exercise_search.exercise_facts(inputs.catalog, pool, context.language)
+
+
 async def propose_new_plan(
     db: Database, llm: LlmRuntime, user_id: int, *, guidance: str | None = None
 ) -> PlanRoundResult:
@@ -1045,15 +1078,17 @@ async def propose_new_plan(
             lang=lang,
         )
 
+    pool_context, facts = await _candidate_pool(db, inputs, guidance)
     spec = model_for("plan_generate", llm.settings)
     feedback: list[str] | None = None
     last: _Attempt | None = None
     for _round in range(_GENERATE_ATTEMPTS):
         rendered = render_user_prompt(
-            inputs.user_context,
+            pool_context,
             request=guidance,
             existing_plans=existing or None,
             guard_feedback=feedback,
+            exercise_facts=facts,
         )
         outcome = await run_agent(
             llm.factory("plan_generate"),

@@ -56,8 +56,9 @@ from fitme.domain.assistant import (
     SetSchedule,
     SwapExercise,
 )
-from fitme.domain.catalog import Catalog
+from fitme.domain.catalog import Catalog, Exercise
 from fitme.domain.enums import (
+    VALID_LOADS_AREAS,
     DecisionKind,
     HealthHoldReason,
     RefusalCode,
@@ -71,7 +72,7 @@ from fitme.i18n import wording
 from fitme.llm.context import render_user_prompt, scrub
 from fitme.llm.models import model_for
 from fitme.llm.usage import record_llm_call, run_agent
-from fitme.services import conversations, log_edit, planning, training
+from fitme.services import conversations, exercise_search, log_edit, planning, training
 from fitme.services.decisions import PromptMeta, prompt_columns
 from fitme.services.llm_runtime import LlmRuntime
 from fitme.services.plan_edit import save_edit
@@ -499,18 +500,60 @@ class _Turn:
             ],
         }
 
+    def _allowed_exercises(self) -> list[Exercise]:
+        return [
+            exercise
+            for exercise_id in sorted(self._allowed)
+            if (exercise := self._catalog.by_id(exercise_id)) is not None
+        ]
+
     async def find_exercises(self, query: str) -> list[dict[str, object]]:
-        needle = query.strip().casefold()
-        found: list[dict[str, object]] = []
-        for exercise_id in sorted(self._allowed):
-            exercise = self._catalog.by_id(exercise_id)
-            names = {} if exercise is None else dict(exercise.names)
-            haystack = [exercise_id.replace("_", " "), exercise_id, *names.values()]
-            if not needle or any(needle in text.casefold() for text in haystack):
-                found.append({"exercise_id": exercise_id, "names": names})
-            if len(found) >= 20:
-                break
-        return found
+        """ADR 0007: hybrid search over the allowed set (exact, full-text, pattern words,
+        semantic when enabled). An empty query lists the allowed set."""
+        runtime = await exercise_search.runtime_for(self._db, self._catalog)
+        results = await exercise_search.search(
+            self._db,
+            runtime,
+            self._allowed_exercises(),
+            exercise_search.ExerciseQuery(text=query, limit=20),
+        )
+        return [
+            {"exercise_id": hit.exercise_id, "names": self._names(hit.exercise_id)}
+            for hit in results
+        ]
+
+    async def find_substitutes(
+        self, exercise_id: str, avoid_areas: list[str]
+    ) -> list[dict[str, object]] | dict[str, object]:
+        """ADR 0007: ranked allowed replacements; the swap itself still goes through
+        `edit_plan`/`edit_today` and the guards."""
+        unknown = sorted(set(avoid_areas) - VALID_LOADS_AREAS)
+        if unknown:
+            return _error(f"unknown areas {unknown}; use {sorted(VALID_LOADS_AREAS)}")
+        runtime = await exercise_search.runtime_for(self._db, self._catalog)
+        try:
+            results = exercise_search.find_substitutes(
+                runtime,
+                exercise_id,
+                self._allowed_exercises(),
+                avoid_areas=avoid_areas,
+                limit=8,
+            )
+        except exercise_search.UnknownExerciseError:
+            return _error(f"{exercise_id} is not a catalog exercise id")
+        return [
+            {
+                "exercise_id": hit.exercise_id,
+                "names": self._names(hit.exercise_id),
+                "close": hit.close,
+                "why": hit.match_reasons,
+            }
+            for hit in results
+        ]
+
+    def _names(self, exercise_id: str) -> dict[str, str]:
+        exercise = self._catalog.by_id(exercise_id)
+        return {} if exercise is None else dict(exercise.names)
 
     # --- planning session
 

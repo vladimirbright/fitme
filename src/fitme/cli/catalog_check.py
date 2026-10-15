@@ -20,8 +20,9 @@ from collections.abc import Callable
 from pydantic import ValidationError
 
 from fitme import i18n
-from fitme.catalog import load_catalog
+from fitme.catalog import CatalogLayoutError, load_catalog
 from fitme.config.content import content_version
+from fitme.db.search_index_file import SearchIndexFileError
 from fitme.domain.catalog import (
     HOME_SELECTABLE_EQUIPMENT,
     LOCATION_DEFAULT_EQUIPMENT,
@@ -44,6 +45,7 @@ from fitme.domain.enums import (
     WeightBucket,
 )
 from fitme.services.catalog import available_exercises
+from fitme.services.catalog_index import default_index_path, index_status
 
 # The movement patterns every location must offer at least one exercise for, with no
 # screening flags active (IMPLEMENTATION_PLAN M3: "every location has a workable full-body
@@ -187,7 +189,7 @@ def catalog_check(*, load: Callable[[], Catalog] = load_catalog) -> int:
     """
     try:
         catalog = load()
-    except (ValidationError, tomllib.TOMLDecodeError, OSError) as exc:
+    except (ValidationError, CatalogLayoutError, tomllib.TOMLDecodeError, OSError) as exc:
         print(f"fitme catalog check: the exercise catalog is invalid: {exc}", file=sys.stderr)
         return 1
 
@@ -207,4 +209,13 @@ def catalog_check(*, load: Callable[[], Catalog] = load_catalog) -> int:
     print(f"catalog OK: {len(catalog.exercise)} exercise(s)")
     print(f"locales OK: {', '.join(i18n.supported_languages())}")
     print(f"content_version: {content_version()}")
+    # ADR 0007: the derived search index is reported, never a failure — search works without
+    # it, and re-embedding needs a provider key not every checkout has.
+    try:
+        status = index_status(catalog, default_index_path())
+    except SearchIndexFileError as exc:
+        print(f"search index: unreadable ({exc}); run `make catalog-index`")
+    else:
+        for line in status.lines():
+            print(line)
     return 0

@@ -40,6 +40,7 @@ from fitme.llm.context import (
 )
 from fitme.llm.usage import AgentRunRecord, PriceTable, run_agent
 from fitme.services.catalog import available_exercises
+from fitme.services.exercise_search import exercise_facts
 
 # Agents this eval tool can actually exercise against a bare profile fixture (see module
 # docstring). The other two names in `AGENT_FACTORIES` are still valid `--agent` values; they
@@ -153,7 +154,10 @@ async def run_eval(
         plan_output: Plan | None = None
 
         if "plan_generate" in agents:
-            rendered = render_user_prompt(context)
+            # The eval has no database for the retrieval pool (ADR 0007): it sends the whole
+            # allowed set, with the same facts the service sends for its pool.
+            facts = exercise_facts(catalog, context.allowed_exercise_ids, context.language)
+            rendered = render_user_prompt(context, exercise_facts=facts)
             outcome = await run_agent(
                 AGENT_FACTORIES["plan_generate"],
                 model_for_agent("plan_generate"),

@@ -67,7 +67,9 @@ async def _all_application_tables(db: Database) -> set[str]:
         db.read() as conn,
         conn.execute(
             "SELECT name FROM sqlite_master WHERE type = 'table' "
-            "AND name NOT LIKE 'sqlite_%' AND name != 'schema_migrations'"
+            "AND name NOT LIKE 'sqlite_%' AND name != 'schema_migrations' "
+            # ADR 0007: derived catalog search indexes, no user data.
+            "AND name NOT LIKE 'catalog\\_%' ESCAPE '\\'"
         ) as cursor,
     ):
         rows = await cursor.fetchall()
