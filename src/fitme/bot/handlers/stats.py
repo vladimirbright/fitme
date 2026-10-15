@@ -4,7 +4,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from html import escape
+
 from aiogram import Router
+from aiogram.enums import ParseMode
 from aiogram.filters import Command
 from aiogram.types import Message
 
@@ -79,45 +83,80 @@ async def cmd_stats(message: Message, db: Database, settings: Settings, user_id:
     await message.answer("\n".join(lines))
 
 
+def _short_model(model: str) -> str:
+    """ "anthropic:claude-sonnet-5" → "sonnet-5": a table column, as narrow as it can be."""
+    name = model.partition(":")[2] or model
+    return name.removeprefix("claude-")
+
+
+def _cost_cell(usage: stats_service.LlmUsage | None) -> str:
+    if usage is None or usage.calls == 0:
+        return "–"
+    if usage.cost_usd is None:
+        return "?"
+    if 0 < usage.cost_usd < 0.005:
+        return "<0.01"
+    return f"{usage.cost_usd:.2f}"
+
+
+def _calls_cell(usage: stats_service.LlmUsage | None) -> str:
+    return "–" if usage is None or usage.calls == 0 else str(usage.calls)
+
+
+def usage_table(
+    rows: list[tuple[str, stats_service.LlmWindowStats]],
+    models: list[str],
+    cell: Callable[[stats_service.LlmUsage | None], str],
+    total_label: str,
+) -> str:
+    """A monospace table: one row per window, one column per model, the total last. Columns
+    are right-aligned to their widest cell."""
+    header = ["", *(_short_model(model) for model in models), total_label]
+    body: list[list[str]] = []
+    for label, window in rows:
+        by_model = {item.model: item.usage for item in window.by_model}
+        body.append([label, *(cell(by_model.get(model)) for model in models), cell(window.total)])
+    widths = [max(len(line[i]) for line in [header, *body]) for i in range(len(header))]
+
+    def render(line: list[str]) -> str:
+        first = line[0].ljust(widths[0])
+        rest = (value.rjust(width) for value, width in zip(line[1:], widths[1:], strict=True))
+        return "  ".join([first, *rest]).rstrip()
+
+    return "\n".join(render(line) for line in [header, *body])
+
+
 async def cmd_system(message: Message, db: Database, settings: Settings, user_id: int) -> None:
     snapshot = await profile_service.get_snapshot(db, user_id)
     lang = snapshot.language
     data = await stats_service.system_stats(db, settings, user_id)
 
-    def cost_text(cost: float | None) -> str:
-        return (
-            t("system.cost_known", lang, cost=f"{cost:.4f}")
-            if cost is not None
-            else t("system.cost_unknown", lang)
-        )
-
-    lines = [
-        t("system.title", lang),
-        "",
-        t("system.db_size_line", lang, size=_format_db_size(data.db_size_bytes)),
-        t("system.sessions_line", lang, count=data.sessions_logged),
-        t("system.content_version_line", lang, version=data.content_version),
-        "",
-        t("system.llm_title", lang),
+    rows = [
+        (t("system.row_today", lang), data.llm_today),
+        (t("system.row_week", lang), data.llm_week),
+        (t("system.row_month", lang), data.llm_month),
+        (t("system.row_all", lang), data.llm_all),
     ]
-    for window_key, window in (
-        ("system.window_today", data.llm_today),
-        ("system.window_7d", data.llm_7d),
-        ("system.window_30d", data.llm_30d),
-        ("system.window_all", data.llm_all),
-    ):
-        lines.append(
-            t(
-                "system.llm_line",
-                lang,
-                window=t(window_key, lang),
-                calls=window.calls,
-                input_tokens=window.input_tokens,
-                output_tokens=window.output_tokens,
-                cost=cost_text(window.cost_usd),
-            )
-        )
-    await message.answer("\n".join(lines))
+    # Every model ever called, the most expensive first (`by_model`'s order, all time).
+    models = [item.model for item in data.llm_all.by_model]
+    total = t("system.total_column", lang)
+    lines = [
+        escape(t("system.title", lang)),
+        "",
+        escape(t("system.db_size_line", lang, size=_format_db_size(data.db_size_bytes))),
+        escape(t("system.sessions_line", lang, count=data.sessions_logged)),
+        escape(t("system.content_version_line", lang, version=data.content_version)),
+        "",
+        f"<b>{escape(t('system.cost_title', lang))}</b>",
+        f"<pre>{escape(usage_table(rows, models, _cost_cell, total))}</pre>",
+        f"<b>{escape(t('system.calls_title', lang))}</b>",
+        f"<pre>{escape(usage_table(rows, models, _calls_cell, total))}</pre>",
+    ]
+    if any(item.usage.cost_usd is None for item in data.llm_all.by_model):
+        lines.append(escape(t("system.unpriced_note", lang)))
+    if data.llm_all.total.estimated:
+        lines.append(escape(t("system.estimate_note", lang)))
+    await message.answer("\n".join(lines), parse_mode=ParseMode.HTML)
 
 
 def build_router() -> Router:

@@ -517,7 +517,7 @@ screening answer re-runs the screening gate.
 | `/plan` | Create or revise a plan (§6.4). With existing plans: list them with actions (view, set default, rename, revise) and **New plan**. |
 | `/train`, `/t` | Start today's workout (§6.5). |
 | `/stats` | Short stats (§6.7). |
-| `/system` | Instance stats: DB size, sessions logged, LLM calls and tokens (today / 7 days / 30 days / all time), estimated cost if a price table is set. |
+| `/system` | Instance stats: DB size, sessions logged, and two monospace tables of LLM cost and calls: rows today / this week / this month (the user's timezone) / all time, one column per model, the total last. A call stored without a cost is estimated from the current price table. |
 | `/export` | Sends a JSON file with all of the user's data (same code as `fitme export`). |
 | `/delete` | Two-step confirmation: a button, then typing `DELETE`. Removes everything (§8.3). |
 | `/cancel` | Leaves the current flow. An in-progress workout is kept and can be resumed, unless the user picks **Abort workout**. |
