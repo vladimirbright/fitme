@@ -64,3 +64,14 @@ def test_a_calibration_block_still_offers_the_link() -> None:
     rows = block_markup(_view(block), catalog=load_catalog(), lang="en").inline_keyboard
     assert rows[0][0].url is not None
     assert rows[1][0].text == t("workout.enter_results_button", "en")
+
+
+def test_the_catalog_search_term_replaces_a_descriptive_name() -> None:
+    block = Block(kind="single", items=[_item("bodyweight_table_row", Load(kind="bodyweight"))])
+    rows = block_markup(_view(block), catalog=load_catalog(), lang="ru").inline_keyboard
+    assert _query(rows[0][0].url) == "австралийские подтягивания под столом"
+
+
+def test_every_search_term_is_non_blank() -> None:
+    for exercise in load_catalog().exercise:
+        assert all(term.strip() for term in exercise.search.values()), exercise.id

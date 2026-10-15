@@ -151,7 +151,7 @@ bodyweight_reverse_lunge | Bodyweight reverse lunge / Обратные выпа�
 bodyweight_single_leg_deadlift | Bodyweight single-leg deadlift / Становая тяга на одной ноге с собственным весом | no kg
 bodyweight_split_squat | Bodyweight split squat / Приседания в разножке | no kg
 bodyweight_squat | Bodyweight squat / Приседания с собственным весом | no kg
-bodyweight_table_row | Bodyweight table row / Тяга к столу с собственным весом | no kg
+bodyweight_table_row | Table inverted row / Австралийские подтягивания под столом | no kg
 brisk_walk | Brisk walk / Ходьба в бодром темпе | no kg
 cable_biceps_curl | Cable biceps curl / Сгибание рук на нижнем блоке | kg total
 cable_chest_fly | Cable chest fly / Сведение рук в кроссовере | kg total
@@ -196,7 +196,7 @@ kettlebell_one_arm_row | One-arm kettlebell row / Тяга гири одной �
 kettlebell_overhead_press | Kettlebell overhead press / Жим гири над головой | kg one
 kettlebell_russian_twist | Kettlebell Russian twist / Русские скручивания с гирей | kg one
 kettlebell_swing | Kettlebell swing / Мах гирей | kg one
-low_bar_inverted_row | Low bar inverted row / Тяга в упоре на низкой перекладине | no kg
+low_bar_inverted_row | Low bar inverted row / Австралийские подтягивания на низкой перекладине | no kg
 machine_assisted_pull_up | Assisted pull-up machine / Подтягивание в гравитроне | kg total
 machine_calf_raise | Machine calf raise / Подъём на носки в тренажёре | kg total
 machine_chest_press | Machine chest press / Жим от груди в тренажёре | kg total

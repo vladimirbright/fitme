@@ -23,6 +23,8 @@
 #   for. Chosen conservatively: any meaningful spinal loading is contraindicated by
 #   `lower_back_injury_current` and `hernia`; overhead/pressing work by `shoulder_injury_current`
 #   and `elbow_wrist_injury_current`; deep knee flexion under load by `knee_injury_current`.
+# - `search` (optional): the term people actually search for, per language, when `names` is
+#   descriptive rather than the common name. Only used for the workout's YouTube search link.
 # - `instructions`: short, neutral execution cues (AGENTS.md §3) — no medical, therapeutic or
 #   diagnostic language.
 
@@ -156,6 +158,7 @@ instructions = { en = "Hold the bar at hip height, feet hip-width. Push your hip
 [[exercise]]
 id = "barbell_good_morning"
 names = { en = "Barbell good morning", ru = "Наклоны со штангой на спине" }
+search = { en = "barbell good morning", ru = "гуд морнинг со штангой" }
 kind = "compound"
 pattern = "hinge"
 equipment = ["barbell", "rack"]
@@ -338,7 +341,8 @@ instructions = { en = "Anchor the band in front of you at chest height, or loop 
 
 [[exercise]]
 id = "bodyweight_table_row"
-names = { en = "Bodyweight table row", ru = "Тяга к столу с собственным весом" }
+names = { en = "Table inverted row", ru = "Австралийские подтягивания под столом" }
+search = { en = "inverted row under a table", ru = "австралийские подтягивания под столом" }
 kind = "bodyweight"
 pattern = "horizontal_pull"
 equipment = []
@@ -396,6 +400,7 @@ load_step_kg = 2.0
 [[exercise]]
 id = "pike_pushup"
 names = { en = "Pike push-up", ru = "Отжимания в упоре согнувшись" }
+search = { en = "pike push-up", ru = "пайк отжимания" }
 kind = "bodyweight"
 pattern = "vertical_push"
 equipment = []
@@ -442,6 +447,7 @@ instructions = { en = "Loop a band around the bar and place one knee or foot in 
 [[exercise]]
 id = "doorframe_row"
 names = { en = "Doorframe row", ru = "Тяга у дверного проёма" }
+search = { en = "doorframe row exercise", ru = "тяга в дверном проёме упражнение" }
 kind = "bodyweight"
 pattern = "horizontal_pull"
 equipment = []
@@ -555,6 +561,7 @@ instructions = { en = "Kneel on one knee with the other foot planted in front. S
 [[exercise]]
 id = "mobility_ankle_dorsiflexion"
 names = { en = "Ankle dorsiflexion drill", ru = "Упражнение на подвижность голеностопа" }
+search = { en = "ankle dorsiflexion mobility drill", ru = "мобильность голеностопа упражнение" }
 kind = "mobility"
 pattern = "mobility"
 equipment = []
@@ -569,6 +576,7 @@ instructions = { en = "Facing a wall in a half-kneeling position, drive your fro
 [[exercise]]
 id = "mobility_shoulder_band_dislocate"
 names = { en = "Band shoulder dislocate", ru = "Растяжка плеч с эспандером" }
+search = { en = "band shoulder dislocates", ru = "выкруты плеч с резинкой" }
 kind = "mobility"
 pattern = "mobility"
 equipment = ["resistance_bands"]
@@ -739,7 +747,8 @@ instructions = { en = "Hold the band with both hands at chest height, arms exten
 
 [[exercise]]
 id = "low_bar_inverted_row"
-names = { en = "Low bar inverted row", ru = "Тяга в упоре на низкой перекладине" }
+names = { en = "Low bar inverted row", ru = "Австралийские подтягивания на низкой перекладине" }
+search = { en = "inverted row", ru = "австралийские подтягивания" }
 kind = "bodyweight"
 pattern = "horizontal_pull"
 equipment = ["pull_up_bar"]
@@ -874,6 +883,7 @@ load_step_kg = 1.0
 [[exercise]]
 id = "cable_face_pull"
 names = { en = "Cable face pull", ru = "Тяга каната к лицу" }
+search = { en = "cable face pull", ru = "фейс пулл на блоке" }
 kind = "isolation"
 pattern = "accessory"
 equipment = ["cable"]
@@ -934,6 +944,7 @@ load_step_kg = 1.0
 [[exercise]]
 id = "cable_wood_chop"
 names = { en = "Cable wood chop", ru = "Диагональная тяга блока" }
+search = { en = "cable wood chop", ru = "дровосек на блоке" }
 kind = "compound"
 pattern = "core"
 equipment = ["cable"]
@@ -1029,6 +1040,7 @@ load_step_kg = 1.0
 [[exercise]]
 id = "dumbbell_suitcase_carry"
 names = { en = "Dumbbell suitcase carry", ru = "Ходьба с гантелью в одной руке" }
+search = { en = "dumbbell suitcase carry", ru = "suitcase carry с гантелью" }
 kind = "compound"
 pattern = "core"
 equipment = ["dumbbells"]
@@ -1059,6 +1071,7 @@ load_step_kg = 2.0
 [[exercise]]
 id = "kettlebell_farmer_carry"
 names = { en = "Kettlebell farmer carry", ru = "Ходьба с гирями в руках" }
+search = { en = "kettlebell farmer carry", ru = "прогулка фермера с гирями" }
 kind = "compound"
 pattern = "core"
 equipment = ["kettlebell"]
@@ -1089,6 +1102,7 @@ load_step_kg = 1.0
 [[exercise]]
 id = "band_good_morning"
 names = { en = "Band good morning", ru = "Наклоны с эспандером" }
+search = { en = "band good morning", ru = "гуд морнинг с резинкой" }
 kind = "compound"
 pattern = "hinge"
 equipment = ["resistance_bands"]
@@ -1194,6 +1208,7 @@ load_step_kg = 1.0
 [[exercise]]
 id = "bodyweight_hip_hinge"
 names = { en = "Bodyweight hip hinge", ru = "Наклоны с отведением таза" }
+search = { en = "bodyweight hip hinge drill", ru = "хип хинж упражнение" }
 kind = "bodyweight"
 pattern = "hinge"
 equipment = []
@@ -1284,6 +1299,7 @@ load_step_kg = 1.0
 [[exercise]]
 id = "bird_dog"
 names = { en = "Bird dog", ru = "Вытягивание разноимённых руки и ноги" }
+search = { en = "bird dog exercise", ru = "упражнение птица-собака" }
 kind = "bodyweight"
 pattern = "core"
 equipment = []
@@ -1314,6 +1330,7 @@ load_step_kg = 1.0
 [[exercise]]
 id = "open_book_rotation"
 names = { en = "Side-lying torso rotation", ru = "Поворот корпуса лёжа на боку" }
+search = { en = "open book stretch", ru = "упражнение открытая книга" }
 kind = "mobility"
 pattern = "mobility"
 equipment = []

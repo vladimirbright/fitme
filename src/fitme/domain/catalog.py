@@ -93,6 +93,10 @@ class Exercise(BaseModel):
     start: Load  # conservative calibration start (A§4.4): an empty bar, the lightest
     # dumbbell/machine stack, or bodyweight.
     instructions: dict[str, str]  # lang -> vetted instructions text, shown during training
+    # lang -> the term people actually search for, when the display name is descriptive
+    # rather than the common name (e.g. "австралийские подтягивания"). Used only for the
+    # workout block's YouTube search link; the name is used when a language has none.
+    search: dict[str, str] = Field(default_factory=dict)
     # Rounding step for the load engine (A§7.3). Defaults from `equipment` when omitted: see
     # `_default_load_step_kg` below.
     load_step_kg: float | None = Field(default=None, gt=0)

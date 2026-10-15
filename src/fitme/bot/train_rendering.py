@@ -248,14 +248,17 @@ _YOUTUBE_SEARCH = "https://www.youtube.com/results?search_query="
 def youtube_search_buttons(
     block: Block, *, catalog: Catalog, lang: str
 ) -> list[InlineKeyboardButton]:
-    """One "search on YouTube" link per exercise of the block: the catalog name only (no
-    user data), opened by the user's own device on tap — the server calls nothing. An
-    https youtube.com link is what the YouTube app claims, so it opens there when installed
-    (the Bot API allows no app-scheme URLs)."""
+    """One "search on YouTube" link per exercise of the block: the catalog's `search` term,
+    or the name plus "technique", in the user's language (no user data), opened by the user's
+    own device on tap — the server calls nothing. An https youtube.com link is what the
+    YouTube app claims, so it opens there when installed (the Bot API allows no app-scheme
+    URLs)."""
     buttons: list[InlineKeyboardButton] = []
     for item in block.items:
-        name = exercise_name(catalog.by_id(item.exercise_id), item.exercise_id, lang)
-        query = t("workout.youtube_query", lang, name=name)
+        exercise = catalog.by_id(item.exercise_id)
+        name = exercise_name(exercise, item.exercise_id, lang)
+        search = None if exercise is None else exercise.search.get(lang)
+        query = search or t("workout.youtube_query", lang, name=name)
         text = (
             t("workout.youtube_button", lang)
             if len(block.items) == 1

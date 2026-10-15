@@ -149,6 +149,8 @@ def _catalog_text_fields(catalog: Catalog) -> list[tuple[str, str]]:
             fields.append((f"{exercise.id}.names.{lang}", text))
         for lang, text in exercise.instructions.items():
             fields.append((f"{exercise.id}.instructions.{lang}", text))
+        for lang, text in exercise.search.items():
+            fields.append((f"{exercise.id}.search.{lang}", text))
     return fields
 
 
