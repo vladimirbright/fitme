@@ -2,6 +2,8 @@ id = "cable_upright_row"
 names = { en = "Cable upright row", ru = "Тяга к груди стоя на нижнем блоке" }
 kind = "compound"
 pattern = "vertical_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

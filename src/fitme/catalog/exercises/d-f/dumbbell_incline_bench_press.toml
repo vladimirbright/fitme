@@ -2,6 +2,8 @@ id = "dumbbell_incline_bench_press"
 names = { en = "Incline dumbbell press", ru = "Жим гантелей на наклонной скамье" }
 kind = "compound"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["dumbbells", "bench"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

@@ -2,6 +2,8 @@ id = "dumbbell_decline_fly"
 names = { en = "Decline dumbbell fly", ru = "Разводка гантелей на скамье с наклоном вниз" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells", "bench"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

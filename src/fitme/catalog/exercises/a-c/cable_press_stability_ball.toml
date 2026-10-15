@@ -2,6 +2,8 @@ id = "cable_press_stability_ball"
 names = { en = "Cable press on a stability ball", ru = "Жим на блоках на фитболе" }
 kind = "compound"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["cable", "stability_ball"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

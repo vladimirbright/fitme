@@ -2,6 +2,8 @@ id = "straight_bar_dip"
 names = { en = "Straight bar dip", ru = "Отжимания на прямой перекладине" }
 kind = "bodyweight"
 pattern = "vertical_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["pull_up_bar"]
 load_unit = "total"
 level = "advanced"

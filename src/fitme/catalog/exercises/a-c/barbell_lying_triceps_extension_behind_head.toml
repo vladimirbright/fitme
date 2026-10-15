@@ -2,6 +2,8 @@ id = "barbell_lying_triceps_extension_behind_head"
 names = { en = "Barbell lying triceps extension behind the head", ru = "Французский жим штанги лёжа за голову" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["barbell", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

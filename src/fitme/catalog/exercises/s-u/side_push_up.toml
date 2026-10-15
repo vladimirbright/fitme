@@ -3,6 +3,8 @@ names = { en = "Side push-up", ru = "Боковые отжимания на од
 kind = "bodyweight"
 level = "advanced"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

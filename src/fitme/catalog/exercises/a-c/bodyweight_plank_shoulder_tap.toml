@@ -2,6 +2,8 @@ id = "bodyweight_plank_shoulder_tap"
 names = { en = "Plank shoulder tap", ru = "Касание плеча в планке" }
 kind = "bodyweight"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

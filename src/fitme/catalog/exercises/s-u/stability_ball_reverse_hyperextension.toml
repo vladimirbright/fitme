@@ -2,6 +2,8 @@ id = "stability_ball_reverse_hyperextension"
 names = { en = "Stability ball reverse hyperextension", ru = "Обратная гиперэкстензия на фитболе" }
 kind = "bodyweight"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["stability_ball"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

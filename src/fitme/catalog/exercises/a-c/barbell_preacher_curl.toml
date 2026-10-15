@@ -2,6 +2,8 @@ id = "barbell_preacher_curl"
 names = { en = "Barbell preacher curl", ru = "Сгибания рук со штангой на скамье Скотта" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["barbell", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

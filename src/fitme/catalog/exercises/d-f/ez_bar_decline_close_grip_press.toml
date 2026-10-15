@@ -2,6 +2,8 @@ id = "ez_bar_decline_close_grip_press"
 names = { en = "EZ bar decline close-grip triceps press", ru = "Жим EZ-грифа ко лбу узким хватом на скамье с обратным наклоном" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 level = "advanced"
 equipment = ["ez_bar", "bench"]
 load_unit = "total"

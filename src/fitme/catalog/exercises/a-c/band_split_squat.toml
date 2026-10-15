@@ -2,6 +2,8 @@ id = "band_split_squat"
 names = { en = "Band split squat", ru = "Приседания в разножке с эспандером" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["resistance_bands"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

@@ -2,6 +2,8 @@ id = "smith_machine_good_morning"
 names = { en = "Smith machine good morning", ru = "Наклоны со штангой на спине в тренажёре Смита" }
 kind = "compound"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["smith_machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

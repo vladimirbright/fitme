@@ -2,6 +2,8 @@ id = "cable_standing_external_rotation"
 names = { en = "Cable standing shoulder external rotation", ru = "Наружная ротация плеча на блоке стоя" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["muscular_endurance"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

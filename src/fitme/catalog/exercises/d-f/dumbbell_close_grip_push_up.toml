@@ -2,6 +2,8 @@ id = "dumbbell_close_grip_push_up"
 names = { en = "Close-grip push-up on dumbbells", ru = "Отжимания узким хватом на гантелях" }
 kind = "bodyweight"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["dumbbells"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

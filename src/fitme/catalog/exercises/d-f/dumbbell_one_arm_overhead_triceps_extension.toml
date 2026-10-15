@@ -2,6 +2,8 @@ id = "dumbbell_one_arm_overhead_triceps_extension"
 names = { en = "Dumbbell one-arm overhead triceps extension", ru = "Разгибание руки с гантелью из-за головы одной рукой" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

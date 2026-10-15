@@ -2,6 +2,8 @@ id = "ez_bar_reverse_grip_bent_over_row"
 names = { en = "EZ-bar reverse-grip bent-over row", ru = "Тяга EZ-грифа в наклоне обратным хватом" }
 kind = "compound"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["ez_bar"]
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["lower_back", "shoulder", "elbow_wrist"]

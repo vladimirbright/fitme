@@ -3,6 +3,8 @@ names = { en = "Kettlebell bottoms-up hang clean", ru = "Взятие гири �
 kind = "compound"
 level = "advanced"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["power", "strength"]
 equipment = ["kettlebell"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

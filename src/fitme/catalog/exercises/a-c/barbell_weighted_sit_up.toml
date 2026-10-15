@@ -2,6 +2,8 @@ id = "barbell_weighted_sit_up"
 names = { en = "Barbell sit-up", ru = "Подъём корпуса со штангой" }
 kind = "isolation"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability", "hypertrophy"]
 equipment = ["barbell"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

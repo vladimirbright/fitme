@@ -2,6 +2,8 @@ id = "machine_close_stance_hack_squat"
 names = { en = "Close-stance machine hack squat", ru = "Гакк-приседания в тренажёре с узкой постановкой" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

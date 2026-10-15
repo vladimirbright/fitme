@@ -2,6 +2,8 @@ id = "dumbbell_standing_alternating_press"
 names = { en = "Standing alternating dumbbell press", ru = "Попеременный жим гантелей стоя" }
 kind = "compound"
 pattern = "vertical_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["dumbbells"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

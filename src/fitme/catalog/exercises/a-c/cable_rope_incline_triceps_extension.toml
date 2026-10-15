@@ -2,6 +2,8 @@ id = "cable_rope_incline_triceps_extension"
 names = { en = "Cable rope incline triceps extension", ru = "Разгибание рук с канатом на наклонной скамье" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

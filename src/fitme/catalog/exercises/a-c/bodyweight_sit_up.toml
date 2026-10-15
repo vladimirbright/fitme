@@ -2,6 +2,8 @@ id = "bodyweight_sit_up"
 names = { en = "Sit-up", ru = "Подъём корпуса из положения лёжа" }
 kind = "bodyweight"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability", "hypertrophy"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

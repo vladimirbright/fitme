@@ -2,6 +2,8 @@ id = "cable_stirrup_rear_delt_row"
 names = { en = "Cable stirrup rear delt row", ru = "Тяга рукояти на блоке в наклоне на заднюю дельту" }
 kind = "compound"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

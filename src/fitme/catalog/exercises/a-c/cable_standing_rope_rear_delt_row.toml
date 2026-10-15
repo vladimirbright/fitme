@@ -2,6 +2,8 @@ id = "cable_standing_rope_rear_delt_row"
 names = { en = "Cable standing rope rear delt row", ru = "Тяга каната на блоке стоя на заднюю дельту" }
 kind = "compound"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

@@ -2,6 +2,8 @@ id = "bodyweight_glute_bridge_hold"
 names = { en = "Glute bridge hold", ru = "Мостик с удержанием" }
 kind = "bodyweight"
 pattern = "hinge"
+measures = ["time"]
+qualities = ["core_stability", "hypertrophy"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

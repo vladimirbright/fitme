@@ -2,6 +2,8 @@ id = "band_bench_press"
 names = { en = "Band bench press", ru = "Жим лёжа с эспандером" }
 kind = "compound"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["resistance_bands", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

@@ -2,6 +2,8 @@ id = "single_leg_sit_to_stand"
 names = { en = "Single-leg sit-to-stand", ru = "Вставание со стула на одной ноге" }
 kind = "bodyweight"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "muscular_endurance"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

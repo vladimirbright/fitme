@@ -2,6 +2,8 @@ id = "mobility_band_peroneal_stretch"
 names = { en = "Band peroneal stretch", ru = "Растяжка малоберцовых мышц с лентой" }
 kind = "mobility"
 pattern = "mobility"
+measures = ["time"]
+qualities = ["mobility"]
 equipment = ["resistance_bands"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

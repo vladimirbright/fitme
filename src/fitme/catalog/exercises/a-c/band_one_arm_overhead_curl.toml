@@ -2,6 +2,8 @@ id = "band_one_arm_overhead_curl"
 names = { en = "Band one-arm overhead curl", ru = "Сгибание руки с лентой над головой" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["resistance_bands"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

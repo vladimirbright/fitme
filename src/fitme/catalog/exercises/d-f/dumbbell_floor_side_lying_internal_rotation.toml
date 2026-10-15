@@ -2,6 +2,8 @@ id = "dumbbell_floor_side_lying_internal_rotation"
 names = { en = "Dumbbell floor side-lying internal rotation", ru = "Внутренняя ротация плеча с гантелью лёжа на боку на полу" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["muscular_endurance"]
 equipment = ["dumbbells"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

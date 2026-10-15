@@ -2,6 +2,8 @@ id = "bodyweight_reverse_plank_leg_lift"
 names = { en = "Reverse plank leg lift", ru = "Обратная планка с подъёмом ноги" }
 kind = "bodyweight"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

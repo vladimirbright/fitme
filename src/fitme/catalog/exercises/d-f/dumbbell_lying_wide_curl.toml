@@ -2,6 +2,8 @@ id = "dumbbell_lying_wide_curl"
 names = { en = "Lying wide-grip dumbbell curl", ru = "Сгибания с гантелями лёжа на скамье широким хватом" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells", "bench"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

@@ -316,3 +316,29 @@ class ExercisePattern(StrEnum):
     MOBILITY = "mobility"
     CONDITIONING = "conditioning"
     ACCESSORY = "accessory"
+
+
+class Measure(StrEnum):
+    """ADR 0009: how one set of an exercise is prescribed and logged. A catalog exercise lists
+    the measures it accepts (`Exercise.measures`, first = default); a prescription uses one."""
+
+    REPS = "reps"  # counted repetitions: reps_min..reps_max
+    TIME = "time"  # a hold, an interval or continuous cardio: seconds
+    DISTANCE = "distance"  # a carry, a sled push, a run: meters
+
+
+class Quality(StrEnum):
+    """ADR 0009: a physical quality an exercise *directly* trains (catalog
+    `Exercise.qualities`), and what a workout declares it is for (`Workout.qualities`). Kept
+    small on purpose: it drives the planner's candidate pool and the goal/exercise check, not
+    a sports-science model."""
+
+    STRENGTH = "strength"
+    HYPERTROPHY = "hypertrophy"
+    POWER = "power"
+    ROTATIONAL_POWER = "rotational_power"
+    CORE_STABILITY = "core_stability"
+    AGILITY = "agility"
+    MUSCULAR_ENDURANCE = "muscular_endurance"
+    CONDITIONING = "conditioning"
+    MOBILITY = "mobility"

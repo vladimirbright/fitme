@@ -2,6 +2,8 @@ id = "bodyweight_side_lying_hip_adduction"
 names = { en = "Side-lying hip adduction", ru = "Приведение ноги лёжа на боку" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

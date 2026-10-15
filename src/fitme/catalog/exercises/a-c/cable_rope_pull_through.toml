@@ -2,6 +2,8 @@ id = "cable_rope_pull_through"
 names = { en = "Cable pull-through with rope", ru = "Протяжка на блоке с канатной рукоятью" }
 kind = "compound"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

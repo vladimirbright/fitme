@@ -2,6 +2,8 @@ id = "machine_rower"
 names = { en = "Rowing machine", ru = "Гребной тренажёр" }
 kind = "cardio"
 pattern = "conditioning"
+measures = ["time", "distance"]
+qualities = ["conditioning"]
 equipment = ["machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

@@ -2,6 +2,8 @@ id = "arm_extended_push_up"
 names = { en = "Push-up with one arm extended", ru = "Отжимания с отведённой рукой" }
 kind = "bodyweight"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "core_stability"]
 equipment = []
 level = "advanced"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

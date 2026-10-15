@@ -2,6 +2,8 @@ id = "cable_rope_seated_row"
 names = { en = "Cable rope seated row", ru = "Тяга каната сидя" }
 kind = "compound"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

@@ -3,6 +3,8 @@ names = { en = "Incline plyometric push-up", ru = "Плиометрически�
 search = { en = "plyometric incline push-up", ru = "плиометрические отжимания от скамьи" }
 kind = "bodyweight"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["power"]
 equipment = ["bench"]
 level = "advanced"
 load_unit = "total"

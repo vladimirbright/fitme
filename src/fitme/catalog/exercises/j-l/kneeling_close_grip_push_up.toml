@@ -2,6 +2,8 @@ id = "kneeling_close_grip_push_up"
 names = { en = "Kneeling close-grip push-up", ru = "Отжимания с колен узким хватом" }
 kind = "bodyweight"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["muscular_endurance", "hypertrophy"]
 equipment = []
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["shoulder", "elbow_wrist"]

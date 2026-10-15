@@ -2,6 +2,8 @@ id = "bodyweight_jumping_jacks"
 names = { en = "Jumping jacks", ru = "Прыжки «звёздочка»" }
 kind = "cardio"
 pattern = "conditioning"
+measures = ["reps", "time"]
+qualities = ["conditioning"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

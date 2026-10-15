@@ -3,6 +3,8 @@ names = { en = "Bird-dog push-up", ru = "Отжимания с подъёмом 
 search = { en = "bird dog push up", ru = "отжимания с подъёмом руки и ноги" }
 kind = "bodyweight"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "core_stability"]
 equipment = []
 level = "advanced"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

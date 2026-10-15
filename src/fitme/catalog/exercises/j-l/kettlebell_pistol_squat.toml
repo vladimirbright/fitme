@@ -2,6 +2,8 @@ id = "kettlebell_pistol_squat"
 names = { en = "Kettlebell pistol squat", ru = "Пистолет с гирей" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength"]
 level = "advanced"
 equipment = ["kettlebell"]
 load_unit = "single_implement"

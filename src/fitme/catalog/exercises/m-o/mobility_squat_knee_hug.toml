@@ -2,6 +2,8 @@ id = "mobility_squat_knee_hug"
 names = { en = "Squat knee hug", ru = "Глубокий присед с обхватом коленей" }
 kind = "mobility"
 pattern = "mobility"
+measures = ["reps"]
+qualities = ["mobility"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

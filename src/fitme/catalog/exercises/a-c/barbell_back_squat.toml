@@ -2,6 +2,8 @@ id = "barbell_back_squat"
 names = { en = "Barbell back squat", ru = "Приседания со штангой на спине" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["barbell", "rack"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

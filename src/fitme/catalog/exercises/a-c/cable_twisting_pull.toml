@@ -2,6 +2,8 @@ id = "cable_twisting_pull"
 names = { en = "Cable twisting one-arm pull", ru = "Тяга блока одной рукой с поворотом корпуса" }
 kind = "compound"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["strength", "core_stability"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

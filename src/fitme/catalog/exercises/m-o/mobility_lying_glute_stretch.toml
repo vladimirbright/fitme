@@ -2,6 +2,8 @@ id = "mobility_lying_glute_stretch"
 names = { en = "Lying figure-four glute stretch", ru = "Растяжка ягодичных лёжа «четвёрка»" }
 kind = "mobility"
 pattern = "mobility"
+measures = ["time"]
+qualities = ["mobility"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

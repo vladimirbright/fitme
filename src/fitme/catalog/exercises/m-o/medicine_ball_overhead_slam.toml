@@ -4,6 +4,8 @@ search = { en = "medicine ball slam", ru = "бросок медбола об п�
 kind = "cardio"
 level = "advanced"
 pattern = "conditioning"
+measures = ["reps"]
+qualities = ["power", "conditioning"]
 equipment = ["medicine_ball"]
 load_unit = "total"
 # conditioning pattern, but a real medicine ball weight is chosen

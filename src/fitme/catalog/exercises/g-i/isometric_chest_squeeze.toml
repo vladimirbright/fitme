@@ -2,6 +2,8 @@ id = "isometric_chest_squeeze"
 names = { en = "Isometric chest squeeze", ru = "Изометрическое сведение ладоней перед грудью" }
 kind = "bodyweight"
 pattern = "accessory"
+measures = ["time"]
+qualities = ["hypertrophy"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

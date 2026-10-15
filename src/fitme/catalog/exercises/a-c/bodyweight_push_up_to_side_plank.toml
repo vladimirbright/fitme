@@ -2,6 +2,8 @@ id = "bodyweight_push_up_to_side_plank"
 names = { en = "Push-up to side plank", ru = "Отжимание с переходом в боковую планку" }
 kind = "bodyweight"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "core_stability"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

@@ -2,6 +2,8 @@ id = "single_arm_push_up"
 names = { en = "One-arm push-up", ru = "Отжимание на одной руке" }
 kind = "bodyweight"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength"]
 equipment = []
 level = "advanced"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

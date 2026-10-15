@@ -2,6 +2,8 @@ id = "machine_captains_chair_leg_raise"
 names = { en = "Captain's chair leg raise", ru = "Подъём прямых ног в упоре на локтях" }
 kind = "bodyweight"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = ["machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

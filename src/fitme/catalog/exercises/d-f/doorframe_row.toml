@@ -3,6 +3,8 @@ names = { en = "Doorframe row", ru = "Тяга у дверного проёма"
 search = { en = "doorframe row exercise", ru = "тяга в дверном проёме упражнение" }
 kind = "bodyweight"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["strength", "muscular_endurance"]
 equipment = []
 load_unit = "total"
 locations = ["apartment_no_equipment", "home_equipment"]

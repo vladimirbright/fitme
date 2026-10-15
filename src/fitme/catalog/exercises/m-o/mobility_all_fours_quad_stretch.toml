@@ -2,6 +2,8 @@ id = "mobility_all_fours_quad_stretch"
 names = { en = "All-fours quad stretch", ru = "Растяжка квадрицепса на четвереньках" }
 kind = "mobility"
 pattern = "mobility"
+measures = ["time"]
+qualities = ["mobility"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

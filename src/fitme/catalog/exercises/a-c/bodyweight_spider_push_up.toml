@@ -2,6 +2,8 @@ id = "bodyweight_spider_push_up"
 names = { en = "Spider push-up", ru = "Отжимания «паук»" }
 kind = "bodyweight"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "core_stability"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

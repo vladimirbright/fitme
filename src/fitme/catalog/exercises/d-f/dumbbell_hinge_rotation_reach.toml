@@ -3,6 +3,8 @@ names = { en = "Dumbbell hinge and rotation reach", ru = "Наклон с пов
 search = { en = "dumbbell spell caster", ru = "spell caster с гантелью" }
 kind = "isolation"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability", "mobility"]
 equipment = ["dumbbells"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

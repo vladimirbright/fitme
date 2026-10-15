@@ -3,6 +3,8 @@ names = { en = "Weight plate crunch", ru = "Скручивания с блино
 search = { en = "weighted crunch", ru = "скручивания с отягощением" }
 kind = "isolation"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = ["weight_plate"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

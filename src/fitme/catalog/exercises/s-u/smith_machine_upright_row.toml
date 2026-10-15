@@ -2,6 +2,8 @@ id = "smith_machine_upright_row"
 names = { en = "Smith machine upright row", ru = "Тяга к подбородку в машине Смита" }
 kind = "compound"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["smith_machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

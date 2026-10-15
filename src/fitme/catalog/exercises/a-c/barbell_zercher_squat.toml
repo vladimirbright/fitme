@@ -2,6 +2,8 @@ id = "barbell_zercher_squat"
 names = { en = "Barbell zercher squat", ru = "Приседания Зерхера со штангой" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 level = "advanced"
 equipment = ["barbell", "rack"]
 load_unit = "total"

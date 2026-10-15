@@ -2,6 +2,8 @@ id = "bodyweight_donkey_calf_raise"
 names = { en = "Donkey calf raise", ru = "Подъём на носки в наклоне (ослик)" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

@@ -2,6 +2,8 @@ id = "decline_push_up"
 names = { en = "Decline push-up", ru = "Отжимания с ногами на возвышении" }
 kind = "bodyweight"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

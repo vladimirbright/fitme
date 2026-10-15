@@ -2,6 +2,8 @@ id = "deep_push_up"
 names = { en = "Deep push-up", ru = "Глубокие отжимания" }
 kind = "bodyweight"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["dumbbells"]
 # Two fixed hex dumbbells are the raised handles; no kg load is prescribed (bodyweight start).
 load_unit = "per_implement"

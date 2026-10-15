@@ -2,6 +2,8 @@ id = "mobility_side_lying_adductor_stretch"
 names = { en = "Side-lying adductor stretch", ru = "Растяжка приводящих мышц лёжа на боку" }
 kind = "mobility"
 pattern = "mobility"
+measures = ["time"]
+qualities = ["mobility"]
 equipment = ["bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

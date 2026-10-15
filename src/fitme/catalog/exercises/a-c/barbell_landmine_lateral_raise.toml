@@ -3,6 +3,8 @@ names = { en = "Landmine lateral raise", ru = "Подъём грифа в упо
 search = { en = "landmine lateral raise", ru = "боковой подъём на лэндмайн" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["barbell"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

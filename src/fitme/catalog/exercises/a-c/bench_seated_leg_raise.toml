@@ -2,6 +2,8 @@ id = "bench_seated_leg_raise"
 names = { en = "Seated bench leg raise", ru = "Подъём прямых ног сидя на скамье" }
 kind = "isolation"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = ["bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

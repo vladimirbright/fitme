@@ -2,6 +2,8 @@ id = "machine_elliptical"
 names = { en = "Elliptical machine", ru = "Эллиптический тренажёр" }
 kind = "cardio"
 pattern = "conditioning"
+measures = ["time"]
+qualities = ["conditioning"]
 equipment = ["machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

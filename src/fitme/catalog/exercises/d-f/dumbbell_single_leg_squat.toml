@@ -2,6 +2,8 @@ id = "dumbbell_single_leg_squat"
 names = { en = "Dumbbell single-leg squat", ru = "Приседания на одной ноге с гантелями" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength"]
 level = "advanced"
 equipment = ["dumbbells"]
 load_unit = "per_implement"

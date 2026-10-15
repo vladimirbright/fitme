@@ -2,6 +2,8 @@ id = "mobility_seated_calf_stretch"
 names = { en = "Seated calf stretch", ru = "Растяжка икр сидя" }
 kind = "mobility"
 pattern = "mobility"
+measures = ["time"]
+qualities = ["mobility"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

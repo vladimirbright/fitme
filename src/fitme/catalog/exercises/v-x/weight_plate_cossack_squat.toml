@@ -2,6 +2,8 @@ id = "weight_plate_cossack_squat"
 names = { en = "Weight plate Cossack squat", ru = "Казачьи приседания с блином" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["weight_plate"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

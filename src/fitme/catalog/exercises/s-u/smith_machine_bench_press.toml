@@ -2,6 +2,8 @@ id = "smith_machine_bench_press"
 names = { en = "Smith machine bench press", ru = "Жим лёжа в Смите" }
 kind = "compound"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["smith_machine", "bench"]
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["shoulder", "elbow_wrist"]

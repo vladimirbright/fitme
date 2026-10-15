@@ -2,6 +2,8 @@ id = "bodyweight_side_lying_curl"
 names = { en = "Bodyweight side-lying curl", ru = "Сгибания руки лёжа на боку без отягощения" }
 kind = "bodyweight"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment"]

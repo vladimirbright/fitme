@@ -2,6 +2,8 @@ id = "bodyweight_sissy_squat"
 names = { en = "Sissy squat", ru = "Сисси-приседание" }
 kind = "bodyweight"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["hypertrophy", "strength"]
 level = "advanced"
 equipment = []
 load_unit = "total"

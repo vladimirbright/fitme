@@ -2,6 +2,8 @@ id = "incline_scapular_push_up"
 names = { en = "Incline scapular push-up", ru = "Лопаточные отжимания с опорой" }
 kind = "bodyweight"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

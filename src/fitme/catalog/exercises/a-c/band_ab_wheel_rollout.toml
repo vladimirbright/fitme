@@ -2,6 +2,8 @@ id = "band_ab_wheel_rollout"
 names = { en = "Band-assisted ab wheel rollout", ru = "Ролик для пресса с лентой" }
 kind = "bodyweight"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = ["ab_wheel", "resistance_bands"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

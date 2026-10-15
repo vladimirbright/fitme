@@ -2,6 +2,8 @@ id = "bodyweight_floor_dip"
 names = { en = "Floor triceps dip", ru = "Обратные отжимания от пола" }
 kind = "bodyweight"
 pattern = "vertical_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

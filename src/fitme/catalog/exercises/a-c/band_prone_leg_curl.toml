@@ -2,6 +2,8 @@ id = "band_prone_leg_curl"
 names = { en = "Band prone leg curl", ru = "Сгибание ног с эспандером лёжа на животе" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["resistance_bands", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

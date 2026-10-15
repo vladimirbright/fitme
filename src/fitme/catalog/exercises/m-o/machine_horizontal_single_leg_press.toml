@@ -2,6 +2,8 @@ id = "machine_horizontal_single_leg_press"
 names = { en = "Machine horizontal single-leg press", ru = "Горизонтальный жим одной ногой в тренажёре" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

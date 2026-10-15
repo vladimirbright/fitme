@@ -2,6 +2,8 @@ id = "dumbbell_seated_one_arm_reverse_grip_press"
 names = { en = "Seated one-arm reverse-grip dumbbell press", ru = "Жим одной гантели сидя обратным хватом" }
 kind = "compound"
 pattern = "vertical_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["dumbbells", "bench"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

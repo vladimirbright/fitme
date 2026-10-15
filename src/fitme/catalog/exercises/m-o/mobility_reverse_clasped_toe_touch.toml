@@ -2,6 +2,8 @@ id = "mobility_reverse_clasped_toe_touch"
 names = { en = "Reverse-clasped toe touch", ru = "Наклон к носкам со сцепленными за спиной руками" }
 kind = "mobility"
 pattern = "mobility"
+measures = ["time"]
+qualities = ["mobility"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

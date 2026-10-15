@@ -2,6 +2,8 @@ id = "bodyweight_cross_body_mountain_climber"
 names = { en = "Cross-body mountain climber", ru = "Скалолаз с касанием локтя" }
 kind = "cardio"
 pattern = "conditioning"
+measures = ["time", "reps"]
+qualities = ["conditioning", "core_stability"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

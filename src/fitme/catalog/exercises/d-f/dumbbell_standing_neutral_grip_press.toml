@@ -2,6 +2,8 @@ id = "dumbbell_standing_neutral_grip_press"
 names = { en = "Standing neutral-grip dumbbell press", ru = "Жим гантелей стоя нейтральным хватом" }
 kind = "compound"
 pattern = "vertical_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["dumbbells"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

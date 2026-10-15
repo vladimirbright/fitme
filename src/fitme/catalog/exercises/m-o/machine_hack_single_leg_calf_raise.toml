@@ -2,6 +2,8 @@ id = "machine_hack_single_leg_calf_raise"
 names = { en = "Hack machine single-leg calf raise", ru = "Подъём на носок на одной ноге в гак-машине" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

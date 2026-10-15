@@ -2,6 +2,8 @@ id = "mobility_wrist_pull_stretch"
 names = { en = "Wrist pull stretch", ru = "Растяжка запястья с помощью второй руки" }
 kind = "mobility"
 pattern = "mobility"
+measures = ["time"]
+qualities = ["mobility"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

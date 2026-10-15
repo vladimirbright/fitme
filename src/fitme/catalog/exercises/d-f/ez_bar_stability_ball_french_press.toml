@@ -2,6 +2,8 @@ id = "ez_bar_stability_ball_french_press"
 names = { en = "EZ bar french press on a stability ball", ru = "Французский жим EZ-грифа сидя на фитболе" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 level = "advanced"
 equipment = ["ez_bar", "stability_ball"]
 load_unit = "total"

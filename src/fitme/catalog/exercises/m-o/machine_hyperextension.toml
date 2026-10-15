@@ -3,6 +3,8 @@ names = { en = "Hyperextension", ru = "Гиперэкстензия" }
 search = { en = "45 degree hyperextension", ru = "гиперэкстензия" }
 kind = "bodyweight"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["hypertrophy", "strength"]
 equipment = ["machine"]
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["lower_back", "hip"]

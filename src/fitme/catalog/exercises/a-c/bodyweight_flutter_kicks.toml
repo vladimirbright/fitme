@@ -2,6 +2,8 @@ id = "bodyweight_flutter_kicks"
 names = { en = "Flutter kicks", ru = "Флаттер-кикс" }
 kind = "bodyweight"
 pattern = "core"
+measures = ["time", "reps"]
+qualities = ["core_stability", "muscular_endurance"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

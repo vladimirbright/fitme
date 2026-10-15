@@ -2,6 +2,8 @@ id = "dip_bars_vertical_leg_raise"
 names = { en = "Dip bar leg raise", ru = "Подъём ног в упоре на брусьях" }
 kind = "isolation"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = ["dip_bars"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

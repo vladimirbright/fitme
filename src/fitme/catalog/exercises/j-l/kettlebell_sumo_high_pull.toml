@@ -4,6 +4,8 @@ search = { en = "kettlebell sumo high pull", ru = "тяга гири сумо к
 kind = "compound"
 level = "advanced"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["power", "strength"]
 equipment = ["kettlebell"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

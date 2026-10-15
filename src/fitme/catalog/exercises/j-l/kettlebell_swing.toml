@@ -2,6 +2,8 @@ id = "kettlebell_swing"
 names = { en = "Kettlebell swing", ru = "Мах гирей" }
 kind = "cardio"
 pattern = "conditioning"
+measures = ["reps"]
+qualities = ["power", "conditioning"]
 equipment = ["kettlebell"]
 load_unit = "single_implement"
 # Conditioning, but loaded with a real kettlebell: its kg matters, so it stays kg-loadable.

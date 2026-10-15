@@ -2,6 +2,8 @@ id = "dip_bars_wide_grip_chest_dip"
 names = { en = "Wide-grip chest dip", ru = "Отжимания на брусьях широким хватом на грудь" }
 kind = "bodyweight"
 pattern = "vertical_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["dip_bars"]
 level = "advanced"
 locations = ["public_gym", "studio_gym", "home_equipment"]

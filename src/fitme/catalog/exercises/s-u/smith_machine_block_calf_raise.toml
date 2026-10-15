@@ -2,6 +2,8 @@ id = "smith_machine_block_calf_raise"
 names = { en = "Smith machine calf raise on a block", ru = "Подъём на носки в машине Смита на подставке" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["smith_machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

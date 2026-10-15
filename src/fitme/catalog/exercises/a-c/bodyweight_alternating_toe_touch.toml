@@ -2,6 +2,8 @@ id = "bodyweight_alternating_toe_touch"
 names = { en = "Alternating toe touch with leg lift", ru = "Касание носка с отведением ноги назад" }
 kind = "bodyweight"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["mobility"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

@@ -2,6 +2,8 @@ id = "stability_ball_crunch_arms_straight"
 names = { en = "Stability ball crunch, arms straight", ru = "Скручивания на фитболе с прямыми руками" }
 kind = "isolation"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = ["stability_ball"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

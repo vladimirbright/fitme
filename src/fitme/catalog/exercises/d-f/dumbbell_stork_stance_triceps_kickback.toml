@@ -2,6 +2,8 @@ id = "dumbbell_stork_stance_triceps_kickback"
 names = { en = "Dumbbell stork-stance triceps kickback", ru = "Разгибание руки с гантелью в наклоне на одной ноге" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 level = "advanced"
 equipment = ["dumbbells"]
 load_unit = "single_implement"

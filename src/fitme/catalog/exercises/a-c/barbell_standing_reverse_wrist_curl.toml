@@ -2,6 +2,8 @@ id = "barbell_standing_reverse_wrist_curl"
 names = { en = "Barbell standing reverse wrist curl", ru = "Обратные сгибания запястий со штангой стоя" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["barbell"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

@@ -3,6 +3,8 @@ names = { en = "Glute-ham raise", ru = "Глют-хэм рейз на трена
 search = { en = "glute ham raise", ru = "глют хэм рейз" }
 kind = "bodyweight"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 level = "advanced"
 equipment = ["machine"]
 load_unit = "total"

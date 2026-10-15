@@ -2,6 +2,8 @@ id = "dumbbell_reverse_grip_bent_over_row"
 names = { en = "Dumbbell reverse-grip bent-over row", ru = "Тяга гантелей в наклоне обратным хватом" }
 kind = "compound"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["dumbbells"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

@@ -3,6 +3,8 @@ names = { en = "Cable incline straight-arm pushdown", ru = "Тяга верхн�
 search = { en = "cable incline pushdown lats", ru = "тяга прямыми руками на наклонной скамье" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

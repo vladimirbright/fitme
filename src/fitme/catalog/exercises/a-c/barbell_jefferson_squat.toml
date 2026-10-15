@@ -2,6 +2,8 @@ id = "barbell_jefferson_squat"
 names = { en = "Barbell Jefferson squat", ru = "Приседания Джефферсона со штангой" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 level = "advanced"
 equipment = ["barbell"]
 load_unit = "total"

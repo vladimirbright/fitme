@@ -2,6 +2,8 @@ id = "dumbbell_alternating_lateral_raise"
 names = { en = "Alternating dumbbell lateral raise", ru = "Попеременный мах гантелью в сторону" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

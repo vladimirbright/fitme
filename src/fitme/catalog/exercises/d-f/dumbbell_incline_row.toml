@@ -3,6 +3,8 @@ names = { en = "Chest-supported dumbbell row", ru = "Тяга гантелей �
 search = { en = "incline bench dumbbell row", ru = "тяга гантелей на наклонной скамье" }
 kind = "compound"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["dumbbells", "bench"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

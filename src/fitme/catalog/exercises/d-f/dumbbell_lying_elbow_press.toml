@@ -2,6 +2,8 @@ id = "dumbbell_lying_elbow_press"
 names = { en = "Dumbbell lying elbow press", ru = "Разгибания рук с гантелями лёжа к плечам" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells", "bench"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

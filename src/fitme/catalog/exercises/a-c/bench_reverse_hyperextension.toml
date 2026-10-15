@@ -2,6 +2,8 @@ id = "bench_reverse_hyperextension"
 names = { en = "Bench reverse hyperextension", ru = "Обратная гиперэкстензия на скамье" }
 kind = "bodyweight"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["hypertrophy", "strength"]
 equipment = ["bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

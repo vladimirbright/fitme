@@ -2,6 +2,8 @@ id = "bodyweight_bulgarian_split_squat"
 names = { en = "Bodyweight Bulgarian split squat", ru = "Болгарские сплит-приседания с собственным весом" }
 kind = "bodyweight"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

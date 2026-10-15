@@ -2,6 +2,8 @@ id = "bodyweight_floor_l_sit"
 names = { en = "Floor L-sit", ru = "Уголок на полу" }
 kind = "bodyweight"
 pattern = "core"
+measures = ["time"]
+qualities = ["core_stability", "strength"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

@@ -2,6 +2,8 @@ id = "bodyweight_forward_jump"
 names = { en = "Standing forward jump", ru = "Прыжок вперёд с места" }
 kind = "cardio"
 pattern = "conditioning"
+measures = ["reps"]
+qualities = ["power"]
 level = "advanced"
 equipment = []
 load_unit = "total"

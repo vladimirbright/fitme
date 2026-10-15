@@ -2,6 +2,8 @@ id = "dumbbell_reverse_lunge"
 names = { en = "Dumbbell reverse lunge", ru = "Выпады назад с гантелями" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["dumbbells"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

@@ -2,6 +2,8 @@ id = "machine_rotary_calf_raise"
 names = { en = "Rotary calf machine raise", ru = "Подъём на носки в ротационном тренажёре" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

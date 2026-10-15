@@ -2,6 +2,8 @@ id = "kettlebell_turkish_get_up"
 names = { en = "Kettlebell Turkish get-up", ru = "Турецкий подъём с гирей" }
 kind = "compound"
 pattern = "core"
+measures = ["reps"]
+qualities = ["strength", "core_stability"]
 level = "advanced"
 equipment = ["kettlebell"]
 load_unit = "single_implement"

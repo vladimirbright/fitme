@@ -2,6 +2,8 @@ id = "smith_machine_inverted_row"
 names = { en = "Smith machine inverted row", ru = "Австралийские подтягивания в тренажёре Смита" }
 kind = "bodyweight"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["smith_machine"]
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["shoulder", "elbow_wrist"]

@@ -2,6 +2,8 @@ id = "cable_one_arm_pulldown"
 names = { en = "Cable one-arm pulldown", ru = "Тяга верхнего блока одной рукой" }
 kind = "compound"
 pattern = "vertical_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

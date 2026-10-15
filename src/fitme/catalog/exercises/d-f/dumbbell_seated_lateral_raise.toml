@@ -2,6 +2,8 @@ id = "dumbbell_seated_lateral_raise"
 names = { en = "Seated dumbbell lateral raise", ru = "Разведение гантелей в стороны сидя" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells", "bench"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

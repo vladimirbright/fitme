@@ -2,6 +2,8 @@ id = "cable_seated_rear_lateral_raise"
 names = { en = "Cable seated rear lateral raise", ru = "Разведение на блоках сидя на заднюю дельту" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

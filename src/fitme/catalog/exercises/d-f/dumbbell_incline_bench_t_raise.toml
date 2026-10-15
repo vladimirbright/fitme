@@ -2,6 +2,8 @@ id = "dumbbell_incline_bench_t_raise"
 names = { en = "Incline bench dumbbell T-raise", ru = "Т-разведение гантелей на наклонной скамье" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells", "bench"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

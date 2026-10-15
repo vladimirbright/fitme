@@ -2,6 +2,8 @@ id = "cable_prone_reverse_fly"
 names = { en = "Cable prone reverse fly", ru = "Обратное разведение на блоке лёжа на скамье" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

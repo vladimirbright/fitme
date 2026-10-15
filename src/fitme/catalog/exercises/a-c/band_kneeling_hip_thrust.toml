@@ -2,6 +2,8 @@ id = "band_kneeling_hip_thrust"
 names = { en = "Band kneeling hip thrust", ru = "Разгибание бёдер на коленях с лентой" }
 kind = "isolation"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["resistance_bands"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

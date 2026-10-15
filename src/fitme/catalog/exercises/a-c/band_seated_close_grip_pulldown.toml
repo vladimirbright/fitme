@@ -2,6 +2,8 @@ id = "band_seated_close_grip_pulldown"
 names = { en = "Band seated close-grip pulldown", ru = "Тяга эспандера сверху сидя узким хватом" }
 kind = "compound"
 pattern = "vertical_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["resistance_bands", "pull_up_bar", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

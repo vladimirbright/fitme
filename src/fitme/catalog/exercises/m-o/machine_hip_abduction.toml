@@ -2,6 +2,8 @@ id = "machine_hip_abduction"
 names = { en = "Seated hip abduction", ru = "Разведение ног сидя в тренажёре" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

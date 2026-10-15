@@ -2,6 +2,8 @@ id = "cable_overhead_triceps_extension"
 names = { en = "Cable overhead triceps extension", ru = "Разгибания рук над головой в блоке" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

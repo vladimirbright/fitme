@@ -2,6 +2,8 @@ id = "barbell_overhead_squat"
 names = { en = "Barbell overhead squat", ru = "Приседания со штангой над головой" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 level = "advanced"
 equipment = ["barbell", "rack"]
 load_unit = "total"

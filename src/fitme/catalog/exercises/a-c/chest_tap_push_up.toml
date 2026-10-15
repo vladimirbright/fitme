@@ -2,6 +2,8 @@ id = "chest_tap_push_up"
 names = { en = "Chest-tap push-up", ru = "Отжимания с касанием груди рукой" }
 kind = "bodyweight"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "core_stability"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

@@ -3,6 +3,8 @@ names = { en = "Lying leg wipers", ru = "Дворники лёжа" }
 search = { en = "leg wipers", ru = "дворники лёжа" }
 kind = "bodyweight"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = []
 level = "advanced"
 load_unit = "total"

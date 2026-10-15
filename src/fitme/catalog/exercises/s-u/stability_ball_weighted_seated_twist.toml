@@ -2,6 +2,8 @@ id = "stability_ball_weighted_seated_twist"
 names = { en = "Stability ball seated twist with plate", ru = "Повороты корпуса сидя на фитболе с блином" }
 kind = "isolation"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = ["stability_ball", "weight_plate"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

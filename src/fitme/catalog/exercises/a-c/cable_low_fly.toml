@@ -2,6 +2,8 @@ id = "cable_low_fly"
 names = { en = "Cable low fly", ru = "Сведение рук в кроссовере снизу вверх" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

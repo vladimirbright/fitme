@@ -3,6 +3,8 @@ names = { en = "Forearm plank saw on a roller", ru = "Планка на пред
 search = { en = "roller body saw", ru = "пила на валике" }
 kind = "bodyweight"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = ["foam_roller"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

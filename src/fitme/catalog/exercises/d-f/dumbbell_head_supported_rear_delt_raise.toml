@@ -2,6 +2,8 @@ id = "dumbbell_head_supported_rear_delt_raise"
 names = { en = "Head-supported dumbbell rear delt raise", ru = "Разведение гантелей в наклоне с опорой лбом о скамью" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells", "bench"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

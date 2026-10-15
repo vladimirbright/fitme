@@ -2,6 +2,8 @@ id = "cable_rope_one_arm_hammer_preacher_curl"
 names = { en = "Cable rope one-arm hammer preacher curl", ru = "Молотковое сгибание одной рукой на скамье Скотта с канатом" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

@@ -3,6 +3,8 @@ names = { en = "Band shoulder dislocate", ru = "Растяжка плеч с э�
 search = { en = "band shoulder dislocates", ru = "выкруты плеч с резинкой" }
 kind = "mobility"
 pattern = "mobility"
+measures = ["reps"]
+qualities = ["mobility"]
 equipment = ["resistance_bands"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

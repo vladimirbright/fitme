@@ -4,6 +4,8 @@ search = { en = "weighted back extension stability ball", ru = "гиперэкс
 kind = "isolation"
 level = "advanced"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["stability_ball", "weight_plate"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

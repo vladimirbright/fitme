@@ -2,6 +2,8 @@ id = "bodyweight_body_up"
 names = { en = "Body-up (plank triceps extension)", ru = "Разгибание рук из планки на предплечьях (body-up)" }
 kind = "bodyweight"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["strength", "core_stability"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

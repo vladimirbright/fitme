@@ -3,6 +3,8 @@ names = { en = "Diamond push-up", ru = "Отжимания ромбом" }
 search = { en = "diamond push-up", ru = "алмазные отжимания" }
 kind = "bodyweight"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = []
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["shoulder", "elbow_wrist"]

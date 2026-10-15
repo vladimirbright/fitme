@@ -2,6 +2,8 @@ id = "bodyweight_janda_sit_up"
 names = { en = "Janda sit-up", ru = "Подъём корпуса по Янде" }
 kind = "bodyweight"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

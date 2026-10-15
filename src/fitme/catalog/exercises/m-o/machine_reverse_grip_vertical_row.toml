@@ -2,6 +2,8 @@ id = "machine_reverse_grip_vertical_row"
 names = { en = "Machine reverse-grip vertical row", ru = "Вертикальная тяга в тренажёре обратным хватом" }
 kind = "compound"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["machine"]
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["shoulder", "elbow_wrist"]

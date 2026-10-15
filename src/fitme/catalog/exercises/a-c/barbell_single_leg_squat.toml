@@ -2,6 +2,8 @@ id = "barbell_single_leg_squat"
 names = { en = "Barbell single-leg squat", ru = "Приседания на одной ноге со штангой" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 level = "advanced"
 equipment = ["barbell", "rack"]
 load_unit = "total"

@@ -3,6 +3,8 @@ names = { en = "Machine hip extension", ru = "Отведение ноги наз
 search = { en = "glute kickback machine", ru = "отведение ноги назад в тренажёре" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

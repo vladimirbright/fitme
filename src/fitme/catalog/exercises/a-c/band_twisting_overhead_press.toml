@@ -2,6 +2,8 @@ id = "band_twisting_overhead_press"
 names = { en = "Band twisting overhead press", ru = "Жим ленты над головой с поворотом корпуса" }
 kind = "compound"
 pattern = "vertical_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["resistance_bands"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

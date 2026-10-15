@@ -2,6 +2,8 @@ id = "cable_squat_curl"
 names = { en = "Cable squat with curl", ru = "Приседание со сгибанием рук на блоке" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

@@ -2,6 +2,8 @@ id = "smith_machine_seated_wrist_curl"
 names = { en = "Smith machine seated wrist curl", ru = "Сгибания запястий сидя с грифом машины Смита" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["smith_machine", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

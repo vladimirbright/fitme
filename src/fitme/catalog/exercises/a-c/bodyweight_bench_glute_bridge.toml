@@ -3,6 +3,8 @@ names = { en = "Bench glute bridge", ru = "Ягодичный мостик с о
 search = { en = "bodyweight hip thrust", ru = "ягодичный мостик от скамьи" }
 kind = "bodyweight"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["hypertrophy", "strength"]
 equipment = ["bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

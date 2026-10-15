@@ -2,6 +2,8 @@ id = "band_standing_rear_delt_row"
 names = { en = "Band standing rear delt row", ru = "Тяга ленты в наклоне к груди на заднюю дельту" }
 kind = "compound"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["resistance_bands"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

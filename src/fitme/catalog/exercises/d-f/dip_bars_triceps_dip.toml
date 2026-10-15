@@ -2,6 +2,8 @@ id = "dip_bars_triceps_dip"
 names = { en = "Parallel bar triceps dip", ru = "Отжимания на брусьях на трицепс" }
 kind = "bodyweight"
 pattern = "vertical_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["dip_bars"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

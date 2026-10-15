@@ -2,6 +2,8 @@ id = "cable_close_grip_pulldown"
 names = { en = "Close-grip lat pulldown (V-handle)", ru = "Тяга верхнего блока узким хватом" }
 kind = "compound"
 pattern = "vertical_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

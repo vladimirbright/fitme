@@ -3,6 +3,8 @@ names = { en = "Band good morning", ru = "Наклоны с эспандером
 search = { en = "band good morning", ru = "гуд морнинг с резинкой" }
 kind = "compound"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["resistance_bands"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

@@ -2,6 +2,8 @@ id = "cable_decline_fly"
 names = { en = "Cable decline fly", ru = "Сведение рук в кроссовере с отрицательным наклоном" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

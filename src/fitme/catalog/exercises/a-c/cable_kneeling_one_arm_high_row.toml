@@ -2,6 +2,8 @@ id = "cable_kneeling_one_arm_high_row"
 names = { en = "Cable kneeling one-arm high row", ru = "Тяга блока одной рукой стоя на коленях" }
 kind = "compound"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

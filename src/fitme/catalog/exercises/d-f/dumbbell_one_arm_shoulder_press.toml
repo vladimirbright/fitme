@@ -2,6 +2,8 @@ id = "dumbbell_one_arm_shoulder_press"
 names = { en = "Standing one-arm dumbbell press", ru = "Жим гантели одной рукой стоя" }
 kind = "compound"
 pattern = "vertical_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["dumbbells"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

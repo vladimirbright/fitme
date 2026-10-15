@@ -2,6 +2,8 @@ id = "machine_sled_calf_raise"
 names = { en = "Angled sled calf raise, facing the machine", ru = "Подъём на носки в наклонной машине лицом к тренажёру" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

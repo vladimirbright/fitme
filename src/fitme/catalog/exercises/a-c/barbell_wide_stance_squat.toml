@@ -2,6 +2,8 @@ id = "barbell_wide_stance_squat"
 names = { en = "Barbell wide-stance squat", ru = "Приседания со штангой широкой постановкой ног" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["barbell", "rack"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

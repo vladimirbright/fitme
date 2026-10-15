@@ -2,6 +2,8 @@ id = "dumbbell_stability_ball_press"
 names = { en = "Dumbbell chest press on stability ball", ru = "Жим гантелей лёжа на фитболе" }
 kind = "compound"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["dumbbells", "stability_ball"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

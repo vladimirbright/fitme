@@ -2,6 +2,8 @@ id = "bench_incline_leg_raise"
 names = { en = "Incline bench leg raise", ru = "Подъём ног на наклонной скамье" }
 kind = "isolation"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = ["bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

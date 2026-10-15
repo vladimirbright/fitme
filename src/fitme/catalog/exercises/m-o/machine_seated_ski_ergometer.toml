@@ -2,6 +2,8 @@ id = "machine_seated_ski_ergometer"
 names = { en = "Seated ski ergometer", ru = "Сидячий лыжный эргометр" }
 kind = "cardio"
 pattern = "conditioning"
+measures = ["time", "distance"]
+qualities = ["conditioning"]
 equipment = ["machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

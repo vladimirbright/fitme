@@ -142,6 +142,13 @@ def _contraindication_problems(catalog: Catalog) -> list[str]:
     return missing_contraindication_coverage(catalog)
 
 
+def _quality_problems(catalog: Catalog) -> list[str]:
+    """ADR 0009: every shipped exercise says what it directly trains (`qualities`)."""
+    return [
+        f"{exercise.id}: no qualities" for exercise in catalog.exercise if not exercise.qualities
+    ]
+
+
 def _catalog_text_fields(catalog: Catalog) -> list[tuple[str, str]]:
     """Every `(field description, text)` pair from the catalog worth scanning for forbidden
     references or terms: every language's `names` and `instructions` entry."""
@@ -197,6 +204,7 @@ def catalog_check(*, load: Callable[[], Catalog] = load_catalog) -> int:
         _full_body_coverage_problems(catalog)
         + _contraindication_problems(catalog)
         + kg_loadable_problems(catalog)
+        + _quality_problems(catalog)
         + _locale_problems()
         + forbidden_reference_problems(catalog)
     )

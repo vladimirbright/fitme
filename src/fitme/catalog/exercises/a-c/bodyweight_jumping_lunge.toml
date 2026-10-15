@@ -2,6 +2,8 @@ id = "bodyweight_jumping_lunge"
 names = { en = "Jumping lunge", ru = "Выпады с прыжком со сменой ног" }
 kind = "bodyweight"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["power", "conditioning"]
 level = "advanced"
 equipment = []
 load_unit = "total"

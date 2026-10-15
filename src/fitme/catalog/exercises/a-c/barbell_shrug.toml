@@ -2,6 +2,8 @@ id = "barbell_shrug"
 names = { en = "Barbell shrug", ru = "Шраги со штангой" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["barbell"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

@@ -2,6 +2,8 @@ id = "bench_decline_sit_up"
 names = { en = "Decline bench sit-up", ru = "Подъём корпуса на скамье головой вниз" }
 kind = "isolation"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = ["bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

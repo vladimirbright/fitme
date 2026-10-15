@@ -2,6 +2,8 @@ id = "dumbbell_alternate_hammer_preacher_curl"
 names = { en = "Dumbbell alternating hammer preacher curl", ru = "Попеременные молотковые сгибания на скамье Скотта" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells", "bench"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

@@ -3,6 +3,8 @@ names = { en = "Barbell one-arm deadlift", ru = "Становая тяга шт�
 search = { en = "barbell suitcase deadlift", ru = "становая тяга штанги одной рукой сбоку" }
 kind = "compound"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 level = "advanced"
 equipment = ["barbell"]
 load_unit = "total"

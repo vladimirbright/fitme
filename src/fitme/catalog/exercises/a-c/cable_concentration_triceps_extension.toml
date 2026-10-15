@@ -2,6 +2,8 @@ id = "cable_concentration_triceps_extension"
 names = { en = "Cable seated concentration triceps extension", ru = "Концентрированное разгибание руки на блоке сидя" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

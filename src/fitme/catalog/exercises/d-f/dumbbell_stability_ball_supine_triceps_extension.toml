@@ -3,6 +3,8 @@ names = { en = "Dumbbell supine triceps extension on a stability ball", ru = "Р
 search = { en = "stability ball dumbbell skull crusher", ru = "французский жим гантели на фитболе" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 level = "advanced"
 equipment = ["dumbbells", "stability_ball"]
 load_unit = "single_implement"

@@ -2,6 +2,8 @@ id = "seated_lean_back_stretch"
 names = { en = "Seated lean-back stretch", ru = "Растяжка сидя с отклонением назад" }
 kind = "mobility"
 pattern = "mobility"
+measures = ["time"]
+qualities = ["mobility"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

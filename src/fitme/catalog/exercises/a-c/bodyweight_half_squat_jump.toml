@@ -2,6 +2,8 @@ id = "bodyweight_half_squat_jump"
 names = { en = "Half squat jump", ru = "Прыжок из неглубокого приседа" }
 kind = "cardio"
 pattern = "conditioning"
+measures = ["reps"]
+qualities = ["power", "conditioning"]
 level = "advanced"
 equipment = []
 load_unit = "total"

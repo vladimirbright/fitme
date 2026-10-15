@@ -2,6 +2,8 @@ id = "band_bent_over_hip_extension"
 names = { en = "Band bent-over hip extension", ru = "Отведение ноги назад с эспандером в наклоне" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["resistance_bands"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

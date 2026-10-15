@@ -2,6 +2,8 @@ id = "barbell_sumo_deadlift"
 names = { en = "Barbell sumo deadlift", ru = "Тяга сумо со штангой" }
 kind = "compound"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["barbell"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

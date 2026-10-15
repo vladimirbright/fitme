@@ -2,6 +2,8 @@ id = "mobility_clasped_circular_toe_touch"
 names = { en = "Clasped-hands circular toe touch", ru = "Круговой наклон к носкам со сцепленными руками" }
 kind = "mobility"
 pattern = "mobility"
+measures = ["reps"]
+qualities = ["mobility"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

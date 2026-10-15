@@ -2,6 +2,8 @@ id = "smith_machine_decline_close_grip_bench_press"
 names = { en = "Smith machine decline close-grip bench press", ru = "Жим в тренажёре Смита узким хватом на наклонной вниз скамье" }
 kind = "compound"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["smith_machine", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

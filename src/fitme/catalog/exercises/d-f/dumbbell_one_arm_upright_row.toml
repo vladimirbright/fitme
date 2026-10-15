@@ -2,6 +2,8 @@ id = "dumbbell_one_arm_upright_row"
 names = { en = "Dumbbell one-arm upright row", ru = "Тяга гантели к подбородку одной рукой" }
 kind = "compound"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["dumbbells"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

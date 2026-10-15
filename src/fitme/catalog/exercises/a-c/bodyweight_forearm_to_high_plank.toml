@@ -3,6 +3,8 @@ names = { en = "Forearm plank to high plank", ru = "Переход из план
 search = { en = "plank up down", ru = "планка вверх-вниз" }
 kind = "bodyweight"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

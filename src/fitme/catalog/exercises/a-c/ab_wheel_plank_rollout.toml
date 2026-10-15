@@ -2,6 +2,8 @@ id = "ab_wheel_plank_rollout"
 names = { en = "Ab wheel rollout from plank", ru = "Ролик для пресса из упора" }
 kind = "bodyweight"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 level = "advanced"
 equipment = ["ab_wheel"]
 load_unit = "total"

@@ -3,6 +3,8 @@ names = { en = "Side-lying torso rotation", ru = "Поворот корпуса 
 search = { en = "open book stretch", ru = "упражнение открытая книга" }
 kind = "mobility"
 pattern = "mobility"
+measures = ["reps"]
+qualities = ["mobility"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

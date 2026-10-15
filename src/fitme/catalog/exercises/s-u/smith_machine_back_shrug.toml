@@ -3,6 +3,8 @@ names = { en = "Smith machine behind-the-back shrug", ru = "Шраги в маш
 search = { en = "smith machine back shrug", ru = "шраги в смите за спиной" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["smith_machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

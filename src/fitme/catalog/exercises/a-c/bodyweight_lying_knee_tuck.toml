@@ -2,6 +2,8 @@ id = "bodyweight_lying_knee_tuck"
 names = { en = "Lying knee tuck", ru = "Подтягивание коленей к груди лёжа" }
 kind = "bodyweight"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

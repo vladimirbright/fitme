@@ -2,6 +2,8 @@ id = "mobility_behind_head_chest_stretch"
 names = { en = "Hands-behind-head chest stretch", ru = "Растяжка груди с руками за головой" }
 kind = "mobility"
 pattern = "mobility"
+measures = ["time"]
+qualities = ["mobility"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

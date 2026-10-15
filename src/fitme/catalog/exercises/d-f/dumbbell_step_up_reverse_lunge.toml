@@ -2,6 +2,8 @@ id = "dumbbell_step_up_reverse_lunge"
 names = { en = "Dumbbell step-up to reverse lunge", ru = "Зашагивание с гантелями и выпадом назад" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["dumbbells", "bench"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

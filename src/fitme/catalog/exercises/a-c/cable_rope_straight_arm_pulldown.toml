@@ -2,6 +2,8 @@ id = "cable_rope_straight_arm_pulldown"
 names = { en = "Cable rope straight-arm pulldown", ru = "Тяга верхнего блока прямыми руками с канатом" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

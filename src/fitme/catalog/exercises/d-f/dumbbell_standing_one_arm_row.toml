@@ -2,6 +2,8 @@ id = "dumbbell_standing_one_arm_row"
 names = { en = "Dumbbell standing one-arm row", ru = "Тяга гантели в наклоне стоя без опоры" }
 kind = "compound"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["dumbbells"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

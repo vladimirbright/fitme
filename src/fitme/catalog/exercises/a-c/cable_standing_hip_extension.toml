@@ -2,6 +2,8 @@ id = "cable_standing_hip_extension"
 names = { en = "Cable standing hip extension", ru = "Разгибание ноги стоя на блоке" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

@@ -3,6 +3,8 @@ names = { en = "Scapular dip", ru = "Лопаточные отжимания н�
 search = { en = "scapular dips", ru = "лопаточные отжимания на брусьях" }
 kind = "bodyweight"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["strength"]
 equipment = ["dip_bars"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

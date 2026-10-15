@@ -2,6 +2,8 @@ id = "bodyweight_plank_with_twist"
 names = { en = "Plank with twist", ru = "Планка с поворотом корпуса" }
 kind = "bodyweight"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

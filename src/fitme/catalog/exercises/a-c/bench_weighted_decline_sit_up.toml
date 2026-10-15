@@ -2,6 +2,8 @@ id = "bench_weighted_decline_sit_up"
 names = { en = "Weighted decline sit-up", ru = "Подъём корпуса на наклонной скамье с блином" }
 kind = "isolation"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability", "hypertrophy"]
 equipment = ["bench", "weight_plate"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

@@ -2,6 +2,8 @@ id = "dumbbell_step_up_with_curl"
 names = { en = "Dumbbell step-up with biceps curl", ru = "Подъём на платформу с гантелями и сгибанием рук" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 level = "advanced"
 equipment = ["dumbbells", "bench"]
 load_unit = "per_implement"

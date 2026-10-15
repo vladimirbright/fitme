@@ -2,6 +2,8 @@ id = "kettlebell_hang_clean"
 names = { en = "Kettlebell hang clean", ru = "Взятие гири на грудь из виса" }
 kind = "compound"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["power", "strength"]
 level = "advanced"
 equipment = ["kettlebell"]
 load_unit = "single_implement"

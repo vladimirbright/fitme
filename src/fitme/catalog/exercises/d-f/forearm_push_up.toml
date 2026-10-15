@@ -3,6 +3,8 @@ names = { en = "Forearm push-up", ru = "Отжимания с упором на 
 search = { en = "sphinx push-up", ru = "отжимания сфинкс" }
 kind = "bodyweight"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "core_stability"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

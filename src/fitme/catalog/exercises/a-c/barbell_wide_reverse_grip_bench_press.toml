@@ -2,6 +2,8 @@ id = "barbell_wide_reverse_grip_bench_press"
 names = { en = "Barbell wide reverse-grip bench press", ru = "Жим штанги лёжа широким обратным хватом" }
 kind = "compound"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["barbell", "rack", "bench"]
 load_unit = "total"
 level = "advanced"

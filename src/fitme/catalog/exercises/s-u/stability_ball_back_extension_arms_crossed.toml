@@ -2,6 +2,8 @@ id = "stability_ball_back_extension_arms_crossed"
 names = { en = "Stability-ball back extension, arms crossed", ru = "Разгибания спины на фитболе со скрещёнными руками" }
 kind = "bodyweight"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["stability_ball"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

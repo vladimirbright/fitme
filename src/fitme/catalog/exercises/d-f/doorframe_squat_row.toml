@@ -3,6 +3,8 @@ names = { en = "Doorframe squat row", ru = "Тяга у дверного про�
 search = { en = "squat row bodyweight", ru = "тяга с приседом у опоры" }
 kind = "bodyweight"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["strength", "muscular_endurance"]
 equipment = []
 load_unit = "total"
 locations = ["apartment_no_equipment", "home_equipment"]

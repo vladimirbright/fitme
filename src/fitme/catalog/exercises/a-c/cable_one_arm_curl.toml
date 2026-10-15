@@ -2,6 +2,8 @@ id = "cable_one_arm_curl"
 names = { en = "Cable one-arm curl", ru = "Сгибание руки на нижнем блоке одной рукой" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

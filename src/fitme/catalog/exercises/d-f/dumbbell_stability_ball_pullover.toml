@@ -2,6 +2,8 @@ id = "dumbbell_stability_ball_pullover"
 names = { en = "Dumbbell pullover on stability ball", ru = "Пуловер с гантелью на фитболе" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells", "stability_ball"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

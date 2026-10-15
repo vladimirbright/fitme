@@ -2,6 +2,8 @@ id = "cable_alternating_lat_pulldown"
 names = { en = "Cable alternating lat pulldown", ru = "Попеременная тяга верхнего блока" }
 kind = "compound"
 pattern = "vertical_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

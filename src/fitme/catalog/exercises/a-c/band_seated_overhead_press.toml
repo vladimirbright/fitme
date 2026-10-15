@@ -2,6 +2,8 @@ id = "band_seated_overhead_press"
 names = { en = "Band seated overhead press", ru = "Жим эспандера вверх сидя" }
 kind = "compound"
 pattern = "vertical_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["resistance_bands", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

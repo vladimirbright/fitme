@@ -2,6 +2,8 @@ id = "band_glute_bridge"
 names = { en = "Band glute bridge", ru = "Ягодичный мостик с эспандером" }
 kind = "compound"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["resistance_bands"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

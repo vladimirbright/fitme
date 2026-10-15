@@ -2,6 +2,8 @@ id = "barbell_reverse_grip_decline_bench_press"
 names = { en = "Barbell reverse-grip decline bench press", ru = "Жим штанги обратным хватом на скамье с отрицательным наклоном" }
 kind = "compound"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["barbell", "rack", "bench"]
 load_unit = "total"
 level = "advanced"

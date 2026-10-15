@@ -2,6 +2,8 @@ id = "machine_kneeling_twist"
 names = { en = "Machine kneeling twist", ru = "Повороты корпуса в тренажёре на коленях" }
 kind = "isolation"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = ["machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

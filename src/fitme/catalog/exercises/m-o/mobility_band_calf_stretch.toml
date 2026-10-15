@@ -2,6 +2,8 @@ id = "mobility_band_calf_stretch"
 names = { en = "Band calf stretch", ru = "Растяжка икр с лентой" }
 kind = "mobility"
 pattern = "mobility"
+measures = ["time"]
+qualities = ["mobility"]
 equipment = ["resistance_bands"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

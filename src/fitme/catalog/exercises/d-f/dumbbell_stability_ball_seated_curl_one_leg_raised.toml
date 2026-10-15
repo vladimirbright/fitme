@@ -2,6 +2,8 @@ id = "dumbbell_stability_ball_seated_curl_one_leg_raised"
 names = { en = "Dumbbell curl seated on stability ball with one leg raised", ru = "Сгибания рук с гантелями сидя на фитболе с поднятой ногой" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells", "stability_ball"]
 level = "advanced"
 load_unit = "per_implement"

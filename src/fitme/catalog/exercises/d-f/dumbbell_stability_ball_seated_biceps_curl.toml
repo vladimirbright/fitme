@@ -2,6 +2,8 @@ id = "dumbbell_stability_ball_seated_biceps_curl"
 names = { en = "Dumbbell seated biceps curl on a stability ball", ru = "Сгибания рук с гантелями на бицепс сидя на фитболе" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells", "stability_ball"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

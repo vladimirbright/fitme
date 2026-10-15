@@ -3,6 +3,8 @@ names = { en = "Slow-lowering crunch", ru = "Скручивания с медл�
 search = { en = "negative crunch", ru = "негативные скручивания" }
 kind = "bodyweight"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

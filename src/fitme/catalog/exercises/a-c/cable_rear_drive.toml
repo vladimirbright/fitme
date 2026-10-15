@@ -3,6 +3,8 @@ names = { en = "Cable rear drive", ru = "Разгибание руки наза�
 search = { en = "cable rear drive", ru = "разгибание руки назад на нижнем блоке" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

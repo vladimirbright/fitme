@@ -2,6 +2,8 @@ id = "barbell_pullover"
 names = { en = "Barbell pullover", ru = "Пуловер со штангой" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 level = "advanced"
 equipment = ["barbell", "bench"]
 load_unit = "total"

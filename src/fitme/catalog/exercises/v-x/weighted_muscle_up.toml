@@ -3,6 +3,8 @@ names = { en = "Weighted muscle-up", ru = "Выход силой с отягощ
 kind = "compound"
 level = "advanced"
 pattern = "vertical_pull"
+measures = ["reps"]
+qualities = ["strength", "power"]
 equipment = ["pull_up_bar", "weight_plate"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

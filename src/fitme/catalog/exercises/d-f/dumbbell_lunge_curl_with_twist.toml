@@ -2,6 +2,8 @@ id = "dumbbell_lunge_curl_with_twist"
 names = { en = "Dumbbell lunge with curl and twist", ru = "Выпад со сгибанием рук и поворотом корпуса" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["dumbbells"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

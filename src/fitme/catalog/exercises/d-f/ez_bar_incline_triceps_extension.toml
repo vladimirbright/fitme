@@ -2,6 +2,8 @@ id = "ez_bar_incline_triceps_extension"
 names = { en = "EZ-bar incline triceps extension", ru = "Разгибания на трицепс с EZ-грифом на наклонной скамье" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["ez_bar", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

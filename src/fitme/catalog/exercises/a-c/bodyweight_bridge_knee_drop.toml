@@ -2,6 +2,8 @@ id = "bodyweight_bridge_knee_drop"
 names = { en = "Glute bridge with knee drop", ru = "Ягодичный мостик с поворотом коленей" }
 kind = "bodyweight"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["core_stability", "mobility"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

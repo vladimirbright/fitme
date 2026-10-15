@@ -2,6 +2,8 @@ id = "dumbbell_stiff_leg_deadlift"
 names = { en = "Dumbbell stiff-leg deadlift", ru = "Становая тяга с гантелями на прямых ногах" }
 kind = "compound"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["dumbbells"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

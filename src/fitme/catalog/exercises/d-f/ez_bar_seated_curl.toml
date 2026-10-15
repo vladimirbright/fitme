@@ -2,6 +2,8 @@ id = "ez_bar_seated_curl"
 names = { en = "EZ-bar seated curl", ru = "Сгибания рук с EZ-грифом сидя" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["ez_bar", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

@@ -3,6 +3,8 @@ names = { en = "Cable wood chop", ru = "Диагональная тяга бло
 search = { en = "cable wood chop", ru = "дровосек на блоке" }
 kind = "compound"
 pattern = "core"
+measures = ["reps"]
+qualities = ["rotational_power", "core_stability"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

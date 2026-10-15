@@ -2,6 +2,8 @@ id = "cable_v_bar_triceps_pushdown"
 names = { en = "Cable V-bar triceps pushdown", ru = "Разгибание рук на верхнем блоке с V-рукоятью" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

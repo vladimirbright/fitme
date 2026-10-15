@@ -2,6 +2,8 @@ id = "smith_machine_decline_close_grip_reverse_press"
 names = { en = "Smith machine decline close-grip reverse press", ru = "Жим в Смите головой вниз узким обратным хватом" }
 kind = "compound"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["smith_machine", "bench"]
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["shoulder", "elbow_wrist"]

@@ -3,6 +3,8 @@ names = { en = "Cable face pull", ru = "Тяга каната к лицу" }
 search = { en = "cable face pull", ru = "фейс пулл на блоке" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

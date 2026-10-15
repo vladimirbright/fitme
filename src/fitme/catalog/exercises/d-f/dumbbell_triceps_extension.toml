@@ -2,6 +2,8 @@ id = "dumbbell_triceps_extension"
 names = { en = "Dumbbell triceps extension", ru = "Разгибания рук с гантелью на трицепс" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

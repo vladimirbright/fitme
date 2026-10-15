@@ -2,6 +2,8 @@ id = "mobility_rocking_frog_stretch"
 names = { en = "Rocking frog stretch", ru = "Растяжка «лягушка» с покачиванием" }
 kind = "mobility"
 pattern = "mobility"
+measures = ["reps"]
+qualities = ["mobility"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

@@ -2,6 +2,8 @@ id = "dumbbell_stability_ball_pullover_hip_extension"
 names = { en = "Dumbbell pullover with hip raise on stability ball", ru = "Пуловер с гантелью и подъёмом таза на фитболе" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells", "stability_ball"]
 level = "advanced"
 load_unit = "single_implement"

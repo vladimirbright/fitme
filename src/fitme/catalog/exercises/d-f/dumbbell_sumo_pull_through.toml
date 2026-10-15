@@ -2,6 +2,8 @@ id = "dumbbell_sumo_pull_through"
 names = { en = "Dumbbell sumo pull-through", ru = "Протяжка с гантелью в сумо-стойке" }
 kind = "compound"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["dumbbells"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

@@ -3,6 +3,8 @@ names = { en = "One-arm chin-up", ru = "Подтягивание обратны�
 kind = "bodyweight"
 level = "advanced"
 pattern = "vertical_pull"
+measures = ["reps"]
+qualities = ["strength"]
 equipment = ["pull_up_bar"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]

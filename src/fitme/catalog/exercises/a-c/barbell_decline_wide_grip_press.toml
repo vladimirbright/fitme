@@ -2,6 +2,8 @@ id = "barbell_decline_wide_grip_press"
 names = { en = "Barbell decline wide-grip press", ru = "Жим штанги широким хватом на скамье с отрицательным наклоном" }
 kind = "compound"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["barbell", "rack", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

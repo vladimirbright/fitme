@@ -4,6 +4,8 @@ search = { en = "front lever progression", ru = "передний вис упр�
 kind = "bodyweight"
 level = "advanced"
 pattern = "core"
+measures = ["reps"]
+qualities = ["strength", "core_stability"]
 equipment = ["pull_up_bar"]
 locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]
 loads_areas = ["shoulder", "elbow_wrist", "lower_back"]

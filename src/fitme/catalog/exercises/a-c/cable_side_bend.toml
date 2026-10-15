@@ -2,6 +2,8 @@ id = "cable_side_bend"
 names = { en = "Cable side bend", ru = "Боковые наклоны на блоке" }
 kind = "isolation"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

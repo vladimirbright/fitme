@@ -3,6 +3,8 @@ names = { en = "Band pull-through", ru = "Тяга эспандера между
 search = { en = "band pull through", ru = "протяжка между ног с резинкой" }
 kind = "compound"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["resistance_bands"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

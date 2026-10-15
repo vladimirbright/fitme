@@ -3,6 +3,8 @@ names = { en = "Dumbbell hammer curl", ru = "Сгибания рук с гант
 search = { en = "dumbbell hammer curl", ru = "молотки с гантелями" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

@@ -2,6 +2,8 @@ id = "sledgehammer_tire_strike"
 names = { en = "Sledgehammer tire strike", ru = "Удары кувалдой по шине" }
 kind = "cardio"
 pattern = "conditioning"
+measures = ["time", "reps"]
+qualities = ["conditioning", "power"]
 equipment = ["sledgehammer", "tire"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

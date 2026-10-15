@@ -2,6 +2,8 @@ id = "one_arm_wall_push_hold"
 names = { en = "One-arm wall push hold", ru = "Упор одной рукой в стену" }
 kind = "bodyweight"
 pattern = "accessory"
+measures = ["time"]
+qualities = ["strength", "core_stability"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

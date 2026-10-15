@@ -2,6 +2,8 @@ id = "cable_shoulder_press"
 names = { en = "Cable shoulder press", ru = "Жим над головой на блоках" }
 kind = "compound"
 pattern = "vertical_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

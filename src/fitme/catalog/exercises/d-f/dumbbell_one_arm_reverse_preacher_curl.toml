@@ -2,6 +2,8 @@ id = "dumbbell_one_arm_reverse_preacher_curl"
 names = { en = "One-arm reverse preacher curl with dumbbell", ru = "Обратные сгибания одной рукой на скамье Скотта" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells", "bench"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

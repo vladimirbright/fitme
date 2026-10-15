@@ -2,6 +2,8 @@ id = "bodyweight_curtsey_squat"
 names = { en = "Curtsey squat", ru = "Приседание-реверанс" }
 kind = "bodyweight"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["hypertrophy", "muscular_endurance"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

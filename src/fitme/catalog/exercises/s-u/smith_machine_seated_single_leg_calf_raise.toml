@@ -2,6 +2,8 @@ id = "smith_machine_seated_single_leg_calf_raise"
 names = { en = "Smith machine seated single-leg calf raise", ru = "Подъём на носок сидя на одной ноге в машине Смита" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["smith_machine", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

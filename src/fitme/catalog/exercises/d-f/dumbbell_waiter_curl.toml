@@ -2,6 +2,8 @@ id = "dumbbell_waiter_curl"
 names = { en = "Dumbbell waiter curl", ru = "Сгибания рук с гантелью «официант»" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

@@ -3,6 +3,8 @@ names = { en = "Dumbbell standing inner biceps curl", ru = "Сгибания р�
 search = { en = "standing dumbbell inner biceps curl", ru = "сгибания на бицепс с разворотом наружу стоя" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

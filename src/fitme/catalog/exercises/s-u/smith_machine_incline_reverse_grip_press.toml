@@ -2,6 +2,8 @@ id = "smith_machine_incline_reverse_grip_press"
 names = { en = "Smith machine incline reverse-grip press", ru = "Жим на наклонной скамье в Смите обратным хватом" }
 kind = "compound"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["smith_machine", "bench"]
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["shoulder", "elbow_wrist"]

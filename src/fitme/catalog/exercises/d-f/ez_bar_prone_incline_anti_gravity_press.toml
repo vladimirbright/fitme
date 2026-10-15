@@ -3,6 +3,8 @@ names = { en = "EZ bar prone incline press", ru = "Жим EZ-грифа лёжа
 search = { en = "EZ bar anti gravity press", ru = "жим EZ грифа анти-гравити" }
 kind = "compound"
 pattern = "vertical_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["ez_bar", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

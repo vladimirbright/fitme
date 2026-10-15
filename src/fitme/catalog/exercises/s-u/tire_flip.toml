@@ -2,6 +2,8 @@ id = "tire_flip"
 names = { en = "Tire flip", ru = "Переворот шины" }
 kind = "compound"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["power", "strength"]
 level = "advanced"
 equipment = ["tire"]
 load_unit = "total"

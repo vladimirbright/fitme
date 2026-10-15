@@ -2,6 +2,8 @@ id = "stability_ball_hug"
 names = { en = "Stability ball hug", ru = "Объятие фитбола" }
 kind = "mobility"
 pattern = "mobility"
+measures = ["time"]
+qualities = ["mobility"]
 equipment = ["stability_ball"]
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["lower_back", "shoulder", "knee"]

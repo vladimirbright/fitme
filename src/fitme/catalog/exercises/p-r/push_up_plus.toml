@@ -2,6 +2,8 @@ id = "push_up_plus"
 names = { en = "Push-up plus", ru = "Отжимания с добавочным движением лопаток" }
 kind = "bodyweight"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = []
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["shoulder", "elbow_wrist"]

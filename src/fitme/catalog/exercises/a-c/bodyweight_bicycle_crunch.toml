@@ -3,6 +3,8 @@ names = { en = "Bicycle crunch", ru = "Велосипед (скручивани�
 search = { en = "bicycle crunch", ru = "скручивания велосипед" }
 kind = "bodyweight"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability", "muscular_endurance"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

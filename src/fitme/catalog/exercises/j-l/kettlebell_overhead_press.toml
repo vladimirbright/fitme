@@ -2,6 +2,8 @@ id = "kettlebell_overhead_press"
 names = { en = "Kettlebell overhead press", ru = "Жим гири над головой" }
 kind = "compound"
 pattern = "vertical_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["kettlebell"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

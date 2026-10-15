@@ -2,6 +2,8 @@ id = "barbell_clean_and_press"
 names = { en = "Barbell clean and press", ru = "Взятие штанги на грудь и жим" }
 kind = "compound"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["power", "strength"]
 level = "advanced"
 equipment = ["barbell"]
 load_unit = "total"

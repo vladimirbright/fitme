@@ -2,6 +2,8 @@ id = "cable_v_bar_standing_twist_row"
 names = { en = "Cable V-bar standing twist row", ru = "Тяга V-образной рукояти стоя с поворотом корпуса" }
 kind = "compound"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["strength", "core_stability"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

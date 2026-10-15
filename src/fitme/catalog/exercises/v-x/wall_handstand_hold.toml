@@ -3,6 +3,8 @@ names = { en = "Wall handstand hold", ru = "Стойка на руках у ст
 kind = "bodyweight"
 level = "advanced"
 pattern = "vertical_push"
+measures = ["time"]
+qualities = ["strength", "core_stability"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

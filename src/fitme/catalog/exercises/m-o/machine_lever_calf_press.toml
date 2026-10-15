@@ -2,6 +2,8 @@ id = "machine_lever_calf_press"
 names = { en = "Seated lever calf press", ru = "Жим носками в рычажном тренажёре сидя" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

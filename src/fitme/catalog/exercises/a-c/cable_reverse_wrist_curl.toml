@@ -2,6 +2,8 @@ id = "cable_reverse_wrist_curl"
 names = { en = "Cable reverse wrist curl", ru = "Обратные сгибания запястий в кроссовере" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

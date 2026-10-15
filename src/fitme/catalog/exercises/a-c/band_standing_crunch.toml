@@ -2,6 +2,8 @@ id = "band_standing_crunch"
 names = { en = "Band standing crunch", ru = "Скручивания стоя с лентой" }
 kind = "isolation"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = ["resistance_bands"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

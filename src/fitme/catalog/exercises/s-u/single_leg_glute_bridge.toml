@@ -2,6 +2,8 @@ id = "single_leg_glute_bridge"
 names = { en = "Single-leg glute bridge", ru = "Ягодичный мостик на одной ноге" }
 kind = "bodyweight"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["hypertrophy", "muscular_endurance"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

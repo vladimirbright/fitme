@@ -3,6 +3,8 @@ names = { en = "Planche push-up", ru = "Отжимания в планше" }
 search = { en = "planche push-up", ru = "отжимания планш" }
 kind = "bodyweight"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength"]
 equipment = []
 level = "advanced"
 load_unit = "total"

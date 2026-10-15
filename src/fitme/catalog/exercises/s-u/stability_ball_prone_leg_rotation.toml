@@ -2,6 +2,8 @@ id = "stability_ball_prone_leg_rotation"
 names = { en = "Stability ball prone leg rotation", ru = "Отведение ноги с ротацией лёжа на фитболе" }
 kind = "bodyweight"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy", "core_stability"]
 equipment = ["stability_ball"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

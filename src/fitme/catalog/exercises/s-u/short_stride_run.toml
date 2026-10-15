@@ -2,6 +2,8 @@ id = "short_stride_run"
 names = { en = "Short-stride run", ru = "Бег короткими шагами" }
 kind = "cardio"
 pattern = "conditioning"
+measures = ["time"]
+qualities = ["conditioning"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]

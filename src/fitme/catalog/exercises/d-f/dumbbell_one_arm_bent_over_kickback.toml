@@ -2,6 +2,8 @@ id = "dumbbell_one_arm_bent_over_kickback"
 names = { en = "Dumbbell one-arm triceps kickback", ru = "Разгибание руки с гантелью в наклоне" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

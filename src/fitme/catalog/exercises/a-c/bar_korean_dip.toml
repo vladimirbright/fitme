@@ -3,6 +3,8 @@ names = { en = "Korean dip", ru = "Корейские отжимания на п
 search = { en = "korean dips", ru = "корейские отжимания" }
 kind = "bodyweight"
 pattern = "vertical_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["pull_up_bar"]
 level = "advanced"
 locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]

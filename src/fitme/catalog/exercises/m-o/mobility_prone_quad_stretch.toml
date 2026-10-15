@@ -2,6 +2,8 @@ id = "mobility_prone_quad_stretch"
 names = { en = "Prone quad stretch", ru = "Растяжка квадрицепса лёжа на животе" }
 kind = "mobility"
 pattern = "mobility"
+measures = ["time"]
+qualities = ["mobility"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

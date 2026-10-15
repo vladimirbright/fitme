@@ -2,6 +2,8 @@ id = "dumbbell_side_lying_lateral_raise"
 names = { en = "Dumbbell side-lying lateral raise", ru = "Подъём гантели в сторону лёжа на боку" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

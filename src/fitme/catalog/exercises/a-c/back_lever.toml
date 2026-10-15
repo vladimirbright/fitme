@@ -2,6 +2,8 @@ id = "back_lever"
 names = { en = "Back lever", ru = "Задний вис (бэк-левер)" }
 kind = "bodyweight"
 pattern = "core"
+measures = ["time", "reps"]
+qualities = ["strength", "core_stability"]
 level = "advanced"
 equipment = ["pull_up_bar"]
 load_unit = "total"

@@ -2,6 +2,8 @@ id = "bodyweight_push_up_to_mountain_climber"
 names = { en = "Push-up to mountain climber", ru = "Отжимание с переходом в «скалолаза»" }
 kind = "cardio"
 pattern = "conditioning"
+measures = ["time", "reps"]
+qualities = ["conditioning", "muscular_endurance"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

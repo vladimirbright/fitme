@@ -2,6 +2,8 @@ id = "dumbbell_prone_bench_rear_lateral_raise"
 names = { en = "Dumbbell prone bench rear lateral raise", ru = "Разведение гантелей лёжа на животе на скамье" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells", "bench"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

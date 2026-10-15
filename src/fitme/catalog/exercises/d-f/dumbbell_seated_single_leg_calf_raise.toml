@@ -2,6 +2,8 @@ id = "dumbbell_seated_single_leg_calf_raise"
 names = { en = "Dumbbell seated single-leg calf raise", ru = "Подъём на носок сидя на одной ноге с гантелью" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells", "bench"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

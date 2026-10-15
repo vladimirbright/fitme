@@ -2,6 +2,8 @@ id = "bodyweight_cross_body_crunch"
 names = { en = "Cross-body crunch", ru = "Скручивания с поворотом" }
 kind = "bodyweight"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

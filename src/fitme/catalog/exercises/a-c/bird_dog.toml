@@ -3,6 +3,8 @@ names = { en = "Bird dog", ru = "Вытягивание разноимённых
 search = { en = "bird dog exercise", ru = "упражнение птица-собака" }
 kind = "bodyweight"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

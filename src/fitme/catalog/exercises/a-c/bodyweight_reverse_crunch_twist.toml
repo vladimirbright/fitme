@@ -2,6 +2,8 @@ id = "bodyweight_reverse_crunch_twist"
 names = { en = "Reverse crunch with twist", ru = "Обратные скручивания с поворотом таза" }
 kind = "bodyweight"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

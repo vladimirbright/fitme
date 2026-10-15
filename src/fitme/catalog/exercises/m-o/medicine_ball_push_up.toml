@@ -2,6 +2,8 @@ id = "medicine_ball_push_up"
 names = { en = "Push-up on medicine ball", ru = "Отжимания на медболе" }
 kind = "bodyweight"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["medicine_ball"]
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["shoulder", "elbow_wrist"]

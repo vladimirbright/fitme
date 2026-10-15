@@ -2,6 +2,8 @@ id = "cable_standing_reverse_grip_one_arm_overhead_triceps_extension"
 names = { en = "Cable standing reverse-grip one-arm overhead triceps extension", ru = "Разгибание руки над головой на блоке обратным хватом" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

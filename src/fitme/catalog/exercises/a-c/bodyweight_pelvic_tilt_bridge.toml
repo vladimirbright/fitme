@@ -2,6 +2,8 @@ id = "bodyweight_pelvic_tilt_bridge"
 names = { en = "Pelvic tilt bridge", ru = "Мостик с подкруткой таза" }
 kind = "bodyweight"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["muscular_endurance", "core_stability"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

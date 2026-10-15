@@ -3,6 +3,8 @@ names = { en = "Band lateral walk", ru = "Боковые шаги с ленто�
 search = { en = "lateral band walk", ru = "боковые шаги с мини-лентой" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy", "muscular_endurance"]
 equipment = ["resistance_bands"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

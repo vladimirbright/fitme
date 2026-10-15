@@ -4,6 +4,8 @@ search = { en = "wall ball", ru = "броски мяча в стену" }
 kind = "compound"
 level = "advanced"
 pattern = "conditioning"
+measures = ["reps"]
+qualities = ["power", "conditioning"]
 equipment = ["medicine_ball"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

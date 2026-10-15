@@ -2,6 +2,8 @@ id = "cable_seated_one_arm_alternating_row"
 names = { en = "Cable seated one-arm alternating row", ru = "Тяга блока сидя поочерёдно одной рукой" }
 kind = "compound"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["cable", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

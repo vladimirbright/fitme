@@ -2,6 +2,8 @@ id = "band_one_arm_twisting_seated_row"
 names = { en = "Band one-arm twisting seated row", ru = "Тяга эспандера сидя одной рукой с поворотом" }
 kind = "compound"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["resistance_bands", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

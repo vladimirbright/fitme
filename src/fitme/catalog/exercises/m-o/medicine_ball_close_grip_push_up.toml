@@ -2,6 +2,8 @@ id = "medicine_ball_close_grip_push_up"
 names = { en = "Medicine ball close-grip push-up", ru = "Отжимания узким хватом на медицинболе" }
 kind = "bodyweight"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["medicine_ball"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

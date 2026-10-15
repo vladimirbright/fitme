@@ -3,6 +3,8 @@ names = { en = "Bodyweight triceps extension", ru = "Разгибания на �
 search = { en = "bodyweight triceps extension bar", ru = "разгибания на трицепс с собственным весом на грифе" }
 kind = "bodyweight"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy", "strength"]
 equipment = ["barbell", "rack"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

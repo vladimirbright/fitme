@@ -2,6 +2,8 @@ id = "ez_bar_close_grip_preacher_curl"
 names = { en = "EZ bar close-grip preacher curl", ru = "Сгибания EZ-грифа узким хватом на скамье Скотта" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["ez_bar", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

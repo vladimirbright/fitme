@@ -2,6 +2,8 @@ id = "bodyweight_squat_overhead_reach_twist"
 names = { en = "Squat with overhead reach and twist", ru = "Приседание с вытягиванием рук вверх и поворотом" }
 kind = "bodyweight"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["muscular_endurance", "mobility"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

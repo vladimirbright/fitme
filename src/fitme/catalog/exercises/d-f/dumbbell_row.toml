@@ -2,6 +2,8 @@ id = "dumbbell_row"
 names = { en = "Dumbbell row", ru = "Тяга гантели в наклоне" }
 kind = "compound"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["dumbbells", "bench"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

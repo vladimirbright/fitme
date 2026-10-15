@@ -3,6 +3,8 @@ names = { en = "Bodyweight hip hinge", ru = "Наклоны с отведени�
 search = { en = "bodyweight hip hinge drill", ru = "хип хинж упражнение" }
 kind = "bodyweight"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["mobility"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

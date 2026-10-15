@@ -2,6 +2,8 @@ id = "dumbbell_kneeling_stability_ball_curl"
 names = { en = "Kneeling dumbbell curl over stability ball", ru = "Сгибания с гантелями на фитболе стоя на коленях" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells", "stability_ball"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

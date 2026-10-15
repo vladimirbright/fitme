@@ -2,6 +2,8 @@ id = "cable_stability_ball_overhead_curl"
 names = { en = "Cable overhead curl on stability ball", ru = "Сгибание рук над головой на блоке, сидя на фитболе" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable", "stability_ball"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

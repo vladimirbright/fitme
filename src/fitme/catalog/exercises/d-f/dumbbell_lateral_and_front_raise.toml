@@ -2,6 +2,8 @@ id = "dumbbell_lateral_and_front_raise"
 names = { en = "Dumbbell lateral and front raise combo", ru = "Подъёмы гантелей в стороны и перед собой" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

@@ -2,6 +2,8 @@ id = "barbell_seated_alternate_leg_raise"
 names = { en = "Barbell seated alternating leg raise", ru = "Подъём ног поочерёдно сидя со штангой" }
 kind = "isolation"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = ["barbell", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

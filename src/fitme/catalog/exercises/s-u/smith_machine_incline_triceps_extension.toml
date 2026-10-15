@@ -2,6 +2,8 @@ id = "smith_machine_incline_triceps_extension"
 names = { en = "Smith machine incline triceps extension", ru = "Разгибания на трицепс в тренажёре Смита на наклонной скамье" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["smith_machine", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

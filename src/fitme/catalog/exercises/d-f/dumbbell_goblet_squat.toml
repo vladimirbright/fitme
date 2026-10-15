@@ -2,6 +2,8 @@ id = "dumbbell_goblet_squat"
 names = { en = "Dumbbell goblet squat", ru = "Приседания с гантелью у груди" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["dumbbells"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

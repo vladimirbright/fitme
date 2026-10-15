@@ -2,6 +2,8 @@ id = "dumbbell_alternating_hammer_curl_and_press"
 names = { en = "Dumbbell standing alternating hammer curl and press", ru = "Попеременные молотковые сгибания и жим гантелей стоя" }
 kind = "compound"
 pattern = "vertical_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["dumbbells"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

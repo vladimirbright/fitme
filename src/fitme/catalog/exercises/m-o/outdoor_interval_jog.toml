@@ -2,6 +2,8 @@ id = "outdoor_interval_jog"
 names = { en = "Outdoor interval jog", ru = "Интервальный бег на улице" }
 kind = "cardio"
 pattern = "conditioning"
+measures = ["time"]
+qualities = ["conditioning"]
 equipment = []
 load_unit = "total"
 locations = ["outdoor"]

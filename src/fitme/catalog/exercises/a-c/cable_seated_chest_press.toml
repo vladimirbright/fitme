@@ -2,6 +2,8 @@ id = "cable_seated_chest_press"
 names = { en = "Cable seated chest press", ru = "Жим от груди сидя на блоках" }
 kind = "compound"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["cable", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

@@ -3,6 +3,8 @@ names = { en = "Barbell standing overhead triceps extension", ru = "Францу
 kind = "isolation"
 level = "advanced"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["barbell", "rack"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

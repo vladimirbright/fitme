@@ -2,6 +2,8 @@ id = "machine_wide_stance_leg_press"
 names = { en = "Wide-stance machine leg press", ru = "Жим ногами в тренажёре с широкой постановкой" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

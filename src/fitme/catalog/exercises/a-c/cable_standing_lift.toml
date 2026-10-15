@@ -2,6 +2,8 @@ id = "cable_standing_lift"
 names = { en = "Cable standing lift", ru = "Подъём блока по диагонали снизу вверх" }
 kind = "compound"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability", "strength"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

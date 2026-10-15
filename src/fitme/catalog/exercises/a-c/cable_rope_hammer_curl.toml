@@ -2,6 +2,8 @@ id = "cable_rope_hammer_curl"
 names = { en = "Cable rope hammer curl", ru = "Молотковые сгибания рук на нижнем блоке с канатом" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

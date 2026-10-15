@@ -2,6 +2,8 @@ id = "dumbbell_bench_squat"
 names = { en = "Dumbbell bench squat", ru = "Приседания с гантелями на скамью" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["dumbbells", "bench"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

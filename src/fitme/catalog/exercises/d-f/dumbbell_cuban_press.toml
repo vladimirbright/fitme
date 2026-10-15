@@ -2,6 +2,8 @@ id = "dumbbell_cuban_press"
 names = { en = "Dumbbell Cuban press", ru = "Кубинский жим гантелей" }
 kind = "compound"
 pattern = "vertical_push"
+measures = ["reps"]
+qualities = ["hypertrophy", "strength"]
 equipment = ["dumbbells"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

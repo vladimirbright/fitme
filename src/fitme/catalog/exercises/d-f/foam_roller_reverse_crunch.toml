@@ -2,6 +2,8 @@ id = "foam_roller_reverse_crunch"
 names = { en = "Roller reverse crunch", ru = "Обратные скручивания с валиком между стопами" }
 kind = "bodyweight"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = ["foam_roller"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

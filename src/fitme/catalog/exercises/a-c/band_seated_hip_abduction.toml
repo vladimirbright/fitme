@@ -2,6 +2,8 @@ id = "band_seated_hip_abduction"
 names = { en = "Band seated hip abduction", ru = "Разведение ног сидя с эспандером" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["resistance_bands", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

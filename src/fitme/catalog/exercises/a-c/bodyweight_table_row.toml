@@ -3,6 +3,8 @@ names = { en = "Table inverted row", ru = "Австралийские подтя
 search = { en = "inverted row under a table", ru = "австралийские подтягивания под столом" }
 kind = "bodyweight"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment"]

@@ -2,6 +2,8 @@ id = "cable_one_arm_bent_over_row"
 names = { en = "Cable one-arm bent-over row", ru = "Тяга блока одной рукой в наклоне" }
 kind = "compound"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

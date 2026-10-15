@@ -2,6 +2,8 @@ id = "cable_one_arm_lateral_raise"
 names = { en = "Cable one-arm lateral raise", ru = "Махи в сторону одной рукой на нижнем блоке" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

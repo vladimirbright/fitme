@@ -2,6 +2,8 @@ id = "band_y_raise"
 names = { en = "Band Y-raise", ru = "Подъём рук буквой Y с лентой" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy", "mobility"]
 equipment = ["resistance_bands"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

@@ -2,6 +2,8 @@ id = "barbell_close_grip_bench_press"
 names = { en = "Barbell close-grip bench press", ru = "Жим штанги лёжа узким хватом" }
 kind = "compound"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["barbell", "rack", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

@@ -2,6 +2,8 @@ id = "machine_lateral_raise"
 names = { en = "Machine lateral raise", ru = "Разведение рук в стороны в тренажёре" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

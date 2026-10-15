@@ -2,6 +2,8 @@ id = "cable_reverse_crunch"
 names = { en = "Cable reverse crunch", ru = "Обратные скручивания с блоком" }
 kind = "isolation"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

@@ -2,6 +2,8 @@ id = "band_bulgarian_split_squat"
 names = { en = "Band Bulgarian split squat", ru = "Болгарские выпады с эспандером" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["resistance_bands", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

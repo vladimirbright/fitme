@@ -3,6 +3,8 @@ names = { en = "Barbell stiff-leg good morning", ru = "Наклоны со шт�
 kind = "compound"
 level = "advanced"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["barbell", "rack"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

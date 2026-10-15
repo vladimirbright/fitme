@@ -2,6 +2,8 @@ id = "kettlebell_windmill"
 names = { en = "Kettlebell windmill", ru = "Мельница с гирей" }
 kind = "compound"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability", "mobility"]
 equipment = ["kettlebell"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

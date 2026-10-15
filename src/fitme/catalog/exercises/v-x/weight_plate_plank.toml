@@ -2,6 +2,8 @@ id = "weight_plate_plank"
 names = { en = "Weighted plank", ru = "Планка с блином на спине" }
 kind = "isolation"
 pattern = "core"
+measures = ["time"]
+qualities = ["core_stability"]
 equipment = ["weight_plate"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

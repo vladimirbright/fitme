@@ -2,6 +2,8 @@ id = "barbell_seated_overhead_press"
 names = { en = "Seated barbell overhead press", ru = "Жим штанги над головой сидя" }
 kind = "compound"
 pattern = "vertical_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["barbell", "rack", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

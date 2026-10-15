@@ -3,6 +3,8 @@ names = { en = "Weighted parallel bar dip", ru = "Отжимания на бру
 kind = "bodyweight"
 level = "advanced"
 pattern = "vertical_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["dip_bars", "weight_plate"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

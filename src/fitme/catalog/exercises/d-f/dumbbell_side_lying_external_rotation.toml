@@ -2,6 +2,8 @@ id = "dumbbell_side_lying_external_rotation"
 names = { en = "Dumbbell side-lying external rotation", ru = "Наружная ротация плеча с гантелью лёжа на боку" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["muscular_endurance"]
 equipment = ["dumbbells", "bench"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

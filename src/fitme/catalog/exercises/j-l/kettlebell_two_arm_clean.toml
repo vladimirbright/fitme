@@ -2,6 +2,8 @@ id = "kettlebell_two_arm_clean"
 names = { en = "Kettlebell two-arm clean", ru = "Взятие гири на грудь двумя руками" }
 kind = "compound"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["power", "strength"]
 equipment = ["kettlebell"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

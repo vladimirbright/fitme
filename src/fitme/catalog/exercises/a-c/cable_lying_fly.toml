@@ -2,6 +2,8 @@ id = "cable_lying_fly"
 names = { en = "Cable lying fly", ru = "Сведение рук в кроссовере лёжа" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

@@ -2,6 +2,8 @@ id = "resistance_band_seated_chest_press"
 names = { en = "Resistance band seated chest press", ru = "Жим от груди сидя с лентой" }
 kind = "compound"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["resistance_bands", "bench"]
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["shoulder", "elbow_wrist"]

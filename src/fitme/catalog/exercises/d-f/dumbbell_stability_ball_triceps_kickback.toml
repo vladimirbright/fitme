@@ -2,6 +2,8 @@ id = "dumbbell_stability_ball_triceps_kickback"
 names = { en = "Seated dumbbell kickback on stability ball", ru = "Разгибания рук с гантелями назад сидя на фитболе" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells", "stability_ball"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

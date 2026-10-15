@@ -2,6 +2,8 @@ id = "dumbbell_close_grip_press"
 names = { en = "Dumbbell close-grip press", ru = "Жим гантелей узким хватом" }
 kind = "compound"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["dumbbells", "bench"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

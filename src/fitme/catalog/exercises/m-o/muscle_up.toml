@@ -3,6 +3,8 @@ names = { en = "Muscle-up", ru = "Выход силой" }
 kind = "bodyweight"
 level = "advanced"
 pattern = "vertical_pull"
+measures = ["reps"]
+qualities = ["strength", "power"]
 equipment = ["pull_up_bar"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]

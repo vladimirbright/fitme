@@ -2,6 +2,8 @@ id = "foam_roller_seated_roll_out"
 names = { en = "Seated foam roller reach", ru = "Сидя: выкат ролла вперёд" }
 kind = "mobility"
 pattern = "mobility"
+measures = ["reps"]
+qualities = ["mobility"]
 equipment = ["foam_roller"]
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["shoulder"]

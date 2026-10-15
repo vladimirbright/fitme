@@ -2,6 +2,8 @@ id = "mobility_iron_cross_stretch"
 names = { en = "Iron cross stretch", ru = "Растяжка «железный крест» лёжа" }
 kind = "mobility"
 pattern = "mobility"
+measures = ["reps"]
+qualities = ["mobility"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

@@ -2,6 +2,8 @@ id = "bodyweight_step_calf_raise"
 names = { en = "Step calf raise", ru = "Подъём на носки на ступени" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

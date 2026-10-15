@@ -2,6 +2,8 @@ id = "cable_close_grip_curl"
 names = { en = "Cable close-grip curl", ru = "Сгибания рук на нижнем блоке узким хватом" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

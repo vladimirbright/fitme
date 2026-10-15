@@ -2,6 +2,8 @@ id = "cable_standing_crunch"
 names = { en = "Cable standing crunch", ru = "Скручивания стоя на блоке" }
 kind = "isolation"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

@@ -2,6 +2,8 @@ id = "barbell_squat_jerk"
 names = { en = "Squat jerk", ru = "Толчок со стоек в присед" }
 kind = "compound"
 pattern = "vertical_push"
+measures = ["reps"]
+qualities = ["power", "strength"]
 level = "advanced"
 equipment = ["barbell", "rack"]
 load_unit = "total"

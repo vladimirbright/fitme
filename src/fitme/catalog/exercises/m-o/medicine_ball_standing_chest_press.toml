@@ -2,6 +2,8 @@ id = "medicine_ball_standing_chest_press"
 names = { en = "Medicine ball standing chest press", ru = "Жим медбола от груди стоя" }
 kind = "compound"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["medicine_ball"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

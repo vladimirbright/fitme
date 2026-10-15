@@ -2,6 +2,8 @@ id = "dumbbell_one_leg_stability_ball_fly"
 names = { en = "One-leg dumbbell fly on stability ball", ru = "Разводка гантелей на фитболе на одной ноге" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells", "stability_ball"]
 level = "advanced"
 load_unit = "per_implement"

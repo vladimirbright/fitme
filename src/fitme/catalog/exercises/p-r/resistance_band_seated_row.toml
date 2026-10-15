@@ -2,6 +2,8 @@ id = "resistance_band_seated_row"
 names = { en = "Resistance band seated row", ru = "Тяга эспандера сидя на полу" }
 kind = "compound"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["resistance_bands"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

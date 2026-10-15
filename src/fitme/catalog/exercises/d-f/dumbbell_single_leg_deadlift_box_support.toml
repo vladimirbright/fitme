@@ -2,6 +2,8 @@ id = "dumbbell_single_leg_deadlift_box_support"
 names = { en = "Dumbbell single-leg deadlift with rear foot on box", ru = "Становая на одной ноге с гантелью и опорой стопы на бокс" }
 kind = "compound"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 level = "advanced"
 equipment = ["dumbbells", "plyo_box"]
 load_unit = "single_implement"

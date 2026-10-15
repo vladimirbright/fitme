@@ -2,6 +2,8 @@ id = "medicine_ball_chest_pass"
 names = { en = "Medicine ball chest pass", ru = "Пас медбола от груди" }
 kind = "compound"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["power"]
 equipment = ["medicine_ball"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

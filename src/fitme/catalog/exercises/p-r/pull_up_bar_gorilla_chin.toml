@@ -3,6 +3,8 @@ names = { en = "Gorilla chin-up", ru = "Подтягивание в стиле �
 search = { en = "gorilla chin crunch", ru = "подтягивания горилла с подъёмом коленей" }
 kind = "compound"
 pattern = "vertical_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["pull_up_bar"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]

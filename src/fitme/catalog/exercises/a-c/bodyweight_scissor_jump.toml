@@ -2,6 +2,8 @@ id = "bodyweight_scissor_jump"
 names = { en = "Scissor jump", ru = "Прыжки «ножницы»" }
 kind = "cardio"
 pattern = "conditioning"
+measures = ["reps"]
+qualities = ["power", "conditioning"]
 level = "advanced"
 equipment = []
 load_unit = "total"

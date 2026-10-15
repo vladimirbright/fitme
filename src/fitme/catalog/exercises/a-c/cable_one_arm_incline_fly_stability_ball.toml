@@ -2,6 +2,8 @@ id = "cable_one_arm_incline_fly_stability_ball"
 names = { en = "Cable one-arm incline fly on a stability ball", ru = "Сведение одной руки в кроссовере на фитболе с опорой на наклонную скамью" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable", "stability_ball", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

@@ -2,6 +2,8 @@ id = "kettlebell_seated_press"
 names = { en = "Kettlebell seated press", ru = "Жим гирь сидя" }
 kind = "compound"
 pattern = "vertical_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["kettlebell", "bench"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

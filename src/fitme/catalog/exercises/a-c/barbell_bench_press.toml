@@ -2,6 +2,8 @@ id = "barbell_bench_press"
 names = { en = "Barbell bench press", ru = "Жим штанги лёжа" }
 kind = "compound"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["barbell", "rack", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

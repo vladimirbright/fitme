@@ -2,6 +2,8 @@ id = "machine_seated_dip"
 names = { en = "Seated dip machine", ru = "Отжимания сидя в тренажёре" }
 kind = "compound"
 pattern = "vertical_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

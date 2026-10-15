@@ -3,6 +3,8 @@ names = { en = "Standing ab wheel rollout", ru = "Ролик для пресса
 kind = "isolation"
 level = "advanced"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = ["ab_wheel"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

@@ -2,6 +2,8 @@ id = "archer_push_up"
 names = { en = "Archer push-up", ru = "Отжимания лучника" }
 kind = "bodyweight"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = []
 load_unit = "total"
 level = "advanced"

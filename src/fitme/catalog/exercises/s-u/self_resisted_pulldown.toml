@@ -2,6 +2,8 @@ id = "self_resisted_pulldown"
 names = { en = "Self-resisted pulldown", ru = "Тяга вниз с сопротивлением другой рукой" }
 kind = "bodyweight"
 pattern = "vertical_pull"
+measures = ["reps"]
+qualities = ["hypertrophy", "muscular_endurance"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

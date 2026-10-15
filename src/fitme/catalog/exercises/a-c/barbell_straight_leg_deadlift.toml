@@ -2,6 +2,8 @@ id = "barbell_straight_leg_deadlift"
 names = { en = "Barbell straight-leg deadlift", ru = "Становая тяга со штангой на прямых ногах" }
 kind = "compound"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["barbell"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

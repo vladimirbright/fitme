@@ -2,6 +2,8 @@ id = "ez_bar_lying_triceps_extension_behind_head"
 names = { en = "EZ bar lying close-grip triceps extension behind the head", ru = "Разгибания EZ-грифа лёжа узким хватом за голову" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 level = "advanced"
 equipment = ["ez_bar", "bench"]
 load_unit = "total"

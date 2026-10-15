@@ -3,6 +3,8 @@ names = { en = "Barbell Frankenstein squat", ru = "Фронтальный при
 search = { en = "frankenstein squat", ru = "присед франкенштейн" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 level = "advanced"
 equipment = ["barbell", "rack"]
 load_unit = "total"

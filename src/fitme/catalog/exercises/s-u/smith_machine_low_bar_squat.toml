@@ -2,6 +2,8 @@ id = "smith_machine_low_bar_squat"
 names = { en = "Smith machine low-bar squat", ru = "Приседания в тренажёре Смита с низким положением грифа" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["smith_machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

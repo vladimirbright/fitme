@@ -2,6 +2,8 @@ id = "ez_bar_lying_bent_arm_pullover"
 names = { en = "EZ-bar lying bent-arm pullover", ru = "Пуловер с EZ-грифом лёжа на согнутых руках" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["ez_bar", "bench"]
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["shoulder", "elbow_wrist"]

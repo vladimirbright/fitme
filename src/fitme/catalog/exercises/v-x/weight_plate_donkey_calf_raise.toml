@@ -2,6 +2,8 @@ id = "weight_plate_donkey_calf_raise"
 names = { en = "Weighted donkey calf raise", ru = "Ослиный подъём на носки с отягощением" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["weight_plate"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

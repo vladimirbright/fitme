@@ -2,6 +2,8 @@ id = "cable_rope_incline_bench_row"
 names = { en = "Cable rope row on an incline bench", ru = "Тяга каната на наклонной скамье" }
 kind = "compound"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["cable", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

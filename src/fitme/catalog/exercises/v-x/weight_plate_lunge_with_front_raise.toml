@@ -2,6 +2,8 @@ id = "weight_plate_lunge_with_front_raise"
 names = { en = "Weight plate lunge with front raise", ru = "Выпады с блином и подъёмом перед собой" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["weight_plate"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

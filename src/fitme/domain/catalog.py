@@ -19,6 +19,8 @@ from fitme.domain.enums import (
     ExerciseLevel,
     ExercisePattern,
     Location,
+    Measure,
+    Quality,
     ScreeningFlag,
 )
 from fitme.domain.models import Load
@@ -84,6 +86,13 @@ class Exercise(BaseModel):
     # `services.catalog.available_exercises` and its "every location has a workable
     # full-body set" test to check that each location offers every primary pattern.
     pattern: ExercisePattern
+    # ADR 0009: how a set is prescribed (reps, time, distance), first = the default. A
+    # prescription in another measure is rejected by `guards.plan` (`plan.measure_fit`).
+    measures: list[Measure] = Field(default_factory=lambda: [Measure.REPS], min_length=1)
+    # ADR 0009: the qualities this exercise directly trains, most important first. Drives
+    # the planner's pool and the goal/exercise check; never what the guards allow.
+    # `fitme catalog check` requires every shipped exercise to have at least one.
+    qualities: list[Quality] = Field(default_factory=list)
     equipment: list[Equipment]
     # Required in the catalog for every dumbbell/kettlebell exercise (`fitme catalog check`
     # fails on a missing one via this model); everything else defaults to `total` — see

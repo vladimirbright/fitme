@@ -2,6 +2,8 @@ id = "dumbbell_bench_supported_one_arm_curl"
 names = { en = "Dumbbell one-arm curl over an incline bench", ru = "Сгибание руки с гантелью стоя с опорой на наклонную скамью" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells", "bench"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

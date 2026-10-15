@@ -3,6 +3,8 @@ names = { en = "Weighted three-bench dip", ru = "Отжимания на трё�
 kind = "bodyweight"
 level = "advanced"
 pattern = "vertical_push"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["bench", "weight_plate"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

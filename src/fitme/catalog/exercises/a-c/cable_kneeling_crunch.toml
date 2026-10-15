@@ -3,6 +3,8 @@ names = { en = "Cable kneeling crunch", ru = "Скручивания на бло
 search = { en = "cable crunch", ru = "скручивания на блоке" }
 kind = "isolation"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability", "hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

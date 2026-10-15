@@ -3,6 +3,8 @@ names = { en = "Smith machine incline shoulder raise", ru = "Подъём пле
 search = { en = "smith incline shoulder raise", ru = "протракция лопаток в Смите на наклонной скамье" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["smith_machine", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

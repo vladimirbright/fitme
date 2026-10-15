@@ -2,6 +2,8 @@ id = "barbell_incline_bench_press"
 names = { en = "Barbell incline bench press", ru = "Жим штанги на наклонной скамье" }
 kind = "compound"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["barbell", "rack", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

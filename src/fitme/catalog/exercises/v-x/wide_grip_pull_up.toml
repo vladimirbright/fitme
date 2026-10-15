@@ -2,6 +2,8 @@ id = "wide_grip_pull_up"
 names = { en = "Wide grip pull-up", ru = "Подтягивания широким хватом" }
 kind = "bodyweight"
 pattern = "vertical_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["pull_up_bar"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]

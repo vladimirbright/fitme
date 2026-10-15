@@ -2,6 +2,8 @@ id = "foam_roller_kneeling_lat_stretch"
 names = { en = "Foam roller kneeling lat stretch", ru = "Растяжка широчайших с роликом на коленях" }
 kind = "mobility"
 pattern = "mobility"
+measures = ["time"]
+qualities = ["mobility"]
 equipment = ["foam_roller"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

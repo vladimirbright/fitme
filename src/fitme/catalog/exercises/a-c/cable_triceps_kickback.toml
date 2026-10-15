@@ -2,6 +2,8 @@ id = "cable_triceps_kickback"
 names = { en = "Cable triceps kickback", ru = "Разгибание руки назад в блоке (кикбэк)" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

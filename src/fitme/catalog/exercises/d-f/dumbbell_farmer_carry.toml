@@ -3,6 +3,8 @@ names = { en = "Dumbbell farmer carry", ru = "Ходьба с гантелями
 search = { en = "dumbbell farmer walk", ru = "прогулка фермера с гантелями" }
 kind = "compound"
 pattern = "core"
+measures = ["distance", "time"]
+qualities = ["strength", "core_stability"]
 equipment = ["dumbbells"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

@@ -2,6 +2,8 @@ id = "smith_machine_hip_thrust"
 names = { en = "Smith machine hip thrust", ru = "Ягодичный мостик в Смите" }
 kind = "compound"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["smith_machine", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

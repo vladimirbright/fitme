@@ -2,6 +2,8 @@ id = "dumbbell_side_plank_rear_fly"
 names = { en = "Dumbbell side plank with rear fly", ru = "Боковая планка с разведением гантели" }
 kind = "compound"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability", "hypertrophy"]
 equipment = ["dumbbells"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

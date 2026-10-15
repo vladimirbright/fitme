@@ -2,6 +2,8 @@ id = "dumbbell_decline_triceps_extension"
 names = { en = "Decline dumbbell triceps extension", ru = "Разгибания рук с гантелями на скамье головой вниз" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells", "bench"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

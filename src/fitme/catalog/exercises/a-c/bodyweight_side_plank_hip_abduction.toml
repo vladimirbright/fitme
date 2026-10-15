@@ -2,6 +2,8 @@ id = "bodyweight_side_plank_hip_abduction"
 names = { en = "Side plank with leg raise", ru = "Боковая планка с отведением ноги" }
 kind = "bodyweight"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

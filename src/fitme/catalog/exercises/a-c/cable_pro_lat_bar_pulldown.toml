@@ -2,6 +2,8 @@ id = "cable_pro_lat_bar_pulldown"
 names = { en = "Cable pulldown with pro lat bar", ru = "Тяга верхнего блока профессиональным грифом" }
 kind = "compound"
 pattern = "vertical_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

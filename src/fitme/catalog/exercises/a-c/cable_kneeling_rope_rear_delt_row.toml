@@ -2,6 +2,8 @@ id = "cable_kneeling_rope_rear_delt_row"
 names = { en = "Cable kneeling rope rear delt row", ru = "Тяга каната на блоке с колен на заднюю дельту" }
 kind = "compound"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["hypertrophy", "strength"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

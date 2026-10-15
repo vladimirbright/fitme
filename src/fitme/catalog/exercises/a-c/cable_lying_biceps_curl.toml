@@ -2,6 +2,8 @@ id = "cable_lying_biceps_curl"
 names = { en = "Cable lying biceps curl", ru = "Сгибание рук лёжа на нижнем блоке" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

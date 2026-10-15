@@ -2,6 +2,8 @@ id = "mobility_cross_body_shoulder_stretch"
 names = { en = "Cross-body shoulder stretch", ru = "Растяжка заднего пучка плеча рукой поперёк груди" }
 kind = "mobility"
 pattern = "mobility"
+measures = ["time"]
+qualities = ["mobility"]
 equipment = []
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["shoulder"]

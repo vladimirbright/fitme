@@ -2,6 +2,8 @@ id = "dumbbell_stability_ball_concentration_curl"
 names = { en = "Dumbbell concentration curl on stability ball", ru = "Концентрированные сгибания с гантелью сидя на фитболе" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells", "stability_ball"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

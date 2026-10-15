@@ -2,6 +2,8 @@ id = "barbell_front_raise"
 names = { en = "Barbell front raise", ru = "Подъём штанги перед собой" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["barbell"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

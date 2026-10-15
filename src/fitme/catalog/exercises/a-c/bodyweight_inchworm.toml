@@ -2,6 +2,8 @@ id = "bodyweight_inchworm"
 names = { en = "Inchworm", ru = "Гусеница" }
 kind = "cardio"
 pattern = "conditioning"
+measures = ["reps"]
+qualities = ["mobility", "conditioning"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

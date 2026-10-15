@@ -2,6 +2,8 @@ id = "dumbbell_one_arm_bench_neutral_wrist_curl"
 names = { en = "One-arm dumbbell neutral-grip wrist curl over bench", ru = "Сгибания запястья с гантелью одной рукой нейтральным хватом над скамьёй" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells", "bench"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

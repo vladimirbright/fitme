@@ -3,6 +3,8 @@ names = { en = "Otis-up", ru = "Подъём корпуса с жимом бли
 search = { en = "otis up exercise", ru = "otis up упражнение" }
 kind = "isolation"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = ["weight_plate"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

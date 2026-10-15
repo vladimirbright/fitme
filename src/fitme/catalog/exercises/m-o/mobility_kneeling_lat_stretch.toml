@@ -2,6 +2,8 @@ id = "mobility_kneeling_lat_stretch"
 names = { en = "Kneeling lat stretch", ru = "Растяжка широчайших стоя на коленях" }
 kind = "mobility"
 pattern = "mobility"
+measures = ["time"]
+qualities = ["mobility"]
 equipment = []
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["shoulder"]

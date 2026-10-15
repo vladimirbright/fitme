@@ -2,6 +2,8 @@ id = "ez_bar_reverse_curl"
 names = { en = "EZ-bar reverse curl", ru = "Сгибания рук с EZ-грифом обратным хватом" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["ez_bar"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

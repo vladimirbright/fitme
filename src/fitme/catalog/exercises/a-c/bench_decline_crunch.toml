@@ -2,6 +2,8 @@ id = "bench_decline_crunch"
 names = { en = "Decline bench crunch", ru = "Скручивания на скамье головой вниз" }
 kind = "isolation"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = ["bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

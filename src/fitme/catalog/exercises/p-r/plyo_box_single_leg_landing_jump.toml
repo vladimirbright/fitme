@@ -2,6 +2,8 @@ id = "plyo_box_single_leg_landing_jump"
 names = { en = "Box jump with single-leg landing", ru = "Запрыгивание на бокс с приземлением на одну ногу" }
 kind = "bodyweight"
 pattern = "conditioning"
+measures = ["reps"]
+qualities = ["power"]
 equipment = ["plyo_box"]
 level = "advanced"
 load_unit = "total"

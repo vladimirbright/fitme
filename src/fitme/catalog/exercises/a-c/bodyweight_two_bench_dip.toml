@@ -2,6 +2,8 @@ id = "bodyweight_two_bench_dip"
 names = { en = "Two-bench dip", ru = "Обратные отжимания между двумя скамьями" }
 kind = "bodyweight"
 pattern = "vertical_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

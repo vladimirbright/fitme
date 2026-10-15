@@ -3,6 +3,8 @@ names = { en = "Band front raise", ru = "Подъём рук перед собо
 search = { en = "band front raise", ru = "подъём рук перед собой с резинкой" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["resistance_bands"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

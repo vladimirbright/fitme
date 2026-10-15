@@ -2,6 +2,8 @@ id = "kettlebell_double_snatch"
 names = { en = "Kettlebell double snatch", ru = "Рывок двух гирь" }
 kind = "compound"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["power", "conditioning"]
 equipment = ["kettlebell"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

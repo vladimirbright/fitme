@@ -2,6 +2,8 @@ id = "side_plank"
 names = { en = "Side plank", ru = "Боковая планка" }
 kind = "bodyweight"
 pattern = "core"
+measures = ["time"]
+qualities = ["core_stability"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

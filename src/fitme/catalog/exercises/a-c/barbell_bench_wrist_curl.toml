@@ -2,6 +2,8 @@ id = "barbell_bench_wrist_curl"
 names = { en = "Barbell wrist curl over a bench", ru = "Сгибания запястий со штангой через скамью" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["barbell", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

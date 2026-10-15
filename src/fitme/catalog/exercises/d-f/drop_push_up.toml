@@ -2,6 +2,8 @@ id = "drop_push_up"
 names = { en = "Drop push-up", ru = "Отжимания с опусканием на колени" }
 kind = "bodyweight"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "muscular_endurance"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

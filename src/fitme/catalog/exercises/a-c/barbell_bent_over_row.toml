@@ -2,6 +2,8 @@ id = "barbell_bent_over_row"
 names = { en = "Barbell bent-over row", ru = "Тяга штанги в наклоне" }
 kind = "compound"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["barbell"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

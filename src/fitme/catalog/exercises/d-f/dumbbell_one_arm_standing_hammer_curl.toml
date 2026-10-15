@@ -2,6 +2,8 @@ id = "dumbbell_one_arm_standing_hammer_curl"
 names = { en = "One-arm standing dumbbell hammer curl", ru = "Молотковые сгибания одной рукой стоя" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

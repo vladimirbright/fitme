@@ -2,6 +2,8 @@ id = "dumbbell_decline_one_arm_hammer_press"
 names = { en = "Decline one-arm dumbbell hammer press", ru = "Жим гантели одной рукой нейтральным хватом на скамье головой вниз" }
 kind = "compound"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["dumbbells", "bench"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

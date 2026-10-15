@@ -2,6 +2,8 @@ id = "barbell_kneeling_squat"
 names = { en = "Barbell kneeling squat", ru = "Приседания со штангой на коленях" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 level = "advanced"
 equipment = ["barbell", "rack"]
 load_unit = "total"

@@ -2,6 +2,8 @@ id = "bodyweight_elbow_to_knee"
 names = { en = "Elbow-to-knee crunch", ru = "Скручивания локоть к колену" }
 kind = "bodyweight"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

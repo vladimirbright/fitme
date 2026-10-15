@@ -2,6 +2,8 @@ id = "hanging_knee_raise"
 names = { en = "Hanging knee raise", ru = "Подъём коленей в висе" }
 kind = "bodyweight"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = ["pull_up_bar"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]

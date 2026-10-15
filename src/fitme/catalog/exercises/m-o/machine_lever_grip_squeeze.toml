@@ -2,6 +2,8 @@ id = "machine_lever_grip_squeeze"
 names = { en = "Lever grip squeeze", ru = "Сжатие рукоятей в рычажном тренажёре" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

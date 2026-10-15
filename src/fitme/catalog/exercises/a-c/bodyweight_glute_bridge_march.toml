@@ -2,6 +2,8 @@ id = "bodyweight_glute_bridge_march"
 names = { en = "Glute bridge march", ru = "Ягодичный мостик с маршем" }
 kind = "bodyweight"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["core_stability", "hypertrophy"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

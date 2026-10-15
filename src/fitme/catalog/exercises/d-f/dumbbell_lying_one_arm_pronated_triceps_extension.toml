@@ -2,6 +2,8 @@ id = "dumbbell_lying_one_arm_pronated_triceps_extension"
 names = { en = "Dumbbell lying one-arm pronated triceps extension", ru = "Разгибание руки с гантелью лёжа хватом сверху" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells", "bench"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

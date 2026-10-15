@@ -2,6 +2,8 @@ id = "mobility_neck_side_stretch_hand_assist"
 names = { en = "Neck side stretch with hand", ru = "Растяжка шеи в сторону с рукой" }
 kind = "mobility"
 pattern = "mobility"
+measures = ["time"]
+qualities = ["mobility"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

@@ -2,6 +2,8 @@ id = "bodyweight_seated_kick_out"
 names = { en = "Seated kick-out", ru = "Выпрямление ног сидя" }
 kind = "bodyweight"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = ["bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

@@ -2,6 +2,8 @@ id = "barbell_thruster"
 names = { en = "Barbell thruster", ru = "Трастер со штангой" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["power", "strength", "conditioning"]
 equipment = ["barbell", "rack"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

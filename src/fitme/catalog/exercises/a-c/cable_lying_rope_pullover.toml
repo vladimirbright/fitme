@@ -2,6 +2,8 @@ id = "cable_lying_rope_pullover"
 names = { en = "Cable lying rope pullover", ru = "Пуловер на блоке лёжа с канатной рукоятью" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

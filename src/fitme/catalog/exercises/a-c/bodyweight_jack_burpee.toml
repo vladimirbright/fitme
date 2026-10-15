@@ -2,6 +2,8 @@ id = "bodyweight_jack_burpee"
 names = { en = "Burpee with push-up and jack", ru = "Бёрпи с отжиманием и прыжком «звёздочка»" }
 kind = "cardio"
 pattern = "conditioning"
+measures = ["reps", "time"]
+qualities = ["conditioning", "muscular_endurance"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

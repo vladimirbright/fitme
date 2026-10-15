@@ -2,6 +2,8 @@ id = "medicine_ball_russian_twist"
 names = { en = "Medicine ball Russian twist", ru = "Русские скручивания с медболом" }
 kind = "isolation"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = ["medicine_ball"]
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["lower_back"]

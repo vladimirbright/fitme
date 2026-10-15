@@ -2,6 +2,8 @@ id = "incline_push_up"
 names = { en = "Incline push-up", ru = "Отжимания от опоры" }
 kind = "bodyweight"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["muscular_endurance", "strength"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

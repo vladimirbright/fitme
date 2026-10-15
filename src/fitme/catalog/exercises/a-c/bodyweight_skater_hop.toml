@@ -2,6 +2,8 @@ id = "bodyweight_skater_hop"
 names = { en = "Skater hop", ru = "Прыжки конькобежца" }
 kind = "cardio"
 pattern = "conditioning"
+measures = ["reps"]
+qualities = ["agility", "power"]
 level = "advanced"
 equipment = []
 load_unit = "total"

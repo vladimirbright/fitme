@@ -3,6 +3,8 @@ names = { en = "Barbell standing rollout", ru = "Выкатывание со ш�
 kind = "isolation"
 level = "advanced"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = ["barbell"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

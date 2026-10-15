@@ -2,6 +2,8 @@ id = "barbell_rear_delt_row"
 names = { en = "Barbell rear delt row", ru = "Тяга штанги в наклоне широким хватом на заднюю дельту" }
 kind = "compound"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["hypertrophy", "strength"]
 equipment = ["barbell"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

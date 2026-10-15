@@ -2,6 +2,8 @@ id = "barbell_forward_lunge"
 names = { en = "Barbell forward lunge", ru = "Выпады вперёд со штангой" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["barbell", "rack"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

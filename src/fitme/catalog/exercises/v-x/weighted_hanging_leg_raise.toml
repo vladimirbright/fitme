@@ -3,6 +3,8 @@ names = { en = "Weighted hanging leg raise", ru = "Подъём ног в вис
 kind = "isolation"
 level = "advanced"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = ["pull_up_bar", "weight_plate"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

@@ -2,6 +2,8 @@ id = "seated_chair_forward_fold"
 names = { en = "Seated chair forward fold", ru = "Наклон вперёд сидя на стуле" }
 kind = "mobility"
 pattern = "mobility"
+measures = ["time"]
+qualities = ["mobility"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment"]

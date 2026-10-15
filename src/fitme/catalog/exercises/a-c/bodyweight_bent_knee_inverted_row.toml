@@ -3,6 +3,8 @@ names = { en = "Bent-knee inverted row", ru = "Австралийские под
 search = { en = "bent knee inverted row", ru = "австралийские подтягивания" }
 kind = "bodyweight"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["pull_up_bar"]
 locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]
 loads_areas = ["shoulder", "elbow_wrist"]

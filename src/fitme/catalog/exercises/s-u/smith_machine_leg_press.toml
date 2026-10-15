@@ -2,6 +2,8 @@ id = "smith_machine_leg_press"
 names = { en = "Smith machine leg press", ru = "Жим ногами в тренажёре Смита" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 level = "advanced"
 equipment = ["smith_machine", "bench"]
 load_unit = "total"

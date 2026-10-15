@@ -2,6 +2,8 @@ id = "smith_machine_full_squat"
 names = { en = "Smith machine deep squat", ru = "Глубокие приседания в тренажёре Смита" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["smith_machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

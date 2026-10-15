@@ -2,6 +2,8 @@ id = "shoulder_circles"
 names = { en = "Shoulder circles", ru = "Круговые движения плечами" }
 kind = "mobility"
 pattern = "mobility"
+measures = ["reps"]
+qualities = ["mobility"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

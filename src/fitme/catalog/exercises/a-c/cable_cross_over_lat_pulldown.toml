@@ -2,6 +2,8 @@ id = "cable_cross_over_lat_pulldown"
 names = { en = "Cable crossover pulldown", ru = "Тяга верхних блоков с перекрёстом" }
 kind = "compound"
 pattern = "vertical_pull"
+measures = ["reps"]
+qualities = ["hypertrophy", "strength"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

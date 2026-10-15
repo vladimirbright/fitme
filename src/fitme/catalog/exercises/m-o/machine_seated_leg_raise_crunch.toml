@@ -2,6 +2,8 @@ id = "machine_seated_leg_raise_crunch"
 names = { en = "Machine seated leg raise crunch", ru = "Подъём ног со скручиванием в тренажёре" }
 kind = "isolation"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability", "hypertrophy"]
 equipment = ["machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

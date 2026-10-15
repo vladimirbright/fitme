@@ -3,6 +3,8 @@ names = { en = "Push-up on BOSU ball", ru = "Отжимания на полус�
 search = { en = "push up on bosu ball", ru = "отжимания на босу" }
 kind = "bodyweight"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "core_stability"]
 equipment = ["bosu_ball"]
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["shoulder", "elbow_wrist"]

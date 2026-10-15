@@ -2,6 +2,8 @@ id = "weight_plate_russian_twist_feet_up"
 names = { en = "Weight plate Russian twist, feet up", ru = "Русские скручивания с блином, ноги подняты" }
 kind = "isolation"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = ["weight_plate"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

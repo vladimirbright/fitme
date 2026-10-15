@@ -2,6 +2,8 @@ id = "cable_bench_seated_wide_grip_row"
 names = { en = "Cable seated wide-grip row on a bench", ru = "Тяга нижнего блока сидя на скамье широким хватом" }
 kind = "compound"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["cable", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

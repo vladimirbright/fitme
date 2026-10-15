@@ -3,6 +3,8 @@ names = { en = "Dumbbell standing around the world", ru = "Круговые дв
 search = { en = "dumbbell around the world shoulder", ru = "around the world с гантелями" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

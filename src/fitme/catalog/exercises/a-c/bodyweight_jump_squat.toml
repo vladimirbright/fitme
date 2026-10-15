@@ -2,6 +2,8 @@ id = "bodyweight_jump_squat"
 names = { en = "Jump squat", ru = "Приседания с выпрыгиванием" }
 kind = "bodyweight"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["power"]
 level = "advanced"
 equipment = []
 load_unit = "total"

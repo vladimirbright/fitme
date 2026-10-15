@@ -8,6 +8,8 @@ names = { en = "Dumbbell suitcase carry", ru = "Ходьба с гантелью
 search = { en = "dumbbell suitcase carry", ru = "suitcase carry с гантелью" }
 kind = "compound"
 pattern = "core"
+measures = ["distance", "time"]
+qualities = ["strength", "core_stability"]
 equipment = ["dumbbells"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

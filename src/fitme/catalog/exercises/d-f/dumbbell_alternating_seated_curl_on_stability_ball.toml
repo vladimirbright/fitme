@@ -2,6 +2,8 @@ id = "dumbbell_alternating_seated_curl_on_stability_ball"
 names = { en = "Dumbbell alternating seated curl on stability ball", ru = "Попеременные сгибания рук сидя на фитболе" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells", "stability_ball"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

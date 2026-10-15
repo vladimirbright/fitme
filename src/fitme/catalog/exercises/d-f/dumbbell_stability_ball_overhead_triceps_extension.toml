@@ -2,6 +2,8 @@ id = "dumbbell_stability_ball_overhead_triceps_extension"
 names = { en = "Dumbbell one-arm overhead triceps extension on a stability ball", ru = "Разгибание руки с гантелью из-за головы сидя на фитболе" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells", "stability_ball"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

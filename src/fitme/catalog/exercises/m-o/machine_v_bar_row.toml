@@ -2,6 +2,8 @@ id = "machine_v_bar_row"
 names = { en = "Machine V-bar row", ru = "Тяга V-рукояти в тренажёре" }
 kind = "compound"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["machine"]
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["shoulder", "elbow_wrist"]

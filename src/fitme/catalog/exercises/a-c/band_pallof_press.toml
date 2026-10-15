@@ -3,6 +3,8 @@ names = { en = "Band Pallof press", ru = "Жим Паллофа с лентой"
 search = { en = "band pallof press", ru = "жим паллофа с лентой" }
 kind = "isolation"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = ["resistance_bands"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

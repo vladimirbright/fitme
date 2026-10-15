@@ -2,6 +2,8 @@ id = "weight_plate_straight_bar_dip"
 names = { en = "Weighted straight bar dip", ru = "Отжимания на перекладине с отягощением" }
 kind = "compound"
 pattern = "vertical_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["pull_up_bar", "weight_plate"]
 level = "advanced"
 locations = ["public_gym", "studio_gym", "home_equipment"]

@@ -3,6 +3,8 @@ names = { en = "Stability ball plank leg raise", ru = "Подъём ноги в 
 search = { en = "exercise ball prone leg raise", ru = "подъём ног на фитболе в упоре лёжа" }
 kind = "bodyweight"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = ["stability_ball"]
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["shoulder", "elbow_wrist", "lower_back"]

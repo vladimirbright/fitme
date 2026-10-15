@@ -2,6 +2,8 @@ id = "dumbbell_reverse_grip_incline_bench_one_arm_row"
 names = { en = "Reverse-grip incline-bench one-arm dumbbell row", ru = "Тяга гантели обратным хватом одной рукой с опорой на наклонную скамью" }
 kind = "compound"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["dumbbells", "bench"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

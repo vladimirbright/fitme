@@ -2,6 +2,8 @@ id = "barbell_bent_arm_pullover"
 names = { en = "Barbell bent-arm pullover", ru = "Пуловер со штангой с согнутыми руками" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 level = "advanced"
 equipment = ["barbell", "bench"]
 load_unit = "total"

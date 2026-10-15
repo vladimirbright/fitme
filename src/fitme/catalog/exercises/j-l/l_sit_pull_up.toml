@@ -3,6 +3,8 @@ names = { en = "L-sit pull-up", ru = "Подтягивания в уголке" 
 kind = "bodyweight"
 level = "advanced"
 pattern = "vertical_pull"
+measures = ["reps"]
+qualities = ["strength", "core_stability"]
 equipment = ["pull_up_bar"]
 locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]
 loads_areas = ["shoulder", "elbow_wrist", "neck", "hip"]

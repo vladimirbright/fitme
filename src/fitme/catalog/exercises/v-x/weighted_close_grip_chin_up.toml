@@ -3,6 +3,8 @@ names = { en = "Weighted close-grip chin-up", ru = "Подтягивания у�
 kind = "compound"
 level = "advanced"
 pattern = "vertical_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["pull_up_bar", "weight_plate"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

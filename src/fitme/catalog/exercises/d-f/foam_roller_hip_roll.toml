@@ -2,6 +2,8 @@ id = "foam_roller_hip_roll"
 names = { en = "Foam roller seated hip roll", ru = "Растяжка бёдер с роликом сидя" }
 kind = "mobility"
 pattern = "mobility"
+measures = ["reps"]
+qualities = ["mobility"]
 equipment = ["foam_roller"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

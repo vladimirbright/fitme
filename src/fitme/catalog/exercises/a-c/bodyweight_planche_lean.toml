@@ -2,6 +2,8 @@ id = "bodyweight_planche_lean"
 names = { en = "Planche lean", ru = "Наклон в планше" }
 kind = "bodyweight"
 pattern = "core"
+measures = ["time"]
+qualities = ["strength", "core_stability"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

@@ -2,6 +2,8 @@ id = "bodyweight_backward_jump"
 names = { en = "Backward jump", ru = "Прыжок назад" }
 kind = "bodyweight"
 pattern = "conditioning"
+measures = ["reps"]
+qualities = ["power"]
 level = "advanced"
 equipment = []
 load_unit = "total"

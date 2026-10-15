@@ -2,6 +2,8 @@ id = "trap_bar_deadlift"
 names = { en = "Trap bar deadlift", ru = "Становая тяга с трэп-грифом" }
 kind = "compound"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["trap_bar"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

@@ -3,6 +3,8 @@ names = { en = "Cable lying leg curl", ru = "Сгибание ног лёжа н
 search = { en = "cable inverse leg curl", ru = "сгибание ног на нижнем блоке лёжа" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

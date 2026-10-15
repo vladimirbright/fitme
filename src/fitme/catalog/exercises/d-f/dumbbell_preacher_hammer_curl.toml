@@ -2,6 +2,8 @@ id = "dumbbell_preacher_hammer_curl"
 names = { en = "Dumbbell hammer preacher curl", ru = "Молотковые сгибания с гантелями на скамье Скотта" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells", "bench"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

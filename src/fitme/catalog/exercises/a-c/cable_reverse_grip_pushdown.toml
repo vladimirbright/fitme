@@ -2,6 +2,8 @@ id = "cable_reverse_grip_pushdown"
 names = { en = "Cable reverse-grip pushdown", ru = "Разгибание рук на верхнем блоке обратным хватом" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

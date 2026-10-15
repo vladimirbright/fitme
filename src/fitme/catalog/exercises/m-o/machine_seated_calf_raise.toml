@@ -2,6 +2,8 @@ id = "machine_seated_calf_raise"
 names = { en = "Seated calf raise", ru = "Подъём на носки сидя в тренажёре" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

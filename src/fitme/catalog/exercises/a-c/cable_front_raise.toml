@@ -2,6 +2,8 @@ id = "cable_front_raise"
 names = { en = "Cable front raise", ru = "Подъём перед собой на нижнем блоке" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

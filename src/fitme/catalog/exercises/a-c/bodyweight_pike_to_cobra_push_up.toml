@@ -3,6 +3,8 @@ names = { en = "Pike-to-cobra push-up", ru = "Отжимание из уголк
 search = { en = "dive bomber push-up", ru = "отжимания дайв-бомбер" }
 kind = "bodyweight"
 pattern = "vertical_push"
+measures = ["reps"]
+qualities = ["muscular_endurance", "mobility"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

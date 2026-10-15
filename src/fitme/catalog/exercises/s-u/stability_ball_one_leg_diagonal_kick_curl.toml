@@ -2,6 +2,8 @@ id = "stability_ball_one_leg_diagonal_kick_curl"
 names = { en = "Stability ball one-leg diagonal kick curl", ru = "Мостик на фитболе на одной ноге с диагональным махом" }
 kind = "bodyweight"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["stability_ball"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

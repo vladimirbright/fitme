@@ -2,6 +2,8 @@ id = "barbell_power_clean"
 names = { en = "Barbell power clean", ru = "Силовое взятие штанги на грудь" }
 kind = "compound"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["power", "strength"]
 level = "advanced"
 equipment = ["barbell"]
 load_unit = "total"

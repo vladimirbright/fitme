@@ -3,6 +3,8 @@ names = { en = "World's greatest stretch", ru = "Лучшая растяжка �
 search = { en = "world's greatest stretch", ru = "лучшая растяжка в мире" }
 kind = "mobility"
 pattern = "mobility"
+measures = ["reps"]
+qualities = ["mobility"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

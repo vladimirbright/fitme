@@ -2,6 +2,8 @@ id = "stability_ball_lat_stretch"
 names = { en = "Stability ball lat stretch", ru = "Растяжка широчайших на фитболе" }
 kind = "mobility"
 pattern = "mobility"
+measures = ["time"]
+qualities = ["mobility"]
 equipment = ["stability_ball"]
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["shoulder"]

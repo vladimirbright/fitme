@@ -2,6 +2,8 @@ id = "barbell_wide_grip_overhead_press"
 names = { en = "Barbell wide-grip standing overhead press", ru = "Жим штанги стоя широким хватом" }
 kind = "compound"
 pattern = "vertical_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["barbell", "rack"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

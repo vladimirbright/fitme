@@ -2,6 +2,8 @@ id = "band_step_up"
 names = { en = "Band step-up", ru = "Зашагивания на скамью с эспандером" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["resistance_bands", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

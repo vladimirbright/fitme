@@ -2,6 +2,8 @@ id = "dumbbell_forward_lunge_triceps_extension"
 names = { en = "Dumbbell forward lunge with overhead triceps extension", ru = "Выпады вперёд с разгибанием рук с гантелями над головой" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["dumbbells"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

@@ -4,6 +4,8 @@ search = { en = "one arm medicine ball slam", ru = "бросок медбола 
 kind = "cardio"
 level = "advanced"
 pattern = "conditioning"
+measures = ["reps"]
+qualities = ["power", "conditioning"]
 equipment = ["medicine_ball"]
 # Conditioning, but loaded with a real medicine ball: its kg matters, so it stays kg-loadable.
 kg_loadable = true

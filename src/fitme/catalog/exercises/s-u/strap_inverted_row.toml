@@ -2,6 +2,8 @@ id = "strap_inverted_row"
 names = { en = "Strap inverted row", ru = "Обратная тяга на петлях" }
 kind = "bodyweight"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 # Suspension straps have no Equipment value: the bar is the anchor, and the move is limited to gyms,
 # which are assumed to have straps, so a home pull-up bar alone never selects it.
 equipment = ["pull_up_bar"]

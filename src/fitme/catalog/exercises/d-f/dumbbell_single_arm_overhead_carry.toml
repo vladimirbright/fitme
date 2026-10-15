@@ -2,6 +2,8 @@ id = "dumbbell_single_arm_overhead_carry"
 names = { en = "Dumbbell single-arm overhead carry", ru = "Ходьба с гантелью над головой одной рукой" }
 kind = "compound"
 pattern = "core"
+measures = ["distance", "time"]
+qualities = ["strength", "core_stability"]
 equipment = ["dumbbells"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

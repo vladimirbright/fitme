@@ -2,6 +2,8 @@ id = "kettlebell_alternating_floor_press"
 names = { en = "Kettlebell alternating floor press", ru = "Жим гирь с пола попеременно" }
 kind = "compound"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["kettlebell"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

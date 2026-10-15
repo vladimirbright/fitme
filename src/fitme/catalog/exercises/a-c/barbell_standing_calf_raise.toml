@@ -2,6 +2,8 @@ id = "barbell_standing_calf_raise"
 names = { en = "Barbell standing calf raise", ru = "Подъём на носки стоя со штангой" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["barbell", "rack"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

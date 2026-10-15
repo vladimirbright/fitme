@@ -2,6 +2,8 @@ id = "bodyweight_star_jump"
 names = { en = "Star jump", ru = "Прыжок «звезда»" }
 kind = "cardio"
 pattern = "conditioning"
+measures = ["reps", "time"]
+qualities = ["conditioning", "power"]
 level = "advanced"
 equipment = []
 load_unit = "total"

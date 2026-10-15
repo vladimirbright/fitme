@@ -2,6 +2,8 @@ id = "dumbbell_lying_triceps_extension"
 names = { en = "Dumbbell lying triceps extension", ru = "Разгибания рук с гантелями лёжа на трицепс" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells", "bench"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

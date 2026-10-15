@@ -3,6 +3,8 @@ names = { en = "Hand-assisted Nordic hamstring curl", ru = "Нордическо
 search = { en = "assisted nordic hamstring curl", ru = "нордические сгибания ног" }
 kind = "bodyweight"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 level = "advanced"
 equipment = ["machine"]
 load_unit = "total"

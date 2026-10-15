@@ -2,6 +2,8 @@ id = "machine_reverse_hyperextension"
 names = { en = "Machine reverse hyperextension", ru = "Обратная гиперэкстензия в тренажёре" }
 kind = "isolation"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

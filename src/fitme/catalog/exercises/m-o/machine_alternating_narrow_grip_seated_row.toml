@@ -2,6 +2,8 @@ id = "machine_alternating_narrow_grip_seated_row"
 names = { en = "Machine alternating narrow-grip seated row", ru = "Тяга сидя в тренажёре узким хватом попеременно" }
 kind = "compound"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["machine"]
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["shoulder", "elbow_wrist"]

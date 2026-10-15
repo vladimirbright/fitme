@@ -3,6 +3,8 @@ names = { en = "Outdoor sprint intervals", ru = "Спринтерские рыв
 kind = "cardio"
 level = "advanced"
 pattern = "conditioning"
+measures = ["time", "distance"]
+qualities = ["conditioning", "power"]
 equipment = []
 load_unit = "total"
 locations = ["outdoor"]

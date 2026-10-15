@@ -2,6 +2,8 @@ id = "barbell_bent_over_reverse_raise"
 names = { en = "Barbell bent-over reverse raise", ru = "Разведение со штангой в наклоне на заднюю дельту" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["barbell"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

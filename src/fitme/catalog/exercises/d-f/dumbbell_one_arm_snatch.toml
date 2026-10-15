@@ -2,6 +2,8 @@ id = "dumbbell_one_arm_snatch"
 names = { en = "Dumbbell one-arm snatch", ru = "Рывок гантели одной рукой" }
 kind = "compound"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["power", "strength"]
 level = "advanced"
 equipment = ["dumbbells"]
 load_unit = "single_implement"

@@ -2,6 +2,8 @@ id = "ab_wheel_kneeling_rollout"
 names = { en = "Kneeling ab wheel rollout", ru = "Ролик для пресса с колен" }
 kind = "isolation"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = ["ab_wheel"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

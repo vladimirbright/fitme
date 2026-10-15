@@ -2,6 +2,8 @@ id = "bodyweight_forward_lunge"
 names = { en = "Bodyweight forward lunge", ru = "Выпады вперёд с собственным весом" }
 kind = "bodyweight"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["muscular_endurance", "hypertrophy"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

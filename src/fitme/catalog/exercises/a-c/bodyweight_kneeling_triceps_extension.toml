@@ -2,6 +2,8 @@ id = "bodyweight_kneeling_triceps_extension"
 names = { en = "Kneeling bodyweight triceps extension", ru = "Разгибание рук от пола с колен на трицепс" }
 kind = "bodyweight"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment"]

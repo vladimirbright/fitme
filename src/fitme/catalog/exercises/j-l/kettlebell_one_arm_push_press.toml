@@ -2,6 +2,8 @@ id = "kettlebell_one_arm_push_press"
 names = { en = "Kettlebell one-arm push press", ru = "Швунг гири одной рукой" }
 kind = "compound"
 pattern = "vertical_push"
+measures = ["reps"]
+qualities = ["strength", "power"]
 equipment = ["kettlebell"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

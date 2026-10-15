@@ -2,6 +2,8 @@ id = "cable_v_bar_seated_row"
 names = { en = "Cable V-bar seated row", ru = "Тяга нижнего блока сидя V-образной рукоятью" }
 kind = "compound"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

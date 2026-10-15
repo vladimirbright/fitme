@@ -2,6 +2,8 @@ id = "band_assisted_pull_up"
 names = { en = "Band-assisted pull-up", ru = "Подтягивания с резиновой лентой" }
 kind = "bodyweight"
 pattern = "vertical_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["pull_up_bar", "resistance_bands"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

@@ -2,6 +2,8 @@ id = "dumbbell_seated_french_press"
 names = { en = "Seated dumbbell French press", ru = "Французский жим сидя с гантелью" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells", "bench"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

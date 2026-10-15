@@ -3,6 +3,8 @@ names = { en = "Band V-up", ru = "V-подъёмы с лентой" }
 kind = "bodyweight"
 level = "advanced"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = ["resistance_bands"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

@@ -2,6 +2,8 @@ id = "machine_reverse_grip_preacher_curl"
 names = { en = "Machine reverse-grip preacher curl", ru = "Сгибания в тренажёре Скотта обратным хватом" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

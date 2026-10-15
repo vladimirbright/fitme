@@ -2,6 +2,8 @@ id = "barbell_incline_row"
 names = { en = "Barbell incline bench row", ru = "Тяга штанги лёжа на наклонной скамье" }
 kind = "compound"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["barbell", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

@@ -2,6 +2,8 @@ id = "cable_shrug"
 names = { en = "Cable shrug", ru = "Шраги в блоке" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

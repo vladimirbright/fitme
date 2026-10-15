@@ -2,6 +2,8 @@ id = "barbell_single_leg_deadlift"
 names = { en = "Barbell single-leg deadlift", ru = "Становая тяга на одной ноге со штангой" }
 kind = "compound"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 level = "advanced"
 equipment = ["barbell"]
 load_unit = "total"

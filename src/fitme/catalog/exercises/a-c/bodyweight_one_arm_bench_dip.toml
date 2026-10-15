@@ -3,6 +3,8 @@ names = { en = "One-arm bench dip", ru = "Обратные отжимания о
 kind = "bodyweight"
 level = "advanced"
 pattern = "vertical_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

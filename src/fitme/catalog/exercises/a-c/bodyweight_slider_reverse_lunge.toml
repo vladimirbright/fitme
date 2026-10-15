@@ -2,6 +2,8 @@ id = "bodyweight_slider_reverse_lunge"
 names = { en = "Sliding reverse lunge", ru = "Обратный выпад со скольжением" }
 kind = "bodyweight"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "muscular_endurance"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

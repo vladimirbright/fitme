@@ -2,6 +2,8 @@ id = "machine_assisted_parallel_close_grip_pull_up"
 names = { en = "Assisted close-grip parallel pull-up machine", ru = "Подтягивания в гравитроне узким параллельным хватом" }
 kind = "compound"
 pattern = "vertical_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

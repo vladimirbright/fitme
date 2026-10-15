@@ -2,6 +2,8 @@ id = "cable_seated_one_arm_concentration_curl"
 names = { en = "Cable seated one-arm concentration curl", ru = "Концентрированное сгибание руки на блоке сидя" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

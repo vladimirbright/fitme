@@ -2,6 +2,8 @@ id = "cable_stability_ball_russian_twist"
 names = { en = "Cable Russian twist on stability ball", ru = "Русские скручивания на блоке на фитболе" }
 kind = "isolation"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability"]
 equipment = ["cable", "stability_ball"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

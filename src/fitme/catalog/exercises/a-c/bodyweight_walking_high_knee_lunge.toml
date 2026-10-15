@@ -2,6 +2,8 @@ id = "bodyweight_walking_high_knee_lunge"
 names = { en = "Walking lunge with high knee", ru = "Выпады с шагом и подъёмом колена" }
 kind = "bodyweight"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["muscular_endurance", "strength"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

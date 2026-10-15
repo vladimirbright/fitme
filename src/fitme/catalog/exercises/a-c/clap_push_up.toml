@@ -2,6 +2,8 @@ id = "clap_push_up"
 names = { en = "Clap push-up", ru = "Отжимания с хлопком" }
 kind = "bodyweight"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["power", "strength"]
 equipment = []
 load_unit = "total"
 level = "advanced"

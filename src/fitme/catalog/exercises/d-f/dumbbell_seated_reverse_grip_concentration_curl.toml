@@ -2,6 +2,8 @@ id = "dumbbell_seated_reverse_grip_concentration_curl"
 names = { en = "Dumbbell seated reverse-grip concentration curl", ru = "Концентрированное сгибание с гантелью обратным хватом сидя" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells", "bench"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

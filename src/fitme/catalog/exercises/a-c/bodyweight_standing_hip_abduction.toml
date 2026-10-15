@@ -2,6 +2,8 @@ id = "bodyweight_standing_hip_abduction"
 names = { en = "Standing hip abduction", ru = "Отведение ноги в сторону стоя" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

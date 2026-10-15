@@ -2,6 +2,8 @@ id = "barbell_reverse_grip_incline_bench_press"
 names = { en = "Barbell reverse-grip incline bench press", ru = "Жим штанги обратным хватом на наклонной скамье" }
 kind = "compound"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["barbell", "rack", "bench"]
 load_unit = "total"
 level = "advanced"

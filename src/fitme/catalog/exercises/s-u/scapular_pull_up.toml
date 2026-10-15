@@ -2,6 +2,8 @@ id = "scapular_pull_up"
 names = { en = "Scapular pull-up", ru = "Лопаточные подтягивания" }
 kind = "bodyweight"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["strength"]
 equipment = ["pull_up_bar"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]

@@ -2,6 +2,8 @@ id = "barbell_squat_to_bench"
 names = { en = "Barbell squat to bench", ru = "Приседания со штангой на скамью" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["barbell", "rack", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

@@ -2,6 +2,8 @@ id = "machine_kneeling_leg_curl"
 names = { en = "Machine kneeling leg curl", ru = "Сгибание ног в тренажёре стоя на коленях" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

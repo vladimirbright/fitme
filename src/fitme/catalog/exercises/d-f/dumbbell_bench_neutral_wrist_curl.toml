@@ -2,6 +2,8 @@ id = "dumbbell_bench_neutral_wrist_curl"
 names = { en = "Dumbbell neutral-grip wrist curl over bench", ru = "Сгибания запястий с гантелями нейтральным хватом над скамьёй" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells", "bench"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

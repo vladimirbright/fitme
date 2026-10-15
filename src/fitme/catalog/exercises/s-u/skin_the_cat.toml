@@ -3,6 +3,8 @@ names = { en = "Skin the cat", ru = "Переворот назад в висе" 
 kind = "bodyweight"
 level = "advanced"
 pattern = "core"
+measures = ["reps"]
+qualities = ["strength", "core_stability"]
 equipment = ["pull_up_bar"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]

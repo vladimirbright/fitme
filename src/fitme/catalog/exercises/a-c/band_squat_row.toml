@@ -2,6 +2,8 @@ id = "band_squat_row"
 names = { en = "Band squat row", ru = "Присед с тягой эспандера" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["resistance_bands"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

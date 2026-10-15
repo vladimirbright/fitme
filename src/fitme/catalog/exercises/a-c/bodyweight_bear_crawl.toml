@@ -2,6 +2,8 @@ id = "bodyweight_bear_crawl"
 names = { en = "Bear crawl", ru = "Медвежья походка" }
 kind = "cardio"
 pattern = "conditioning"
+measures = ["time", "reps"]
+qualities = ["conditioning", "core_stability"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

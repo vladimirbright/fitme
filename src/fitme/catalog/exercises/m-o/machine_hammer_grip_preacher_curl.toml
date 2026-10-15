@@ -2,6 +2,8 @@ id = "machine_hammer_grip_preacher_curl"
 names = { en = "Machine hammer-grip preacher curl", ru = "Сгибания в тренажёре Скотта хватом «молоток»" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

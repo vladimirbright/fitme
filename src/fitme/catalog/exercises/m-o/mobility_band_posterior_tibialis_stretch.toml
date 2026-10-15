@@ -2,6 +2,8 @@ id = "mobility_band_posterior_tibialis_stretch"
 names = { en = "Band posterior tibialis stretch", ru = "Растяжка задней большеберцовой мышцы с лентой" }
 kind = "mobility"
 pattern = "mobility"
+measures = ["time"]
+qualities = ["mobility"]
 equipment = ["resistance_bands"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

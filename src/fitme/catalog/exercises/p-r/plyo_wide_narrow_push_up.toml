@@ -2,6 +2,8 @@ id = "plyo_wide_narrow_push_up"
 names = { en = "Plyometric wide-to-narrow push-up", ru = "Плиометрические отжимания широко-узко" }
 kind = "bodyweight"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["power"]
 equipment = []
 level = "advanced"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

@@ -6,7 +6,9 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
+from fitme.catalog import load_catalog
 from fitme.domain.catalog import Catalog, Exercise
+from fitme.domain.enums import Measure, Quality
 from fitme.domain.models import Load
 
 
@@ -183,3 +185,29 @@ def test_kg_loadable_explicit_override_and_consistency_rules() -> None:
     assert Exercise.model_validate({**swing, "kg_loadable": True}).kg_loadable is True
     with pytest.raises(ValidationError, match="loads_areas"):
         Exercise.model_validate(_exercise(kg_loadable=True, loads_areas=[], contraindicated_by=[]))
+
+
+def test_exercise_measures_default_to_reps_and_reject_unknown_values() -> None:
+    exercise = Exercise.model_validate(_exercise())
+    assert exercise.measures == [Measure.REPS] and exercise.qualities == []
+    with pytest.raises(ValidationError):
+        Exercise.model_validate(_exercise(measures=["laps"]))
+    with pytest.raises(ValidationError):
+        Exercise.model_validate(_exercise(measures=[]))
+    with pytest.raises(ValidationError):
+        Exercise.model_validate(_exercise(qualities=["speed_of_light"]))
+
+
+def test_every_shipped_exercise_is_tagged_and_holds_are_timed() -> None:
+    """ADR 0009: the shipped catalog says what each exercise trains and how a set is
+    measured; the cases behind the original bug reports are pinned."""
+    catalog = load_catalog()
+    assert all(exercise.qualities for exercise in catalog.exercise)
+    by_id = {exercise.id: exercise for exercise in catalog.exercise}
+    assert by_id["plank"].measures[0] == Measure.TIME
+    assert by_id["battle_rope_alternating_waves"].measures[0] == Measure.TIME
+    assert by_id["dumbbell_farmer_carry"].measures[0] == Measure.DISTANCE
+    assert by_id["barbell_bench_press"].measures == [Measure.REPS]
+    assert Quality.AGILITY in by_id["jump_rope_skipping"].qualities
+    assert Quality.POWER in by_id["medicine_ball_overhead_slam"].qualities
+    assert Quality.POWER not in by_id["barbell_back_squat"].qualities

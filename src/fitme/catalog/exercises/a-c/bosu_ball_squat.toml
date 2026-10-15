@@ -2,6 +2,8 @@ id = "bosu_ball_squat"
 names = { en = "Bosu ball squat", ru = "Приседания на босу" }
 kind = "bodyweight"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["muscular_endurance", "core_stability"]
 equipment = ["bosu_ball"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

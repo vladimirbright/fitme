@@ -2,6 +2,8 @@ id = "barbell_deficit_deadlift"
 names = { en = "Deficit deadlift", ru = "Становая тяга с дефицита" }
 kind = "compound"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["barbell"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

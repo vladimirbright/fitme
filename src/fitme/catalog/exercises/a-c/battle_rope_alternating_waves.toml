@@ -2,6 +2,8 @@ id = "battle_rope_alternating_waves"
 names = { en = "Battle rope alternating waves", ru = "Волны канатами поочерёдно" }
 kind = "cardio"
 pattern = "conditioning"
+measures = ["time"]
+qualities = ["conditioning"]
 equipment = ["battle_rope"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

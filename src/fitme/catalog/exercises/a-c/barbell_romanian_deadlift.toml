@@ -2,6 +2,8 @@ id = "barbell_romanian_deadlift"
 names = { en = "Barbell Romanian deadlift", ru = "Румынская тяга со штангой" }
 kind = "compound"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["barbell"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

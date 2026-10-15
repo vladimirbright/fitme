@@ -3,6 +3,8 @@ names = { en = "Prone back extension", ru = "Подъём корпуса лёж�
 search = { en = "prone back extension floor", ru = "подъём корпуса лёжа на животе" }
 kind = "bodyweight"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy", "muscular_endurance"]
 equipment = []
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["lower_back"]

@@ -2,6 +2,8 @@ id = "stability_ball_back_extension_with_rotation"
 names = { en = "Stability ball back extension with rotation", ru = "Разгибание спины с поворотом на фитболе" }
 kind = "bodyweight"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["stability_ball"]
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["lower_back", "hip"]

@@ -2,6 +2,8 @@ id = "band_leg_extension"
 names = { en = "Band leg extension", ru = "Разгибание ноги с эспандером" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["resistance_bands"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

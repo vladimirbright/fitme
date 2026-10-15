@@ -2,6 +2,8 @@ id = "barbell_pullover_to_press"
 names = { en = "Barbell pullover to press", ru = "Пуловер со штангой с жимом" }
 kind = "compound"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 level = "advanced"
 equipment = ["barbell", "bench"]
 load_unit = "total"

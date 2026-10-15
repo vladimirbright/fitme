@@ -2,6 +2,8 @@ id = "machine_assisted_triceps_dip"
 names = { en = "Machine assisted kneeling triceps dip", ru = "Отжимания на брусьях в тренажёре с помощью, стоя на коленях" }
 kind = "compound"
 pattern = "vertical_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

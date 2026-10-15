@@ -2,6 +2,8 @@ id = "mobility_hip_flexor_stretch"
 names = { en = "Hip flexor stretch", ru = "Растяжка сгибателей бедра" }
 kind = "mobility"
 pattern = "mobility"
+measures = ["time"]
+qualities = ["mobility"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

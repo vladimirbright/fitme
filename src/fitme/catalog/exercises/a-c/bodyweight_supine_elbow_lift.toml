@@ -3,6 +3,8 @@ names = { en = "Supine elbow lift", ru = "Подъём корпуса с опо�
 search = { en = "elbow lift reverse push-up", ru = "подъём на локтях лёжа на спине" }
 kind = "bodyweight"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["mobility"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

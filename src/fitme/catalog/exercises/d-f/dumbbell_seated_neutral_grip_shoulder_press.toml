@@ -2,6 +2,8 @@ id = "dumbbell_seated_neutral_grip_shoulder_press"
 names = { en = "Seated neutral-grip dumbbell shoulder press", ru = "Жим гантелей сидя нейтральным хватом" }
 kind = "compound"
 pattern = "vertical_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["dumbbells", "bench"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

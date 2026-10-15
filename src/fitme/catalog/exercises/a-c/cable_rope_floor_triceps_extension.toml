@@ -2,6 +2,8 @@ id = "cable_rope_floor_triceps_extension"
 names = { en = "Cable rope lying floor triceps extension", ru = "Разгибание рук с канатом лёжа на полу" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

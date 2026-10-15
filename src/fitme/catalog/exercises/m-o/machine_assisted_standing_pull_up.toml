@@ -2,6 +2,8 @@ id = "machine_assisted_standing_pull_up"
 names = { en = "Assisted standing pull-up machine", ru = "Подтягивания в гравитроне стоя на платформе" }
 kind = "compound"
 pattern = "vertical_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

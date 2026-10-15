@@ -2,6 +2,8 @@ id = "machine_reverse_t_bar_row"
 names = { en = "Machine reverse-grip T-bar row", ru = "Тяга Т-грифа в тренажёре обратным хватом" }
 kind = "compound"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["machine"]
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["shoulder", "elbow_wrist"]

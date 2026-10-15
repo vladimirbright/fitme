@@ -2,6 +2,8 @@ id = "cable_incline_two_arm_curl"
 names = { en = "Cable incline two-arm curl", ru = "Сгибание рук на блоках на наклонной скамье" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

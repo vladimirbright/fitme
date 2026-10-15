@@ -2,6 +2,8 @@ id = "smith_machine_split_squat"
 names = { en = "Smith machine split squat", ru = "Сплит-приседания в тренажёре Смита" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["smith_machine", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

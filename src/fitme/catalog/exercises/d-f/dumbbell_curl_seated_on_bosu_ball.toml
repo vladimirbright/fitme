@@ -2,6 +2,8 @@ id = "dumbbell_curl_seated_on_bosu_ball"
 names = { en = "Dumbbell curl seated on Bosu ball", ru = "Сгибания рук с гантелями сидя на босу" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["dumbbells", "bosu_ball"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

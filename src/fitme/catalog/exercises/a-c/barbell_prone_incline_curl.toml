@@ -2,6 +2,8 @@ id = "barbell_prone_incline_curl"
 names = { en = "Barbell prone incline curl", ru = "Сгибания рук со штангой лёжа на наклонной скамье лицом вниз" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["barbell", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

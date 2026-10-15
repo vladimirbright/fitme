@@ -2,6 +2,8 @@ id = "dumbbell_side_bend"
 names = { en = "Dumbbell side bend", ru = "Наклоны в сторону с гантелью" }
 kind = "isolation"
 pattern = "core"
+measures = ["reps"]
+qualities = ["core_stability", "hypertrophy"]
 equipment = ["dumbbells"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

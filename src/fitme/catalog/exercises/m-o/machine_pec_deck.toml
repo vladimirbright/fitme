@@ -2,6 +2,8 @@ id = "machine_pec_deck"
 names = { en = "Pec deck (machine fly)", ru = "Сведения в тренажёре «бабочка»" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

@@ -2,6 +2,8 @@ id = "kettlebell_alternating_row"
 names = { en = "Alternating kettlebell row", ru = "Тяга гирь в наклоне попеременно" }
 kind = "compound"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["kettlebell"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

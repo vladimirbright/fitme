@@ -3,6 +3,8 @@ names = { en = "Pistol squat", ru = "Приседания на одной ног
 search = { en = "pistol squat", ru = "пистолет" }
 kind = "bodyweight"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength"]
 level = "advanced"
 equipment = []
 load_unit = "total"

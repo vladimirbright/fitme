@@ -2,6 +2,8 @@ id = "machine_unilateral_row"
 names = { en = "Machine one-arm row", ru = "Тяга в тренажёре одной рукой" }
 kind = "compound"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["machine"]
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["shoulder", "elbow_wrist"]

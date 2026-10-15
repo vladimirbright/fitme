@@ -2,6 +2,8 @@ id = "machine_upper_body_ergometer"
 names = { en = "Hand bike (upper body ergometer)", ru = "Велоэргометр для рук" }
 kind = "cardio"
 pattern = "conditioning"
+measures = ["time"]
+qualities = ["conditioning"]
 equipment = ["machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

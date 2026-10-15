@@ -2,6 +2,8 @@ id = "barbell_step_up"
 names = { en = "Barbell step-up", ru = "Зашагивание со штангой" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 level = "advanced"
 equipment = ["barbell", "rack", "bench"]
 load_unit = "total"

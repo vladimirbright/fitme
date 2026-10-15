@@ -2,6 +2,8 @@ id = "machine_assisted_standing_chin_up"
 names = { en = "Assisted standing chin-up machine", ru = "Подтягивания обратным хватом в гравитроне стоя" }
 kind = "compound"
 pattern = "vertical_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

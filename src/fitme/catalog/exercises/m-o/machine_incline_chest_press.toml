@@ -2,6 +2,8 @@ id = "machine_incline_chest_press"
 names = { en = "Machine incline chest press", ru = "Наклонный жим от груди в тренажёре" }
 kind = "compound"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

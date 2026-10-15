@@ -2,6 +2,8 @@ id = "machine_one_arm_high_row"
 names = { en = "Machine one-arm high row", ru = "Высокая тяга в тренажёре одной рукой" }
 kind = "compound"
 pattern = "horizontal_pull"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["machine"]
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["shoulder", "elbow_wrist"]

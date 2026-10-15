@@ -2,6 +2,8 @@ id = "band_lying_hip_external_rotation"
 names = { en = "Band lying hip external rotation", ru = "Разведение коленей лёжа с эспандером" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["mobility"]
 equipment = ["resistance_bands"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

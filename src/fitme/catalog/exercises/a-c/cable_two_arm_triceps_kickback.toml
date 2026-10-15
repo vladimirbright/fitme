@@ -2,6 +2,8 @@ id = "cable_two_arm_triceps_kickback"
 names = { en = "Cable two-arm triceps kickback", ru = "Разгибание рук назад на блоке двумя руками" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

@@ -2,6 +2,8 @@ id = "band_knee_loop_squat"
 names = { en = "Band squat with loop above knees", ru = "Приседания с петлёй эспандера над коленями" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["resistance_bands"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

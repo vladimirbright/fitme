@@ -2,6 +2,8 @@ id = "cable_reverse_preacher_curl"
 names = { en = "Cable reverse preacher curl", ru = "Обратное сгибание рук на скамье Скотта на блоке" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

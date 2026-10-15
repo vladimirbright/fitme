@@ -2,6 +2,8 @@ id = "medicine_ball_stability_ball_seated_curl"
 names = { en = "Seated medicine ball curl on stability ball", ru = "Сгибания рук с медицинболом сидя на фитболе" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["medicine_ball", "stability_ball"]
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["elbow_wrist"]

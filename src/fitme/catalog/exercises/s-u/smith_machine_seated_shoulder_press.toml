@@ -2,6 +2,8 @@ id = "smith_machine_seated_shoulder_press"
 names = { en = "Smith machine seated shoulder press", ru = "Жим в машине Смита сидя" }
 kind = "compound"
 pattern = "vertical_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["smith_machine", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

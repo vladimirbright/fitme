@@ -2,6 +2,8 @@ id = "ez_bar_spider_curl"
 names = { en = "EZ-bar spider curl", ru = "Паучьи сгибания рук с EZ-грифом" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["ez_bar", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

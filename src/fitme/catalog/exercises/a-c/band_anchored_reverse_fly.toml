@@ -2,6 +2,8 @@ id = "band_anchored_reverse_fly"
 names = { en = "Band anchored reverse fly", ru = "Обратное разведение с лентой, закреплённой на опоре" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["resistance_bands"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

@@ -3,6 +3,8 @@ names = { en = "Medicine ball chest throw from three-point stance", ru = "Бро
 search = { en = "medicine ball chest push from 3 point stance", ru = "бросок медбола от груди из низкой стойки" }
 kind = "compound"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["power"]
 equipment = ["medicine_ball"]
 load_unit = "total"
 level = "advanced"

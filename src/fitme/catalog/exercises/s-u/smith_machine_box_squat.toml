@@ -2,6 +2,8 @@ id = "smith_machine_box_squat"
 names = { en = "Smith machine squat to bench", ru = "Приседания в тренажёре Смита на скамью" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["smith_machine", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

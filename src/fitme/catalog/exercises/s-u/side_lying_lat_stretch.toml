@@ -2,6 +2,8 @@ id = "side_lying_lat_stretch"
 names = { en = "Side-lying lat stretch", ru = "Растяжка широчайших лёжа на боку" }
 kind = "mobility"
 pattern = "mobility"
+measures = ["time"]
+qualities = ["mobility"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

@@ -2,6 +2,8 @@ id = "cable_seated_curl"
 names = { en = "Cable seated curl", ru = "Сгибание рук сидя на нижнем блоке" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

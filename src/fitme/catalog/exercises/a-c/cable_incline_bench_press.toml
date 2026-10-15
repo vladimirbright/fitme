@@ -2,6 +2,8 @@ id = "cable_incline_bench_press"
 names = { en = "Cable incline bench press", ru = "Жим на блоках на наклонной скамье" }
 kind = "compound"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["cable", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

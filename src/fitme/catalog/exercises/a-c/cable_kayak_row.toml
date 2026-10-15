@@ -3,6 +3,8 @@ names = { en = "Cable kayak row", ru = "Тяга верхнего блока «�
 search = { en = "cable kayak row", ru = "тяга байдарка на блоке" }
 kind = "compound"
 pattern = "vertical_pull"
+measures = ["reps"]
+qualities = ["hypertrophy", "strength"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

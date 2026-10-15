@@ -2,6 +2,8 @@ id = "bodyweight_supported_deep_squat"
 names = { en = "Supported deep squat", ru = "Глубокий присед с опорой" }
 kind = "bodyweight"
 pattern = "squat"
+measures = ["time"]
+qualities = ["mobility"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

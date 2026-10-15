@@ -2,6 +2,8 @@ id = "kettlebell_thruster"
 names = { en = "Kettlebell thruster", ru = "Трастер с гирей" }
 kind = "compound"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["strength", "conditioning"]
 equipment = ["kettlebell"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

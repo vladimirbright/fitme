@@ -2,6 +2,8 @@ id = "cable_alternating_shoulder_press"
 names = { en = "Cable alternating shoulder press", ru = "Попеременный жим одной рукой на блоках" }
 kind = "compound"
 pattern = "vertical_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

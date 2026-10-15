@@ -2,6 +2,8 @@ id = "cable_high_crossover_reverse_fly"
 names = { en = "Cable high crossover reverse fly", ru = "Обратное разведение на верхних блоках" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

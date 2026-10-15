@@ -2,6 +2,8 @@ id = "cable_standing_calf_raise"
 names = { en = "Cable standing calf raise", ru = "Подъём на носки стоя в кроссовере" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

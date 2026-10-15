@@ -3,6 +3,8 @@ names = { en = "Pike push-up", ru = "Отжимания в упоре согну
 search = { en = "pike push-up", ru = "пайк отжимания" }
 kind = "bodyweight"
 pattern = "vertical_push"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

@@ -3,6 +3,8 @@ names = { en = "Landmine rotation", ru = "Ротации со штангой в 
 search = { en = "landmine 180", ru = "лендмайн 180 ротации" }
 kind = "compound"
 pattern = "core"
+measures = ["reps"]
+qualities = ["rotational_power", "core_stability"]
 equipment = ["barbell"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

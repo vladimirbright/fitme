@@ -2,6 +2,8 @@ id = "hindu_push_up"
 names = { en = "Hindu push-up", ru = "Индийские отжимания" }
 kind = "bodyweight"
 pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["strength", "mobility"]
 equipment = []
 level = "advanced"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

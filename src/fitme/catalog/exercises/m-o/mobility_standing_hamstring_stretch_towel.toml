@@ -2,6 +2,8 @@ id = "mobility_standing_hamstring_stretch_towel"
 names = { en = "Standing hamstring and calf stretch with a towel", ru = "Растяжка задней поверхности бедра и икры с полотенцем" }
 kind = "mobility"
 pattern = "mobility"
+measures = ["time"]
+qualities = ["mobility"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

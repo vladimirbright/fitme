@@ -2,6 +2,8 @@ id = "machine_pullover"
 names = { en = "Machine pullover", ru = "Пуловер в тренажёре" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["machine"]
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["shoulder", "elbow_wrist"]

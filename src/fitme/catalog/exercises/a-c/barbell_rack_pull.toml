@@ -2,6 +2,8 @@ id = "barbell_rack_pull"
 names = { en = "Barbell rack pull", ru = "Тяга штанги со стоек" }
 kind = "compound"
 pattern = "hinge"
+measures = ["reps"]
+qualities = ["strength", "hypertrophy"]
 equipment = ["barbell", "rack"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

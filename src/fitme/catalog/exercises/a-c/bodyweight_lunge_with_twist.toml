@@ -2,6 +2,8 @@ id = "bodyweight_lunge_with_twist"
 names = { en = "Lunge with twist", ru = "Выпад с поворотом корпуса" }
 kind = "bodyweight"
 pattern = "squat"
+measures = ["reps"]
+qualities = ["muscular_endurance", "core_stability"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

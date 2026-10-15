@@ -2,6 +2,8 @@ id = "barbell_incline_shoulder_raise"
 names = { en = "Barbell incline shoulder raise", ru = "Подъём плеч со штангой на наклонной скамье" }
 kind = "isolation"
 pattern = "accessory"
+measures = ["reps"]
+qualities = ["hypertrophy"]
 equipment = ["barbell", "rack", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]
