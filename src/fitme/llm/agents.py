@@ -245,8 +245,9 @@ async def _find_substitutes(ctx: Deps, exercise_id: str, avoid_areas: list[str])
 async def _edit_plan(ctx: Deps, plan_id: int | None, ops: list[PlanOp]) -> object:
     """Change specific things in a plan: numbers of one exercise, swap/add/remove an
     exercise, the weekly schedule, a workout's title. `plan_id`: the plan to change, or null
-    for the open planning session's draft. Changes go to the session's draft (opening a
-    planning session for that plan if needed); the user saves the draft later. Call it as
+    for the open planning session's draft (always null for a new plan's draft). Changes go
+    to the session's draft (opening a planning session for that plan if needed); the user
+    saves the draft later. Call it as
     many times as needed; the answer says whether it applied and what the draft looks like,
     or why not (fix and retry, or tell the user)."""
     return _NO_DATA if ctx.deps is None else await ctx.deps.edit_plan(plan_id, list(ops))
@@ -254,8 +255,10 @@ async def _edit_plan(ctx: Deps, plan_id: int | None, ops: list[PlanOp]) -> objec
 
 async def _rewrite_plan(ctx: Deps, plan_id: int | None, request: str) -> object:
     """A broad redesign of a plan that specific edits can't express ("make it calisthenics",
-    "2 workouts a week", "drop all lunges and rebalance"). `request`: what the user wants, in
-    their words plus anything clarified earlier in the conversation. The redesign is made
+    "2 workouts a week", "drop all lunges and rebalance"). `plan_id`: the plan to redesign,
+    or null for the open planning session's draft (always null for a new plan's draft).
+    `request`: what the user wants, in their words plus anything clarified earlier in the
+    conversation. The redesign is made
     after this turn by the plan designer and shown as the new draft. At most once per turn;
     not together with `edit_plan` in the same turn."""
     if ctx.deps is None:

@@ -405,6 +405,25 @@ async def test_the_session_remembers_the_conversation_and_saves_by_asking(
     assert await _open_conversations(db, seeded.user_id) == []
 
 
+async def test_a_redesign_while_a_new_plans_draft_is_open_never_targets_a_saved_plan(
+    dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
+) -> None:
+    seeded = await _ready(dispatcher, bot, db)
+    new_plan = _plan().model_copy(update={"name": "Boxing"})
+    llm.steps = [Call("new_plan", {"guidance": "бокс"}), say("Составляю."), new_plan]
+    await _send(dispatcher, bot, "план для бокса")
+    [conversation] = await _open_conversations(db, seeded.user_id)
+    assert conversation.plan_id is None and conversation.draft_decision_id is not None
+
+    rewrite = {"plan_id": seeded.plan_id, "request": "меньше плеч, добавь скакалку"}
+    llm.steps = [Call("rewrite_plan", rewrite), say("Уточните.")]
+    await _send(dispatcher, bot, "меньше плеч, добавь скакалку")
+
+    answer = llm.returns("rewrite_plan")[0]
+    assert answer["ok"] is False and "plan_id null" in answer["error"]
+    assert len(await _bodies(db, seeded.plan_id)) == 1  # the saved plan is untouched
+
+
 async def test_several_tools_in_one_turn(
     dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
 ) -> None:

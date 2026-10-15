@@ -619,6 +619,18 @@ class _Turn:
             return _error("request is empty")
         session = self._planning
         target = plan_id if plan_id is not None else (None if session is None else session.plan_id)
+        if (
+            session is not None
+            and session.plan_id != target
+            and await self._draft_is_current(session)
+        ):
+            # Same rule as `edit_plan`: a plan_id other than the open draft's (e.g. the
+            # default plan while a new plan's draft is open) would silently redesign the
+            # wrong plan.
+            return _error(
+                "a draft is open in the planning session: pass plan_id null to redesign it, "
+                "or ask the user to save or discard it before changing another plan"
+            )
         base: planning.RevisionBase
         if (
             session is not None
@@ -634,7 +646,12 @@ class _Turn:
         else:
             return _error("which plan? pass plan_id, or use new_plan for a new one")
         staged.rewrite = RunRewrite(base=base, request=request.strip())
-        return _ok(staged="the redesigned draft is shown after this turn")
+        return _ok(
+            staged=(
+                "the redesign runs after this turn and can still fail: tell the user it is "
+                "being prepared, not that it is done"
+            )
+        )
 
     async def new_plan(self, guidance: str | None) -> dict[str, object]:
         staged = self.staged
