@@ -219,3 +219,62 @@ report):
 Imported sessions never trigger a recap or a progression, are never a session to resume — a
 linked one included, since it stays `completed` — and are exported and deleted like every
 other row (`fitme export`, `fitme delete`, the website's training delete).
+
+## Converting your notes with an LLM
+
+If your history lives in a notes app, a spreadsheet or a chat log, a general-purpose LLM
+(ChatGPT, Claude, …) can transcribe it into this format. The LLM only writes the file; the
+import still checks every name, weight and plan exactly as described above, and nothing is
+guessed on its side either.
+
+Your notes are personal health data and the chat sends them to that provider. Remove what the
+import doesn't need first — names, injury or health remarks, anything that isn't an exercise,
+a date, a weight or a rep count.
+
+1. **Make the catalog list** the aliases must point at (one line per exercise: id, English
+   name, what `kg` means, whether it takes a `kg` at all):
+
+   ```sh
+   uv run python -c 'from fitme.catalog import load_catalog
+   for e in load_catalog().exercise: print(e.id, e.names["en"], e.load_unit or "-", "kg" if e.kg_loadable else "no kg", sep=" | ")' > catalog.txt
+   ```
+
+2. **Give the LLM four things**: this file (`docs/import-format.md`), the sample
+   `tests/fixtures/history_sample.toml`, `catalog.txt`, and your notes. Then paste:
+
+   ```text
+   Convert my training notes into a fitme import file, following import-format.md exactly.
+   Output a single TOML file and nothing else.
+
+   Rules:
+   - [meta]: version = 1, timezone = "<your IANA timezone, e.g. Europe/Berlin>".
+   - Use only the keys the format lists. No extra keys, no comments that invent data.
+   - [aliases]: map every exercise name exactly as it appears in my notes to an id from
+     catalog.txt. Only map a name when you are sure it is the same movement. If no catalog
+     id fits, leave the name unmapped and list it in a TOML comment at the top of the file
+     ("# unmapped: ..."), so I can decide.
+   - One [[session]] per training day, with one [[session.set]] per set I wrote down. If I
+     wrote "3x5 @ 75", that is three sets of 5 reps at 75 kg.
+   - Weights in kg. Convert lb by multiplying by 0.4536, rounded to 0.5 kg.
+     Barbell = total incl. bar; dumbbells/kettlebells with "per_implement" = weight of ONE
+     implement; "single_implement" = that one implement; machines = the stack number.
+     If my notes say "2x20 kg dumbbells", kg = 20.
+   - Give kg only for "kg" exercises in catalog.txt; omit it for "no kg" ones.
+   - Never invent a set, a weight, a rep count or a date. If a day has no date or a set
+     has no weight/reps where one is required, leave it out and note it in a TOML comment.
+   - Dates: use the date only (2026-08-03) unless I wrote a time.
+   - If my notes describe the program I was following, add it as a [[plan]] with its
+     schedule (0 = Monday) and workouts, transcribed as written, and set workout = "<key>"
+     on each session that followed one of its workouts.
+   ```
+
+3. **Check it.** Save the output as `<something>.import.toml` (gitignored), dry-run it, and
+   feed the report back to the LLM until it is clean:
+
+   ```sh
+   fitme history import my.import.toml --dry-run
+   ```
+
+   Unknown exercise names are the usual first report: add the missing `[aliases]` lines
+   yourself, or ask for a catalog addition when nothing fits. Read the file once before the
+   real import — the dry run proves it is well-formed, not that the LLM read your notes right.
