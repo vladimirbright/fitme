@@ -1,0 +1,76 @@
+{
+  "name": "scenario_b_hypertrophy",
+  "user_id": 202,
+  "language": "en",
+  "age_bucket": "30_39",
+  "weight_bucket": "80_89",
+  "experience": "2y_5y",
+  "barbell_experience": "yes",
+  "preferences": [
+    "weight_training",
+    "split"
+  ],
+  "focus": "muscle",
+  "location": "public_gym",
+  "equipment": [
+    "dumbbells",
+    "barbell",
+    "rack",
+    "bench",
+    "pull_up_bar",
+    "kettlebell",
+    "resistance_bands",
+    "machine",
+    "cable",
+    "ez_bar",
+    "trap_bar",
+    "smith_machine",
+    "medicine_ball",
+    "stability_ball",
+    "bosu_ball",
+    "foam_roller",
+    "ab_wheel",
+    "weight_plate",
+    "dip_bars",
+    "plyo_box",
+    "jump_rope",
+    "battle_rope",
+    "sled",
+    "tire",
+    "sledgehammer"
+  ],
+  "sessions_per_week": 4,
+  "session_minutes": 60,
+  "flags": [
+    {
+      "flag": "heart_condition",
+      "value": "no"
+    },
+    {
+      "flag": "chest_discomfort",
+      "value": "no"
+    },
+    {
+      "flag": "dizziness_fainting",
+      "value": "no"
+    },
+    {
+      "flag": "high_blood_pressure",
+      "value": "no"
+    },
+    {
+      "flag": "recent_surgery",
+      "value": "no"
+    },
+    {
+      "flag": "pregnant",
+      "value": "no"
+    },
+    {
+      "flag": "other_condition_limits",
+      "value": "no"
+    }
+  ],
+  "history": [],
+  "request": "Muscle growth, four sessions a week."
+}

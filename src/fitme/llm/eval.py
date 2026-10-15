@@ -9,10 +9,13 @@ Scope: `plan_generate` and `plan_revise` run against the fixtures and are checke
 real guards (`guards.plan.validate_plan`), per A§8.5 rule 7. `plan_revise` needs a plan to
 revise, so for each fixture it revises whatever `plan_generate` just produced for the same
 fixture — this only runs when `plan_generate` is also in the requested agent list and
-succeeded. `session_adjust`, `result_parse` and `recap` take a specific in-progress workout
-or free-text report as input, which a bare profile fixture doesn't carry; requesting them is
-accepted (so `--agent` still recognizes every agent name) but reported as `skipped`, with a
-clear reason, rather than fed a fabricated input.
+succeeded. ADR 0009: a fixture may also carry a plan `request`, the user's other `sport`
+(`sport_sessions_per_week`) and hard `exclusions` (`[{"kind", "value"}]`); a plan that passes
+the guards is then also reviewed (`services.plan_quality`) and reported as `findings` when
+the review finds programming problems. `session_adjust`, `result_parse` and `recap` take a
+specific in-progress workout or free-text report as input, which a bare profile fixture
+doesn't carry; requesting them is accepted (so `--agent` still recognizes every agent name)
+but reported as `skipped`, with a clear reason, rather than fed a fabricated input.
 """
 
 from __future__ import annotations
@@ -24,8 +27,9 @@ from pathlib import Path
 from typing import Any, Literal
 
 from fitme.catalog import load_catalog
+from fitme.db.records import ExclusionRecord
 from fitme.domain.catalog import Catalog
-from fitme.domain.enums import Equipment, Experience, Location
+from fitme.domain.enums import Equipment, Experience, Location, Measure, Quality, Sport
 from fitme.domain.models import Plan, Refusal
 from fitme.domain.screening import ScreeningFlagState
 from fitme.guards.context import GuardContext
@@ -39,15 +43,18 @@ from fitme.llm.context import (
     render_user_prompt,
 )
 from fitme.llm.usage import AgentRunRecord, PriceTable, run_agent
+from fitme.services import exclusions
 from fitme.services.catalog import available_exercises
-from fitme.services.exercise_search import exercise_facts
+from fitme.services.exercise_search import exercise_facts, requested_qualities
+from fitme.services.measures import repair_measures
+from fitme.services.plan_quality import ReviewContext, review
 
 # Agents this eval tool can actually exercise against a bare profile fixture (see module
 # docstring). The other two names in `AGENT_FACTORIES` are still valid `--agent` values; they
 # just always come back `skipped`.
 _SUPPORTED_AGENTS: tuple[str, ...] = ("plan_generate", "plan_revise")
 
-Outcome = Literal["ok", "refusal", "guard_fail", "provider_error", "skipped"]
+Outcome = Literal["ok", "findings", "refusal", "guard_fail", "provider_error", "skipped"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -73,16 +80,33 @@ def _flag_states(fixture: Mapping[str, Any]) -> list[ScreeningFlagState]:
     return [ScreeningFlagState.model_validate(entry) for entry in fixture["flags"]]
 
 
+def _excluded(fixture: Mapping[str, Any], catalog: Catalog) -> frozenset[str]:
+    rows = [
+        ExclusionRecord(
+            id=index, user_id=0, kind=entry["kind"], value=entry["value"], created_at=""
+        )
+        for index, entry in enumerate(fixture.get("exclusions", []))
+    ]
+    return exclusions.resolve(rows, catalog)
+
+
+def _sport(fixture: Mapping[str, Any]) -> Sport | None:
+    return Sport(fixture["sport"]) if fixture.get("sport") else None
+
+
 def _build_context(fixture: Mapping[str, Any], catalog: Catalog) -> UserContext:
     location = Location(fixture["location"])
     equipment = frozenset(Equipment(item) for item in fixture["equipment"])
     flag_states = _flag_states(fixture)
-    allowed_ids = [
-        exercise.id
-        for exercise in available_exercises(
-            catalog, location, equipment, flag_states, Experience(fixture["experience"])
-        )
-    ]
+    allowed = available_exercises(
+        catalog,
+        location,
+        equipment,
+        flag_states,
+        Experience(fixture["experience"]),
+        excluded=_excluded(fixture, catalog),
+    )
+    allowed_ids = [exercise.id for exercise in allowed]
     history = [ExerciseHistorySummary.model_validate(entry) for entry in fixture.get("history", [])]
     return build_user_context(
         user_id=fixture["user_id"],
@@ -100,6 +124,14 @@ def _build_context(fixture: Mapping[str, Any], catalog: Catalog) -> UserContext:
         flags=[FlagSummary(flag=state.flag, value=state.value) for state in flag_states],
         allowed_exercise_ids=allowed_ids,
         history=history,
+        exercise_measures={
+            exercise.id: exercise.measures
+            for exercise in allowed
+            if exercise.measures != [Measure.REPS]
+        },
+        sport=_sport(fixture),
+        sport_sessions_per_week=fixture.get("sport_sessions_per_week"),
+        exclusions=[f"{entry['kind']}:{entry['value']}" for entry in fixture.get("exclusions", [])],
     )
 
 
@@ -111,6 +143,16 @@ def _guard_context(fixture: Mapping[str, Any], catalog: Catalog) -> GuardContext
         location=Location(fixture["location"]),
         sessions_per_week=fixture["sessions_per_week"],
         experience=Experience(fixture["experience"]),
+        excluded_exercise_ids=_excluded(fixture, catalog),
+    )
+
+
+def _requested(fixture: Mapping[str, Any], context: UserContext) -> list[Quality]:
+    return requested_qualities(
+        fixture.get("request"),
+        focus=context.focus,
+        preferences=context.preferences,
+        sport=context.sport,
     )
 
 
@@ -128,11 +170,26 @@ def _classify_plan_output(
         )
     if isinstance(output, Refusal):
         return EvalResult(fixture_name, agent_name, "refusal", record, output.code.value)
+    repair_measures(output, catalog)  # what the service does before judging (ADR 0009)
     verdicts = validate_plan(output, _guard_context(fixture, catalog))
     failed = [verdict for verdict in verdicts if not verdict.ok]
     if failed:
         detail = "; ".join(verdict.detail for verdict in failed[:3])
         return EvalResult(fixture_name, agent_name, "guard_fail", record, detail)
+    context = _build_context(fixture, catalog)
+    findings = review(
+        output,
+        ReviewContext(
+            catalog=catalog,
+            requested=_requested(fixture, context),
+            sport=context.sport,
+            sport_sessions_per_week=context.sport_sessions_per_week,
+            require_declared=bool(requested_qualities(fixture.get("request"))),
+        ),
+    )
+    if findings:
+        detail = "; ".join(f"{finding.rule}: {finding.detail}" for finding in findings[:3])
+        return EvalResult(fixture_name, agent_name, "findings", record, detail)
     return EvalResult(fixture_name, agent_name, "ok", record)
 
 
@@ -161,7 +218,12 @@ async def run_eval(
             # The eval has no database for the retrieval pool (ADR 0007): it sends the whole
             # allowed set, with the same facts the service sends for its pool.
             facts = exercise_facts(catalog, context.allowed_exercise_ids, context.language)
-            rendered = render_user_prompt(context, exercise_facts=facts)
+            rendered = render_user_prompt(
+                context,
+                request=fixture.get("request"),
+                exercise_facts=facts,
+                requested_qualities=_requested(fixture, context),
+            )
             outcome = await run_agent(
                 AGENT_FACTORIES["plan_generate"],
                 model_for_agent("plan_generate"),
@@ -255,8 +317,11 @@ def summarize(results: Sequence[EvalResult]) -> str:
 
         refusals = sum(1 for item in runnable if item.outcome == "refusal")
         provider_errors = sum(1 for item in runnable if item.outcome == "provider_error")
-        guard_checked = [item for item in runnable if item.outcome in ("ok", "guard_fail")]
-        guard_passes = sum(1 for item in guard_checked if item.outcome == "ok")
+        guard_checked = [
+            item for item in runnable if item.outcome in ("ok", "findings", "guard_fail")
+        ]
+        guard_passes = sum(1 for item in guard_checked if item.outcome in ("ok", "findings"))
+        reviewed_clean = sum(1 for item in guard_checked if item.outcome == "ok")
 
         line = (
             f"{agent_name}: {len(runnable)} run(s), "
@@ -265,7 +330,11 @@ def summarize(results: Sequence[EvalResult]) -> str:
         if guard_checked:
             pass_rate = 100 * guard_passes / len(guard_checked)
             line += f", guard pass rate {guard_passes}/{len(guard_checked)} ({pass_rate:.0f}%)"
+            line += f", review clean {reviewed_clean}/{len(guard_checked)}"
         lines.append(line)
+        for item in runnable:
+            if item.outcome in ("findings", "guard_fail"):
+                lines.append(f"  {item.fixture_name}: {item.outcome}: {item.detail}")
 
         for item in runnable:
             if item.record is None:

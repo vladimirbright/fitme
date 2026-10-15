@@ -149,7 +149,7 @@ async def test_escalation_fails_twice_on_medium_then_once_on_large_then_refuses(
     for attempt in outcome.attempts:
         assert attempt.prompt is not None
         assert attempt.prompt.template_name == "plan_revise"
-        assert attempt.prompt.version == 2
+        assert attempt.prompt.version == 3
 
 
 async def test_escalation_succeeds_on_the_large_tier_attempt(db: Database) -> None:

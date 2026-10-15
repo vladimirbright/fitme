@@ -110,7 +110,10 @@ def make_plan(name: str = "Home plan") -> Plan:
                     Block(
                         kind="superset",
                         items=[
-                            _prescription("dumbbell_bench_press", Load(kind="calibration")),
+                            # ADR 0009: a superset's first rest is the transition.
+                            _prescription(
+                                "dumbbell_bench_press", Load(kind="calibration")
+                            ).model_copy(update={"rest_seconds": 30}),
                             _prescription("pushup", Load(kind="bodyweight")),
                         ],
                     ),
@@ -239,8 +242,13 @@ async def test_new_plan_shows_a_draft_with_explicit_loads_and_confirm_saves_it(
     assert draft.text is not None
     assert draft.text.startswith(t("plan.draft_title", "en"))
     assert "Tuesday: A — Full body" in draft.text and "Friday: A — Full body" in draft.text
-    assert "Barbell back squat: 3 × 8–10 @ calibration: start with 20 kg" in draft.text
-    assert "Dumbbell bench press: 3 × 8–10 @ calibration: start with 2 kg each" in draft.text
+    assert (
+        "Barbell back squat: 3 × 8–10 @ calibration: pick a weight that leaves about 3 reps "
+        "in reserve" in draft.text
+    )
+    # ADR 0009: no generic "start with 2 kg each" — a reps-in-reserve target instead.
+    assert "Dumbbell bench press: 3 × 8–10 @ calibration: pick a weight" in draft.text
+    assert "start with 2 kg" not in draft.text
     assert "Push-up: 3 × 8–10 @ bodyweight" in draft.text
     assert t("disclosure.ai", "en") in draft.text
     datas = _callback_datas(draft)
@@ -567,7 +575,8 @@ async def test_long_plan_is_split_into_several_messages(
         schedule=base.schedule,
         workouts=[Workout(key="A", title="Full body", blocks=base.workouts[0].blocks * 40)],
     )
-    llm.responses.append(big)
+    # 80 blocks trip the weekly-volume review (ADR 0009): its repair round gets the same plan.
+    llm.responses.extend([big, big])
     before = len(_sent_messages(session))
 
     await _click(dispatcher, bot, PlanMenu(action="new", plan_id=0))

@@ -12,7 +12,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, model_validator
 
-from fitme.domain.enums import Measure, RefusalCode
+from fitme.domain.enums import Measure, Quality, RefusalCode
 
 _STRICT_CONFIG = ConfigDict(extra="forbid", allow_inf_nan=False)
 
@@ -185,7 +185,9 @@ class Prescription(BaseModel):
 
 
 class Block(BaseModel):
-    """One exercise (`single`) or a superset of 2-4 exercises (A§4.5)."""
+    """One exercise (`single`) or a superset of 2-4 exercises (A§4.5). ADR 0009: a superset
+    is done in rounds, its exercises in the listed order; each exercise's `rest_seconds` is
+    the transition to the next one, and the last exercise's is the rest after the round."""
 
     model_config = _STRICT_CONFIG
 
@@ -208,6 +210,9 @@ class Workout(BaseModel):
     key: str  # "A", "B", ...
     title: Annotated[str, BeforeValidator(_trim_title)]
     blocks: list[Block]
+    # ADR 0009: what this session is for, as the planner states it; checked against the
+    # exercises' own qualities (`services.plan_quality`). Empty for plans made before it.
+    qualities: list[Quality] = Field(default_factory=list, max_length=4)
 
 
 class ScheduledDay(BaseModel):

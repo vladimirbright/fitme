@@ -226,7 +226,10 @@ def make_plan(
         Block(
             kind="superset",
             items=[
-                prescription("pushup", Load(kind="bodyweight"), reps=(8, 12)),
+                # ADR 0009: a superset's first rest is the transition to the next exercise.
+                prescription("pushup", Load(kind="bodyweight"), reps=(8, 12)).model_copy(
+                    update={"rest_seconds": 30}
+                ),
                 prescription("dumbbell_bench_press", Load(kind="calibration"), reps=(8, 12)),
             ],
         ),
@@ -283,7 +286,7 @@ async def test_valid_plan_is_a_draft_then_version_1_on_confirm(db: Database, use
     decision = rounds[0]
     assert decision.id == result.decision_id
     assert decision.model == _settings().llm_tier_large
-    assert decision.prompt_template == "plan_generate" and decision.prompt_version == "4"
+    assert decision.prompt_template == "plan_generate" and decision.prompt_version == "5"
     assert decision.guards_fired  # the gate verdict at least
     assert decision.proposal is not None
     assert Plan.model_validate(decision.proposal["plan"]) == result.plan
@@ -849,7 +852,13 @@ async def test_revise_then_confirm_creates_version_2_on_the_same_plan(
         db, llm.runtime(), user_id, planning.PlanBase(plan_id=saved.plan_id), "rename it"
     )
 
-    assert result.plan == revised_plan and result.plan_id == saved.plan_id
+    # ADR 0009: the judge adds the default reps-in-reserve target to the calibration loads.
+    expected = revised_plan.model_copy(deep=True)
+    for block in expected.workouts[0].blocks:
+        for item in block.items:
+            if item.load.kind == "calibration":
+                item.rir = planning.DEFAULT_CALIBRATION_RIR
+    assert result.plan == expected and result.plan_id == saved.plan_id
     assert llm.calls == 1
     assert json.loads(llm.prompts[0])["user_request"] == "rename it"
     assert "current_plan" in json.loads(llm.prompts[0])
@@ -1358,3 +1367,75 @@ async def test_plan_generate_falls_back_to_every_allowed_id_when_retrieval_fails
     sent = json.loads(llm.prompts[0])
     assert sent["context"]["allowed_exercise_ids"] == full.user_context.allowed_exercise_ids
     assert len(sent["exercise_facts"]) == len(full.user_context.allowed_exercise_ids)
+
+
+# --- ADR 0009: programming review and targeted repair ------------------------------------------
+
+
+def _cold_heavy_plan() -> Plan:
+    """Valid for the guards, but heavy squats with no warm-up first (`quality.warm_up`)."""
+    plan = make_plan()
+    plan.workouts[0].blocks[0].items[0] = prescription(
+        _SQUAT, Load(kind="calibration"), reps=(3, 5)
+    )
+    return plan
+
+
+def _warmed_up_plan() -> Plan:
+    plan = _cold_heavy_plan()
+    warm_up = prescription("mobility_cat_cow", Load(kind="bodyweight"), reps=(8, 10))
+    plan.workouts[0].blocks.insert(0, Block(kind="single", items=[warm_up]))
+    return plan
+
+
+async def test_a_plan_with_programming_findings_gets_one_targeted_repair(
+    db: Database, user_id: int
+) -> None:
+    await seed_profile(db, user_id)
+    llm = FakeLlm([_cold_heavy_plan(), _warmed_up_plan()])
+
+    result = await planning.propose_new_plan(db, llm.runtime(), user_id)
+
+    assert llm.calls == 2
+    assert result.plan is not None
+    assert result.plan.workouts[0].blocks[0].items[0].exercise_id == "mobility_cat_cow"
+    feedback = json.loads(llm.prompts[1])["guard_feedback"]
+    assert any(item.startswith("quality.warm_up:") for item in feedback)
+    rounds = await decisions(db, user_id)
+    assert any(g["rule"] == "quality.warm_up" for g in rounds[0].guards_fired)
+    assert not any(g["rule"].startswith("quality.") for g in rounds[1].guards_fired)
+
+
+async def test_a_repair_that_fails_the_guards_keeps_the_valid_plan(
+    db: Database, user_id: int
+) -> None:
+    """A finding is never worth losing a guard-passing plan: the first one is the draft,
+    with its finding logged, rather than a refusal."""
+    await seed_profile(db, user_id)
+    llm = FakeLlm([_cold_heavy_plan(), bad_plan()])
+
+    result = await planning.propose_new_plan(db, llm.runtime(), user_id)
+
+    assert result.refusal is None and result.plan is not None
+    rounds = await decisions(db, user_id)
+    assert [d.kind for d in rounds] == ["plan_generate", "plan_generate"]
+    assert result.decision_id == rounds[0].id
+    assert any(g.rule == "quality.warm_up" for g in result.guards_fired)
+
+
+async def test_the_boxing_request_reaches_the_planner_as_qualities(
+    db: Database, user_id: int
+) -> None:
+    await seed_profile(db, user_id)
+    llm = FakeLlm([_warmed_up_plan(), _warmed_up_plan()])
+
+    await planning.propose_new_plan(
+        db,
+        llm.runtime(),
+        user_id,
+        guidance="Тренировка для бокса: сила удара и скорость перемещения",
+    )
+
+    sent = json.loads(llm.prompts[0])
+    assert {"power", "rotational_power", "agility"} <= set(sent["requested_qualities"])
+    assert all("qualities" in fact for fact in sent["exercise_facts"])

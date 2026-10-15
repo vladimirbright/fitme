@@ -232,9 +232,20 @@ def render_plan_text(
     for workout in plan.workouts:
         lines.append("")
         lines.append(t("plan.workout_title", lang, workout_key=workout.key, title=workout.title))
+        if workout.qualities:
+            names = ", ".join(t(f"enum.quality.{q.value}", lang) for q in workout.qualities)
+            lines.append(t("plan.workout_qualities", lang, qualities=names))
         for block in workout.blocks:
             if block.kind == "superset":
-                lines.append(t("plan.superset_label", lang))
+                # ADR 0009: in the listed order, in rounds; the last rest closes the round.
+                lines.append(
+                    t(
+                        "plan.superset_rounds_label",
+                        lang,
+                        rounds=max(item.sets for item in block.items),
+                        rest=rest_text(block.items[-1].rest_seconds, lang),
+                    )
+                )
                 lines.extend(
                     f"    • {prescription_line(item, catalog, lang)}" for item in block.items
                 )

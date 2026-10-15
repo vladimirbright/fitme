@@ -409,7 +409,10 @@ async def test_a_redesign_while_a_new_plans_draft_is_open_never_targets_a_saved_
     dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
 ) -> None:
     seeded = await _ready(dispatcher, bot, db)
-    new_plan = _plan().model_copy(update={"name": "Boxing"})
+    new_plan = _plan().model_copy(update={"name": "Boxing"}, deep=True)
+    # ADR 0009: a generated plan warms up before its heavy squat (else a repair round runs).
+    warm_up = _item("mobility_cat_cow", Load(kind="bodyweight"))
+    new_plan.workouts[0].blocks.insert(0, Block(kind="single", items=[warm_up]))
     llm.steps = [Call("new_plan", {"guidance": "бокс"}), say("Составляю."), new_plan]
     await _send(dispatcher, bot, "план для бокса")
     [conversation] = await _open_conversations(db, seeded.user_id)

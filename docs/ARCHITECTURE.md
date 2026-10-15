@@ -291,6 +291,12 @@ unknown experience fails closed. `Equipment` also covers EZ/trap bars, a Smith m
 rollers, plates, dip bars, a plyo box, ropes, a sled, a tire and a sledgehammer;
 `GYM_ONLY_EQUIPMENT` lists the ones the home questionnaire doesn't offer.
 
+**Measures and qualities (ADR 0009).** `measures` lists how a set of the exercise is
+prescribed (`reps`, `time`, `distance`; the first is the default) and `qualities` what it
+directly trains (`strength`, `hypertrophy`, `power`, `rotational_power`, `core_stability`,
+`agility`, `muscular_endurance`, `conditioning`, `mobility`). `fitme catalog check` requires
+`qualities` on every exercise.
+
 **Search (ADR 0007).** Derived, rebuildable indexes sit next to the catalog: the shipped
 embedding file `catalog/search_index.sqlite` (built by `fitme catalog index`) and, in the app
 DB, `catalog_search_fts` and `catalog_embeddings` (migration 0009, refreshed at startup).
@@ -304,7 +310,11 @@ bodyweight.
 ### 4.5 Domain models (`src/fitme/domain/`)
 
 Pure pydantic v2 models. The LLM output types, the DB JSON columns and the guards all use
-them.
+them. ADR 0009 adds to the models below: a `Prescription` has one `measure` with exactly its
+target (`reps_min`/`reps_max`, `seconds` or `meters`) and an optional `rir`; a `Workout`
+has optional `qualities` (what the session is for); a superset is done in rounds in listed
+order, each exercise's rest being the transition to the next and the last one's the rest
+after the round. Bodies stored before ADR 0009 parse unchanged (reps, no qualities).
 
 ```python
 class Load(BaseModel):
@@ -581,6 +591,14 @@ check gates ──► build context ──► LLM: propose ──► guards ─�
        ⇒ Refusal, stop                                   with feedback, else Refusal
 ```
 
+**ADR 0009.** The model gets `requested_qualities` (read from the request, the other sport,
+focus and preferences) and a pool that includes exercises directly training each of them;
+a plan that passes the guards is reviewed by `services/plan_quality` (session goals vs
+exercises, warm-up and order, supersets, weekly shoulder/leg load), and findings spend the
+feedback retry as a targeted repair — the passing attempt with the fewest findings becomes
+the draft, remaining findings are logged, never a refusal. Hard exclusions
+(`exercise_exclusions`) are removed from the allowed set and rejected by `plan.excluded`.
+
 1. **Gates** (guards, before any LLM call): the profile is complete; there is no open
    `health_hold`; red-flag clearance is present. Any failure returns a `Refusal`, which is
    logged as a `decision(kind=refusal)`. The bot shows a refusal by its per-code copy, except
@@ -731,7 +749,7 @@ class GuardVerdict(BaseModel):
 | `checkins.py` | `increase_allowed(exercise, checkins, flagged_areas) -> GuardVerdict` | Check-ins are asked for **flagged** areas only (§6.5). For every area the exercise loads **that the user flagged**, the latest check-in must be `fine`. A missing, `unknown`, `worse` or `pain` answer blocks the increase (silence is not consent). Areas the user did not flag need no check-in. An exercise with empty `loads_areas` fails closed. Because the catalog contraindicates every exercise that loads a flagged area, this gate only matters for exercises with a reviewed `contraindication_exceptions` entry. It is kept as defense in depth. |
 | `stop_words.py` | `scan(text, lang) -> StopHit \| None` | Normalizes the text (casefold, strip punctuation) and matches the per-language lists in `stop_words/*.txt` (pain, dizzy, numb, chest, popped, ... and inflections). **Any match halts.** Runs before the LLM. |
 | `screening.py` | `plan_allowed(flags, holds) -> GuardVerdict`; `exercise_allowed(exercise, flags) -> GuardVerdict` | Every red flag must have an explicit `yes`/`no` answer. Missing or `unknown` → `Refusal(SCREENING_INCOMPLETE)` (silence is not consent). Red flags answered `yes` need clearance. Open holds refuse. Contraindications remove exercises. |
-| `plan.py` | `validate_plan(plan, ctx) -> list[GuardVerdict]` | Runs all the checks above (including `plan_allowed`) over every prescription, plus: catalog ids only, location and equipment fit, at least one scheduled day (the profile's frequency is the default a plan is generated with, not a rule: a plan may have fewer or more days), reps_min ≤ reps_max, superset size. **Reference load:** an increase is measured against the exercise's **current working load**, not the historical max. When both are known, the reference is `min(current, history_max)`. **An increase already applied in the trailing 7 days is not counted twice.** If a `to_kg` from an applied `load_changes` entry for the exercise, is above that reference, the reference becomes the highest such applied `to_kg`. An applied change is discarded only when the exercise's last completed session **after** the change was **prescribed below** its `to_kg`, i.e. the user has since trained at a lower prescription. A load the user just failed at therefore cannot be restored through the lift. A skipped or lighter-logged session at the applied prescription keeps the lift, so keeping that load is a hold, not a new increase. Two kinds of applied change never lift the reference (they still count toward the weekly cap):
+| `plan.py` | `validate_plan(plan, ctx) -> list[GuardVerdict]` | ADR 0009: `plan.excluded` rejects an exercise the user's hard exclusions remove (plan-level only; `validate_workout` doesn't run it, so a saved plan still trains). Runs all the checks above (including `plan_allowed`) over every prescription, plus: catalog ids only, location and equipment fit, at least one scheduled day (the profile's frequency is the default a plan is generated with, not a rule: a plan may have fewer or more days), reps_min ≤ reps_max, superset size. **Reference load:** an increase is measured against the exercise's **current working load**, not the historical max. When both are known, the reference is `min(current, history_max)`. **An increase already applied in the trailing 7 days is not counted twice.** If a `to_kg` from an applied `load_changes` entry for the exercise, is above that reference, the reference becomes the highest such applied `to_kg`. An applied change is discarded only when the exercise's last completed session **after** the change was **prescribed below** its `to_kg`, i.e. the user has since trained at a lower prescription. A load the user just failed at therefore cannot be restored through the lift. A skipped or lighter-logged session at the applied prescription keeps the lift, so keeping that load is a hold, not a new increase. Two kinds of applied change never lift the reference (they still count toward the weekly cap):
   - **over-cap `user_edit` changes**, i.e. edits the user confirmed past the caps;
   - **changes made before a `session_delete` that removed a completed session.** Deleting logs must never raise what the system allows (§9.4). The engine's decrease rule also has priority over holding at an applied load. Keeping a confirmed load is therefore not a new increase, and only the part above it counts toward the cap. The earlier change was guarded when it was applied, and `check_ceiling` still runs as the absolute backstop. The current working load is the prescribed load of the last completed session (the logged load, when that session was a calibration: the engine holds there, §7.3), falling back to the active plan version's prescription. If there is history but no current load, the historical max is the reference, and the increase checks still run. Any `proposed > current` must pass `check_weekly_increment` and `increase_allowed`. `check_ceiling` always runs as an absolute backstop. |
 
@@ -886,7 +904,9 @@ One pydantic-ai `Agent` per purpose. Each has a typed output, and its prompt is 
 | `assistant` | context + `state` + session `history` + user text (scrubbed); lookup and staging tools | `AssistantTurn \| Refusal` (ADR 0003, ADR 0004) | medium |
 
 - The prompt loader returns `(template_name, version, rendered_text)`. Template name and
-  version go into `decisions`.
+  version go into `decisions`. Current versions (ADR 0009): `plan_generate.v5`,
+  `plan_revise.v3`, `plan_import.v2`, `session_adjust.v2`, `result_parse.v2`, `recap.v1`,
+  `assistant.v7`.
 - Each agent's model comes from its tier or override (§8.5). Nothing in the code is tied to
   one provider.
 - `llm/usage.py` wraps every run: records `llm_calls` from `result.usage` (a property), latency, and
