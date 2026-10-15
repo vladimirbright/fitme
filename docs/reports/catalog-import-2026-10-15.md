@@ -254,7 +254,7 @@ These remain in the local reference TOML with `triage = "lookup_only"` and the r
 
 - `2ed305b` Catalog retrieval: hybrid search, substitutes and plan candidate pools
 - `3ad0077` Extended equipment and an experience gate for advanced exercises
-- the import commit that adds this report: 908 exercise files, the rebuilt search index, and the audit fixes
+- `3288393` Import 908 reference exercises into the catalog (190 -> 1,098)
 
 ## Known limitations and follow-ups
 
