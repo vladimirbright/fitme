@@ -1,0 +1,12 @@
+id = "bodyweight_curtsey_squat"
+names = { en = "Curtsey squat", ru = "Приседание-реверанс" }
+kind = "bodyweight"
+pattern = "squat"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["knee", "hip", "ankle"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Stand with feet hip-width. Step one foot back and across behind the other leg and bend both knees, keeping the chest up and the weight on the front foot. Push through the front foot to stand and alternate sides.", ru = "Встаньте, ноги на ширине таза. Отведите одну ногу назад и по диагонали за другую, согните оба колена, грудь поднята, вес на передней ноге. Оттолкнитесь передней ногой и встаньте, чередуйте стороны." }

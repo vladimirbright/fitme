@@ -1,0 +1,12 @@
+id = "standing_upper_back_stretch"
+names = { en = "Standing upper back stretch", ru = "Растяжка верха спины стоя" }
+kind = "mobility"
+pattern = "mobility"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand tall and clasp your hands in front of you at shoulder height, palms facing out. Reach forward and round the upper back slightly, then lift the arms overhead while keeping the ribs down. Hold briefly and release.", ru = "Встаньте прямо, сцепите руки перед собой на уровне плеч, ладони смотрят наружу. Вытяните руки вперёд, слегка округлив верх спины, затем поднимите их над головой, не раскрывая рёбра. Задержитесь и отпустите." }

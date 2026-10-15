@@ -1,0 +1,12 @@
+id = "upward_facing_dog"
+names = { en = "Upward-facing dog", ru = "Собака мордой вверх" }
+kind = "mobility"
+pattern = "mobility"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Lie face down with hands beside the lower ribs. Press into the hands and straighten the arms, lifting the chest and thighs off the floor with only the tops of the feet and hands touching. Hold briefly and lower under control. Keep the neck long.", ru = "Лягте на живот, ладони у нижних рёбер. Надавите руками, выпрямите руки и поднимите грудь и бёдра от пола, опираясь только на ладони и верх стоп. Задержитесь и опуститесь под контролем. Шея длинная." }

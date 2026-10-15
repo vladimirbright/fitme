@@ -1,0 +1,12 @@
+id = "band_reverse_wrist_curl"
+names = { en = "Band reverse wrist curl", ru = "Обратные сгибания запястий с лентой" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["resistance_bands", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Sit on a bench, forearms on your thighs, palms down, with the band under both feet and its ends in your hands. Raise the backs of your hands by bending only the wrists, then lower slowly. Use light tension.", ru = "Сядьте на скамью, предплечья на бёдрах, ладони вниз; середина ленты под обеими стопами, концы в руках. Поднимайте тыльную сторону кистей, сгибая только запястья, и медленно опускайте. Берите лёгкое натяжение." }

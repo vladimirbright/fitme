@@ -1,0 +1,11 @@
+id = "medicine_ball_stability_ball_seated_curl"
+names = { en = "Seated medicine ball curl on stability ball", ru = "Сгибания рук с медицинболом сидя на фитболе" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["medicine_ball", "stability_ball"]
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit on a stability ball, feet flat and back straight, holding a medicine ball underhand. Curl it toward the shoulders with upper arms still, then lower under control.", ru = "Сядьте на фитбол, стопы на полу, спина прямая, медицинбол держите обратным хватом. Согните руки к плечам, плечи неподвижны, затем опустите под контролем." }

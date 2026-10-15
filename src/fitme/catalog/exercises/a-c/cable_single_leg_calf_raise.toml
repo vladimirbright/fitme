@@ -1,0 +1,13 @@
+id = "cable_single_leg_calf_raise"
+names = { en = "Cable single-leg calf raise", ru = "Подъём на носок на одной ноге в кроссовере" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["ankle"]
+contraindicated_by = ["ankle_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Stand on one foot holding a low-pulley handle at your side and a fixed support with the other hand. Rise onto the ball of the foot, pause, then lower the heel slowly. Finish one side, then switch.", ru = "Встаньте на одну ногу, в руке рукоять нижнего блока вдоль корпуса, другой рукой держитесь за опору. Поднимитесь на носок, задержитесь и медленно опустите пятку. Выполните все повторения на одной ноге, затем смените." }
+load_step_kg = 1.0

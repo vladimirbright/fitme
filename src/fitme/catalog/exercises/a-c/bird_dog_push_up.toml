@@ -1,0 +1,14 @@
+id = "bird_dog_push_up"
+names = { en = "Bird-dog push-up", ru = "Отжимания с подъёмом руки и ноги" }
+search = { en = "bird dog push up", ru = "отжимания с подъёмом руки и ноги" }
+kind = "bodyweight"
+pattern = "horizontal_push"
+equipment = []
+level = "advanced"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Start in a plank with hands a little wider than shoulders. Do a push-up. At the top lift one arm forward and the opposite leg back in line with the body, hold briefly, then lower both. Alternate sides.", ru = "Примите упор лёжа, руки чуть шире плеч. Выполните отжимание. Вверху вытяните одну руку вперёд и противоположную ногу назад в линию с телом, задержитесь и опустите. Чередуйте стороны." }
+load_step_kg = 1.0

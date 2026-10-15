@@ -1,0 +1,13 @@
+id = "barbell_bent_arm_pullover"
+names = { en = "Barbell bent-arm pullover", ru = "Пуловер со штангой с согнутыми руками" }
+kind = "isolation"
+pattern = "accessory"
+level = "advanced"
+equipment = ["barbell", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Lie lengthwise on a bench with the bar above the chest, elbows bent. Lower it in an arc behind the head only as far as the shoulders allow, then return over the chest. Use a light load and keep the bar away from the face.", ru = "Лягте вдоль скамьи, штанга над грудью, локти согнуты. Опустите её по дуге за голову настолько, насколько позволяют плечи, и верните над грудь. Вес лёгкий, гриф держите вдали от лица." }

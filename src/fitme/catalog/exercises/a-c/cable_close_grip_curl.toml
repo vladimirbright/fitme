@@ -1,0 +1,13 @@
+id = "cable_close_grip_curl"
+names = { en = "Cable close-grip curl", ru = "Сгибания рук на нижнем блоке узким хватом" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Attach a straight bar to a low pulley. Stand facing the machine, underhand grip with hands close together, elbows by the torso. Curl to the shoulders, then lower under control.", ru = "Прикрепите прямую рукоять к нижнему блоку. Встаньте лицом к тренажёру, хват снизу узкий, локти у корпуса. Согните руки к плечам, затем опустите под контролем." }
+load_step_kg = 1.0

@@ -1,0 +1,13 @@
+id = "barbell_straight_leg_deadlift"
+names = { en = "Barbell straight-leg deadlift", ru = "Становая тяга со штангой на прямых ногах" }
+kind = "compound"
+pattern = "hinge"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Stand with the bar over mid-foot, take an overhand grip a little wider than the shoulders and stand up with the bar. Keep the knees nearly straight and push the hips back, sliding the bar down the legs until the hamstrings stretch. Return by driving the hips forward and keep the back flat throughout.", ru = "Встаньте так, чтобы гриф был над серединой стопы, возьмите его хватом сверху чуть шире плеч и поднимите. Колени почти прямые, таз уходит назад, гриф скользит вдоль ног до растяжения задней поверхности бедра. Вернитесь, выводя таз вперёд; спина прямая на всём протяжении." }
+load_step_kg = 2.5

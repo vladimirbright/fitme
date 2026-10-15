@@ -1,0 +1,13 @@
+id = "machine_alternating_leg_press"
+names = { en = "Machine alternating leg press", ru = "Жим ногами в тренажёре поочерёдно" }
+kind = "compound"
+pattern = "squat"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["knee", "hip", "lower_back"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the seat so the knees bend comfortably and sit with the back flat on the pad. Press one foot at a time, then the other, keeping the hips and back in contact with the seat. Do not lock the knees at the top.", ru = "Отрегулируйте сиденье, спина плотно прижата к спинке. Жмите платформу поочерёдно одной и другой ногой, таз и спина не отрываются от сиденья. Не фиксируйте колени в верхней точке." }
+load_step_kg = 2.5

@@ -1,0 +1,13 @@
+id = "medicine_ball_chest_pass"
+names = { en = "Medicine ball chest pass", ru = "Пас медбола от груди" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["medicine_ball"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand a few steps from a solid wall, ball held at chest height. Push the ball forward in a straight line against the wall, catch the rebound with soft elbows and bring it back to your chest. Use a light ball and a wall that is clear of people and objects.", ru = "Встаньте в нескольких шагах от прочной стены, медбол на уровне груди. Толкните мяч вперёд по прямой в стену, поймайте отскок на мягких локтях и верните мяч к груди. Берите лёгкий мяч, рядом со стеной не должно быть людей и предметов." }
+load_step_kg = 1.0

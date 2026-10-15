@@ -1,0 +1,13 @@
+id = "cable_floor_seated_wide_grip_row"
+names = { en = "Cable floor wide-grip row", ru = "Тяга нижнего блока сидя на полу широким хватом" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit on the floor facing a low pulley, legs extended, and hold a wide bar. Pull the handle to the waist with a tall chest, then let it go forward under control without rounding the back.", ru = "Сядьте на пол лицом к нижнему блоку, ноги вытянуты, держите широкую рукоять. Тяните её к поясу с поднятой грудью, затем верните под контролем, не округляя спину." }
+load_step_kg = 2.5

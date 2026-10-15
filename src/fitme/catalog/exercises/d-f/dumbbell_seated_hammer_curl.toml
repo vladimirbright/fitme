@@ -1,0 +1,12 @@
+id = "dumbbell_seated_hammer_curl"
+names = { en = "Dumbbell seated hammer curl", ru = "Молотковые сгибания с гантелями сидя" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit upright on a bench with a dumbbell in each hand at your sides, palms facing your torso. Curl the weights toward your shoulders keeping the palms inward, then lower under control without leaning back.", ru = "Сядьте ровно на скамью, гантели по бокам, ладони смотрят на корпус. Согните руки, поднимая гантели к плечам и сохраняя ладони внутрь, затем опустите под контролем, не откидываясь назад." }

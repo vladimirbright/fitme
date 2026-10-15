@@ -1,0 +1,13 @@
+id = "dumbbell_alternate_hammer_preacher_curl"
+names = { en = "Dumbbell alternating hammer preacher curl", ru = "Попеременные молотковые сгибания на скамье Скотта" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit or stand at a preacher pad (or a bench set steeply upright) so the backs of your upper arms rest on it. Hold dumbbells with palms facing each other. Curl one toward your shoulder, lower it under control, then the other, keeping the upper arms on the pad.", ru = "Займите место у скамьи Скотта (или круто поставленной скамьи) так, чтобы задняя часть плеч лежала на упоре. Гантели в нейтральном хвате. Согните одну руку к плечу, подконтрольно опустите, затем другую, плечи остаются на упоре." }
+load_step_kg = 1.0

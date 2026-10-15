@@ -1,0 +1,12 @@
+id = "band_one_arm_twisting_chest_press"
+names = { en = "Band one-arm twisting chest press", ru = "Жим от груди одной рукой с эспандером и поворотом" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Anchor the band at chest height and stand side-on to the anchor, feet shoulder-width apart and knees slightly bent. Hold the band at the opposite shoulder, then press the hand forward and across while turning the torso a little. Return slowly. Do all reps on one side, then switch.", ru = "Закрепите ленту на уровне груди и встаньте боком к креплению, ноги на ширине плеч, колени слегка согнуты. Держите ленту у противоположного плеча, затем выжимайте руку вперёд и поперёк корпуса с небольшим поворотом. Медленно вернитесь. Все повторы на одну сторону, затем смените." }

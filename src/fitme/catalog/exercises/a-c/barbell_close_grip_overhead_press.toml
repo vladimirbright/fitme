@@ -1,0 +1,13 @@
+id = "barbell_close_grip_overhead_press"
+names = { en = "Barbell close-grip standing overhead press", ru = "Жим штанги стоя узким хватом" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["barbell", "rack"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "neck", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Set the bar at shoulder height and grip slightly inside shoulder width. Unrack, brace, and press straight overhead until your arms are extended, then lower to your shoulders. Set the rack's safety arms below the lowest point.", ru = "Установите гриф на уровне плеч, хват чуть уже плеч. Снимите штангу, напрягите корпус и выжмите строго вверх до выпрямления рук, затем опустите к плечам. Страховочные упоры выставьте ниже нижней точки." }
+load_step_kg = 2.5

@@ -1,0 +1,13 @@
+id = "cable_v_bar_standing_row"
+names = { en = "Cable V-bar standing row", ru = "Тяга V-образной рукояти блока стоя" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Stand facing the cable with feet shoulder-width and a slight hip hinge, holding the V-bar. Pull it to your lower chest with the elbows close, then return slowly. Keep the back flat and the knees soft.", ru = "Встаньте лицом к блоку, ноги на ширине плеч, лёгкий наклон корпуса, V-образная рукоять в руках. Тяните её к низу груди, локти близко, затем медленно возвращайте. Спина прямая, колени слегка согнуты." }
+load_step_kg = 2.5

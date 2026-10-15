@@ -1,0 +1,13 @@
+id = "dumbbell_step_up_with_curl"
+names = { en = "Dumbbell step-up with biceps curl", ru = "Подъём на платформу с гантелями и сгибанием рук" }
+kind = "compound"
+pattern = "squat"
+level = "advanced"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "ankle", "lower_back", "elbow_wrist"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current", "lower_back_injury_current", "hernia", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand facing a sturdy bench or step with a dumbbell in each hand. Step up with one foot, driving through that heel, and curl the weights at the top while balanced. Step down under control and alternate legs. Use light weights and a stable step.", ru = "Встаньте лицом к устойчивой скамье или платформе, в руках гантели. Поднимитесь одной ногой, отталкиваясь пяткой, и в верхней точке, удерживая баланс, согните руки с гантелями. Спуститесь под контролем и чередуйте ноги. Вес небольшой, платформа устойчивая." }

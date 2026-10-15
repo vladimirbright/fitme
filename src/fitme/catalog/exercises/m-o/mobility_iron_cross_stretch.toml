@@ -1,0 +1,12 @@
+id = "mobility_iron_cross_stretch"
+names = { en = "Iron cross stretch", ru = "Растяжка «железный крест» лёжа" }
+kind = "mobility"
+pattern = "mobility"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on your back with arms out to the sides and legs raised. Slowly lower both legs to one side, keeping the shoulders on the floor, hold briefly, then return and switch sides. Move within a comfortable range.", ru = "Лягте на спину, руки в стороны, ноги подняты вверх. Медленно опустите обе ноги в сторону, не отрывая плечи от пола, задержитесь и вернитесь, затем в другую сторону. Двигайтесь в комфортной амплитуде." }

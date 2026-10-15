@@ -1,0 +1,13 @@
+id = "bodyweight_kneeling_triceps_extension"
+names = { en = "Kneeling bodyweight triceps extension", ru = "Разгибание рук от пола с колен на трицепс" }
+kind = "bodyweight"
+pattern = "accessory"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Kneel on a mat with the forearms flat on the floor, elbows under the shoulders. Press through the palms to straighten the arms and lift the forearms off the floor, then lower back onto the forearms slowly. Keep the elbows pointing back and the hips in line with the torso.", ru = "Встаньте на колени на коврик, предплечья на полу, локти под плечами. Давите ладонями в пол, выпрямляя руки и отрывая предплечья, затем медленно опуститесь обратно на предплечья. Локти смотрят назад, таз на одной линии с корпусом." }
+load_step_kg = 1.0

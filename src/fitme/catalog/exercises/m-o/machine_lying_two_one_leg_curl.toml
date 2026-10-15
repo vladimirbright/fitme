@@ -1,0 +1,13 @@
+id = "machine_lying_two_one_leg_curl"
+names = { en = "Machine lying leg curl, two up one down", ru = "Сгибание ног лёжа: поднять двумя, опустить одной" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["knee"]
+contraindicated_by = ["knee_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Lie face down with the roller above the heels. Curl both legs up together, then lower with one leg only, slowly. Alternate the lowering leg each rep. Use a light weight and keep the hips down.", ru = "Лягте лицом вниз, валик чуть выше пяток. Согните обе ноги вместе, а опускайте медленно одной ногой. На каждом повторе меняйте опускаемую ногу. Вес лёгкий, таз прижат." }
+load_step_kg = 1.0

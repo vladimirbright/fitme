@@ -1,0 +1,13 @@
+id = "smith_machine_back_shrug"
+names = { en = "Smith machine behind-the-back shrug", ru = "Шраги в машине Смита за спиной" }
+search = { en = "smith machine back shrug", ru = "шраги в смите за спиной" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["smith_machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "neck", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "neck_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the safety stops just below thigh height, stand with your back to the bar and hold it behind your thighs, arms straight. Lift the shoulders straight up, pause, and lower slowly. Keep the chest tall and the hips under you.", ru = "Установите страховочные упоры чуть ниже уровня бёдер, встаньте спиной к грифу и возьмите его за спиной, руки прямые. Поднимите плечи строго вверх, задержитесь и медленно опустите. Грудь раскрыта, таз под корпусом." }

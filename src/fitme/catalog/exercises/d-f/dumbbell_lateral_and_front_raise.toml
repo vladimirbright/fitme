@@ -1,0 +1,12 @@
+id = "dumbbell_lateral_and_front_raise"
+names = { en = "Dumbbell lateral and front raise combo", ru = "Подъёмы гантелей в стороны и перед собой" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand holding a dumbbell in each hand at your sides. Raise both arms out to the sides to shoulder height and lower, then raise both arms forward to shoulder height and lower. That is one rep. Keep the elbows slightly bent and avoid swinging.", ru = "Встаньте, гантели в руках вдоль корпуса. Поднимите обе руки в стороны до уровня плеч и опустите, затем поднимите обе руки вперёд до уровня плеч и опустите. Это одно повторение. Локти слегка согнуты, без раскачки." }

@@ -1,0 +1,13 @@
+id = "cable_kneeling_triceps_extension"
+names = { en = "Cable kneeling triceps extension", ru = "Разгибание рук с канатом на верхнем блоке стоя на коленях" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Attach a rope to a high pulley and kneel facing it, hands at the sides of the head. Keep the elbows close and straighten the arms down and forward, then return slowly. Keep the torso upright.", ru = "Прикрепите канат к верхнему блоку и встаньте на колени лицом к нему, руки у головы. Локти близко, разогните руки вниз и вперёд, затем медленно вернитесь. Корпус прямой." }
+load_step_kg = 1.0

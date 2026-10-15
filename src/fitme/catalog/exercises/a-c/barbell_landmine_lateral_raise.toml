@@ -1,0 +1,14 @@
+id = "barbell_landmine_lateral_raise"
+names = { en = "Landmine lateral raise", ru = "Подъём грифа в упоре в угол в сторону" }
+search = { en = "landmine lateral raise", ru = "боковой подъём на лэндмайн" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "lower_back", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "lower_back_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Wedge one end of an empty barbell into a landmine anchor or a padded corner and stand side-on to it, holding the free end in one hand at hip level. Keeping the arm nearly straight, raise the bar up and out to shoulder height, then lower it slowly. Start with the bar alone, keep your torso still and switch sides.", ru = "Зафиксируйте один конец пустого грифа в креплении лэндмайн или в углу с мягкой прокладкой и встаньте к нему боком, держа свободный конец одной рукой у бедра. Почти прямой рукой поднимите гриф вверх и в сторону до уровня плеч, затем медленно опустите. Начните с пустого грифа, корпус неподвижен, затем смените сторону." }
+load_step_kg = 2.5

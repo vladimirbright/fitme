@@ -1,0 +1,12 @@
+id = "machine_standing_calf_raise"
+names = { en = "Machine standing calf raise", ru = "Подъём на носки стоя в тренажёре" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["ankle", "knee", "lower_back"]
+contraindicated_by = ["ankle_injury_current", "knee_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Adjust the pads to your height and place the shoulders under them, balls of the feet on the platform. Straighten the knees to take the load, lower the heels for a gentle stretch, then rise as high as you can. Pause, lower slowly, and re-rack before stepping away.", ru = "Отрегулируйте валики по росту и поставьте плечи под них, передняя часть стопы на платформе. Выпрямите колени, чтобы взять вес, опустите пятки до лёгкого растяжения и поднимитесь как можно выше. Задержитесь, медленно опустите и верните вес на упоры, прежде чем отойти." }

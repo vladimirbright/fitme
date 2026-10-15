@@ -1,0 +1,12 @@
+id = "band_standing_crunch"
+names = { en = "Band standing crunch", ru = "Скручивания стоя с лентой" }
+kind = "isolation"
+pattern = "core"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "neck"]
+contraindicated_by = ["lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Anchor the band high and stand facing away, feet shoulder-width apart, hands holding it beside your head. Bend forward at the ribs toward your pelvis, then return upright. Keep your hips still and do not pull with your arms.", ru = "Закрепите ленту высоко и встаньте к опоре спиной, ноги на ширине плеч, руки с лентой у головы. Сверните корпус, сближая рёбра и таз, затем вернитесь. Таз неподвижен, руками не тяните." }

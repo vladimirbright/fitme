@@ -1,0 +1,12 @@
+id = "dumbbell_one_arm_bench_fly"
+names = { en = "One-arm dumbbell fly on bench", ru = "Разводка одной гантели лёжа" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie on a flat bench holding one dumbbell above your chest, elbow slightly bent. Open the arm out to the side in an arc to chest level, then bring it back. Finish all reps on one side, then switch.", ru = "Лягте на горизонтальную скамью, одна гантель над грудью, локоть слегка согнут. Разведите руку в сторону по дуге до уровня груди и верните обратно. Выполните все повторения на одну сторону, затем смените." }

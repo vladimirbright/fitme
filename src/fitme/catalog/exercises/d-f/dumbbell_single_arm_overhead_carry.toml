@@ -1,0 +1,13 @@
+id = "dumbbell_single_arm_overhead_carry"
+names = { en = "Dumbbell single-arm overhead carry", ru = "Ходьба с гантелью над головой одной рукой" }
+kind = "compound"
+pattern = "core"
+equipment = ["dumbbells"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Press a light dumbbell overhead with one arm and lock it out, ribs down, biceps near your ear. Walk slowly in a straight line, keeping the dumbbell stacked over your shoulder. Lower the weight with control and switch hands. Stop if the weight drifts forward.", ru = "Выжмите лёгкую гантель одной рукой над головой и зафиксируйте, рёбра опущены, плечо рядом с ухом. Медленно идите по прямой, удерживая гантель над плечом. Под контролем опустите вес и смените руку. Остановитесь, если гантель уходит вперёд." }
+level = "advanced"

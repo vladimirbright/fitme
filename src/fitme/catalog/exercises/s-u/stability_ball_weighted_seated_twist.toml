@@ -1,0 +1,12 @@
+id = "stability_ball_weighted_seated_twist"
+names = { en = "Stability ball seated twist with plate", ru = "Повороты корпуса сидя на фитболе с блином" }
+kind = "isolation"
+pattern = "core"
+equipment = ["stability_ball", "weight_plate"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "shoulder"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit tall on a stability ball with feet wide and a plate held close to your chest. Rotate your torso to one side, then the other, keeping your hips still. Use a light plate and a steady pace.", ru = "Сядьте прямо на фитбол, ноги широко, блин у груди. Поворачивайте корпус в одну сторону, затем в другую, таз неподвижен. Блин лёгкий, темп ровный." }

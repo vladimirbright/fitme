@@ -1,0 +1,12 @@
+id = "diamond_push_up"
+names = { en = "Diamond push-up", ru = "Отжимания ромбом" }
+search = { en = "diamond push-up", ru = "алмазные отжимания" }
+kind = "bodyweight"
+pattern = "horizontal_push"
+equipment = []
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Start in a high plank with thumbs and index fingers forming a diamond under your chest. Keep your body straight and elbows close as you lower your chest toward your hands, then press up. Do them from your knees if the full version is too hard.", ru = "Примите упор лёжа, большие и указательные пальцы образуют ромб под грудью. Тело прямое, локти близко к корпусу: опустите грудь к кистям, затем отожмитесь. Если полный вариант пока тяжёл, выполняйте с колен." }

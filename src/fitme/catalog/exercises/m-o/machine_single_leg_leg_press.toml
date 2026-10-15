@@ -1,0 +1,13 @@
+id = "machine_single_leg_leg_press"
+names = { en = "Single-leg machine leg press", ru = "Жим одной ногой в тренажёре" }
+kind = "compound"
+pattern = "squat"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["knee", "hip", "lower_back"]
+contraindicated_by = ["knee_injury_current", "hernia", "hip_injury_current", "lower_back_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the lightest resistance and place one foot in the middle of the platform. Lower the platform with control until the knee is bent comfortably, keeping the hips on the seat. Press back up without locking the knee hard. Finish the reps, then switch legs.", ru = "Установите минимальное сопротивление и поставьте одну стопу в центр платформы. Плавно опускайте платформу до удобного сгибания колена, таз остаётся на сиденье. Выжмите обратно, не разгибая колено резко до упора. Закончите повторения и смените ногу." }
+load_step_kg = 2.5

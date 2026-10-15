@@ -1,0 +1,12 @@
+id = "bench_decline_sit_up"
+names = { en = "Decline bench sit-up", ru = "Подъём корпуса на скамье головой вниз" }
+kind = "isolation"
+pattern = "core"
+equipment = ["bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["lower_back", "neck", "hip"]
+contraindicated_by = ["lower_back_injury_current", "neck_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Lie back on a decline ab bench with your feet hooked under the pads and knees bent, hands crossed on your chest. Curl up until your torso is upright, then lower back under control. Keep the movement smooth and do not yank on your neck.", ru = "Лягте на скамью для пресса головой вниз, зацепив стопы под валиками, колени согнуты, руки скрещены на груди. Поднимите корпус до вертикали, затем под контролем опуститесь. Двигайтесь плавно, шею не дёргайте." }

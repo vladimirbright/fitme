@@ -1,0 +1,14 @@
+id = "kettlebell_one_arm_jerk"
+names = { en = "Kettlebell one-arm jerk", ru = "Толчок гири одной рукой" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["kettlebell"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "hip", "knee", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hip_injury_current", "knee_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 4.0 }
+level = "advanced"
+instructions = { en = "Start with one kettlebell racked at the shoulder. Dip and drive up through your legs, then drop slightly under the bell as the arm locks out overhead. Stand fully, then lower the bell back to the rack under control. Finish one side before switching; use a light weight with clear space around you.", ru = "Начните с гирей у плеча. Присядьте и оттолкнитесь ногами, затем слегка подсядьте под гирю, фиксируя руку над головой. Полностью выпрямитесь, затем под контролем опустите гирю к плечу. Выполните одну сторону и смените; вес лёгкий, вокруг должно быть свободно." }
+load_step_kg = 2.0

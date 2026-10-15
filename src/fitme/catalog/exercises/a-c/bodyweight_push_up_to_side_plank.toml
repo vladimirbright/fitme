@@ -1,0 +1,12 @@
+id = "bodyweight_push_up_to_side_plank"
+names = { en = "Push-up to side plank", ru = "Отжимание с переходом в боковую планку" }
+kind = "bodyweight"
+pattern = "horizontal_push"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Do a push-up with your body in one line. At the top, shift weight to one hand and rotate into a side plank, lifting the other arm up. Return to the push-up position and alternate sides. Move with control and keep the hips lifted.", ru = "Выполните отжимание, тело — прямая линия. Вверху перенесите вес на одну руку и развернитесь в боковую планку, подняв другую руку вверх. Вернитесь в упор и чередуйте стороны. Двигайтесь под контролем, таз приподнят." }

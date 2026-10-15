@@ -1,0 +1,12 @@
+id = "smith_machine_supported_calf_raise"
+names = { en = "Smith machine supported calf raise", ru = "Подъём на носки в машине Смита с опорой на гриф" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["smith_machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["ankle"]
+contraindicated_by = ["ankle_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Set the bar at about chest height and stand facing it, balls of the feet on the edge of a low step with the heels free. Hold the bar lightly for balance. Rise as high as you can, pause, then lower the heels below the step slowly.", ru = "Установите гриф примерно на уровне груди и встаньте к нему лицом, передняя часть стопы на краю невысокой ступени, пятки свободны. Держитесь за гриф только для равновесия. Поднимитесь на носки как можно выше, задержитесь и медленно опустите пятки ниже ступени." }

@@ -1,0 +1,13 @@
+id = "clap_push_up"
+names = { en = "Clap push-up", ru = "Отжимания с хлопком" }
+kind = "bodyweight"
+pattern = "horizontal_push"
+equipment = []
+load_unit = "total"
+level = "advanced"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Start in a push-up position on a firm, non-slip floor. Lower the chest toward the floor, then press up hard enough that the hands leave the floor and clap briefly. Land with soft, slightly bent elbows and go straight into the next rep. Stop the set when the push loses height.", ru = "Исходное положение для отжиманий на твёрдом нескользком полу. Опуститесь грудью к полу, затем мощно оттолкнитесь так, чтобы ладони оторвались от пола, и коротко хлопните. Приземляйтесь на мягкие, слегка согнутые руки и сразу переходите к следующему повтору. Завершайте подход, когда толчок теряет высоту." }

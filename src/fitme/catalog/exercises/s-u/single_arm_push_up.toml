@@ -1,0 +1,13 @@
+id = "single_arm_push_up"
+names = { en = "One-arm push-up", ru = "Отжимание на одной руке" }
+kind = "bodyweight"
+pattern = "horizontal_push"
+equipment = []
+level = "advanced"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Start in a plank with feet wide and one hand under the shoulder, the other behind the back. Lower the chest under control by bending the working elbow, then press back up with hips level. Finish all reps, then switch arms.", ru = "Примите упор лёжа, ноги широко, одна рука под плечом, другая за спиной. Под контролем опустите грудь, сгибая рабочую руку, затем выжмитесь вверх, таз ровный. Выполните все повторения и смените руку." }
+load_step_kg = 1.0

@@ -1,0 +1,14 @@
+id = "barbell_thruster"
+names = { en = "Barbell thruster", ru = "Трастер со штангой" }
+kind = "compound"
+pattern = "squat"
+equipment = ["barbell", "rack"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "hip", "knee", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hip_injury_current", "knee_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+level = "advanced"
+instructions = { en = "Rest the bar on the front of your shoulders from the rack, elbows forward. Squat to a controlled depth, then stand and press the bar overhead in one flow, and lower it back to your shoulders. Set the rack's safety arms and keep the weight light enough to stay in control.", ru = "Снимите штангу со стойки на передние дельты, локти вперёд. Опуститесь в присед на контролируемую глубину, затем встаньте и одним движением выжмите штангу вверх, после чего опустите её на плечи. Выставьте страховочные упоры, вес берите такой, чтобы контролировать движение." }
+load_step_kg = 2.5

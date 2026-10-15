@@ -1,0 +1,13 @@
+id = "cable_rotating_grip_row"
+names = { en = "Cable rotating-grip row", ru = "Тяга блока с поворотом кисти" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set a handle at waist height, step back and stand with soft knees and a flat back. Start with palms down and turn them up as you pull the handle to your lower ribs. Return slowly while turning the palms back down. Keep the torso still.", ru = "Установите рукоять на уровне пояса, отойдите назад, колени слегка согнуты, спина прямая. Начните хватом сверху и по ходу тяги к низу рёбер поворачивайте кисти ладонями вверх. Медленно возвращайтесь, разворачивая кисти обратно. Корпус неподвижен." }
+load_step_kg = 2.5

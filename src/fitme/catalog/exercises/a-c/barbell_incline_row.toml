@@ -1,0 +1,12 @@
+id = "barbell_incline_row"
+names = { en = "Barbell incline bench row", ru = "Тяга штанги лёжа на наклонной скамье" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["barbell", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Lie face down on an incline bench with the chest on the pad and take the bar with an overhand grip. Row it toward the chest, squeezing the shoulder blades, then lower it under control.", ru = "Лягте животом на наклонную скамью, грудь на опоре, возьмите штангу хватом сверху. Тяните её к груди, сводя лопатки, затем опустите под контролем." }

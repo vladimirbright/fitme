@@ -1,0 +1,12 @@
+id = "dumbbell_side_lying_external_rotation"
+names = { en = "Dumbbell side-lying external rotation", ru = "Наружная ротация плеча с гантелью лёжа на боку" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie on your side on a bench with a light dumbbell in the top hand, elbow bent 90 degrees and pinned to your side. Rotate the forearm upward, away from your body, then lower slowly. Keep the weight light.", ru = "Лягте на бок на скамью, в верхней руке лёгкая гантель, локоть согнут под 90 градусов и прижат к боку. Поверните предплечье вверх, от корпуса, затем медленно опустите. Вес берите небольшой." }

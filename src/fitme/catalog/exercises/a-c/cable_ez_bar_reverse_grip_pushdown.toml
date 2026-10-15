@@ -1,0 +1,13 @@
+id = "cable_ez_bar_reverse_grip_pushdown"
+names = { en = "Cable EZ-bar reverse-grip pushdown", ru = "Разгибание рук обратным хватом на верхнем блоке с EZ-рукоятью" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Attach an EZ-bar handle to a high pulley and hold it underhand, upper arms pinned to your sides. Straighten the arms downward without moving the upper arms, then let the bar rise under control.", ru = "Закрепите EZ-рукоять на верхнем блоке и возьмитесь хватом снизу, плечи прижаты к бокам. Выпрямите руки вниз, не двигая плечами, затем подконтрольно дайте рукояти подняться." }
+load_step_kg = 1.0

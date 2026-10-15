@@ -1,0 +1,13 @@
+id = "dip_bars_wide_grip_chest_dip"
+names = { en = "Wide-grip chest dip", ru = "Отжимания на брусьях широким хватом на грудь" }
+kind = "bodyweight"
+pattern = "vertical_push"
+equipment = ["dip_bars"]
+level = "advanced"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Support yourself on wide parallel bars, arms extended, torso leaned forward. Lower until the upper arms are about parallel to the floor, then press back up. Do not go deeper and avoid swinging.", ru = "Обопритесь на широкие параллельные брусья, руки выпрямлены, корпус наклонён вперёд. Опуститесь, пока плечи не станут примерно параллельны полу, затем выжмитесь вверх. Глубже не опускайтесь, без раскачки." }
+load_step_kg = 1.0

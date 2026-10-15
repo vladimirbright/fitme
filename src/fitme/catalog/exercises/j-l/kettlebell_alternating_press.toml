@@ -1,0 +1,13 @@
+id = "kettlebell_alternating_press"
+names = { en = "Kettlebell alternating press", ru = "Попеременный жим гирь стоя" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["kettlebell"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 4.0 }
+instructions = { en = "Stand with a kettlebell at each shoulder, elbows close to your body. Press one kettlebell straight overhead, lower it back to the shoulder, then press the other. Keep your ribs down and do not lean back.", ru = "Встаньте, по гире у каждого плеча, локти ближе к корпусу. Выжмите одну гирю строго вверх, опустите к плечу, затем выжмите вторую. Рёбра опущены, не отклоняйтесь назад." }
+load_step_kg = 2.0

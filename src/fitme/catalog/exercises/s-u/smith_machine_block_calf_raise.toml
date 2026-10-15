@@ -1,0 +1,12 @@
+id = "smith_machine_block_calf_raise"
+names = { en = "Smith machine calf raise on a block", ru = "Подъём на носки в машине Смита на подставке" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["smith_machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["ankle", "knee", "lower_back", "neck"]
+contraindicated_by = ["ankle_injury_current", "knee_injury_current", "lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Place a stable block or plate under the bar and set the bar at shoulder height. Step under it with the bar across the upper back, balls of the feet on the block and heels free. Unhook, lower the heels for a gentle stretch, rise as high as you can, then lower slowly. Re-hook the bar before stepping off.", ru = "Поставьте под гриф устойчивую подставку или блин и установите гриф на уровне плеч. Встаньте под него, гриф на верхней части спины, передняя часть стоп на подставке, пятки свободны. Снимите гриф с фиксаторов, опустите пятки до лёгкого растяжения, поднимитесь как можно выше и медленно опуститесь. Верните гриф на фиксаторы, прежде чем сойти с подставки." }

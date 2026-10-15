@@ -1,0 +1,12 @@
+id = "dumbbell_standing_neutral_grip_concentration_curl"
+names = { en = "Dumbbell standing neutral-grip concentration curl", ru = "Концентрированное сгибание с гантелью стоя нейтральным хватом" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand with feet wide and hinge slightly forward, one dumbbell in your hand with the palm facing inward and your other hand braced on your thigh. Curl the weight toward your shoulder with your upper arm still, then lower under control. Finish all reps, then switch arms.", ru = "Встаньте, ноги широко, слегка наклонитесь вперёд, в руке гантель ладонью внутрь, вторая рука упирается в бедро. Согните руку, поднимая гантель к плечу, плечо неподвижно, затем опустите под контролем. Выполните все повторения и смените руку." }

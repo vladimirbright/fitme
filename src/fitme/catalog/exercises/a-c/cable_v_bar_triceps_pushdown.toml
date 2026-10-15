@@ -1,0 +1,13 @@
+id = "cable_v_bar_triceps_pushdown"
+names = { en = "Cable V-bar triceps pushdown", ru = "Разгибание рук на верхнем блоке с V-рукоятью" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Face a high pulley holding a V-bar with elbows at your sides. Press down until the arms are straight, then let the bar rise under control with the upper arms still.", ru = "Встаньте лицом к верхнему блоку, V-рукоять в руках, локти у корпуса. Выжмите вниз до прямых рук, затем подконтрольно дайте рукояти подняться, плечи неподвижны." }
+load_step_kg = 1.0

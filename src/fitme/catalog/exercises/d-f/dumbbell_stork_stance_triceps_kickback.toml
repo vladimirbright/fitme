@@ -1,0 +1,13 @@
+id = "dumbbell_stork_stance_triceps_kickback"
+names = { en = "Dumbbell stork-stance triceps kickback", ru = "Разгибание руки с гантелью в наклоне на одной ноге" }
+kind = "isolation"
+pattern = "accessory"
+level = "advanced"
+equipment = ["dumbbells"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder", "lower_back"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Hold a dumbbell in one hand and stand on the opposite leg, hinging forward with a flat back and the free hand braced on a bench or wall for balance. Keep the upper arm against your side, straighten the elbow back, then bend it under control. Finish all reps, then switch sides.", ru = "Возьмите гантель в одну руку и встаньте на противоположную ногу, наклонитесь вперёд с ровной спиной, свободной рукой обопритесь о скамью или стену для баланса. Плечо прижато к корпусу, выпрямите руку назад, затем согните под контролем. Выполните все повторения и смените сторону." }

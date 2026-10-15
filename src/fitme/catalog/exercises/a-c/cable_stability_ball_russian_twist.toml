@@ -1,0 +1,13 @@
+id = "cable_stability_ball_russian_twist"
+names = { en = "Cable Russian twist on stability ball", ru = "Русские скручивания на блоке на фитболе" }
+kind = "isolation"
+pattern = "core"
+equipment = ["cable", "stability_ball"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["lower_back"]
+contraindicated_by = ["lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Sit on a stability ball side-on to a cable set at chest height, feet planted wide, handle held in both hands in front of you. Rotate your torso away from the stack, then return slowly. Keep your hips steady on the ball.", ru = "Сядьте на фитбол боком к блоку на уровне груди, стопы широко, рукоять в обеих руках перед собой. Поверните корпус от тренажёра, затем медленно вернитесь. Таз устойчиво на мяче." }
+load_step_kg = 1.0

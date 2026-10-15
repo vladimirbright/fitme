@@ -1,0 +1,13 @@
+id = "band_kneeling_hip_thrust"
+names = { en = "Band kneeling hip thrust", ru = "Разгибание бёдер на коленях с лентой" }
+kind = "isolation"
+pattern = "hinge"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["hip", "knee", "lower_back"]
+contraindicated_by = ["hip_injury_current", "knee_injury_current", "lower_back_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Place a loop band above the knees and kneel with hips under shoulders, hands on the hips. Drive the hips forward, squeezing the glutes, pause, then return with control. Do not lean back.", ru = "Наденьте петлю-ленту выше колен и встаньте на колени, руки на бёдрах. Выведите таз вперёд, напрягая ягодицы, задержитесь и под контролем вернитесь. Не прогибайтесь назад." }
+load_step_kg = 1.0

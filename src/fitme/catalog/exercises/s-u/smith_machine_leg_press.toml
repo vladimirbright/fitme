@@ -1,0 +1,14 @@
+id = "smith_machine_leg_press"
+names = { en = "Smith machine leg press", ru = "Жим ногами в тренажёре Смита" }
+kind = "compound"
+pattern = "squat"
+level = "advanced"
+equipment = ["smith_machine", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["knee", "hip", "lower_back"]
+contraindicated_by = ["knee_injury_current", "hernia", "hip_injury_current", "lower_back_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Lie on a flat bench under the bar with hips and knees bent and feet on the bar. Release the hooks and lower the knees toward the chest only as far as the lower back stays on the bench, then press up. Keep the feet flat and centred on the bar, and set the safety stops so the bar cannot reach your body.", ru = "Лягте на скамью под гриф, бёдра и колени согнуты, стопы на грифе. Снимите гриф с крючков и опускайте колени к груди, пока поясница прижата к скамье, затем выжмите вверх. Держите стопы ровно по центру грифа и выставьте ограничители так, чтобы гриф не достал до тела." }
+load_step_kg = 2.5

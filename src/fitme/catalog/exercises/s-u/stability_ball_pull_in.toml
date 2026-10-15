@@ -1,0 +1,12 @@
+id = "stability_ball_pull_in"
+names = { en = "Stability ball pull-in", ru = "Подтягивание коленей к груди с фитболом" }
+kind = "bodyweight"
+pattern = "core"
+equipment = ["stability_ball"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Start in a push-up position with your shins on a stability ball. Keeping your arms straight, roll the ball toward your chest by drawing your knees in. Extend your legs back out slowly. Keep your hips from sagging.", ru = "Примите упор лёжа на прямых руках, голени лежат на фитболе. Не сгибая рук, прикатите мяч к груди, подтягивая колени. Медленно вытяните ноги обратно. Таз не провисает." }

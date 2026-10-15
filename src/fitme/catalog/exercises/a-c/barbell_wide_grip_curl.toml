@@ -1,0 +1,12 @@
+id = "barbell_wide_grip_curl"
+names = { en = "Barbell wide-grip curl", ru = "Сгибания рук со штангой широким хватом" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Stand tall with an underhand grip, hands wider than the shoulders, elbows beside the torso. Curl the bar toward the shoulders, then lower under control. Keep the torso still.", ru = "Встаньте ровно, хват снизу шире плеч, локти у корпуса. Поднимите гриф к плечам, затем опустите под контролем. Корпус неподвижен." }

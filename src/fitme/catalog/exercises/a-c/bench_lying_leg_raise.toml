@@ -1,0 +1,12 @@
+id = "bench_lying_leg_raise"
+names = { en = "Flat bench leg raise", ru = "Подъём ног лёжа на скамье" }
+kind = "isolation"
+pattern = "core"
+equipment = ["bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on a flat bench with your hips at the end, holding the bench behind your head or placing your hands under your glutes. Raise your straight legs toward the ceiling, then lower slowly without touching the floor. Keep your lower back against the bench.", ru = "Лягте на плоскую скамью так, чтобы таз был у края, держитесь за скамью за головой или подложите руки под ягодицы. Поднимите прямые ноги к потолку, затем медленно опустите, не касаясь пола. Поясница прижата к скамье." }

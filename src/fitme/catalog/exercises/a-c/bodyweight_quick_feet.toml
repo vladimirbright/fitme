@@ -1,0 +1,12 @@
+id = "bodyweight_quick_feet"
+names = { en = "Quick feet", ru = "Быстрые шаги на месте" }
+kind = "cardio"
+pattern = "conditioning"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["ankle", "knee"]
+contraindicated_by = ["ankle_injury_current", "knee_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand with feet hip-width and knees soft. Tap the feet quickly on the spot, staying on the balls of the feet with light contacts. Keep the arms relaxed and the pace under control.", ru = "Встаньте, ноги на ширине таза, колени слегка согнуты. Быстро перебирайте ногами на месте, оставаясь на передней части стопы с лёгким касанием. Руки расслаблены, темп под контролем." }

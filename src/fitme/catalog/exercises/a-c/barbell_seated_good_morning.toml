@@ -1,0 +1,13 @@
+id = "barbell_seated_good_morning"
+names = { en = "Barbell seated good morning", ru = "Наклоны со штангой сидя" }
+kind = "compound"
+pattern = "hinge"
+equipment = ["barbell", "rack", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip", "neck"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit upright on a bench with the bar on the upper back, set up from the rack. Lean the torso forward from the hips with a flat back, only as far as control allows, then sit tall again. Keep the weight light.", ru = "Сядьте прямо на скамью со штангой на верхней части спины, взятой со стойки. Наклоните корпус вперёд от бёдер с ровной спиной, насколько позволяет контроль, и вернитесь. Вес лёгкий." }
+load_step_kg = 2.5

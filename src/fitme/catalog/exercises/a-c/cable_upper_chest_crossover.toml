@@ -1,0 +1,13 @@
+id = "cable_upper_chest_crossover"
+names = { en = "Cable staggered crossover with crossing hands", ru = "Кроссовер на блоках в шаговой стойке со скрещиванием рук" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set both pulleys at chest height and stand in a split stance, a handle in each hand. With slightly bent elbows, pull the hands together in front of the chest and cross them. Open back out slowly and keep the torso steady.", ru = "Установите оба блока на уровне груди и встаньте в шаговую стойку, рукояти в руках. С чуть согнутыми локтями сведите кисти перед грудью и скрестите. Медленно разведите, корпус устойчив." }
+load_step_kg = 1.0

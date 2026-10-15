@@ -1,0 +1,13 @@
+id = "archer_push_up"
+names = { en = "Archer push-up", ru = "Отжимания лучника" }
+kind = "bodyweight"
+pattern = "horizontal_push"
+equipment = []
+load_unit = "total"
+level = "advanced"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Start in a push-up position with hands well outside shoulder width. Shift your weight toward one hand and lower on that side while the other arm stays straight out to the side. Press back to the start and alternate sides. Keep your body in one line and move slowly.", ru = "Исходное положение для отжиманий, руки заметно шире плеч. Сместите вес на одну руку и опускайтесь в её сторону, другая рука остаётся прямой в стороне. Выжмитесь обратно и чередуйте стороны. Держите тело ровной линией и двигайтесь медленно." }

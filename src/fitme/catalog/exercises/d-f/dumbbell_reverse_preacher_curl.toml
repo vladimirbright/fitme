@@ -1,0 +1,12 @@
+id = "dumbbell_reverse_preacher_curl"
+names = { en = "Dumbbell reverse preacher curl", ru = "Обратные сгибания с гантелями на скамье Скотта" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Rest both upper arms on a preacher pad (or an incline bench with your chest against it) and hold the dumbbells with an overhand grip. Curl up with straight wrists, then lower slowly. Use a light weight.", ru = "Положите оба плеча на упор скамьи Скотта (или на наклонную скамью, грудью к спинке), гантели в хвате сверху. Согните руки, запястья ровные, затем медленно опустите. Берите лёгкий вес." }

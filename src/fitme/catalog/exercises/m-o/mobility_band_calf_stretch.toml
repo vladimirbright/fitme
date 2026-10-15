@@ -1,0 +1,12 @@
+id = "mobility_band_calf_stretch"
+names = { en = "Band calf stretch", ru = "Растяжка икр с лентой" }
+kind = "mobility"
+pattern = "mobility"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["ankle"]
+contraindicated_by = ["ankle_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Sit with one leg straight and loop a band around the ball of that foot. Holding the ends, gently draw the toes toward you with the knee straight. Hold 20-30 seconds, then switch legs.", ru = "Сядьте, одна нога прямая, наденьте ленту на переднюю часть этой стопы. Держа концы ленты, мягко подтяните носок на себя, колено прямое. Удерживайте 20-30 секунд, затем смените ногу." }

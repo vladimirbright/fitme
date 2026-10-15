@@ -1,0 +1,13 @@
+id = "bodyweight_half_squat_jump"
+names = { en = "Half squat jump", ru = "Прыжок из неглубокого приседа" }
+kind = "cardio"
+pattern = "conditioning"
+level = "advanced"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["knee", "ankle", "hip"]
+contraindicated_by = ["knee_injury_current", "ankle_injury_current", "hip_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand with feet shoulder-width apart and dip into a shallow squat. Jump up, swinging the arms, then land softly on the balls of the feet with the knees bent. Reset and repeat without stacking up speed.", ru = "Встаньте, ноги на ширине плеч, уйдите в неглубокий присед. Выпрыгните вверх, помогая руками, и мягко приземлитесь на переднюю часть стопы с согнутыми коленями. Займите исходное положение и повторите, не наращивая скорость." }

@@ -1,0 +1,14 @@
+id = "kettlebell_renegade_row"
+names = { en = "Kettlebell renegade row", ru = "Тяга ренегат с гирями" }
+kind = "compound"
+level = "advanced"
+pattern = "horizontal_pull"
+equipment = ["kettlebell"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 4.0 }
+instructions = { en = "Take a push-up position with a hand on each kettlebell handle, feet wide for balance. Row one kettlebell toward the ribs without twisting the hips, set it down and alternate. Use light kettlebells that stand steady on a flat floor and do not roll under the hand.", ru = "Примите упор лёжа, по руке на ручке каждой гири, стопы широко для устойчивости. Тяните одну гирю к рёбрам, не поворачивая таз, поставьте её и чередуйте стороны. Берите лёгкие гири, которые устойчиво стоят на ровном полу и не перекатываются под рукой." }
+load_step_kg = 2.0

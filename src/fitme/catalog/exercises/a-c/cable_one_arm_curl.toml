@@ -1,0 +1,13 @@
+id = "cable_one_arm_curl"
+names = { en = "Cable one-arm curl", ru = "Сгибание руки на нижнем блоке одной рукой" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Stand facing a low pulley and hold the handle with an underhand grip. Keep your elbow by your side and curl the handle toward your shoulder, then lower it under control. Finish the set and switch arms.", ru = "Встаньте лицом к нижнему блоку, рукоять хватом снизу. Локоть у корпуса: согните руку, подняв рукоять к плечу, затем подконтрольно опустите. Выполните подход и смените руку." }
+load_step_kg = 1.0

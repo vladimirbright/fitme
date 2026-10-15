@@ -1,0 +1,13 @@
+id = "bodyweight_standing_hip_abduction"
+names = { en = "Standing hip abduction", ru = "Отведение ноги в сторону стоя" }
+kind = "isolation"
+pattern = "accessory"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["hip", "ankle"]
+contraindicated_by = ["hip_injury_current", "ankle_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand tall beside a wall or chair for light support. Shift onto one leg and lift the other leg out to the side with the knee straight and toes forward. Lower slowly without leaning the torso, then switch legs.", ru = "Встаньте прямо рядом со стеной или стулом для лёгкой опоры. Перенесите вес на одну ногу и отведите другую в сторону, колено прямое, носок смотрит вперёд. Медленно опустите, не наклоняя корпус, затем смените ногу." }
+load_step_kg = 1.0

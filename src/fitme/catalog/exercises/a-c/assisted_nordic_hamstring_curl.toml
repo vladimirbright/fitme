@@ -1,0 +1,14 @@
+id = "assisted_nordic_hamstring_curl"
+names = { en = "Hand-assisted Nordic hamstring curl", ru = "Нордическое сгибание ног с помощью рук" }
+search = { en = "assisted nordic hamstring curl", ru = "нордические сгибания ног" }
+kind = "bodyweight"
+pattern = "accessory"
+level = "advanced"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["knee", "hip"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Kneel on a pad with the heels hooked under a fixed padded roller, such as the knee pad of a lat pulldown. Keep the body straight from knees to head and lean forward slowly, as far as you can control. Catch yourself with your hands, then push off lightly and pull back up with the legs.", ru = "Встаньте на колени на мат, пятки зафиксированы под неподвижным мягким валиком, например упором для колен в тяге верхнего блока. Держите тело прямым от колен до головы и медленно наклоняйтесь вперёд, пока сохраняете контроль. Подстрахуйтесь руками, слегка оттолкнитесь и вернитесь вверх усилием ног." }

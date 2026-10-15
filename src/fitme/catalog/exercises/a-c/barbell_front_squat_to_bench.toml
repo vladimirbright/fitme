@@ -1,0 +1,12 @@
+id = "barbell_front_squat_to_bench"
+names = { en = "Barbell front squat to bench", ru = "Фронтальные приседания со штангой на скамью" }
+kind = "compound"
+pattern = "squat"
+equipment = ["barbell", "rack", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "lower_back", "hip", "shoulder", "elbow_wrist", "neck"]
+contraindicated_by = ["knee_injury_current", "lower_back_injury_current", "hip_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Set a bench behind you inside the rack at about parallel height and the safety arms below the bar's lowest point. Unrack the bar onto the front shoulders, elbows up. Sit back until you lightly touch the bench without dropping onto it, then stand up.", ru = "Поставьте скамью позади себя внутри стойки на высоте примерно параллели, страховочные упоры ниже нижней точки штанги. Снимите штангу на передние дельты, локти подняты. Присядьте назад до лёгкого касания скамьи, не падая на неё, и встаньте." }

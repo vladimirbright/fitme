@@ -1,0 +1,13 @@
+id = "dumbbell_curl_seated_on_bosu_ball"
+names = { en = "Dumbbell curl seated on Bosu ball", ru = "Сгибания рук с гантелями сидя на босу" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bosu_ball"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit upright on a Bosu ball with knees bent and feet flat, a dumbbell in each hand. Curl both dumbbells toward your shoulders without leaning back, then lower under control.", ru = "Сядьте ровно на босу, колени согнуты, ступни на полу, в руках гантели. Согните руки, подняв гантели к плечам, не отклоняясь назад, затем подконтрольно опустите." }
+load_step_kg = 1.0

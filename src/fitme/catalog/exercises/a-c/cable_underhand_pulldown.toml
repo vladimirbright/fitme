@@ -1,0 +1,13 @@
+id = "cable_underhand_pulldown"
+names = { en = "Cable underhand pulldown", ru = "Тяга верхнего блока обратным хватом сидя" }
+kind = "compound"
+pattern = "vertical_pull"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit with the thigh pads snug and hold the bar with an underhand grip, hands shoulder-width. Pull it to the upper chest, elbows moving down along the body, then let it rise under control. Avoid swinging back.", ru = "Сядьте, бёдра зафиксированы валиками, возьмите рукоять хватом снизу на ширине плеч. Тяните её к верху груди, локти идут вниз вдоль корпуса, затем отпускайте под контролем. Не раскачивайтесь назад." }
+load_step_kg = 2.5

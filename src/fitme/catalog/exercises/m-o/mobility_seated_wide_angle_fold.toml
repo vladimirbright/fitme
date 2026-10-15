@@ -1,0 +1,12 @@
+id = "mobility_seated_wide_angle_fold"
+names = { en = "Seated wide-angle forward fold", ru = "Наклон вперёд сидя с широко расставленными ногами" }
+kind = "mobility"
+pattern = "mobility"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["hip", "lower_back"]
+contraindicated_by = ["hip_injury_current", "lower_back_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Sit with legs spread wide and knees pointing up, hands behind you. Hinge forward from the hips with a long spine, hold, then return upright.", ru = "Сядьте, ноги широко разведены, колени смотрят вверх, руки сзади. Наклонитесь вперёд от бёдер с вытянутой спиной, задержитесь и вернитесь." }

@@ -1,0 +1,14 @@
+id = "barbell_lateral_lunge"
+names = { en = "Barbell lateral lunge", ru = "Боковые выпады со штангой" }
+kind = "compound"
+pattern = "squat"
+level = "advanced"
+equipment = ["barbell", "rack"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "ankle", "lower_back", "neck"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current", "lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Unrack the bar on the upper back and step back into clear space. Take a wide step to the side, sit into that hip while the other leg stays straight, then push back to the start. Alternate sides with a controlled pace.", ru = "Снимите штангу на верх спины и отойдите на свободное место. Широко шагните в сторону, сядьте на эту ногу, вторая остаётся прямой, затем оттолкнитесь обратно. Чередуйте стороны в контролируемом темпе." }
+load_step_kg = 2.5

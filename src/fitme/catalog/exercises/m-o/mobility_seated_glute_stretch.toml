@@ -1,0 +1,12 @@
+id = "mobility_seated_glute_stretch"
+names = { en = "Seated glute stretch", ru = "Растяжка ягодиц сидя" }
+kind = "mobility"
+pattern = "mobility"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["hip"]
+contraindicated_by = ["hip_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Sit with legs extended. Cross one ankle over the opposite thigh, hand behind you, and gently press the bent knee away. Hold, then switch sides.", ru = "Сядьте, ноги вытянуты. Положите одну лодыжку на противоположное бедро, рука опирается сзади, и мягко отведите согнутое колено. Задержитесь и смените сторону." }

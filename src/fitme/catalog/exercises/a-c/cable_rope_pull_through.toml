@@ -1,0 +1,13 @@
+id = "cable_rope_pull_through"
+names = { en = "Cable pull-through with rope", ru = "Протяжка на блоке с канатной рукоятью" }
+kind = "compound"
+pattern = "hinge"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["hip", "lower_back"]
+contraindicated_by = ["hip_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Stand facing away from a low pulley, holding the rope between the legs, and step forward for tension. Push the hips back with a flat back and soft knees, then drive the hips forward to stand. Keep the arms long.", ru = "Встаньте спиной к нижнему блоку, канатная рукоять между ног, сделайте шаг вперёд до натяжения. Отведите таз назад, спина ровная, колени слегка согнуты, затем выведите таз вперёд. Руки прямые." }
+load_step_kg = 2.5

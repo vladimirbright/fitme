@@ -1,0 +1,12 @@
+id = "dumbbell_standing_preacher_curl"
+names = { en = "Dumbbell standing preacher curl", ru = "Сгибания с гантелями стоя с упором плеч на скамью" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand facing an incline bench or preacher pad, the backs of your upper arms resting on it, a dumbbell in each hand with palms forward. Curl the weights toward your shoulders, then lower until the arms are nearly straight, under control.", ru = "Встаньте лицом к наклонной скамье или подушке скамьи Скотта, плечи лежат на ней, в руках гантели ладонями вперёд. Согните руки, поднимая гантели к плечам, затем опустите почти до выпрямления под контролем." }

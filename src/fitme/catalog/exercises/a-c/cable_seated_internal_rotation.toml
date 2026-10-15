@@ -1,0 +1,13 @@
+id = "cable_seated_internal_rotation"
+names = { en = "Cable seated shoulder internal rotation", ru = "Внутренняя ротация плеча на блоке сидя" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Sit on a bench side-on to a pulley set at elbow height, upper arm at your side and elbow bent to 90 degrees. Rotate your forearm across toward your belly, then return slowly. Keep the elbow pinned and the resistance very light.", ru = "Сядьте на скамью боком к блоку на уровне локтя, плечо у корпуса, локоть согнут под 90 градусов. Разверните предплечье поперёк к животу, затем медленно верните. Локоть прижат, сопротивление очень лёгкое." }
+load_step_kg = 1.0

@@ -1,0 +1,12 @@
+id = "bodyweight_standing_side_bend_toe_reach"
+names = { en = "Standing side bend toe reach", ru = "Боковые наклоны стоя с тягой к стопе" }
+kind = "bodyweight"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back"]
+contraindicated_by = ["lower_back_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Stand with feet wide, arms out to the sides. Bend sideways and slide one hand down toward the same-side foot, keeping your chest facing forward. Return to upright and alternate. Do not twist or bounce.", ru = "Встаньте, ноги шире плеч, руки в стороны. Наклонитесь вбок, скользя рукой к стопе той же стороны, грудь смотрит вперёд. Вернитесь и смените сторону. Без скручивания и пружинения." }

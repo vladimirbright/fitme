@@ -1,0 +1,12 @@
+id = "medicine_ball_russian_twist"
+names = { en = "Medicine ball Russian twist", ru = "Русские скручивания с медболом" }
+kind = "isolation"
+pattern = "core"
+equipment = ["medicine_ball"]
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back"]
+contraindicated_by = ["lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit with knees bent, leaning back slightly, ball held at your chest. Rotate your torso to one side, then the other, moving the ball beside each hip. Keep your chest lifted and move at a steady pace.", ru = "Сядьте, колени согнуты, слегка откиньтесь назад, мяч у груди. Поворачивайте корпус в одну сторону, затем в другую, проводя мяч рядом с бедром. Грудь поднята, темп ровный." }
+load_step_kg = 1.0

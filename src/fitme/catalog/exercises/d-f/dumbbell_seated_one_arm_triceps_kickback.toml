@@ -1,0 +1,12 @@
+id = "dumbbell_seated_one_arm_triceps_kickback"
+names = { en = "Dumbbell seated one-arm triceps kickback", ru = "Разгибание руки с гантелью сидя в наклоне" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder", "lower_back"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit on the end of a bench with one dumbbell, leaning forward from the hips with a flat back and your free hand on your knee. Keep the upper arm against your side and straighten the elbow back, then bend it under control. Finish all reps, then switch arms.", ru = "Сядьте на край скамьи, в руке гантель, наклонитесь вперёд от бёдер с ровной спиной, свободная рука на колене. Плечо прижато к корпусу, выпрямите руку назад, затем согните под контролем. Выполните все повторения и смените руку." }

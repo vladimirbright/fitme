@@ -1,0 +1,14 @@
+id = "barbell_front_raise_overhead"
+names = { en = "Barbell front raise to overhead", ru = "Подъём штанги перед собой выше головы" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+# Calibration, not the empty 20 kg bar: too heavy a first raise for a novice.
+start = { kind = "calibration" }
+instructions = { en = "Stand holding a light bar in front of your thighs, overhand grip. Raise it forward in a smooth arc to just above head height, keeping the bar path clear of your face, then lower slowly. Use a weight you fully control.", ru = "Встаньте, держа лёгкий гриф перед бёдрами хватом сверху. Плавной дугой поднимите его вперёд чуть выше головы, держа траекторию грифа в стороне от лица, затем медленно опустите. Берите вес, который полностью контролируете." }
+load_step_kg = 2.5

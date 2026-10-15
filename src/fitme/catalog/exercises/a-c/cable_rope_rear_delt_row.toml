@@ -1,0 +1,13 @@
+id = "cable_rope_rear_delt_row"
+names = { en = "Cable rope rear delt row", ru = "Тяга каната на блоке в наклоне на заднюю дельту" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["lower_back", "shoulder", "elbow_wrist", "hip"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Attach a rope to a low pulley, face the stack and hinge forward with a flat back and soft knees. Pull the rope toward your chest with elbows wide, squeeze the shoulder blades, then return under control. Keep the hinge angle fixed.", ru = "Закрепите канат на нижнем блоке, встаньте лицом к стеку и наклонитесь с ровной спиной и мягкими коленями. Тяните канат к груди, локти в стороны, сведите лопатки, затем верните под контролем. Угол наклона не меняйте." }
+load_step_kg = 1.0

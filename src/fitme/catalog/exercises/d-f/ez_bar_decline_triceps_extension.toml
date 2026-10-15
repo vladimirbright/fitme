@@ -1,0 +1,13 @@
+id = "ez_bar_decline_triceps_extension"
+names = { en = "EZ bar decline triceps extension", ru = "Разгибания рук с EZ-грифом на скамье с обратным наклоном" }
+kind = "isolation"
+pattern = "accessory"
+level = "advanced"
+equipment = ["ez_bar", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Lie on a decline bench with your feet secured, an EZ bar held overhand at shoulder width above your chest. Keep the upper arms still and bend the elbows to lower the bar slowly toward your forehead, then straighten the arms. Use a light bar.", ru = "Лягте на скамью с обратным наклоном, ноги зафиксированы, EZ-гриф хватом сверху на ширине плеч над грудью. Плечи неподвижны, согните локти, медленно опуская гриф ко лбу, затем выпрямите руки. Берите лёгкий гриф." }

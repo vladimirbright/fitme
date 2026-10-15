@@ -1,0 +1,12 @@
+id = "bodyweight_push_up_leg_lift"
+names = { en = "Push-up with leg lift", ru = "Отжимания с подъёмом ноги" }
+kind = "bodyweight"
+pattern = "horizontal_push"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Start in a push-up position. Lower the chest, and as you press up, lift one straight leg off the floor. Lower it and alternate legs each rep. Keep the body in a straight line.", ru = "Примите упор лёжа. Опустите грудь, а при выжимании оторвите от пола одну прямую ногу. Опустите её и меняйте ногу на каждом повторе. Тело на одной линии." }

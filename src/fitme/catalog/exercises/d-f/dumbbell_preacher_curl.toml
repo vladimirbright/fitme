@@ -1,0 +1,12 @@
+id = "dumbbell_preacher_curl"
+names = { en = "Dumbbell preacher curl", ru = "Сгибания с гантелями на скамье Скотта" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Rest both upper arms on a preacher pad (or an incline bench with your chest against it), palms up. Curl both dumbbells toward your shoulders, then lower slowly without fully dropping into the stretch.", ru = "Положите оба плеча на упор скамьи Скотта (или на наклонную скамью, грудью к спинке), ладони вверх. Поднимите обе гантели к плечам, затем медленно опустите, не проваливаясь в нижней точке." }

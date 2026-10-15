@@ -1,0 +1,14 @@
+id = "cable_incline_pushdown"
+names = { en = "Cable incline straight-arm pushdown", ru = "Тяга верхнего блока прямыми руками на наклонной скамье" }
+search = { en = "cable incline pushdown lats", ru = "тяга прямыми руками на наклонной скамье" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Lie back on an incline bench facing away from a high pulley and hold a straight bar overhead. Keep the elbows slightly bent and fixed, and sweep the bar down in an arc toward the hips. Return slowly to overhead.", ru = "Лягте на наклонную скамью спиной к верхнему блоку, держите прямую рукоять над головой. Локти слегка согнуты и не меняют угол, ведите рукоять вниз по дуге к бёдрам. Медленно верните её над голову." }
+load_step_kg = 2.5

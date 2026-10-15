@@ -1,0 +1,13 @@
+id = "dumbbell_incline_shrug"
+names = { en = "Incline-bench dumbbell shrug", ru = "Шраги с гантелями на наклонной скамье" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "neck", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "neck_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit against an incline bench with a dumbbell in each hand, arms hanging straight. Lift your shoulders straight up, pause, then lower under control. Keep your back on the pad and your head still.", ru = "Сядьте на наклонную скамью, прислонившись спиной, в руках по гантели, руки свободно висят. Поднимите плечи строго вверх, задержитесь, затем опустите под контролем. Спина прижата к спинке, голова неподвижна." }
+load_step_kg = 1.0

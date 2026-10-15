@@ -1,0 +1,14 @@
+id = "dumbbell_single_leg_deadlift_box_support"
+names = { en = "Dumbbell single-leg deadlift with rear foot on box", ru = "Становая на одной ноге с гантелью и опорой стопы на бокс" }
+kind = "compound"
+pattern = "hinge"
+level = "advanced"
+equipment = ["dumbbells", "plyo_box"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip", "ankle"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "ankle_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand in front of a low box with a dumbbell in one hand and rest the toes of the other foot on the box behind you. Hinge forward on the standing leg with a flat back, lowering the dumbbell toward the shin, then stand back up. Finish one side, then switch.", ru = "Встаньте перед низким боксом, гантель в одной руке, носок другой ноги стоит на боксе позади. Наклонитесь на опорной ноге с прямой спиной, опуская гантель к голени, затем выпрямитесь. Закончите одну сторону и смените." }
+load_step_kg = 1.0

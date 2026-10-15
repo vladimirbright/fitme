@@ -1,0 +1,13 @@
+id = "barbell_reverse_grip_incline_bench_press"
+names = { en = "Barbell reverse-grip incline bench press", ru = "Жим штанги обратным хватом на наклонной скамье" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["barbell", "rack", "bench"]
+load_unit = "total"
+level = "advanced"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Set the bench to a modest incline and lie back with feet flat. Take an underhand grip about shoulder width, unrack and lower the bar under control to the upper chest, then press back up. Use a lighter weight than usual. Wrap the thumbs fully around the bar. Set the rack's safety arms just below the lowest point of the movement.", ru = "Установите скамью с небольшим наклоном и лягте, стопы на полу. Возьмите гриф обратным хватом примерно на ширине плеч, снимите штангу, под контролем опустите к верху груди и выжмите вверх. Вес берите меньше обычного. Обхватывайте гриф большими пальцами. Установите страховочные упоры чуть ниже нижней точки движения." }

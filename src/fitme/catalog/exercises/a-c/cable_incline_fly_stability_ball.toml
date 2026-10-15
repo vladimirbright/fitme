@@ -1,0 +1,13 @@
+id = "cable_incline_fly_stability_ball"
+names = { en = "Cable incline fly on a stability ball", ru = "Сведение рук в кроссовере на фитболе" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable", "stability_ball"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "hip"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hip_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set the handles on the low pulleys and place the stability ball between them. Lie back with the upper back on the ball, hips a little lower than the shoulders and feet planted wide. With slightly bent elbows, open the arms out to the sides in an arc and bring them back over the chest. Use a light weight and keep the hips steady.", ru = "Установите рукояти на нижние блоки и положите фитбол между ними. Лягте верхней частью спины на мяч, таз чуть ниже плеч, ноги широко и устойчиво. С чуть согнутыми локтями разведите руки дугой в стороны и сведите над грудью. Вес лёгкий, таз неподвижен." }
+load_step_kg = 1.0

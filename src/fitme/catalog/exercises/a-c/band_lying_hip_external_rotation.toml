@@ -1,0 +1,13 @@
+id = "band_lying_hip_external_rotation"
+names = { en = "Band lying hip external rotation", ru = "Разведение коленей лёжа с эспандером" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["hip", "knee"]
+contraindicated_by = ["hip_injury_current", "knee_injury_current"]
+increment_kg = 2.0
+start = { kind = "calibration" }
+instructions = { en = "Lie on your back with knees bent, feet together flat on the floor, and a loop band just above the knees. Let the knees open outward against the band while the feet stay together, then bring them back slowly. Keep the lower back resting on the floor.", ru = "Лягте на спину, колени согнуты, стопы вместе на полу, петля эспандера чуть выше колен. Разведите колени в стороны против эспандера, не разводя стопы, и медленно верните. Поясница лежит на полу." }
+load_step_kg = 1.0

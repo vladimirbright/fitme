@@ -1,0 +1,13 @@
+id = "bodyweight_v_up"
+names = { en = "V-up", ru = "V-подъёмы" }
+kind = "bodyweight"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back", "neck", "hip"]
+contraindicated_by = ["lower_back_injury_current", "neck_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+level = "advanced"
+instructions = { en = "Lie on your back, legs straight, arms extended overhead. Lift your torso and legs together and reach your hands toward your shins or toes, then lower slowly. Bend your knees if your lower back starts to arch.", ru = "Лягте на спину, ноги прямые, руки вытянуты за голову. Одновременно поднимите корпус и ноги, тянясь руками к голеням или носкам, затем медленно опуститесь. Если поясница начинает прогибаться, согните колени." }

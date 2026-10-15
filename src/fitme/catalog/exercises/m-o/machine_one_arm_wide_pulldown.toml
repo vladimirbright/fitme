@@ -1,0 +1,12 @@
+id = "machine_one_arm_wide_pulldown"
+names = { en = "Machine one-arm wide pulldown", ru = "Тяга сверху одной рукой в тренажёре" }
+kind = "compound"
+pattern = "vertical_pull"
+equipment = ["machine"]
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Adjust the seat and thigh pad, sit tall and take one handle with an overhand grip. Pull the elbow down toward the side of the ribs, then let the arm rise slowly. Switch arms after the set.", ru = "Настройте сиденье и валик для бёдер, сядьте прямо и возьмите одну рукоять хватом сверху. Тяните локоть вниз к боку, затем медленно отпускайте руку вверх. После подхода смените руку." }
+load_step_kg = 2.5

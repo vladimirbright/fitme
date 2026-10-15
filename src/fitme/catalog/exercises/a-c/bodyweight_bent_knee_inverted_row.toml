@@ -1,0 +1,12 @@
+id = "bodyweight_bent_knee_inverted_row"
+names = { en = "Bent-knee inverted row", ru = "Австралийские подтягивания с согнутыми коленями" }
+search = { en = "bent knee inverted row", ru = "австралийские подтягивания" }
+kind = "bodyweight"
+pattern = "horizontal_pull"
+equipment = ["pull_up_bar"]
+locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Set a bar at about waist height and lie under it, hands on the bar, knees bent and feet flat on the floor. Keep the hips up and pull the chest to the bar, then lower under control.", ru = "Установите перекладину примерно на уровне пояса и лягте под неё, руки на перекладине, колени согнуты, стопы на полу. Держите таз приподнятым, подтяните грудь к перекладине и опуститесь под контролем." }

@@ -1,0 +1,14 @@
+id = "bodyweight_supine_elbow_lift"
+names = { en = "Supine elbow lift", ru = "Подъём корпуса с опорой на локти лёжа на спине" }
+search = { en = "elbow lift reverse push-up", ru = "подъём на локтях лёжа на спине" }
+kind = "bodyweight"
+pattern = "accessory"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on your back on a mat, knees bent, upper arms by your sides and elbows bent to about 90 degrees. Press the elbows into the floor and draw the shoulder blades together to lift the upper back off the mat. Pause briefly, then lower slowly. Keep the chin slightly tucked.", ru = "Лягте на спину на коврик, колени согнуты, плечи вдоль корпуса, локти согнуты примерно под прямым углом. Надавите локтями в пол и сведите лопатки, приподнимая верх спины над ковриком. Коротко задержитесь, затем медленно опуститесь. Подбородок слегка прижат." }
+load_step_kg = 1.0

@@ -1,0 +1,13 @@
+id = "band_squat_row"
+names = { en = "Band squat row", ru = "Присед с тягой эспандера" }
+kind = "compound"
+pattern = "squat"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "lower_back", "shoulder", "elbow_wrist"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "calibration" }
+instructions = { en = "Anchor a band at waist height and face it holding the handles with straight arms. Squat down, then as you stand pull the handles toward the ribs and squeeze the shoulder blades together. Return the arms under control.", ru = "Закрепите эспандер на уровне пояса и встаньте к нему лицом, держа рукояти прямыми руками. Присядьте, а при вставании потяните рукояти к рёбрам, сводя лопатки. Верните руки под контролем." }
+load_step_kg = 1.0

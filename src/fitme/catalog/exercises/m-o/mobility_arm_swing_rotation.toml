@@ -1,0 +1,12 @@
+id = "mobility_arm_swing_rotation"
+names = { en = "Arm swing with torso rotation", ru = "Махи руками с поворотом корпуса" }
+kind = "mobility"
+pattern = "mobility"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "lower_back_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand with feet shoulder-width apart and knees slightly bent. Hold the arms out in front and swing them from side to side, turning the torso and letting the hips follow. Keep the movement smooth and the range comfortable.", ru = "Встаньте, ноги на ширине плеч, колени слегка согнуты. Вытяните руки перед собой и плавно машите ими из стороны в сторону, поворачивая корпус, таз следует за движением. Движение плавное, амплитуда комфортная." }

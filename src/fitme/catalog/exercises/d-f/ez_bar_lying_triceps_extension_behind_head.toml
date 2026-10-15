@@ -1,0 +1,13 @@
+id = "ez_bar_lying_triceps_extension_behind_head"
+names = { en = "EZ bar lying close-grip triceps extension behind the head", ru = "Разгибания EZ-грифа лёжа узким хватом за голову" }
+kind = "isolation"
+pattern = "accessory"
+level = "advanced"
+equipment = ["ez_bar", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Lie on a bench with your head near the end and an EZ bar held with a close grip above your chest. Keeping the upper arms still, bend the elbows to lower the bar behind your head, then straighten the arms. Use a light bar and keep it clear of your face.", ru = "Лягте на скамью так, чтобы голова была у края, EZ-гриф узким хватом над грудью. Плечи неподвижны, согните локти, опуская гриф за голову, затем выпрямите руки. Берите лёгкий гриф и держите его вдали от лица." }

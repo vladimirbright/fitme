@@ -1,0 +1,13 @@
+id = "cable_wide_grip_seated_row"
+names = { en = "Cable wide-grip seated row", ru = "Тяга нижнего блока сидя широким хватом" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit at the low cable with feet on the footplates, holding a wide bar with palms down. Keep your chest tall and pull the bar to your upper abdomen, elbows flaring out. Return slowly and avoid leaning back.", ru = "Сядьте у нижнего блока, ступни на упорах, широкая рукоять хватом сверху. Грудь раскрыта, тяните рукоять к верху живота, локти разведены в стороны. Медленно возвращайтесь, не заваливайтесь назад." }
+load_step_kg = 2.5

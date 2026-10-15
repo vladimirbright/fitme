@@ -1,0 +1,12 @@
+id = "smith_machine_shrug"
+names = { en = "Smith machine shrug", ru = "Шраги в машине Смита" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["smith_machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "neck", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "neck_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the safety stops just below thigh height and stand with the bar in front of your thighs, hands just outside the hips, arms straight. Lift the shoulders straight up, pause, and lower slowly. Keep the elbows locked and the neck still.", ru = "Установите страховочные упоры чуть ниже уровня бёдер и встаньте, гриф перед бёдрами, хват чуть шире таза, руки прямые. Поднимите плечи строго вверх, задержитесь и медленно опустите. Локти прямые, шея неподвижна." }

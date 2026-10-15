@@ -1,0 +1,14 @@
+id = "kettlebell_bent_press"
+names = { en = "Kettlebell bent press", ru = "Жим гири с наклоном" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["kettlebell"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "shoulder", "hip", "knee", "elbow_wrist", "neck"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "hip_injury_current", "knee_injury_current", "elbow_wrist_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 4.0 }
+level = "advanced"
+instructions = { en = "Hold a light kettlebell at your shoulder, elbow tucked against your side, feet wider than shoulders. Turn slightly away and lean your torso to the side and down while the forearm stays vertical, so the arm straightens as your body moves under the bell. Stand up with the arm locked overhead, then lower the bell to your shoulder; if you lose control, step away and let it drop to the side.", ru = "Держите лёгкую гирю у плеча, локоть прижат к корпусу, ноги шире плеч. Слегка повернитесь от гири и наклоняйте корпус вбок и вниз, предплечье остаётся вертикальным, так что рука выпрямляется, пока тело уходит под гирю. Выпрямитесь с зафиксированной над головой рукой, затем опустите гирю к плечу; если контроль потерян, отойдите и дайте ей упасть в сторону." }
+load_step_kg = 2.0

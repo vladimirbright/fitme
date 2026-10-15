@@ -1,0 +1,13 @@
+id = "smith_machine_biceps_curl"
+names = { en = "Smith machine biceps curl", ru = "Сгибания рук на бицепс в тренажёре Смита" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["smith_machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Stand close to the bar and hold it underhand at about shoulder width. Curl the bar toward the shoulders with elbows by your sides, then lower under control.", ru = "Встаньте близко к грифу и возьмите его обратным хватом на ширине плеч. Поднимайте гриф к плечам, локти у корпуса, затем опустите под контролем." }
+load_step_kg = 1.0

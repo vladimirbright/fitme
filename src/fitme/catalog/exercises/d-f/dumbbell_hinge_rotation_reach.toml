@@ -1,0 +1,14 @@
+id = "dumbbell_hinge_rotation_reach"
+names = { en = "Dumbbell hinge and rotation reach", ru = "Наклон с поворотом и гантелью к противоположной стопе" }
+search = { en = "dumbbell spell caster", ru = "spell caster с гантелью" }
+kind = "isolation"
+pattern = "core"
+equipment = ["dumbbells"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip", "shoulder"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "shoulder_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand with feet shoulder-width apart, a light dumbbell in one hand. Hinge at the hips with a flat back and reach the dumbbell toward the opposite foot as your torso rotates. Return upright and repeat, then switch hands. Use a light weight and move slowly.", ru = "Встаньте ноги на ширине плеч, лёгкая гантель в одной руке. Наклонитесь в тазобедренных суставах с прямой спиной и потянитесь гантелью к противоположной стопе, поворачивая корпус. Вернитесь и повторите, затем смените руку. Вес лёгкий, движение медленное." }
+load_step_kg = 1.0

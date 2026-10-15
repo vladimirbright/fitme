@@ -1,0 +1,12 @@
+id = "ab_wheel_kneeling_rollout"
+names = { en = "Kneeling ab wheel rollout", ru = "Ролик для пресса с колен" }
+kind = "isolation"
+pattern = "core"
+equipment = ["ab_wheel"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Kneel on a mat holding the wheel under your shoulders. Roll forward only as far as you can keep your back flat, then pull the wheel back using your abs. Stop earlier if your lower back arches.", ru = "Встаньте на колени на коврик, колесо под плечами. Катите его вперёд лишь настолько, насколько спина остаётся ровной, затем верните колесо прессом. Если поясница прогибается, остановитесь раньше." }

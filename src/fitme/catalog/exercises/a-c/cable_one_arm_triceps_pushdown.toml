@@ -1,0 +1,13 @@
+id = "cable_one_arm_triceps_pushdown"
+names = { en = "Cable one-arm triceps pushdown", ru = "Разгибание руки на верхнем блоке одной рукой" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Face a high pulley and hold the handle with one hand, elbow tucked at your side. Straighten the arm downward without moving the upper arm, then return under control. Switch arms after the set.", ru = "Встаньте лицом к верхнему блоку, рукоять в одной руке, локоть прижат к боку. Выпрямите руку вниз, не двигая плечо, затем подконтрольно вернитесь. После подхода смените руку." }
+load_step_kg = 1.0

@@ -1,0 +1,13 @@
+id = "ez_bar_reverse_grip_preacher_curl"
+names = { en = "EZ-bar reverse-grip preacher curl", ru = "Сгибания с EZ-грифом обратным хватом на скамье Скотта" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["ez_bar", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Sit at a preacher bench with the upper arms resting on the pad. Hold the EZ-bar with an overhand grip. Curl it up without lifting the elbows off the pad, then lower slowly to nearly straight arms.", ru = "Сядьте за скамью Скотта, руки выше локтей лежат на подушке. Возьмите EZ-гриф прямым хватом. Согните руки, не отрывая локти от подушки, затем медленно опустите почти до прямых рук." }
+load_step_kg = 1.0

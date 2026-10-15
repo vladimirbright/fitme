@@ -1,0 +1,12 @@
+id = "weight_plate_russian_twist_feet_up"
+names = { en = "Weight plate Russian twist, feet up", ru = "Русские скручивания с блином, ноги подняты" }
+kind = "isolation"
+pattern = "core"
+equipment = ["weight_plate"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit leaning back with your feet lifted and together, a plate held at your chest. Rotate your torso side to side, bringing the plate beside each hip. Put your feet down if your back rounds.", ru = "Сядьте, откинувшись, ноги подняты и сомкнуты, блин у груди. Поворачивайте корпус из стороны в сторону, опуская блин к каждому бедру. Если спина округляется, поставьте ноги на пол." }

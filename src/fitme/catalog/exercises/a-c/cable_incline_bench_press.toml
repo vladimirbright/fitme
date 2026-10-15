@@ -1,0 +1,13 @@
+id = "cable_incline_bench_press"
+names = { en = "Cable incline bench press", ru = "Жим на блоках на наклонной скамье" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["cable", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the bench to a 45-degree incline with the handles on the low pulleys behind it. Sit back with a handle in each hand at shoulder height and feet flat. Press the handles up and forward until the arms are straight, then return under control.", ru = "Установите скамью под углом около 45 градусов, рукояти на нижних блоках позади неё. Сядьте, рукояти на уровне плеч, стопы на полу. Выжмите рукояти вверх и вперёд до прямых рук, затем вернитесь под контролем." }
+load_step_kg = 2.5

@@ -1,0 +1,13 @@
+id = "incline_close_grip_push_up"
+names = { en = "Incline close-grip push-up", ru = "Отжимания узким хватом с опорой на возвышение" }
+kind = "bodyweight"
+pattern = "horizontal_push"
+equipment = ["bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Place the hands close together on a stable bench, body in a straight line. Lower the chest toward the bench with elbows close to the sides, then press away.", ru = "Поставьте ладони близко друг к другу на устойчивую скамью, тело в одну линию. Опустите грудь к скамье, локти у корпуса, затем отожмитесь." }
+load_step_kg = 1.0

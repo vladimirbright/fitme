@@ -1,0 +1,13 @@
+id = "stability_ball_pike_push_up"
+names = { en = "Stability ball pike push-up", ru = "Отжимания в упоре согнувшись с фитболом" }
+kind = "bodyweight"
+pattern = "vertical_push"
+equipment = ["stability_ball"]
+level = "advanced"
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Start in a push-up position with your shins on a stability ball. Lift your hips up toward the ceiling, rolling the ball toward your hands, then bend your elbows to lower your head toward the floor and press back up. Move slowly and keep the ball steady.", ru = "Примите упор лёжа, голени на фитболе. Поднимите таз вверх, прикатывая мяч к рукам, затем согните локти, опуская голову к полу, и выжмите обратно. Двигайтесь медленно, мяч держите устойчиво." }

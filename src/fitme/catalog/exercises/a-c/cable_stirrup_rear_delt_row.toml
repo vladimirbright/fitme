@@ -1,0 +1,13 @@
+id = "cable_stirrup_rear_delt_row"
+names = { en = "Cable stirrup rear delt row", ru = "Тяга рукояти на блоке в наклоне на заднюю дельту" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["lower_back", "shoulder", "elbow_wrist", "hip"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Attach a single handle to a low pulley and face the stack, hinging forward with a flat back and soft knees. Pull the handle toward your chest with the elbow flared, squeeze the shoulder blade, then return under control. Do all reps, then switch arms.", ru = "Закрепите одиночную рукоять на нижнем блоке, встаньте лицом к стеку, наклонитесь с ровной спиной и мягкими коленями. Тяните рукоять к груди, локоть в сторону, сведите лопатку, затем верните под контролем. Выполните все повторения, затем смените руку." }
+load_step_kg = 1.0

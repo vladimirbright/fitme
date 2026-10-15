@@ -1,0 +1,14 @@
+id = "barbell_bent_over_reverse_raise"
+names = { en = "Barbell bent-over reverse raise", ru = "Разведение со штангой в наклоне на заднюю дельту" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "shoulder", "elbow_wrist", "hip"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+# Calibration, not the empty 20 kg bar: too heavy a first raise for a novice.
+start = { kind = "calibration" }
+instructions = { en = "Hinge forward with a flat back and soft knees, holding a light bar below your chest with straight arms. Sweep the bar back and up in a small arc until your arms are about parallel to the floor, then lower slowly. Keep the load light.", ru = "Наклонитесь вперёд с ровной спиной и мягкими коленями, лёгкий гриф в прямых руках под грудью. Небольшой дугой отведите гриф назад и вверх, пока руки не станут примерно параллельны полу, затем медленно опустите. Вес лёгкий." }
+load_step_kg = 2.5

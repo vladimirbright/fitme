@@ -1,0 +1,12 @@
+id = "dumbbell_one_arm_stability_ball_fly"
+names = { en = "One-arm dumbbell fly on stability ball", ru = "Разводка одной гантели на фитболе" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "stability_ball"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie back on a stability ball with your head and upper back supported, feet wide, hips level. Hold one dumbbell above your chest, elbow slightly bent, lower it out to the side in an arc to chest level, then bring it back. Keep your hips level and finish all reps before switching arms.", ru = "Лягте на фитбол: голова и верх спины опираются на мяч, ноги широко, таз на уровне корпуса. Одна гантель над грудью, локоть слегка согнут: опустите её в сторону по дуге до уровня груди и верните обратно. Не заваливайте таз, все повторения на одну руку, затем смените." }

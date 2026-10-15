@@ -1,0 +1,13 @@
+id = "dumbbell_standing_inner_biceps_curl"
+names = { en = "Dumbbell standing inner biceps curl", ru = "Сгибания рук с гантелями стоя с разведением кистей наружу" }
+search = { en = "standing dumbbell inner biceps curl", ru = "сгибания на бицепс с разворотом наружу стоя" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand tall, a dumbbell in each hand at your sides, palms facing in and elbows by your torso. Curl the weights up and slightly outward, turning the palms up so the forearms finish in line with the outside of your shoulders. Lower slowly without leaning back.", ru = "Встаньте ровно, гантели по бокам, ладони смотрят внутрь, локти у корпуса. Поднимайте гантели вверх и чуть в стороны, разворачивая ладони вверх, чтобы в верхней точке предплечья были на линии внешней стороны плеч. Медленно опустите, не отклоняясь назад." }

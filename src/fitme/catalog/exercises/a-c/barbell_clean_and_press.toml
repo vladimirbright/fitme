@@ -1,0 +1,14 @@
+id = "barbell_clean_and_press"
+names = { en = "Barbell clean and press", ru = "Взятие штанги на грудь и жим" }
+kind = "compound"
+pattern = "hinge"
+level = "advanced"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip", "knee", "shoulder", "elbow_wrist", "neck", "ankle"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "knee_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current", "hernia", "ankle_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Start with the bar over mid-foot and a flat back. Pull the bar up close to the body, drop under it and catch it on the front shoulders, then press it overhead. Lower it back with control. Use a clear floor, with room to let the bar go safely.", ru = "Начните со штангой над серединой стопы и ровной спиной. Подтяните штангу близко к телу, подсядьте под неё и зафиксируйте на передних дельтах, затем выжмите над головой. Верните штангу под контролем. Нужно свободное место, чтобы безопасно отпустить штангу." }
+load_step_kg = 2.5

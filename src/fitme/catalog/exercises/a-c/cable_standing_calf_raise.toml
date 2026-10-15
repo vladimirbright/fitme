@@ -1,0 +1,13 @@
+id = "cable_standing_calf_raise"
+names = { en = "Cable standing calf raise", ru = "Подъём на носки стоя в кроссовере" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["ankle"]
+contraindicated_by = ["ankle_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Stand between two low pulleys holding a handle in each hand at your sides, feet hip-width. Rise onto the balls of your feet, pause, then lower the heels slowly. Keep your torso upright.", ru = "Встаньте между двумя нижними блоками, в каждой руке по рукояти вдоль корпуса, ноги на ширине таза. Поднимитесь на носки, задержитесь и медленно опустите пятки. Корпус держите вертикально." }
+load_step_kg = 1.0

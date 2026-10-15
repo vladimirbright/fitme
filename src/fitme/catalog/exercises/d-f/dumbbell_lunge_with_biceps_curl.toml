@@ -1,0 +1,12 @@
+id = "dumbbell_lunge_with_biceps_curl"
+names = { en = "Dumbbell lunge with biceps curl", ru = "Выпады с гантелями и сгибанием рук на бицепс" }
+kind = "compound"
+pattern = "squat"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "ankle", "lower_back", "elbow_wrist"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current", "lower_back_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Hold light dumbbells at your sides, palms forward. Step into a forward lunge and curl the weights as you lower, then push back to standing while lowering the weights. Alternate legs and keep the elbows at your sides.", ru = "Держите лёгкие гантели по бокам, ладони вперёд. Сделайте выпад вперёд, сгибая руки с гантелями, затем оттолкнитесь и вернитесь в стойку, опуская гантели. Чередуйте ноги, локти у корпуса." }

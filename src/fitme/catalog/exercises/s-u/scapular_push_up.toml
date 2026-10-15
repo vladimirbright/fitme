@@ -1,0 +1,12 @@
+id = "scapular_push_up"
+names = { en = "Scapular push-up", ru = "Лопаточные отжимания" }
+kind = "bodyweight"
+pattern = "accessory"
+equipment = []
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Start in a plank with arms straight. Without bending the elbows, let the chest sink between the shoulder blades by pulling them together, then push the floor away to spread them apart. Keep the body straight.", ru = "Примите упор лёжа на прямых руках. Не сгибая локти, опустите грудь между лопатками, сводя их, затем оттолкнитесь от пола, разводя лопатки. Тело прямое." }
+load_step_kg = 1.0

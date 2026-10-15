@@ -1,0 +1,13 @@
+id = "cable_concentration_curl"
+names = { en = "Cable concentration curl", ru = "Концентрированные сгибания руки на нижнем блоке" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Sit facing a low pulley with the handle in one hand and the elbow resting on the inner thigh. Curl toward the shoulder, then lower until the arm is nearly straight. Keep the upper arm still.", ru = "Сядьте лицом к нижнему блоку, рукоять в одной руке, локоть на внутренней части бедра. Согните руку к плечу, затем опустите почти до прямой. Плечо неподвижно." }
+load_step_kg = 1.0

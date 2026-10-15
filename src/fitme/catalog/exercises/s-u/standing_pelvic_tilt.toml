@@ -1,0 +1,12 @@
+id = "standing_pelvic_tilt"
+names = { en = "Standing pelvic tilt", ru = "Наклон таза стоя" }
+kind = "mobility"
+pattern = "mobility"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back"]
+contraindicated_by = ["lower_back_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand with knees soft and hands on the hips. Tilt the pelvis so the lower back flattens, then return to a neutral position. Move slowly and keep the ribs and knees still.", ru = "Встаньте, колени слегка согнуты, руки на бёдрах. Наклоните таз так, чтобы поясница выпрямилась, затем вернитесь в нейтраль. Двигайтесь медленно, рёбра и колени неподвижны." }

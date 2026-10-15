@@ -1,0 +1,13 @@
+id = "cable_seated_one_arm_concentration_curl"
+names = { en = "Cable seated one-arm concentration curl", ru = "Концентрированное сгибание руки на блоке сидя" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Sit on a bench facing a low pulley and rest the elbow of the working arm against your inner thigh. Curl the handle toward your shoulder without swinging, then lower under control. Switch arms after the set.", ru = "Сядьте на скамью лицом к нижнему блоку, локоть рабочей руки упирается во внутреннюю часть бедра. Согните руку к плечу без раскачки, затем подконтрольно опустите. После подхода смените руку." }
+load_step_kg = 1.0

@@ -1,0 +1,12 @@
+id = "seated_lean_back_stretch"
+names = { en = "Seated lean-back stretch", ru = "Растяжка сидя с отклонением назад" }
+kind = "mobility"
+pattern = "mobility"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Sit with legs extended and hands on the floor behind you, fingers pointing back or sideways. Lean back a little, keeping the chest open. Hold briefly, then return upright. Skip the position if the wrists are uncomfortable.", ru = "Сядьте, ноги вытянуты, руки на полу позади корпуса, пальцы направлены назад или в стороны. Слегка отклонитесь назад, грудь раскрыта. Задержитесь и вернитесь вертикально. Если запястьям неудобно, пропустите." }

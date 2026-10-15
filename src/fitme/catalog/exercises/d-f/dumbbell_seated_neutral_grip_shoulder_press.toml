@@ -1,0 +1,12 @@
+id = "dumbbell_seated_neutral_grip_shoulder_press"
+names = { en = "Seated neutral-grip dumbbell shoulder press", ru = "Жим гантелей сидя нейтральным хватом" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit on a bench with a near-vertical backrest, dumbbells at shoulder height, palms facing each other. Press both dumbbells overhead to full extension, then lower them back to shoulder height under control. Keep your back against the pad.", ru = "Сядьте на скамью с почти вертикальной спинкой, гантели на уровне плеч, ладони друг к другу. Выжмите обе гантели вверх до выпрямления рук, затем под контролем опустите на уровень плеч. Спина прижата к спинке." }

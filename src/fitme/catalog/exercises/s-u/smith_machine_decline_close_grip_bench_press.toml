@@ -1,0 +1,13 @@
+id = "smith_machine_decline_close_grip_bench_press"
+names = { en = "Smith machine decline close-grip bench press", ru = "Жим в тренажёре Смита узким хватом на наклонной вниз скамье" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["smith_machine", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set a decline bench under the bar, hook the feet under the pads and set the safety stops just below the lowest point. Hands about shoulder-width apart; lower the bar to the lower chest with elbows tucked, then press up. Re-hook the bar after the set.", ru = "Поставьте под гриф скамью с наклоном вниз, зафиксируйте ноги под валиками и установите страховочные упоры чуть ниже нижней точки. Руки примерно на ширине плеч; опустите гриф к нижней части груди, локти прижаты, затем выжмите вверх. После подхода повесьте гриф на крюки." }
+load_step_kg = 2.5

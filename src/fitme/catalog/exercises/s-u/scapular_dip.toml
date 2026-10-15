@@ -1,0 +1,13 @@
+id = "scapular_dip"
+names = { en = "Scapular dip", ru = "Лопаточные отжимания на брусьях" }
+search = { en = "scapular dips", ru = "лопаточные отжимания на брусьях" }
+kind = "bodyweight"
+pattern = "accessory"
+equipment = ["dip_bars"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Support yourself on dip bars with straight arms. Let the shoulders rise toward the ears, then press them down so the body lifts a little, with elbows staying straight. Move slowly through a small range.", ru = "Обопритесь на брусья на прямых руках. Позвольте плечам подняться к ушам, затем опустите их вниз так, чтобы тело немного приподнялось, не сгибая локти. Двигайтесь медленно в небольшой амплитуде." }

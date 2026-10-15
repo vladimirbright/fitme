@@ -1,0 +1,13 @@
+id = "towel_overhead_triceps_extension"
+names = { en = "Towel overhead triceps extension", ru = "Разгибание рук за головой с полотенцем" }
+kind = "bodyweight"
+pattern = "accessory"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand holding a towel taut between both hands behind the head, elbows near the ears. Straighten the arms upward while pulling the towel apart for resistance, then bend back slowly. Keep the ribs down.", ru = "Встаньте, держа натянутое полотенце двумя руками за головой, локти у ушей. Выпрямляйте руки вверх, растягивая полотенце для сопротивления, затем медленно согните обратно. Рёбра опущены." }
+load_step_kg = 1.0

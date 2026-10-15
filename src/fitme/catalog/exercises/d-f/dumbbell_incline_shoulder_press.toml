@@ -1,0 +1,12 @@
+id = "dumbbell_incline_shoulder_press"
+names = { en = "Incline bench dumbbell shoulder press", ru = "Жим гантелей над головой на наклонной скамье" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Set a bench to a steep incline and sit with your back against it, dumbbells at shoulder height, palms forward. Press both dumbbells overhead until your arms are extended, then lower them back to shoulder height under control. Keep your back on the pad.", ru = "Установите скамью под крутым наклоном и сядьте, прижав спину, гантели на уровне плеч, ладони вперёд. Выжмите обе гантели вверх до выпрямления рук, затем под контролем опустите на уровень плеч. Спина остаётся на скамье." }

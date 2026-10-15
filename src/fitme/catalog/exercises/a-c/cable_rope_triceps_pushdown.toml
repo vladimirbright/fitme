@@ -1,0 +1,13 @@
+id = "cable_rope_triceps_pushdown"
+names = { en = "Cable rope triceps pushdown", ru = "Разгибание рук на верхнем блоке с канатом" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Face a high pulley holding a rope with palms facing each other, elbows at your sides. Press down until the arms are straight, spreading the rope ends slightly, then return under control.", ru = "Встаньте лицом к верхнему блоку, канат ладонями друг к другу, локти у корпуса. Выжмите вниз до прямых рук, слегка разводя концы каната, затем подконтрольно вернитесь." }
+load_step_kg = 1.0

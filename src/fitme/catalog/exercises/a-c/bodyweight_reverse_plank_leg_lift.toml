@@ -1,0 +1,12 @@
+id = "bodyweight_reverse_plank_leg_lift"
+names = { en = "Reverse plank leg lift", ru = "Обратная планка с подъёмом ноги" }
+kind = "bodyweight"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "hip"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hip_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Sit with legs extended and hands on the floor behind you, fingers pointing toward your feet. Press up into a reverse plank with hips high, then lift one leg and lower it, alternating. Keep your neck neutral and drop your hips if your shoulders or wrists feel strained.", ru = "Сядьте с вытянутыми ногами, ладони на полу сзади, пальцы направлены к стопам. Поднимите таз в обратную планку, затем поочерёдно поднимайте и опускайте ноги. Шея нейтральна; если плечи или запястья перегружены, опустите таз." }

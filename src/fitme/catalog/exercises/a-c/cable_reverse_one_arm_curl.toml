@@ -1,0 +1,13 @@
+id = "cable_reverse_one_arm_curl"
+names = { en = "Cable reverse one-arm curl", ru = "Обратное сгибание руки на нижнем блоке одной рукой" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Stand facing a low pulley and hold the handle overhand with one hand. Keep the elbow at your side and wrist straight as you curl toward your shoulder, then lower under control. Switch arms after the set.", ru = "Встаньте лицом к нижнему блоку, рукоять хватом сверху в одной руке. Локоть у корпуса, запястье прямое: согните руку к плечу, затем подконтрольно опустите. После подхода смените руку." }
+load_step_kg = 1.0

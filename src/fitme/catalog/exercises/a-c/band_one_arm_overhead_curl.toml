@@ -1,0 +1,13 @@
+id = "band_one_arm_overhead_curl"
+names = { en = "Band one-arm overhead curl", ru = "Сгибание руки с лентой над головой" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Stand on one end of the band and hold the other end with the arm raised, palm forward. Keep the upper arm still next to the head and bend the elbow to bring the hand toward the shoulder. Return slowly; stand tall and keep the ribs down.", ru = "Встаньте на один конец ленты, другой держите поднятой рукой, ладонь вперёд. Плечо неподвижно рядом с головой, сгибайте локоть, приближая кисть к плечу. Медленно вернитесь; стойте прямо, рёбра опущены." }
+load_step_kg = 1.0

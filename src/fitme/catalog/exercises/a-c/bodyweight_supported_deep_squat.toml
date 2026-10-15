@@ -1,0 +1,12 @@
+id = "bodyweight_supported_deep_squat"
+names = { en = "Supported deep squat", ru = "Глубокий присед с опорой" }
+kind = "bodyweight"
+pattern = "squat"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["knee", "hip", "ankle"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Hold a stable support, feet shoulder-width with toes slightly out. Sit down into a deep squat, chest up, heels down, pause briefly, then stand. Keep the depth within what you control.", ru = "Держитесь за устойчивую опору, ноги на ширине плеч, носки слегка в стороны. Опуститесь в глубокий присед, грудь поднята, пятки на полу, ненадолго задержитесь и встаньте. Глубина в пределах контроля." }

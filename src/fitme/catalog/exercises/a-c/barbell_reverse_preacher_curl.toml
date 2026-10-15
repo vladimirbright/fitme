@@ -1,0 +1,12 @@
+id = "barbell_reverse_preacher_curl"
+names = { en = "Barbell reverse preacher curl", ru = "Обратные сгибания рук со штангой на скамье Скотта" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["barbell", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit at the preacher bench with the upper arms flat on the pad. Take the bar overhand, about shoulder width, with straight wrists. Curl up under control, then lower until the arms are nearly straight. Keep the load light.", ru = "Сядьте за скамью Скотта, плечи лежат на подушке. Возьмите гриф сверху примерно на ширине плеч, кисти прямые. Согните руки под контролем, затем опустите почти до прямых рук. Вес лёгкий." }

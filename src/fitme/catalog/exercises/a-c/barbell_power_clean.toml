@@ -1,0 +1,14 @@
+id = "barbell_power_clean"
+names = { en = "Barbell power clean", ru = "Силовое взятие штанги на грудь" }
+kind = "compound"
+pattern = "hinge"
+level = "advanced"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip", "knee", "shoulder", "elbow_wrist", "ankle"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "knee_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "ankle_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Bar on the floor over the mid-foot, grip just outside the knees, back flat. Pull the bar past the knees, extend the hips and shrug, then drop under it and catch it on the shoulders. Stand tall, then lower it with control. Use bumper plates with clear space around you.", ru = "Штанга на полу над серединой стопы, хват чуть шире коленей, спина ровная. Протяните штангу мимо колен, разогните бёдра, пожмите плечами, подсядьте под гриф и поймайте его на плечи. Выпрямитесь, затем опустите штангу под контролем. Используйте бамперные блины, вокруг должно быть свободное место." }
+load_step_kg = 2.5

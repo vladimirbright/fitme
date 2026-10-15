@@ -1,0 +1,13 @@
+id = "cable_side_crunch"
+names = { en = "Cable side crunch", ru = "Боковые скручивания на блоке" }
+kind = "isolation"
+pattern = "core"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["lower_back"]
+contraindicated_by = ["lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set a handle on a low pulley and stand side-on, holding it in the hand farther from the stack, other hand on your hip. Bend sideways away from the stack, bringing that elbow toward your hip, then return upright. Keep a small range and your knees soft. Finish one side, then switch.", ru = "Закрепите рукоять на нижнем блоке и встаньте боком, рукоять в дальней от тренажёра руке, другая рука на поясе. Наклонитесь в сторону от тренажёра, приближая локоть к бедру, затем вернитесь. Амплитуда небольшая, колени слегка согнуты. Закончите одну сторону, затем смените." }
+load_step_kg = 1.0

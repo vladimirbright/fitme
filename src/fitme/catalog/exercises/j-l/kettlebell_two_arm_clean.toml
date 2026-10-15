@@ -1,0 +1,14 @@
+id = "kettlebell_two_arm_clean"
+names = { en = "Kettlebell two-arm clean", ru = "Взятие гири на грудь двумя руками" }
+kind = "compound"
+pattern = "hinge"
+equipment = ["kettlebell"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip", "shoulder", "elbow_wrist", "knee"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "knee_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 4.0 }
+level = "advanced"
+instructions = { en = "Stand over one kettlebell, hinge at the hips and grip it with both hands. Drive your hips forward and pull the bell close to the body up to the front of your chest, catching it with elbows tucked. Lower it back to the floor under control. Keep your back flat and the bell close.", ru = "Встаньте над гирей, наклонитесь в тазобедренных суставах и возьмите её двумя руками. Толкните таз вперёд и подтяните гирю близко к телу к груди, принимая её с прижатыми локтями. Под контролем опустите гирю на пол. Спина ровная, гиря близко к телу." }
+load_step_kg = 2.0

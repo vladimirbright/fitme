@@ -1,0 +1,13 @@
+id = "dumbbell_bench_squat"
+names = { en = "Dumbbell bench squat", ru = "Приседания с гантелями на скамью" }
+kind = "compound"
+pattern = "squat"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "lower_back", "ankle"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "lower_back_injury_current", "ankle_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand with your back to a low bench, a dumbbell in each hand at the sides. Sit back until the glutes lightly touch the bench with chest up, then stand through the whole foot. Do not drop onto the bench.", ru = "Встаньте спиной к низкой скамье, гантели в руках по бокам. Сядьте назад до лёгкого касания скамьи ягодицами, грудь поднята, затем встаньте, опираясь на всю стопу. Не падайте на скамью." }
+load_step_kg = 1.0

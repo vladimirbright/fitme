@@ -1,0 +1,12 @@
+id = "mobility_band_posterior_tibialis_stretch"
+names = { en = "Band posterior tibialis stretch", ru = "Растяжка задней большеберцовой мышцы с лентой" }
+kind = "mobility"
+pattern = "mobility"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["ankle"]
+contraindicated_by = ["ankle_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Sit with the legs extended and loop a band around the ball of one foot. Holding the ends, draw the foot toward you and slightly outward until you feel a gentle pull along the inner lower leg. Hold 20-30 seconds, then switch legs.", ru = "Сядьте, ноги вытянуты, оберните ленту вокруг передней части одной стопы. Держа концы, подтяните стопу на себя и слегка наружу до лёгкого натяжения по внутренней стороне голени. Удерживайте 20-30 секунд, затем смените ногу." }

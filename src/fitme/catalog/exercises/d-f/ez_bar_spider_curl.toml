@@ -1,0 +1,13 @@
+id = "ez_bar_spider_curl"
+names = { en = "EZ-bar spider curl", ru = "Паучьи сгибания рук с EZ-грифом" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["ez_bar", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Lie chest-down on an incline bench with arms hanging straight, holding the EZ-bar with an underhand grip. Curl the bar up without moving the upper arms, then lower fully under control.", ru = "Лягте грудью на наклонную скамью, руки свисают вниз, EZ-гриф обратным хватом. Согните руки, не двигая плечами, затем полностью опустите под контролем." }
+load_step_kg = 1.0

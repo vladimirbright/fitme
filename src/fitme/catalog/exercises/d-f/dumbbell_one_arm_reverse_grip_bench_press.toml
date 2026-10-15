@@ -1,0 +1,12 @@
+id = "dumbbell_one_arm_reverse_grip_bench_press"
+names = { en = "One-arm reverse-grip dumbbell bench press", ru = "Жим одной гантели лёжа обратным хватом" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["dumbbells", "bench"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie on a flat bench, feet on the floor, holding one dumbbell with your palm facing your feet. Lower it toward your chest, elbow close to your body, then press back up. Use a light weight and keep your wrist straight; switch arms after the set.", ru = "Лягте на горизонтальную скамью, стопы на полу, гантель в одной руке, ладонь смотрит в сторону ног. Опустите её к груди, локоть ближе к корпусу, затем выжмите обратно. Вес лёгкий, запястье прямое; после подхода смените руку." }

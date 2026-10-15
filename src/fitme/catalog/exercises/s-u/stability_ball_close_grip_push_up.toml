@@ -1,0 +1,13 @@
+id = "stability_ball_close_grip_push_up"
+names = { en = "Stability ball close-grip push-up", ru = "Отжимания узким хватом на фитболе" }
+kind = "bodyweight"
+pattern = "horizontal_push"
+equipment = ["stability_ball"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Place both hands close together on a stability ball, body in a straight line. Lower the chest toward the ball with elbows near the sides, then press up. Keep the ball steady.", ru = "Поставьте ладони близко друг к другу на фитбол, тело в одну линию. Опустите грудь к мячу, локти у корпуса, затем отожмитесь. Следите, чтобы мяч не двигался." }
+load_step_kg = 1.0

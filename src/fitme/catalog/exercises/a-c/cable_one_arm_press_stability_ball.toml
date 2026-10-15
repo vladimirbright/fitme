@@ -1,0 +1,13 @@
+id = "cable_one_arm_press_stability_ball"
+names = { en = "Cable one-arm press on a stability ball", ru = "Жим одной рукой на блоке на фитболе" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["cable", "stability_ball"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit on the stability ball with feet planted wide and one hand on your hip. Hold a single handle at chest height with the elbow bent. Press it forward until the arm is straight, then return slowly. Keep the torso still and switch arms after the set.", ru = "Сядьте на фитбол, ноги широко и устойчиво, свободная рука на поясе. Рукоять у груди, локоть согнут. Выжмите вперёд до прямой руки, затем медленно вернитесь. Корпус неподвижен; после подхода смените руку." }
+load_step_kg = 2.5

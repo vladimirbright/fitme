@@ -1,0 +1,12 @@
+id = "bodyweight_reverse_lunge_overhead_reach"
+names = { en = "Reverse lunge with overhead reach", ru = "Обратный выпад с вытягиванием рук вверх" }
+kind = "bodyweight"
+pattern = "squat"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["knee", "hip", "ankle"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Stand tall with feet hip-width apart. Step one foot back and lower into a lunge while reaching both arms up and slightly back. Push through the front foot to stand and alternate legs. Keep the front knee over the foot.", ru = "Встаньте прямо, ноги на ширине таза. Шагните одной ногой назад и опуститесь в выпад, одновременно вытягивая руки вверх и чуть назад. Оттолкнитесь передней ногой, вернитесь и смените ногу. Переднее колено над стопой." }

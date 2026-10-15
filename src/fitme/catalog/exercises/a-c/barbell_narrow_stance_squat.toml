@@ -1,0 +1,12 @@
+id = "barbell_narrow_stance_squat"
+names = { en = "Barbell narrow-stance squat", ru = "Приседания со штангой узкой постановкой ног" }
+kind = "compound"
+pattern = "squat"
+equipment = ["barbell", "rack"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "lower_back", "hip", "neck"]
+contraindicated_by = ["knee_injury_current", "lower_back_injury_current", "hip_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Place the bar on the upper back and stand with feet hip-width, toes slightly out. Sit down and back to about parallel with knees tracking over the toes, then stand. Set the safety arms below the lowest point.", ru = "Положите штангу на верх спины, ноги на ширине таза, носки чуть наружу. Присядьте вниз и назад до параллели, колени идут по линии носков, затем встаньте. Страховочные упоры поставьте ниже нижней точки." }

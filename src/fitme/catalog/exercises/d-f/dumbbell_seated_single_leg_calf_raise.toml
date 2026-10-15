@@ -1,0 +1,12 @@
+id = "dumbbell_seated_single_leg_calf_raise"
+names = { en = "Dumbbell seated single-leg calf raise", ru = "Подъём на носок сидя на одной ноге с гантелью" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["ankle", "knee"]
+contraindicated_by = ["ankle_injury_current", "knee_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit on a bench with the ball of one foot on a low block and a dumbbell held on that thigh near the knee. Lower the heel for a gentle stretch, rise onto the toes, then lower slowly. Finish one side, then switch.", ru = "Сядьте на скамью, передняя часть одной стопы на невысокой подставке, гантель удерживайте на этом бедре у колена. Опустите пятку до лёгкого растяжения, поднимитесь на носок и медленно опустите. Выполните все повторения на одной ноге, затем смените." }

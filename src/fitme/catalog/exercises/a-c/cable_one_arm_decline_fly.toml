@@ -1,0 +1,13 @@
+id = "cable_one_arm_decline_fly"
+names = { en = "Cable one-arm decline fly", ru = "Сведение одной руки в кроссовере с отрицательным наклоном" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Place a decline bench beside a low pulley so the cable runs out to the side of your working arm. Lie back holding the single handle above your chest, elbow slightly bent. Lower the arm out to the side in an arc to shoulder level, then bring it back up. Finish all reps before switching sides.", ru = "Поставьте скамью с отрицательным наклоном сбоку от нижнего блока, чтобы трос шёл в сторону рабочей руки. Лягте, держа рукоять над грудью, локоть слегка согнут. Опустите руку дугой в сторону до уровня плеча, затем верните вверх. Выполните все повторения, затем смените сторону." }
+load_step_kg = 1.0

@@ -1,0 +1,12 @@
+id = "dumbbell_one_arm_seated_stability_ball_hammer_press"
+names = { en = "One-arm seated neutral-grip press on stability ball", ru = "Жим гантели одной рукой нейтральным хватом сидя на фитболе" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["dumbbells", "stability_ball"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia", "neck_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit tall on a stability ball with feet wide and a dumbbell at shoulder height, palm facing in. Press straight overhead, then lower under control. Keep the ribs down and switch arms after the set.", ru = "Сядьте прямо на фитбол, ноги широко, гантель у плеча, ладонь смотрит внутрь. Выжмите вверх над головой, затем подконтрольно опустите. Рёбра опущены, после подхода смените руку." }

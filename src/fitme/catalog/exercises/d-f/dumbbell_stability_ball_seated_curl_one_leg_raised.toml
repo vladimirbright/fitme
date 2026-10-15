@@ -1,0 +1,14 @@
+id = "dumbbell_stability_ball_seated_curl_one_leg_raised"
+names = { en = "Dumbbell curl seated on stability ball with one leg raised", ru = "Сгибания рук с гантелями сидя на фитболе с поднятой ногой" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "stability_ball"]
+level = "advanced"
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit upright on a stability ball with feet hip-width, a dumbbell in each hand, then lift one foot just off the floor. Curl both dumbbells toward your shoulders and lower under control. Put the foot down if you lose balance and switch legs between sets.", ru = "Сядьте ровно на фитбол, стопы на ширине таза, в руках гантели, затем приподнимите одну стопу над полом. Согните руки к плечам и подконтрольно опустите. Потеряв равновесие, поставьте ногу; меняйте ногу между подходами." }
+load_step_kg = 1.0

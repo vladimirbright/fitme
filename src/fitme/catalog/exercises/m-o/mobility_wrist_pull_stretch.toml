@@ -1,0 +1,12 @@
+id = "mobility_wrist_pull_stretch"
+names = { en = "Wrist pull stretch", ru = "Растяжка запястья с помощью второй руки" }
+kind = "mobility"
+pattern = "mobility"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Extend one arm in front, palm down, fingers pointing down. With the other hand, gently draw the fingers toward the body until you feel a mild pull in the forearm. Hold 15-30 seconds, then switch arms. Keep the range comfortable.", ru = "Вытяните одну руку вперёд, ладонью вниз, пальцы смотрят вниз. Другой рукой мягко подтяните пальцы к себе до лёгкого натяжения в предплечье. Удерживайте 15-30 секунд, затем смените руку. Амплитуда комфортная." }

@@ -1,0 +1,12 @@
+id = "push_up_plus"
+names = { en = "Push-up plus", ru = "Отжимания с добавочным движением лопаток" }
+kind = "bodyweight"
+pattern = "horizontal_push"
+equipment = []
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Start in a push-up position. Lower the chest, press up, and at the top push the floor away a bit further so the upper back rounds slightly and the shoulder blades spread apart. Relax back to flat and repeat.", ru = "Примите упор лёжа. Опуститесь, выжмитесь вверх и в верхней точке оттолкнитесь от пола ещё немного, чтобы верх спины слегка округлился и лопатки разошлись. Вернитесь в ровное положение и повторите." }
+load_step_kg = 1.0

@@ -1,0 +1,12 @@
+id = "stability_ball_weighted_overhead_crunch"
+names = { en = "Stability ball overhead crunch with plate", ru = "Скручивания на фитболе с блином над головой" }
+kind = "isolation"
+pattern = "core"
+equipment = ["stability_ball", "weight_plate"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "shoulder", "neck", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "neck_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit on a stability ball, then lean back until your lower back is supported, holding a light plate overhead with straight arms. Curl your torso up, then lower slowly. Grip the plate firmly by its edges, keep your arms steady and your feet planted.", ru = "Сядьте на фитбол и откиньтесь до опоры поясницей, лёгкий блин на прямых руках над головой. Поднимите корпус, затем медленно вернитесь. Крепко держите блин за края, руки неподвижны, стопы на полу." }

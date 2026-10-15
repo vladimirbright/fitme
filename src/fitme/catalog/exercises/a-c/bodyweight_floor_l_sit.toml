@@ -1,0 +1,13 @@
+id = "bodyweight_floor_l_sit"
+names = { en = "Floor L-sit", ru = "Уголок на полу" }
+kind = "bodyweight"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist", "hip"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+level = "advanced"
+instructions = { en = "Sit with legs straight and palms on the floor beside your hips. Press down, lift your hips and legs off the floor, and hold with straight arms. Bend your knees if you cannot keep your legs up.", ru = "Сядьте с прямыми ногами, ладони на полу у бёдер. Давите вниз, оторвите таз и ноги от пола и удерживайте положение на прямых руках. Если ноги не удержать, согните колени." }

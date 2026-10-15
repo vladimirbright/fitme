@@ -1,0 +1,13 @@
+id = "machine_kneeling_twist"
+names = { en = "Machine kneeling twist", ru = "Повороты корпуса в тренажёре на коленях" }
+kind = "isolation"
+pattern = "core"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Adjust the seat and set the lightest resistance. Kneel on the pads, hold the handles, and rotate your torso to one side with your hips facing forward, then return slowly and alternate. Keep the range comfortable.", ru = "Настройте сиденье и поставьте минимальное сопротивление. Встаньте коленями на упоры, возьмитесь за рукояти и поворачивайте корпус в сторону, таз смотрит вперёд, затем медленно вернитесь и смените сторону. Амплитуда комфортная." }
+load_step_kg = 1.0

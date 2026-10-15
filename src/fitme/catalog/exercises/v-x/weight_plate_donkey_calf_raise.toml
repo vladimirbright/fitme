@@ -1,0 +1,12 @@
+id = "weight_plate_donkey_calf_raise"
+names = { en = "Weighted donkey calf raise", ru = "Ослиный подъём на носки с отягощением" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["weight_plate"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["ankle", "knee", "lower_back"]
+contraindicated_by = ["ankle_injury_current", "knee_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Hang a plate from a dip belt around the hips. Stand with the balls of the feet on a low block, hinge forward and rest the hands on a bench or rail with the back flat. Lower the heels for a gentle stretch, rise as high as you can, pause, then lower slowly.", ru = "Подвесьте блин на пояс для отягощений вокруг таза. Встаньте передней частью стоп на невысокий блок, наклонитесь вперёд и обопритесь руками о скамью или перекладину, спина ровная. Опустите пятки до лёгкого растяжения, поднимитесь на носки как можно выше, задержитесь и медленно опуститесь." }

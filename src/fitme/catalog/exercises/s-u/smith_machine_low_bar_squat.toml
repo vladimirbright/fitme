@@ -1,0 +1,13 @@
+id = "smith_machine_low_bar_squat"
+names = { en = "Smith machine low-bar squat", ru = "Приседания в тренажёре Смита с низким положением грифа" }
+kind = "compound"
+pattern = "squat"
+equipment = ["smith_machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["knee", "hip", "lower_back", "neck"]
+contraindicated_by = ["knee_injury_current", "hernia", "hip_injury_current", "lower_back_injury_current", "neck_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the bar at upper-chest height and rest it across the rear shoulders below the neck. Feet slightly forward of the bar line. Hinge the hips back and sit down with a slight forward lean, then stand. Set the safety stops below the lowest point.", ru = "Установите гриф на уровне верха груди и положите на задние дельты ниже шеи. Стопы чуть впереди линии грифа. Отведите таз назад и присядьте с небольшим наклоном корпуса, затем встаньте. Выставьте ограничители ниже нижней точки." }
+load_step_kg = 2.5

@@ -1,0 +1,12 @@
+id = "dumbbell_seated_external_rotation"
+names = { en = "Dumbbell seated external rotation", ru = "Наружная ротация плеча с гантелью сидя" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit on a bench with the foot of the working side up on it and rest that elbow on the knee, bent 90 degrees, a light dumbbell in the hand and the forearm pointing forward. Turn the forearm up until it is vertical, keeping the elbow in place, then lower slowly. Finish one side, then switch.", ru = "Сядьте на скамью, поставьте на неё стопу рабочей стороны и обопритесь локтем о колено; локоть согнут под 90 градусов, в руке лёгкая гантель, предплечье направлено вперёд. Поднимите предплечье до вертикали, не сдвигая локоть, затем медленно опустите. Выполните все повторения одной рукой, затем смените." }

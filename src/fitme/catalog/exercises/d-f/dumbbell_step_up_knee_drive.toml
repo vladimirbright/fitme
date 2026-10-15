@@ -1,0 +1,13 @@
+id = "dumbbell_step_up_knee_drive"
+names = { en = "Dumbbell step-up with knee drive", ru = "Зашагивание с гантелями и подъёмом колена" }
+kind = "compound"
+pattern = "squat"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "ankle", "lower_back"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Hold a dumbbell in each hand and place one foot fully on a low bench. Step up and lift the other knee to hip height, pause, then lower that foot to the floor. Finish the reps on one side before switching.", ru = "Гантели в руках, поставьте одну ногу всей стопой на низкую скамью. Поднимитесь и поднимите другое колено до уровня таза, задержитесь, затем опустите ногу на пол. Закончите повторения на одну сторону и смените." }
+load_step_kg = 1.0

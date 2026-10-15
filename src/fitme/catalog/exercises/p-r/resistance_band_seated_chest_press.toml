@@ -1,0 +1,11 @@
+id = "resistance_band_seated_chest_press"
+names = { en = "Resistance band seated chest press", ru = "Жим от груди сидя с лентой" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["resistance_bands", "bench"]
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Anchor the band behind a bench or chair at chest height. Sit upright facing away from the anchor, one end in each hand at chest level. Press both hands forward until your arms are extended, then return slowly. Keep your back against the support.", ru = "Закрепите ленту позади скамьи или стула на уровне груди. Сядьте прямо спиной к креплению, концы ленты в руках у груди. Выжмите руки вперёд до выпрямления, затем медленно вернитесь. Спина прижата к опоре." }

@@ -1,0 +1,13 @@
+id = "trap_bar_deadlift"
+names = { en = "Trap bar deadlift", ru = "Становая тяга с трэп-грифом" }
+kind = "compound"
+pattern = "hinge"
+equipment = ["trap_bar"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip", "knee"]
+contraindicated_by = ["lower_back_injury_current", "hernia", "hip_injury_current", "knee_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Stand inside the trap bar, feet hip-width. Hinge and sit back to grip the handles, back flat, chest up. Stand by pushing the floor away, then lower the bar along the same path with control.", ru = "Встаньте внутрь трэп-грифа, ноги на ширине таза. Наклонитесь, отведя таз назад, и возьмитесь за рукояти, спина прямая, грудь вперёд. Встаньте, отталкиваясь от пола, затем плавно опустите гриф по той же траектории." }
+load_step_kg = 2.5

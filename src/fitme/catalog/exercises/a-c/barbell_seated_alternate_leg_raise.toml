@@ -1,0 +1,13 @@
+id = "barbell_seated_alternate_leg_raise"
+names = { en = "Barbell seated alternating leg raise", ru = "Подъём ног поочерёдно сидя со штангой" }
+kind = "isolation"
+pattern = "core"
+equipment = ["barbell", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit on the end of a bench, leaning back slightly, a light bar resting on your thighs and held with both hands. Raise one straight leg, then lower it and raise the other. Keep your back flat and the bar steady.", ru = "Сядьте на край скамьи, слегка откинувшись, лёгкий гриф лежит на бёдрах и удерживается двумя руками. Поднимите одну прямую ногу, опустите и поднимите другую. Спина ровная, гриф неподвижен." }
+load_step_kg = 2.5

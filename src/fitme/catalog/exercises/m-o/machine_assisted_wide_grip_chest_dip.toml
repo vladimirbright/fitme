@@ -1,0 +1,13 @@
+id = "machine_assisted_wide_grip_chest_dip"
+names = { en = "Assisted wide-grip chest dip machine (kneeling)", ru = "Отжимания на брусьях в гравитроне, широкий хват (с колен)" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Start with plenty of assistance, place your knees on the pad and take the wide handles with arms straight. Lean slightly forward and bend the elbows only as far as the shoulders stay stable. Press back up and keep the shoulders away from the ears.", ru = "Начните с большой помощи, поставьте колени на подушку и возьмитесь за широкие рукояти на прямых руках. Слегка наклонитесь и сгибайте локти лишь до положения, в котором плечи остаются устойчивыми. Выжмитесь обратно, плечи не поднимайте к ушам." }
+load_step_kg = 2.5

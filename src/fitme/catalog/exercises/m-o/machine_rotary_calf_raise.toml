@@ -1,0 +1,12 @@
+id = "machine_rotary_calf_raise"
+names = { en = "Rotary calf machine raise", ru = "Подъём на носки в ротационном тренажёре" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["ankle", "knee"]
+contraindicated_by = ["ankle_injury_current", "knee_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set the seat so the knees are slightly bent and the balls of the feet are on the platform with the heels free. Rise as high as you can, pause, then lower the heels under control. Keep the hands on the handles.", ru = "Установите сиденье так, чтобы колени были слегка согнуты, а передняя часть стопы стояла на платформе, пятки свободны. Поднимитесь на носки как можно выше, задержитесь и подконтрольно опустите пятки. Руки держат рукояти." }

@@ -1,0 +1,14 @@
+id = "kettlebell_double_alternating_hang_clean"
+names = { en = "Kettlebell double alternating hang clean", ru = "Попеременное взятие двух гирь на грудь из виса" }
+kind = "compound"
+level = "advanced"
+pattern = "hinge"
+equipment = ["kettlebell"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "hip"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 4.0 }
+instructions = { en = "Hinge at the hips with a kettlebell in each hand. Drive the hips forward and pull one bell close to the body to the shoulder, lower it, then clean the other. Keep the back flat. Use light bells.", ru = "Наклонитесь в тазобедренных суставах, в каждой руке гиря. Выпрямите таз вперёд и подтяните одну гирю близко к телу к плечу, опустите, затем взятие другой. Спина прямая. Берите лёгкие гири." }
+load_step_kg = 2.0

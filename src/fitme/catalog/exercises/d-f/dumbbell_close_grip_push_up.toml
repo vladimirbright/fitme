@@ -1,0 +1,13 @@
+id = "dumbbell_close_grip_push_up"
+names = { en = "Close-grip push-up on dumbbells", ru = "Отжимания узким хватом на гантелях" }
+kind = "bodyweight"
+pattern = "horizontal_push"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Set two hex dumbbells that cannot roll on the floor close together and grip the handles under the shoulders. Hold a straight body line, lower the chest with elbows close to the sides, then press up.", ru = "Поставьте на пол рядом две гантели с гранёными дисками, которые не катятся, и возьмитесь за рукояти под плечами. Тело в одну линию, опустите грудь, локти у корпуса, затем отожмитесь." }
+load_step_kg = 1.0

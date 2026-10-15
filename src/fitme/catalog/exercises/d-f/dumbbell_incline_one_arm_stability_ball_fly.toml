@@ -1,0 +1,12 @@
+id = "dumbbell_incline_one_arm_stability_ball_fly"
+names = { en = "Incline one-arm dumbbell fly on stability ball", ru = "Разводка одной гантели на фитболе с наклоном корпуса" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "stability_ball"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie back on a stability ball with your upper back on the ball and hips lower, so your torso is angled upward. Feet wide. Hold one dumbbell above your chest, elbow slightly bent, open the arm in an arc to chest level, then bring it back. Finish one side, then switch.", ru = "Лягте на фитбол верхней частью спины, таз ниже, корпус наклонён вверх. Ноги широко. Одна гантель над грудью, локоть слегка согнут: разведите руку по дуге до уровня груди и верните обратно. Закончите одну сторону, затем смените." }

@@ -1,0 +1,13 @@
+id = "bodyweight_side_plank_hip_adduction"
+names = { en = "Side plank with bottom leg lift", ru = "Боковая планка с приведением нижней ноги" }
+kind = "bodyweight"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "hip"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hip_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Hold a side plank on one forearm with the elbow under the shoulder. Keep the body in one line and lift the bottom foot up toward the top foot, then lower it with control. Finish the reps and switch sides.", ru = "Примите боковую планку на предплечье, локоть под плечом. Держа тело на одной линии, поднимите нижнюю стопу к верхней и плавно опустите. Выполните повторения и смените сторону." }
+load_step_kg = 1.0

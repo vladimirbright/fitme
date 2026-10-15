@@ -1,0 +1,11 @@
+id = "foam_roller_seated_front_raise"
+names = { en = "Seated foam roller front raise", ru = "Подъём ролла перед собой сидя" }
+kind = "mobility"
+pattern = "mobility"
+equipment = ["foam_roller"]
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Sit on the floor with legs extended, holding a roller in both hands on your thighs. Lean back slightly and raise the roller with straight arms to shoulder height, then lower it slowly. Keep the ribs down.", ru = "Сядьте на пол, ноги вытянуты, ролл в обеих руках лежит на бёдрах. Слегка отклонитесь назад и поднимите ролл на прямых руках до уровня плеч, затем медленно опустите. Рёбра опущены." }

@@ -1,0 +1,13 @@
+id = "smith_machine_deadlift"
+names = { en = "Smith machine deadlift", ru = "Становая тяга в тренажёре Смита" }
+kind = "compound"
+pattern = "hinge"
+equipment = ["smith_machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["lower_back", "hip", "knee"]
+contraindicated_by = ["lower_back_injury_current", "hernia", "hip_injury_current", "knee_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the safety stops at mid-shin height and rest the bar on them. Feet hip-width, bar close to the shins. Hinge and grip just outside the legs, keep the back flat and chest up, then stand by pushing the floor away. Lower along the same path with control.", ru = "Выставьте ограничители на уровне середины голени и положите на них гриф. Ноги на ширине таза, гриф близко к голеням. Наклонитесь и возьмитесь чуть шире ног, спина прямая, грудь вперёд, встаньте, отталкиваясь от пола. Опускайте штангу по той же траектории плавно." }
+load_step_kg = 2.5

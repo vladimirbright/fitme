@@ -1,0 +1,12 @@
+id = "standing_toe_touch"
+names = { en = "Standing toe touch", ru = "Наклон вперёд к носкам стоя" }
+kind = "mobility"
+pattern = "mobility"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back"]
+contraindicated_by = ["lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand with feet hip-width apart and knees soft. Hinge forward from the hips, sliding the hands down the legs toward the toes. Go only as far as you can with a long spine, then return upright slowly.", ru = "Встаньте, ноги на ширине таза, колени слегка согнуты. Наклонитесь от бёдер, скользя руками по ногам к носкам. Идите только до того предела, где спина остаётся длинной, и медленно вернитесь." }

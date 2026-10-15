@@ -1,0 +1,13 @@
+id = "weighted_muscle_up"
+names = { en = "Weighted muscle-up", ru = "Выход силой с отягощением" }
+kind = "compound"
+level = "advanced"
+pattern = "vertical_pull"
+equipment = ["pull_up_bar", "weight_plate"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Attach a plate to a belt and hang from the bar. Pull explosively until the bar reaches the chest, then turn the wrists and elbows over the bar. Press up to straight arms and lower slowly under control.", ru = "Прикрепите блин к поясу и повисните на перекладине. Резко подтяните тело до касания перекладины грудью, затем переведите кисти и локти над перекладиной. Выжмите до прямых рук и медленно опуститесь под контролем." }

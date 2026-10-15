@@ -1,0 +1,13 @@
+id = "dip_bars_crossed_leg_dip"
+names = { en = "Crossed-leg bar dip", ru = "Отжимания на брусьях со скрещенными ногами" }
+kind = "bodyweight"
+pattern = "vertical_push"
+equipment = ["dip_bars"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Support yourself on parallel bars with straight arms, knees bent and ankles crossed behind you. Lower until the upper arms are about parallel to the floor, then press back up.", ru = "Обопритесь на брусья на прямых руках, колени согнуты, лодыжки скрещены сзади. Опуститесь до положения плеч примерно параллельно полу, затем выжмитесь вверх." }
+load_step_kg = 1.0

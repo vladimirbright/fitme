@@ -1,0 +1,14 @@
+id = "kettlebell_thruster"
+names = { en = "Kettlebell thruster", ru = "Трастер с гирей" }
+kind = "compound"
+pattern = "squat"
+equipment = ["kettlebell"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "hip", "knee", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hip_injury_current", "knee_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 4.0 }
+level = "advanced"
+instructions = { en = "Hold a kettlebell at your chest with both hands, elbows down. Squat to a controlled depth, then stand and press the bell overhead in one smooth movement. Lower it back to your chest and repeat. Keep the weight light enough to stay in control as you tire.", ru = "Держите гирю у груди обеими руками, локти опущены. Присядьте на контролируемую глубину, затем встаньте и одним плавным движением выжмите гирю вверх. Опустите её к груди и повторите. Вес такой, чтобы сохранять контроль при усталости." }
+load_step_kg = 2.0

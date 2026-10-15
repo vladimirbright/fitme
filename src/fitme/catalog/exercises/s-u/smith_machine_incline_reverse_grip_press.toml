@@ -1,0 +1,12 @@
+id = "smith_machine_incline_reverse_grip_press"
+names = { en = "Smith machine incline reverse-grip press", ru = "Жим на наклонной скамье в Смите обратным хватом" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["smith_machine", "bench"]
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set a bench at a modest incline under the bar, lie back and take an underhand grip about shoulder width. Unhook and lower the bar to the upper chest with elbows close, then press up. Keep the wrists straight and set the safety stops low.", ru = "Установите скамью с небольшим наклоном под гриф, лягте и возьмите гриф хватом снизу примерно на ширине плеч. Снимите гриф, опустите к верху груди, локти близко, и выжмите вверх. Запястья прямые, ограничители установите низко." }
+load_step_kg = 2.5

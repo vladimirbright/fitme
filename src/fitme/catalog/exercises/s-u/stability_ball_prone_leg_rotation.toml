@@ -1,0 +1,12 @@
+id = "stability_ball_prone_leg_rotation"
+names = { en = "Stability ball prone leg rotation", ru = "Отведение ноги с ротацией лёжа на фитболе" }
+kind = "bodyweight"
+pattern = "accessory"
+equipment = ["stability_ball"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["hip", "shoulder", "lower_back"]
+contraindicated_by = ["hip_injury_current", "shoulder_injury_current", "lower_back_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Lie face down over a stability ball with the hips on it and hands on the floor. Lift one straight leg level with the body, rotate it outward, then return it. Keep the hips and torso still and alternate legs.", ru = "Лягте животом на фитбол, таз на мяче, руки на полу. Поднимите прямую ногу до уровня корпуса, поверните её наружу и верните. Таз и корпус неподвижны, чередуйте ноги." }

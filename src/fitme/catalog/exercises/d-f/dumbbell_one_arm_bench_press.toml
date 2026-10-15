@@ -1,0 +1,12 @@
+id = "dumbbell_one_arm_bench_press"
+names = { en = "One-arm dumbbell bench press", ru = "Жим одной гантели лёжа" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["dumbbells", "bench"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie on a flat bench, feet on the floor, with one dumbbell at shoulder level. Press it straight up, lower it under control, and keep your torso from twisting. Finish all reps on one side, then switch.", ru = "Лягте на горизонтальную скамью, стопы на полу, одна гантель у плеча. Выжмите её вверх и подконтрольно опустите, корпус не разворачивайте. Выполните все повторения на одну сторону, затем смените." }

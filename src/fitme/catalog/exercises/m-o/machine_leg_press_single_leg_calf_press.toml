@@ -1,0 +1,12 @@
+id = "machine_leg_press_single_leg_calf_press"
+names = { en = "Single-leg leg press calf press", ru = "Жим носком одной ногой в тренажёре для жима ногами" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["ankle", "knee"]
+contraindicated_by = ["ankle_injury_current", "knee_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Sit in the leg press with one foot low on the platform, heel hanging off, knee nearly straight but not locked. Press by extending the ankle, pause, then lower the heel slowly. Use a light load, set the safety stops first, then switch legs.", ru = "Сядьте в тренажёр для жима ногами, одна стопа внизу платформы, пятка свисает, колено почти прямое, но не заблокировано. Выжмите платформу, разгибая голеностоп, задержитесь и медленно опустите пятку. Берите небольшой вес, заранее выставьте ограничители, затем смените ногу." }

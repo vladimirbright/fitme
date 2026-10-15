@@ -1,0 +1,12 @@
+id = "bodyweight_walking_high_knee_lunge"
+names = { en = "Walking lunge with high knee", ru = "Выпады с шагом и подъёмом колена" }
+kind = "bodyweight"
+pattern = "squat"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["knee", "hip", "ankle"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand tall and lift one knee toward the chest. Step forward with that leg and lower into a lunge, then push off and lift the back knee as you step through. Alternate legs and keep the torso upright. Use a clear space and slow down if balance slips.", ru = "Встаньте прямо и поднимите одно колено к груди. Шагните этой ногой вперёд и опуститесь в выпад, затем оттолкнитесь и поднимите заднее колено, делая следующий шаг. Чередуйте ноги, корпус вертикален. Нужно свободное место; при потере равновесия замедлитесь." }

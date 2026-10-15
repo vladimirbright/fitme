@@ -1,0 +1,11 @@
+id = "stability_ball_back_extension_with_rotation"
+names = { en = "Stability ball back extension with rotation", ru = "Разгибание спины с поворотом на фитболе" }
+kind = "bodyweight"
+pattern = "accessory"
+equipment = ["stability_ball"]
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Lie face down over the ball with hips on it and feet braced on the floor, hands crossed on the chest. Lift the torso until it is level with the legs, turn the upper body slightly to one side, return to centre and alternate. Move slowly and do not lean back past a straight line.", ru = "Лягте животом на фитбол, таз на мяче, стопы упёрты в пол, руки скрещены на груди. Поднимите корпус до линии с ногами, слегка поверните верхнюю часть тела в сторону, вернитесь в центр и чередуйте стороны. Двигайтесь медленно, не прогибайтесь выше прямой линии." }

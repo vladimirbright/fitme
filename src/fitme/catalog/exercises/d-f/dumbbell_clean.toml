@@ -1,0 +1,14 @@
+id = "dumbbell_clean"
+names = { en = "Dumbbell clean", ru = "Взятие гантелей на грудь" }
+kind = "compound"
+pattern = "hinge"
+level = "advanced"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip", "knee", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "knee_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand with feet hip-width and dumbbells hanging in front of the thighs. Push the hips back, then extend hips and knees and pull the dumbbells up close to the body. Catch them on the shoulders with a soft knee bend and lower them under control. Start very light.", ru = "Встаньте, ноги на ширине таза, гантели висят перед бёдрами. Отведите таз назад, затем разогните бёдра и колени и подтяните гантели близко к телу. Поймайте их на плечи, слегка согнув колени, и контролируемо опустите. Начинайте с очень лёгкого веса." }
+load_step_kg = 1.0

@@ -1,0 +1,12 @@
+id = "stability_ball_one_leg_diagonal_kick_curl"
+names = { en = "Stability ball one-leg diagonal kick curl", ru = "Мостик на фитболе на одной ноге с диагональным махом" }
+kind = "bodyweight"
+pattern = "accessory"
+equipment = ["stability_ball"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["hip", "knee", "lower_back"]
+contraindicated_by = ["hip_injury_current", "knee_injury_current", "lower_back_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on your back with the heels on a stability ball and lift the hips into a bridge. Draw one knee toward the chest, then extend that leg diagonally across the body and return. Keep the hips level and alternate sides slowly.", ru = "Лягте на спину, пятки на фитболе, поднимите таз в мостик. Подтяните одно колено к груди, затем выпрямите эту ногу по диагонали через тело и верните. Таз ровно, чередуйте стороны медленно." }

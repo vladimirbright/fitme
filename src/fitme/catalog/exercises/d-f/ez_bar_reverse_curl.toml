@@ -1,0 +1,13 @@
+id = "ez_bar_reverse_curl"
+names = { en = "EZ-bar reverse curl", ru = "Сгибания рук с EZ-грифом обратным хватом" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["ez_bar"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Stand holding the EZ-bar with an overhand grip, hands about shoulder-width apart. Curl the bar toward your shoulders with elbows by your sides and wrists straight, then lower under control. Use a lighter weight than for a regular curl.", ru = "Встаньте, держите EZ-гриф прямым хватом (ладони вниз) на ширине плеч. Поднимайте гриф к плечам, локти у корпуса, запястья прямые, затем опустите под контролем. Берите вес легче, чем для обычных сгибаний." }
+load_step_kg = 1.0

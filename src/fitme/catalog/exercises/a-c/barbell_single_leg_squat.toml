@@ -1,0 +1,14 @@
+id = "barbell_single_leg_squat"
+names = { en = "Barbell single-leg squat", ru = "Приседания на одной ноге со штангой" }
+kind = "compound"
+pattern = "squat"
+level = "advanced"
+equipment = ["barbell", "rack"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "ankle", "lower_back", "neck"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current", "lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Work inside the rack with the safety arms just below the lowest point. With the bar on the upper back, lift one foot forward and sit down on the standing leg only as deep as you stay balanced, then stand. Use a light load and switch legs after the set.", ru = "Работайте внутри стойки, страховочные упоры чуть ниже нижней точки. Со штангой на верхней части спины вынесите одну ногу вперёд и присядьте на опорной ноге на глубину, где сохраняется равновесие, затем встаньте. Вес лёгкий; после подхода смените ногу." }
+load_step_kg = 2.5

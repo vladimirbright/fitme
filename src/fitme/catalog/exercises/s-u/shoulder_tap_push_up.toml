@@ -1,0 +1,12 @@
+id = "shoulder_tap_push_up"
+names = { en = "Shoulder tap push-up", ru = "Отжимания с касанием плеча" }
+kind = "bodyweight"
+pattern = "horizontal_push"
+equipment = []
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Start in a plank with feet wide. Do a push-up, and at the top lift one hand to tap the opposite shoulder while keeping the hips from twisting. Place it back and do the next rep, alternating hands.", ru = "Примите упор лёжа, ноги шире. Выполните отжимание, а вверху поднимите одну руку и коснитесь противоположного плеча, не раскачивая таз. Поставьте руку и сделайте следующее повторение, чередуя руки." }
+load_step_kg = 1.0

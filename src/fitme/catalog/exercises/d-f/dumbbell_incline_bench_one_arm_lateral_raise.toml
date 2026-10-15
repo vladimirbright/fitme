@@ -1,0 +1,13 @@
+id = "dumbbell_incline_bench_one_arm_lateral_raise"
+names = { en = "Incline bench one-arm dumbbell lateral raise", ru = "Мах гантелью в сторону одной рукой на наклонной скамье" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Set a bench to about 45 degrees and lie on your side against the backrest, a dumbbell in the top hand hanging in front of you. With a slight elbow bend, raise the arm out to the side up to shoulder line, then lower slowly. Do all reps, then switch sides.", ru = "Установите спинку скамьи примерно на 45 градусов и лягте на неё боком, гантель в верхней руке свисает перед корпусом. Слегка согнув локоть, поднимите руку в сторону до линии плеча, затем медленно опустите. Выполните все повторения, затем смените сторону." }
+search = { en = "incline side lying one arm lateral raise", ru = "мах гантелью в сторону лёжа боком на наклонной скамье" }

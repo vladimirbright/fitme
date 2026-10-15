@@ -1,0 +1,13 @@
+id = "cable_standing_external_rotation"
+names = { en = "Cable standing shoulder external rotation", ru = "Наружная ротация плеча на блоке стоя" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Stand side-on to a pulley set at elbow height, holding the handle with the far hand, elbow bent to 90 degrees and pinned to your side. Rotate your forearm outward, then return slowly. Use very light resistance.", ru = "Встаньте боком к блоку на уровне локтя, рукоять держите дальней рукой, локоть согнут под 90 градусов и прижат к боку. Разверните предплечье наружу, затем медленно верните. Сопротивление очень лёгкое." }
+load_step_kg = 1.0

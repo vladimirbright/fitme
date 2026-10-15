@@ -1,0 +1,13 @@
+id = "bosu_ball_push_up"
+names = { en = "Push-up on BOSU ball", ru = "Отжимания на полусфере BOSU" }
+search = { en = "push up on bosu ball", ru = "отжимания на босу" }
+kind = "bodyweight"
+pattern = "horizontal_push"
+equipment = ["bosu_ball"]
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Place the BOSU flat side up on a non-slip floor. Put your hands on its edges, body in a straight line. Lower the chest toward the ball, then press back up. Keep the hands level and the core tight.", ru = "Положите BOSU плоской стороной вверх на нескользкий пол. Поставьте руки на края, тело прямое. Опустите грудь к платформе и выжмитесь обратно. Держите руки на одном уровне, корпус напряжён." }
+load_step_kg = 1.0

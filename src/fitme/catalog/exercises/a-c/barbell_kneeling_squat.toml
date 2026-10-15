@@ -1,0 +1,14 @@
+id = "barbell_kneeling_squat"
+names = { en = "Barbell kneeling squat", ru = "Приседания со штангой на коленях" }
+kind = "compound"
+pattern = "squat"
+level = "advanced"
+equipment = ["barbell", "rack"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "lower_back", "neck"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the bar in the rack at shoulder height for kneeling and the safety arms just below the bar's lowest point. Kneel on a pad with the bar on the upper back. Sit the hips back toward the heels, then drive them forward to rise. Keep the weight light.", ru = "Установите штангу в стойке на высоте плеч в положении на коленях, страховочные упоры чуть ниже нижней точки штанги. Встаньте на колени на мягкую подкладку, штанга на верхней части спины. Отведите таз назад к пяткам, затем выведите его вперёд и поднимитесь. Вес лёгкий." }
+load_step_kg = 2.5

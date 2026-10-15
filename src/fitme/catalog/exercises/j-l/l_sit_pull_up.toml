@@ -1,0 +1,12 @@
+id = "l_sit_pull_up"
+names = { en = "L-sit pull-up", ru = "Подтягивания в уголке" }
+kind = "bodyweight"
+level = "advanced"
+pattern = "vertical_pull"
+equipment = ["pull_up_bar"]
+locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist", "neck", "hip"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Hang from the bar with an overhand grip and raise straight legs to about hip height, holding them there. Pull the chin above the bar, then lower fully under control. Stop the set if the legs drop or the body swings.", ru = "Повисните на перекладине хватом сверху и поднимите прямые ноги примерно до уровня таза, удерживая их. Подтяните подбородок выше перекладины, затем полностью опуститесь под контролем. Завершите подход, если ноги опускаются или тело раскачивается." }

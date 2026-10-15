@@ -1,0 +1,12 @@
+id = "dumbbell_one_arm_decline_press"
+names = { en = "Decline one-arm dumbbell press", ru = "Жим одной гантели на скамье с наклоном вниз" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["dumbbells", "bench"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Secure your feet on a decline bench and hold one dumbbell at the side of your chest. Press it straight up, lower it under control, and keep your back on the pad. Finish all reps on one side, then switch.", ru = "Зафиксируйте ноги на скамье с наклоном вниз, одна гантель у бока груди. Выжмите её вверх, подконтрольно опустите, спина лежит на скамье. Выполните все повторения на одну сторону, затем смените руку." }

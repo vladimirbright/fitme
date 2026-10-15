@@ -1,0 +1,13 @@
+id = "bodyweight_three_bench_dip"
+names = { en = "Three-bench dip", ru = "Отжимания на трёх скамьях" }
+kind = "bodyweight"
+pattern = "vertical_push"
+equipment = ["bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Set two stable benches parallel, slightly wider than the shoulders, and a third across their ends. Put one hand on each parallel bench and the heels on the third, arms straight. Bend the elbows until the upper arms are about level with the floor, then press back up.", ru = "Поставьте две устойчивые скамьи параллельно, чуть шире плеч, а третью поперёк перед ними. Обопритесь руками на параллельные скамьи, пятки на третьей, руки прямые. Сгибайте локти, пока плечи не станут примерно параллельны полу, затем выжмитесь вверх." }
+load_step_kg = 1.0

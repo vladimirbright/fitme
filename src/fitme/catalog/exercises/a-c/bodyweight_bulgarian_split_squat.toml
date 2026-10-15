@@ -1,0 +1,13 @@
+id = "bodyweight_bulgarian_split_squat"
+names = { en = "Bodyweight Bulgarian split squat", ru = "Болгарские сплит-приседания с собственным весом" }
+kind = "bodyweight"
+pattern = "squat"
+equipment = ["bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "ankle"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand facing away from a bench and rest the top of one rear foot on it. Step the front foot far enough ahead that the knee stays over the foot. Lower straight down with the chest up, then press through the front heel. Finish the reps, then switch legs.", ru = "Встаньте спиной к скамье и положите на неё подъём задней ноги. Передняя нога достаточно далеко, чтобы колено оставалось над стопой. Опуститесь вертикально вниз, грудь вперёд, затем поднимитесь, отталкиваясь передней пяткой. Закончите повторения и смените ногу." }
+load_step_kg = 1.0

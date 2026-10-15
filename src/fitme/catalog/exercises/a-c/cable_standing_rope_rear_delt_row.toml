@@ -1,0 +1,13 @@
+id = "cable_standing_rope_rear_delt_row"
+names = { en = "Cable standing rope rear delt row", ru = "Тяга каната на блоке стоя на заднюю дельту" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Attach a rope to a pulley at chest height and stand upright facing the stack, arms reaching forward. Draw the rope toward your chest with elbows high and wide, bring the shoulder blades together, then let the arms go back out slowly. Stay tall and keep the resistance light.", ru = "Закрепите канат на блоке на уровне груди, встаньте прямо лицом к стеку, руки тянутся вперёд. Подтяните канат к груди, локти высоко и в стороны, сведите лопатки, затем медленно отпустите руки вперёд. Корпус прямой, сопротивление лёгкое." }
+load_step_kg = 1.0

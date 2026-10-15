@@ -1,0 +1,14 @@
+id = "forearm_push_up"
+names = { en = "Forearm push-up", ru = "Отжимания с упором на предплечья" }
+search = { en = "sphinx push-up", ru = "отжимания сфинкс" }
+kind = "bodyweight"
+pattern = "horizontal_push"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Start in a forearm plank, elbows under the shoulders and palms flat. Press through the palms to lift the forearms off the floor until the arms are straight. Lower the forearms back down under control, keeping the body in a line.", ru = "Примите планку на предплечьях, локти под плечами, ладони плотно на полу. Давите ладонями в пол и отрывайте предплечья, пока руки не выпрямятся. Подконтрольно опустите предплечья обратно, тело в одну линию." }
+load_step_kg = 1.0

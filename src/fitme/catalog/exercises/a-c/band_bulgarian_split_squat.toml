@@ -1,0 +1,13 @@
+id = "band_bulgarian_split_squat"
+names = { en = "Band Bulgarian split squat", ru = "Болгарские выпады с эспандером" }
+kind = "compound"
+pattern = "squat"
+equipment = ["resistance_bands", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "ankle"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current"]
+increment_kg = 2.0
+start = { kind = "calibration" }
+instructions = { en = "Stand with the front foot on one end of a band and hold the other end at the shoulder with one hand. Rest the top of the back foot on a bench behind you and hold a stable support with the free hand. Lower the back knee toward the floor, then press up through the front foot. Finish one side before switching.", ru = "Наступите передней стопой на один конец эспандера, другой конец держите одной рукой у плеча. Положите подъём задней стопы на скамью позади, свободной рукой держитесь за устойчивую опору. Опустите заднее колено к полу и поднимитесь через переднюю ногу. Выполните все повторы на одну сторону, затем смените." }
+load_step_kg = 1.0

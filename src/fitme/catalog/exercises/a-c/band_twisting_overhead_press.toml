@@ -1,0 +1,13 @@
+id = "band_twisting_overhead_press"
+names = { en = "Band twisting overhead press", ru = "Жим ленты над головой с поворотом корпуса" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Stand on a light band and hold the handles at shoulder height. Press one hand overhead while turning the torso slightly to that side with hips square, then return and alternate. Keep the turn small and slow.", ru = "Встаньте на лёгкую ленту, рукоятки держите у плеч. Выжмите одну руку вверх, слегка повернув корпус в её сторону при неподвижных бёдрах, затем вернитесь и смените сторону. Поворот небольшой и медленный." }
+load_step_kg = 1.0

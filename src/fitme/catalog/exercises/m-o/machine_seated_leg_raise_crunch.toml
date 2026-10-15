@@ -1,0 +1,13 @@
+id = "machine_seated_leg_raise_crunch"
+names = { en = "Machine seated leg raise crunch", ru = "Подъём ног со скручиванием в тренажёре" }
+kind = "isolation"
+pattern = "core"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Adjust the seat and set the lightest resistance. Sit back against the pad, hold the handles, and draw your knees up while curling your torso forward, then return slowly. Keep control of the stack on the way down.", ru = "Настройте сиденье и поставьте минимальное сопротивление. Прижмитесь спиной к спинке, держитесь за рукояти, подтяните колени вверх, одновременно скругляя корпус вперёд, затем медленно вернитесь. Контролируйте плиты на опускании." }
+load_step_kg = 1.0

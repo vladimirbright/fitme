@@ -1,0 +1,13 @@
+id = "ab_wheel_plank_rollout"
+names = { en = "Ab wheel rollout from plank", ru = "Ролик для пресса из упора" }
+kind = "bodyweight"
+pattern = "core"
+level = "advanced"
+equipment = ["ab_wheel"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "lower_back", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "lower_back_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Start in a plank with the hands on the wheel handles, body in one line. Roll the wheel forward as far as you can control, then pull it back with the core. Keep the ribs down and stop before the lower back sags. Use a shorter range if needed.", ru = "Примите упор лёжа, руки на ручках ролика, тело в одной линии. Откатите ролик вперёд насколько можете контролировать, затем вернитесь, подтягивая его корпусом. Рёбра опущены, остановитесь до прогиба поясницы. При необходимости сократите амплитуду." }

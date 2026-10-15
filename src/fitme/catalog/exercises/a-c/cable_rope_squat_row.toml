@@ -1,0 +1,13 @@
+id = "cable_rope_squat_row"
+names = { en = "Cable rope squat row", ru = "Тяга каната в полуприседе" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["knee", "hip", "shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set a rope at waist height, step back and hold a half squat with a tall chest. Pull the rope to your chest, elbows close, then extend the arms under control. Keep the knees in line with the toes and hold the squat depth steady.", ru = "Установите канат на уровне пояса, отойдите назад и удерживайте полуприсед, грудь раскрыта. Тяните канат к груди, локти близко, затем под контролем выпрямите руки. Колени направлены по линии стоп, глубину приседа не меняйте." }
+load_step_kg = 2.5

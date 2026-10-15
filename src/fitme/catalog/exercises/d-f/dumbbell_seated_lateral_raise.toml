@@ -1,0 +1,12 @@
+id = "dumbbell_seated_lateral_raise"
+names = { en = "Seated dumbbell lateral raise", ru = "Разведение гантелей в стороны сидя" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit tall on a bench with a dumbbell in each hand at your sides. With a slight bend in the elbows, raise your arms out to the sides to shoulder height, then lower under control. Avoid leaning or swinging.", ru = "Сядьте прямо на скамью, гантели в руках по бокам. Слегка согнув локти, поднимите руки в стороны до уровня плеч, затем опустите под контролем. Не отклоняйтесь и не раскачивайтесь." }

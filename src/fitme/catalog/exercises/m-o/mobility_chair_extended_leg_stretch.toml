@@ -1,0 +1,12 @@
+id = "mobility_chair_extended_leg_stretch"
+names = { en = "Seated extended-leg stretch", ru = "Растяжка с выпрямленной ногой сидя на стуле" }
+kind = "mobility"
+pattern = "mobility"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["knee", "hip"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Sit on the edge of a chair, one leg straight with the heel on the floor and toes up. Hinge forward from the hips with a flat back until a gentle stretch builds. Hold 20-30 seconds, then switch legs.", ru = "Сядьте на край стула, одна нога прямая, пятка на полу, носок на себя. Наклонитесь от бёдер с прямой спиной до умеренного растяжения. Удерживайте 20-30 секунд, затем смените ногу." }

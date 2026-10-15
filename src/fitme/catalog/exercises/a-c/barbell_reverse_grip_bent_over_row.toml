@@ -1,0 +1,12 @@
+id = "barbell_reverse_grip_bent_over_row"
+names = { en = "Barbell reverse-grip bent-over row", ru = "Тяга штанги в наклоне обратным хватом" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Hinge forward with a flat back and take the bar with an underhand grip. Pull it to the lower stomach with elbows close, then lower under control. Keep the load below your regular bent-over row.", ru = "Наклонитесь с прямой спиной, хват снизу. Тяните штангу к низу живота, локти близко, затем опустите под контролем. Вес берите ниже, чем в обычной тяге в наклоне." }

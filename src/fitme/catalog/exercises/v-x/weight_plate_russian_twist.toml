@@ -1,0 +1,12 @@
+id = "weight_plate_russian_twist"
+names = { en = "Weight plate Russian twist", ru = "Русские скручивания с блином" }
+kind = "isolation"
+pattern = "core"
+equipment = ["weight_plate"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit with knees bent and heels down, leaning back slightly with a plate held at your chest. Rotate your torso to each side, tapping the plate near your hip. Keep your chest tall and move slowly.", ru = "Сядьте, колени согнуты, пятки на полу, слегка откиньтесь, блин у груди. Поворачивайте корпус в стороны, касаясь блином пола у бедра. Грудь раскрыта, движения медленные." }

@@ -1,0 +1,13 @@
+id = "machine_hack_squat"
+names = { en = "Machine hack squat", ru = "Гакк-приседания в тренажёре" }
+kind = "compound"
+pattern = "squat"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["knee", "hip", "lower_back"]
+contraindicated_by = ["knee_injury_current", "hernia", "hip_injury_current", "lower_back_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the lightest resistance. Stand with back and shoulders on the pads and feet shoulder-width, toes slightly out. Release the safety handles, lower until the thighs are about parallel, then press up through the whole foot. Re-engage the safeties when done.", ru = "Установите минимальное сопротивление. Встаньте, спина и плечи на упорах, ноги на ширине плеч, носки чуть развёрнуты. Снимите страховку, опуститесь до бёдер примерно параллельно полу и поднимитесь, опираясь на всю стопу. После подхода верните страховку." }
+load_step_kg = 2.5

@@ -1,0 +1,13 @@
+id = "weight_plate_otis_up"
+names = { en = "Otis-up", ru = "Подъём корпуса с жимом блина вверх" }
+search = { en = "otis up exercise", ru = "otis up упражнение" }
+kind = "isolation"
+pattern = "core"
+equipment = ["weight_plate"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "neck", "hip", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "neck_injury_current", "hip_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Lie on your back, knees bent, feet hooked under a stable support, a light plate held at your chest. Sit up and press the plate toward the ceiling as you rise. Bring it back to your chest before you roll down slowly. Keep the plate over your chest, never over your face.", ru = "Лягте на спину, колени согнуты, стопы зацеплены за устойчивую опору, лёгкий блин у груди. Поднимите корпус и по ходу выжмите блин вверх. Верните блин к груди и только потом медленно опуститесь. Блин держите над грудью, не над лицом." }

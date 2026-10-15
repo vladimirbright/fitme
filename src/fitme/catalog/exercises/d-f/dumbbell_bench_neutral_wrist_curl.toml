@@ -1,0 +1,12 @@
+id = "dumbbell_bench_neutral_wrist_curl"
+names = { en = "Dumbbell neutral-grip wrist curl over bench", ru = "Сгибания запястий с гантелями нейтральным хватом над скамьёй" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit beside a bench and rest your forearms on it with the hands past the edge, palms facing each other. Raise the dumbbells by bending only the wrists, then lower slowly. Use a light weight and a short, steady range.", ru = "Сядьте у скамьи и положите на неё предплечья, кисти за краем, ладони смотрят друг на друга. Поднимайте гантели, сгибая только запястья, затем медленно опускайте. Вес лёгкий, амплитуда небольшая и ровная." }

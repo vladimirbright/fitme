@@ -1,0 +1,13 @@
+id = "wall_handstand_push_up"
+names = { en = "Wall handstand push-up", ru = "Отжимания в стойке на руках у стены" }
+kind = "bodyweight"
+level = "advanced"
+pattern = "vertical_push"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Kick up into a handstand with the heels against a wall and the hands shoulder-width apart. Bend the elbows to lower the head toward the floor, then press back up to straight arms. Place a mat under the head and bail out by lowering the feet.", ru = "Встаньте в стойку на руках, пятки у стены, ладони на ширине плеч. Согните локти, опуская голову к полу, затем выжмитесь до прямых рук. Подложите мат под голову, при потере контроля опустите ноги." }

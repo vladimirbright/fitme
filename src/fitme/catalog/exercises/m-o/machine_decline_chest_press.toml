@@ -1,0 +1,12 @@
+id = "machine_decline_chest_press"
+names = { en = "Machine decline chest press", ru = "Жим от груди вниз под углом в тренажёре" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["machine"]
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the seat so the handles line up with the lower chest and sit with your back against the pad. Press the handles forward and slightly down until your arms are extended, then return slowly. Keep the shoulders down and keep tension at the bottom instead of resting the weight between reps.", ru = "Отрегулируйте сиденье так, чтобы рукояти были на уровне нижней части груди, прижмите спину к спинке. Выжмите рукояти вперёд и немного вниз до выпрямления рук, затем медленно вернитесь. Держите плечи опущенными, в нижней точке не опускайте вес на упор между повторениями." }
+load_step_kg = 2.5

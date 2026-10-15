@@ -1,0 +1,12 @@
+id = "dumbbell_incline_inner_biceps_curl"
+names = { en = "Incline dumbbell inner biceps curl", ru = "Сгибания с гантелями на наклонной скамье с руками в стороны" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie back on a bench set to about 45 degrees and let the arms hang slightly out from your sides, palms facing forward and turned a little outward. Curl toward the outside of your shoulders without moving the elbows, then lower slowly. Use a light weight.", ru = "Откиньтесь на скамью с наклоном около 45 градусов, руки свисают чуть в стороны от корпуса, ладони смотрят вперёд и немного наружу. Сгибайте руки к внешней стороне плеч, не сдвигая локти, затем медленно опустите. Вес лёгкий." }

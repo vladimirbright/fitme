@@ -1,0 +1,14 @@
+id = "bodyweight_triceps_extension"
+names = { en = "Bodyweight triceps extension", ru = "Разгибания на трицепс с собственным весом" }
+search = { en = "bodyweight triceps extension bar", ru = "разгибания на трицепс с собственным весом на грифе" }
+kind = "bodyweight"
+pattern = "accessory"
+equipment = ["barbell", "rack"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Set an empty bar in the rack's hooks at about chest height. Hold it overhand at shoulder width, walk the feet back and lean in with straight arms and a straight body. Bend only the elbows to bring the head under the bar, then extend back. The more upright you stand, the easier it is.", ru = "Повесьте пустой гриф на крюки стойки примерно на уровне груди. Возьмитесь прямым хватом на ширине плеч, отступите ногами назад и наклонитесь к грифу на прямых руках, тело прямое. Сгибайте только локти, уводя голову под гриф, затем разогните руки. Чем вертикальнее корпус, тем легче." }
+load_step_kg = 1.0

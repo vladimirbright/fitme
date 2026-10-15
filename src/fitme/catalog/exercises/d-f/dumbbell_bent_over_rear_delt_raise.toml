@@ -1,0 +1,12 @@
+id = "dumbbell_bent_over_rear_delt_raise"
+names = { en = "Dumbbell bent-over rear delt raise", ru = "Разведение гантелей в наклоне стоя на заднюю дельту" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand with soft knees and hinge forward at the hips with a flat back, dumbbells hanging below your chest, palms facing each other. With a slight bend in the elbows, raise the dumbbells out to the sides to shoulder line, then lower under control. Keep your neck in line with your spine.", ru = "Встаньте, колени слегка согнуты, наклонитесь вперёд от бёдер с прямой спиной, гантели свисают под грудью, ладони друг к другу. Слегка согнув локти, поднимите гантели в стороны до линии плеч, затем опустите под контролем. Шея остаётся продолжением позвоночника." }

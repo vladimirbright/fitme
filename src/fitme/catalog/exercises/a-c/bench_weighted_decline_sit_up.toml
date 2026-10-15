@@ -1,0 +1,12 @@
+id = "bench_weighted_decline_sit_up"
+names = { en = "Weighted decline sit-up", ru = "Подъём корпуса на наклонной скамье с блином" }
+kind = "isolation"
+pattern = "core"
+equipment = ["bench", "weight_plate"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "neck", "hip"]
+contraindicated_by = ["lower_back_injury_current", "neck_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Secure your feet on a decline bench and hold a plate against your chest. Curl your torso up, then lower under control. Use a modest weight and keep your neck relaxed.", ru = "Закрепите стопы на наклонной скамье, блин прижат к груди. Поднимите корпус, затем опуститесь под контролем. Вес умеренный, шея расслаблена." }

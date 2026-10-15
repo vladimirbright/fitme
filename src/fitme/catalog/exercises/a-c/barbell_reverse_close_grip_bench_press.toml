@@ -1,0 +1,13 @@
+id = "barbell_reverse_close_grip_bench_press"
+names = { en = "Barbell reverse close-grip bench press", ru = "Жим штанги лёжа обратным узким хватом" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["barbell", "rack", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+level = "advanced"
+instructions = { en = "Lie on the bench with the safety arms set just below the lowest point. Underhand grip about shoulder width with the thumbs wrapped around the bar, light load. Unrack over the chest, lower to the lower chest with elbows close, then press up. Keep the wrists straight.", ru = "Лягте на скамью, страховочные упоры чуть ниже нижней точки. Обратный хват примерно на ширине плеч, большие пальцы обхватывают гриф, вес лёгкий. Снимите штангу над грудью, опустите к нижней части груди, локти близко, затем выжмите. Кисти держите прямо." }

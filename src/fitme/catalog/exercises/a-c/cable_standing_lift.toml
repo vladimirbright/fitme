@@ -1,0 +1,13 @@
+id = "cable_standing_lift"
+names = { en = "Cable standing lift", ru = "Подъём блока по диагонали снизу вверх" }
+kind = "compound"
+pattern = "core"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "lower_back", "hip"]
+contraindicated_by = ["shoulder_injury_current", "lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the cable low and stand side-on, both hands on the handle at your hip. With arms mostly straight, lift the handle diagonally up and across toward the opposite shoulder, turning your torso, then lower under control. Finish one side, then switch.", ru = "Установите блок внизу и встаньте боком, обе руки на рукояти у бедра. С почти прямыми руками поднимите рукоять по диагонали к противоположному плечу, поворачивая корпус, затем опустите под контролем. Закончите одну сторону, затем смените." }
+load_step_kg = 2.5

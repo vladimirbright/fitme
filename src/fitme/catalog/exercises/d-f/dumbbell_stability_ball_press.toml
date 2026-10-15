@@ -1,0 +1,12 @@
+id = "dumbbell_stability_ball_press"
+names = { en = "Dumbbell chest press on stability ball", ru = "Жим гантелей лёжа на фитболе" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["dumbbells", "stability_ball"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "hip"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hip_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit on a stability ball with dumbbells on your thighs, walk your feet forward and lie back until your upper back rests on the ball, hips lifted in line with your torso. Press the dumbbells up from chest level and lower them under control, keeping your hips steady.", ru = "Сядьте на фитбол с гантелями на бёдрах, пройдите стопами вперёд и лягте верхней частью спины на мяч, таз поднят на одной линии с корпусом. Выжмите гантели от уровня груди вверх и подконтрольно опустите, таз не опускайте." }

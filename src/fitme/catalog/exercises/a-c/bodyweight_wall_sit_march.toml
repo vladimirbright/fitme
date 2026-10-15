@@ -1,0 +1,12 @@
+id = "bodyweight_wall_sit_march"
+names = { en = "Wall sit march", ru = "Стульчик у стены с поочерёдным подъёмом колен" }
+kind = "bodyweight"
+pattern = "squat"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["knee", "hip"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Lean back on a wall and slide down until the knees are bent to about a right angle. Lift one knee toward the chest, lower it, then lift the other. Keep the back on the wall.", ru = "Прислонитесь спиной к стене и сползите вниз, пока колени не согнутся примерно под прямым углом. Поднимите одно колено к груди, опустите, затем другое. Спина остаётся на стене." }

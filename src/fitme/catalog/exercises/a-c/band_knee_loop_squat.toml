@@ -1,0 +1,13 @@
+id = "band_knee_loop_squat"
+names = { en = "Band squat with loop above knees", ru = "Приседания с петлёй эспандера над коленями" }
+kind = "compound"
+pattern = "squat"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "lower_back"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "calibration" }
+instructions = { en = "Place a loop band just above the knees and stand with feet shoulder-width apart. Sit back and down while pushing the knees out against the band. Stand up through the whole foot.", ru = "Наденьте петлю эспандера чуть выше колен, ноги на ширине плеч. Присядьте назад и вниз, разводя колени против эспандера. Встаньте, опираясь на всю стопу." }
+load_step_kg = 1.0

@@ -1,0 +1,12 @@
+id = "band_seated_twist"
+names = { en = "Band seated twist", ru = "Повороты сидя с лентой" }
+kind = "isolation"
+pattern = "core"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back"]
+contraindicated_by = ["lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Anchor a band beside you at waist height and sit side-on to it, legs extended, hands holding the free end at your chest. Rotate your torso away from the anchor, then return slowly. Keep your back tall. Finish one side, then switch.", ru = "Закрепите ленту сбоку на уровне пояса и сядьте к ней боком, ноги вытянуты, руки с лентой у груди. Повернитесь корпусом от опоры, затем медленно вернитесь. Спина прямая. Закончите одну сторону, затем смените." }

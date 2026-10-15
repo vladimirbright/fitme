@@ -1,0 +1,13 @@
+id = "cable_drag_curl"
+names = { en = "Cable drag curl", ru = "Сгибания рук на блоке «дрэг»" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["elbow_wrist", "shoulder"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Stand facing a low pulley with a straight bar held underhand. Curl by drawing the elbows back so the bar travels close to the torso, then return along the same line. Keep the load moderate.", ru = "Встаньте лицом к нижнему блоку, прямая рукоять хватом снизу. Сгибайте руки, отводя локти назад, так что рукоять идёт близко к корпусу, затем вернитесь по той же линии. Вес умеренный." }
+load_step_kg = 1.0

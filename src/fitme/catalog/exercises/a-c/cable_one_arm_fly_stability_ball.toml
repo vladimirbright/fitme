@@ -1,0 +1,13 @@
+id = "cable_one_arm_fly_stability_ball"
+names = { en = "Cable one-arm fly on a stability ball", ru = "Сведение одной руки в кроссовере на фитболе" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable", "stability_ball"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Sit on the stability ball with feet wide and planted, a single handle in one hand and the arm out to the side at shoulder height. Keep the elbow slightly bent and sweep the hand across the body in front of the chest, then return slowly. Hold the torso steady and switch arms after the set.", ru = "Сядьте на фитбол, ноги широко и устойчиво, рукоять в одной руке, рука в стороне на уровне плеча. Локоть слегка согнут: проведите кисть дугой перед грудью, затем медленно вернитесь. Корпус неподвижен; после подхода смените руку." }
+load_step_kg = 1.0

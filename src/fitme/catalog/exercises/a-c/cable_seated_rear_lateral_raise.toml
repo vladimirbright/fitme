@@ -1,0 +1,13 @@
+id = "cable_seated_rear_lateral_raise"
+names = { en = "Cable seated rear lateral raise", ru = "Разведение на блоках сидя на заднюю дельту" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Sit on a bench facing the stack with the cables crossed and a handle in each hand, arms forward. With soft elbows, open your arms out to the sides to shoulder height, then return under control. Use light resistance.", ru = "Сядьте на скамью лицом к стеку, тросы скрещены, по рукоятке в каждой руке, руки вперёд. С мягкими локтями разведите руки в стороны до уровня плеч, затем верните под контролем. Сопротивление лёгкое." }
+load_step_kg = 1.0

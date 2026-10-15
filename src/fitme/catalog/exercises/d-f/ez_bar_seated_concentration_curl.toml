@@ -1,0 +1,12 @@
+id = "ez_bar_seated_concentration_curl"
+names = { en = "EZ bar seated close-grip concentration curl", ru = "Концентрированные сгибания рук с EZ-грифом сидя узким хватом" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["ez_bar", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit on a bench with feet wide, lean forward slightly and brace the backs of both upper arms against your inner thighs, an EZ bar held in a close underhand grip. Curl the bar toward your shoulders, then lower until the arms are nearly straight. Use a light bar.", ru = "Сядьте на скамью, ноги широко, слегка наклонитесь и упритесь плечами во внутреннюю часть бёдер, EZ-гриф узким хватом снизу. Согните руки, поднимая гриф к плечам, затем опустите почти до выпрямления. Берите лёгкий гриф." }

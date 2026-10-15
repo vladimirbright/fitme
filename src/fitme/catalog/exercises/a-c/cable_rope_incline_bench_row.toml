@@ -1,0 +1,13 @@
+id = "cable_rope_incline_bench_row"
+names = { en = "Cable rope row on an incline bench", ru = "Тяга каната на наклонной скамье" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["cable", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set an incline bench in front of a low pulley and sit on it facing the stack, chest against the pad. Hold the rope with palms facing each other and pull it toward your upper chest, elbows close to the body. Let the arms extend slowly and keep the chest on the pad.", ru = "Поставьте наклонную скамью перед нижним блоком и сядьте лицом к стойке, грудью на спинку. Возьмите канат ладонями друг к другу и тяните к верху груди, локти у корпуса. Медленно выпрямляйте руки, грудь остаётся на спинке." }
+load_step_kg = 2.5

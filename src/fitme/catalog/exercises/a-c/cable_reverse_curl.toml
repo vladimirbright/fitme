@@ -1,0 +1,13 @@
+id = "cable_reverse_curl"
+names = { en = "Cable reverse curl", ru = "Обратное сгибание рук на нижнем блоке" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Stand facing a low pulley with a straight bar held overhand at shoulder width. Keep elbows by your sides and wrists straight as you curl the bar toward your shoulders, then lower under control with a light weight.", ru = "Встаньте лицом к нижнему блоку, прямой гриф хватом сверху на ширине плеч. Локти у корпуса, запястья прямые: поднимите гриф к плечам и подконтрольно опустите. Вес лёгкий." }
+load_step_kg = 1.0

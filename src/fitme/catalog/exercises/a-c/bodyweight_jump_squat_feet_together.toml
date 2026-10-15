@@ -1,0 +1,13 @@
+id = "bodyweight_jump_squat_feet_together"
+names = { en = "Jump squat with feet together", ru = "Прыжок из приседа с соединением ног" }
+kind = "bodyweight"
+pattern = "squat"
+level = "advanced"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["knee", "hip", "ankle", "lower_back"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current", "lower_back_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Feet shoulder-width apart, sink into a partial squat with the chest up. Jump straight up, tap the feet together in the air and separate them again before landing. Land quietly with bent knees tracking over the toes, then reset your stance before the next jump.", ru = "Ноги на ширине плеч, опуститесь в неглубокий присед, грудь поднята. Выпрыгните вверх, коснитесь стопами друг друга в воздухе и снова разведите их до приземления. Приземляйтесь мягко на согнутые ноги, колени по линии носков, и восстановите стойку перед следующим прыжком." }

@@ -1,0 +1,12 @@
+id = "dumbbell_lying_cross_face_triceps_extension"
+names = { en = "Dumbbell lying cross-face triceps extension", ru = "Разгибание руки с гантелью лёжа к противоположному плечу" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie on a flat bench with one light dumbbell held straight above your shoulder, palm facing your feet. Bend the elbow to lower the weight slowly across your body toward the opposite shoulder, keeping it clear of your face, then extend. Switch arms after the set.", ru = "Лягте на горизонтальную скамью, лёгкая гантель в одной руке, рука прямая над плечом, ладонь смотрит в сторону ног. Сгибая локоть, медленно опустите гантель поперёк корпуса к противоположному плечу, не над лицом, затем разогните. После подхода смените руку." }

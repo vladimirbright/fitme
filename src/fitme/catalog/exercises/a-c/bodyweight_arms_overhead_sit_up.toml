@@ -1,0 +1,12 @@
+id = "bodyweight_arms_overhead_sit_up"
+names = { en = "Sit-up with arms overhead", ru = "Подъём корпуса с руками над головой" }
+kind = "bodyweight"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back"]
+contraindicated_by = ["lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on your back, knees bent, feet flat, arms stretched overhead. Curl up smoothly until your torso is upright, reaching your arms forward. Lower back down under control without dropping. Anchor your feet if they lift.", ru = "Лягте на спину, колени согнуты, стопы на полу, руки вытянуты за голову. Плавно поднимите корпус до вертикали, вынося руки вперёд. Опуститесь под контролем, не падая. Если стопы отрываются, зафиксируйте их." }

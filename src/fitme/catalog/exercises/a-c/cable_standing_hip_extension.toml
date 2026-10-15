@@ -1,0 +1,13 @@
+id = "cable_standing_hip_extension"
+names = { en = "Cable standing hip extension", ru = "Разгибание ноги стоя на блоке" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["hip", "lower_back"]
+contraindicated_by = ["hip_injury_current", "lower_back_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Fix an ankle strap to the working leg and face a low pulley, holding the frame. Keeping the torso upright, move the straight leg back under control, pause and return slowly. Avoid arching the lower back.", ru = "Закрепите ножной ремень на рабочей ноге и встаньте лицом к нижнему блоку, держась за опору. Корпус вертикально, отведите прямую ногу назад, задержитесь и медленно верните. Поясницу не прогибайте." }
+load_step_kg = 1.0

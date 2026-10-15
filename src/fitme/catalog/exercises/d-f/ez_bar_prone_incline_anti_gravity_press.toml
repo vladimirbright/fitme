@@ -1,0 +1,14 @@
+id = "ez_bar_prone_incline_anti_gravity_press"
+names = { en = "EZ bar prone incline press", ru = "Жим EZ-грифа лёжа лицом вниз на наклонной скамье" }
+search = { en = "EZ bar anti gravity press", ru = "жим EZ грифа анти-гравити" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["ez_bar", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set a bench at a moderate incline and lie face down with your chest and hips on the pad, holding an EZ bar with a reverse grip at chest level. Press the bar up and forward in a smooth path until your arms are extended, then lower it slowly to your chest. Use a light weight and keep your hips on the pad.", ru = "Установите скамью под умеренным наклоном и лягте лицом вниз, грудь и таз на опоре, EZ-гриф в обратном хвате на уровне груди. Плавно выжмите гриф вверх и вперёд до выпрямления рук, затем медленно опустите к груди. Вес лёгкий, таз прижат к скамье." }
+load_step_kg = 2.5

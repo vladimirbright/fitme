@@ -1,0 +1,13 @@
+id = "band_bent_over_hip_extension"
+names = { en = "Band bent-over hip extension", ru = "Отведение ноги назад с эспандером в наклоне" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["hip", "lower_back"]
+contraindicated_by = ["hip_injury_current", "lower_back_injury_current"]
+increment_kg = 2.0
+start = { kind = "calibration" }
+instructions = { en = "Anchor a band low and loop it around one ankle, then face the anchor. Hinge forward with a flat back and a soft standing knee. Extend the banded leg straight back, then return slowly. Finish all reps, then switch legs.", ru = "Закрепите эспандер низко и наденьте петлю на одну щиколотку, встаньте лицом к креплению. Наклонитесь от бёдер с ровной спиной и мягким опорным коленом. Отведите ногу с эспандером прямо назад, затем медленно верните. Выполните все повторы и смените ногу." }
+load_step_kg = 1.0

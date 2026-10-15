@@ -1,0 +1,12 @@
+id = "smith_machine_seated_wrist_curl"
+names = { en = "Smith machine seated wrist curl", ru = "Сгибания запястий сидя с грифом машины Смита" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["smith_machine", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Sit on a bench facing the bar set low, forearms on the thighs and wrists past the knees, palms up, hands holding the bar shoulder-width apart. Curl the wrists up, pause, then lower slowly. Use a light load and re-hook the bar when you finish.", ru = "Сядьте на скамью лицом к грифу, установленному низко, предплечья на бёдрах, кисти за коленями, ладони вверх, хват на ширине плеч. Согните запястья вверх, задержитесь и медленно опустите. Берите небольшой вес и по окончании верните гриф на фиксаторы." }

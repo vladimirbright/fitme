@@ -1,0 +1,12 @@
+id = "dumbbell_bench_supported_one_arm_curl"
+names = { en = "Dumbbell one-arm curl over an incline bench", ru = "Сгибание руки с гантелью стоя с опорой на наклонную скамью" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand beside an incline bench with one hand braced on it and your torso slightly forward, a dumbbell in the other hand. Curl the weight toward your shoulder without swinging, then lower under control. Finish all reps, then switch arms.", ru = "Встаньте у наклонной скамьи, одной рукой обопритесь на неё, корпус слегка наклонён, в другой руке гантель. Согните руку, поднимая гантель к плечу без раскачки, затем опустите под контролем. Выполните все повторения и смените руку." }

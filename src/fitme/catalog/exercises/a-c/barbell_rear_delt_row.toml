@@ -1,0 +1,13 @@
+id = "barbell_rear_delt_row"
+names = { en = "Barbell rear delt row", ru = "Тяга штанги в наклоне широким хватом на заднюю дельту" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "shoulder", "elbow_wrist", "hip"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Hold the bar with a wide overhand grip and hinge forward with a flat back and soft knees. Pull the bar toward your upper chest with elbows flared, squeeze the shoulder blades, then lower under control. Keep the hinge angle fixed.", ru = "Возьмите гриф широким хватом сверху и наклонитесь вперёд с ровной спиной и мягкими коленями. Тяните гриф к верху груди, локти в стороны, сведите лопатки, затем опустите под контролем. Угол наклона не меняйте." }
+load_step_kg = 2.5

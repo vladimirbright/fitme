@@ -1,0 +1,12 @@
+id = "barbell_seated_concentration_curl"
+names = { en = "Barbell seated concentration curl", ru = "Концентрированные сгибания рук со штангой сидя" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["barbell", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit on a bench, feet flat, upper arms braced on the inner thighs just above the knees, bar in an underhand grip with hands shoulder-width apart. Curl up, then lower until the arms are nearly straight. Keep the back still.", ru = "Сядьте на скамью, стопы на полу, плечи упираются во внутреннюю часть бёдер над коленями, гриф хватом снизу на ширине плеч. Согните руки, затем опустите почти до прямых. Спина неподвижна." }

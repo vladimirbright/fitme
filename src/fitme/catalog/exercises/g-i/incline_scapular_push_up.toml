@@ -1,0 +1,12 @@
+id = "incline_scapular_push_up"
+names = { en = "Incline scapular push-up", ru = "Лопаточные отжимания с опорой" }
+kind = "bodyweight"
+pattern = "accessory"
+equipment = ["bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Place your hands on a stable bench with straight arms and a straight body. Without bending the elbows, let your shoulder blades come together, then push the bench away to spread them wide. Move slowly through a small range.", ru = "Поставьте ладони на устойчивую скамью, руки прямые, тело прямое. Не сгибая локти, сведите лопатки, затем оттолкнитесь от скамьи, разводя их широко. Двигайтесь медленно в небольшой амплитуде." }

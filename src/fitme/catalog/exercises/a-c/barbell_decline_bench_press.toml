@@ -1,0 +1,12 @@
+id = "barbell_decline_bench_press"
+names = { en = "Barbell decline bench press", ru = "Жим штанги на скамье с отрицательным наклоном" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["barbell", "rack", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Lie on a decline bench with your feet secured and the bar on the rack above your chest. Take a grip slightly wider than your shoulders, unrack and lower the bar under control to the lower chest, then press back up. Set the rack's safety arms just below the lowest point of the movement.", ru = "Лягте на скамью с отрицательным наклоном, ноги зафиксированы, штанга на стойке над грудью. Хват чуть шире плеч, снимите штангу, под контролем опустите к нижней части груди и выжмите вверх. Установите страховочные упоры чуть ниже нижней точки движения." }

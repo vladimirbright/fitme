@@ -1,0 +1,12 @@
+id = "band_lying_hamstring_stretch"
+names = { en = "Band lying hamstring stretch", ru = "Растяжка задней поверхности бедра лёжа с лентой" }
+kind = "mobility"
+pattern = "mobility"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["hip", "lower_back"]
+contraindicated_by = ["hip_injury_current", "lower_back_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on your back and loop a band around the sole of one foot, ends in both hands. Raise the straight leg and use the band to draw it gently closer, within a comfortable range. Hold, lower slowly, then switch legs.", ru = "Лягте на спину, накиньте ленту на стопу одной ноги, концы в руках. Поднимите прямую ногу и мягко подтяните её лентой ближе, в комфортной амплитуде. Задержитесь, медленно опустите и смените ногу." }

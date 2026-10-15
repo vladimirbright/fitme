@@ -1,0 +1,13 @@
+id = "weighted_one_arm_pull_up"
+names = { en = "Weighted one-arm pull-up", ru = "Подтягивание на одной руке с отягощением" }
+kind = "compound"
+level = "advanced"
+pattern = "vertical_pull"
+equipment = ["pull_up_bar", "weight_plate"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Attach a plate to a belt and hang from the bar with one hand. Pull your chin above the bar without swinging, then lower to a straight arm slowly. Do equal reps on each side.", ru = "Прикрепите блин к поясу и повисните на перекладине на одной руке. Подтянитесь подбородком выше перекладины без раскачки и медленно опуститесь до прямой руки. Выполните одинаковое число повторений на каждую сторону." }

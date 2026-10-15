@@ -1,0 +1,13 @@
+id = "cable_standing_reverse_grip_one_arm_overhead_triceps_extension"
+names = { en = "Cable standing reverse-grip one-arm overhead triceps extension", ru = "Разгибание руки над головой на блоке обратным хватом" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Stand with your back to a low pulley and hold the handle underhand overhead, elbow near your head. Bend the elbow to lower the handle behind your head, then extend. Keep your ribs down and switch arms after the set.", ru = "Встаньте спиной к нижнему блоку, рукоять хватом снизу над головой, локоть у головы. Согните локоть, опуская рукоять за голову, затем выпрямите. Рёбра опущены; после подхода смените руку." }
+load_step_kg = 1.0

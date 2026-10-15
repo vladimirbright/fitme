@@ -1,0 +1,13 @@
+id = "cable_triceps_kickback"
+names = { en = "Cable triceps kickback", ru = "Разгибание руки назад в блоке (кикбэк)" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set a low pulley and hold the handle in one hand. Hinge forward with a flat back and knees soft, upper arm along the torso. Straighten the arm backward without moving the upper arm, then return slowly.", ru = "Установите нижний блок, рукоять в одной руке. Наклонитесь вперёд с ровной спиной и мягкими коленями, плечо вдоль корпуса. Разогните руку назад, не двигая плечом, затем медленно вернитесь." }
+load_step_kg = 1.0

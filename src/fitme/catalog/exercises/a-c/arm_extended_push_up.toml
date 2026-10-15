@@ -1,0 +1,13 @@
+id = "arm_extended_push_up"
+names = { en = "Push-up with one arm extended", ru = "Отжимания с отведённой рукой" }
+kind = "bodyweight"
+pattern = "horizontal_push"
+equipment = []
+level = "advanced"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Start in a push-up position, feet together. Reach one arm out to the side with the palm on the floor for light support. Lower and press up with the working arm, keeping the hips level. Switch sides every set or rep.", ru = "Примите упор лёжа, ноги вместе. Отведите одну руку в сторону, ладонь лежит на полу как лёгкая опора. Опуститесь и выжмитесь рабочей рукой, таз ровный. Меняйте сторону каждый подход или повторение." }
+load_step_kg = 1.0

@@ -1,0 +1,12 @@
+id = "dumbbell_side_lying_lateral_raise"
+names = { en = "Dumbbell side-lying lateral raise", ru = "Подъём гантели в сторону лёжа на боку" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie on your side with your head resting on your lower arm and a light dumbbell in the top hand, palm down. Raise the arm up toward shoulder height with a slight elbow bend, then lower slowly. Do all reps, then switch sides.", ru = "Лягте на бок, голова на нижней руке, в верхней руке лёгкая гантель, ладонь вниз. Поднимите руку вверх примерно до уровня плеча, слегка согнув локоть, затем медленно опустите. Выполните все повторения, затем смените сторону." }

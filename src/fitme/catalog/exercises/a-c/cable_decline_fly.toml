@@ -1,0 +1,13 @@
+id = "cable_decline_fly"
+names = { en = "Cable decline fly", ru = "Сведение рук в кроссовере с отрицательным наклоном" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Place a decline bench between the low pulleys, secure your feet and lie back with a handle in each hand above the chest. With slightly bent elbows, open the arms out to the sides in an arc and bring them back together. Keep the elbow bend fixed and the weight light.", ru = "Поставьте скамью с отрицательным наклоном между нижними блоками, зафиксируйте ноги и лягте, рукояти в руках над грудью. С чуть согнутыми локтями разведите руки дугой в стороны и сведите обратно. Угол в локтях не меняйте, вес лёгкий." }
+load_step_kg = 1.0

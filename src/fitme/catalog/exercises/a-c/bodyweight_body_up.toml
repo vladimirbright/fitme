@@ -1,0 +1,14 @@
+id = "bodyweight_body_up"
+names = { en = "Body-up (plank triceps extension)", ru = "Разгибание рук из планки на предплечьях (body-up)" }
+kind = "bodyweight"
+pattern = "accessory"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+search = { en = "body ups triceps exercise", ru = "body ups упражнение на трицепс" }
+instructions = { en = "Start in a forearm plank on the toes, hands flat and elbows under the shoulders. Press through the palms to straighten the arms so the forearms leave the floor, then lower back onto them under control. Keep the body in one straight line; drop to the knees if the hips sag.", ru = "Примите планку на предплечьях на носках, ладони на полу, локти под плечами. Давите ладонями, выпрямляя руки и отрывая предплечья от пола, затем подконтрольно опуститесь обратно. Тело — прямая линия; если таз провисает, встаньте на колени." }
+load_step_kg = 1.0

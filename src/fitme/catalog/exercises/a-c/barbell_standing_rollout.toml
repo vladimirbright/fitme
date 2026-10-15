@@ -1,0 +1,13 @@
+id = "barbell_standing_rollout"
+names = { en = "Barbell standing rollout", ru = "Выкатывание со штангой стоя" }
+kind = "isolation"
+level = "advanced"
+pattern = "core"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Load the bar with small plates and stand holding it at thigh level. Hinge forward and roll the bar out along the floor only as far as you can keep your back flat, then pull back to standing. Keep the range short and your trunk braced.", ru = "Нагрузите гриф небольшими блинами и встаньте, удерживая его на уровне бёдер. Наклонитесь вперёд и прокатите гриф по полу лишь пока спина ровная, затем вернитесь в стойку. Амплитуда короткая, корпус напряжён." }

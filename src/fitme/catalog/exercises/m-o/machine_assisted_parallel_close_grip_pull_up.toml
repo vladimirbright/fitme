@@ -1,0 +1,13 @@
+id = "machine_assisted_parallel_close_grip_pull_up"
+names = { en = "Assisted close-grip parallel pull-up machine", ru = "Подтягивания в гравитроне узким параллельным хватом" }
+kind = "compound"
+pattern = "vertical_pull"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the assistance level, then take the parallel handles with a narrow neutral grip. Pull the chest up toward the handles with elbows close to the body, and lower slowly to straight arms.", ru = "Выставьте уровень помощи и возьмитесь за параллельные рукояти узким нейтральным хватом. Подтяните грудь к рукоятям, локти у корпуса, и медленно опуститесь до прямых рук." }
+load_step_kg = 2.5

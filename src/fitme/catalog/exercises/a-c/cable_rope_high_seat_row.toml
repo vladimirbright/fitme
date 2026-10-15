@@ -1,0 +1,13 @@
+id = "cable_rope_high_seat_row"
+names = { en = "Cable rope row from a raised seat", ru = "Тяга каната сидя на высоком сиденье" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit on the raised seat facing the cable, holding the rope with palms facing each other. Lean slightly forward with a flat back, then pull the rope to your chest, elbows close. Return under control without rounding the back.", ru = "Сядьте на приподнятое сиденье лицом к блоку, канат ладонями друг к другу. Слегка наклонитесь вперёд с прямой спиной, затем тяните канат к груди, локти близко. Возвращайте под контролем, не округляя спину." }
+load_step_kg = 2.5

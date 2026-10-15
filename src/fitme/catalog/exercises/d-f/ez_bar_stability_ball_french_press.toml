@@ -1,0 +1,13 @@
+id = "ez_bar_stability_ball_french_press"
+names = { en = "EZ bar french press on a stability ball", ru = "Французский жим EZ-грифа сидя на фитболе" }
+kind = "isolation"
+pattern = "accessory"
+level = "advanced"
+equipment = ["ez_bar", "stability_ball"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder", "lower_back"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit tall on a stability ball with feet flat and wide, EZ bar held overhead with an overhand grip. Bend the elbows to lower the bar behind your head, keeping the upper arms close to your ears, then straighten the arms. Use a light bar and keep your ribs down.", ru = "Сядьте ровно на фитбол, стопы на полу на ширине, EZ-гриф над головой хватом сверху. Согните локти, опуская гриф за голову, плечи рядом с ушами, затем выпрямите руки. Берите лёгкий гриф, рёбра не разводите." }

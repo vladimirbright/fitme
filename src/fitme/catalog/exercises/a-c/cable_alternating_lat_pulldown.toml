@@ -1,0 +1,13 @@
+id = "cable_alternating_lat_pulldown"
+names = { en = "Cable alternating lat pulldown", ru = "Попеременная тяга верхнего блока" }
+kind = "compound"
+pattern = "vertical_pull"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit at a high pulley with a handle in each hand and thighs under the pads. Pull one handle down to the upper chest, return it, then pull the other. Keep the torso steady and control the way up.", ru = "Сядьте у верхнего блока с рукоятью в каждой руке, бёдра под валиками. Опустите одну рукоять к верху груди, верните и тяните вторую. Корпус стабилен, подъём контролируйте." }
+load_step_kg = 2.5

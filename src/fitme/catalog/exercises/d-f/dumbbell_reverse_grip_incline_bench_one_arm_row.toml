@@ -1,0 +1,13 @@
+id = "dumbbell_reverse_grip_incline_bench_one_arm_row"
+names = { en = "Reverse-grip incline-bench one-arm dumbbell row", ru = "Тяга гантели обратным хватом одной рукой с опорой на наклонную скамью" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["dumbbells", "bench"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Set a bench to a moderate incline and support one knee and the same-side hand on it, back flat. Hold a dumbbell in the other hand with an underhand grip and row it toward your ribs, elbow close. Lower under control, then switch sides.", ru = "Установите скамью под умеренным наклоном и обопритесь на неё коленом и рукой с одной стороны, спина прямая. В другой руке гантель хватом снизу, тяните её к рёбрам, локоть близко. Опустите под контролем, затем смените сторону." }
+load_step_kg = 1.0

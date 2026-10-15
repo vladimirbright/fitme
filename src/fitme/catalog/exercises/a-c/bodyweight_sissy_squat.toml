@@ -1,0 +1,14 @@
+id = "bodyweight_sissy_squat"
+names = { en = "Sissy squat", ru = "Сисси-приседание" }
+kind = "bodyweight"
+pattern = "squat"
+level = "advanced"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["knee", "ankle", "hip"]
+contraindicated_by = ["knee_injury_current", "ankle_injury_current", "hip_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand with feet hip-width and hold a post or frame with one hand. Rise onto the balls of the feet, push the knees forward and lean the torso back as you lower. Go only as deep as you can control, then return upright. Use a shallow range at first.", ru = "Встаньте, ноги на ширине таза, одной рукой держитесь за опору. Поднимитесь на носки, выводите колени вперёд и наклоняйте корпус назад, опускаясь. Опускайтесь только на подконтрольную глубину и вернитесь вверх. Сначала делайте неглубокую амплитуду." }
+load_step_kg = 1.0

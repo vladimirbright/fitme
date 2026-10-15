@@ -1,0 +1,12 @@
+id = "stability_ball_pyramid_stretch"
+names = { en = "Stability ball lower back stretch", ru = "Растяжка поясницы на фитболе" }
+search = { en = "exercise ball pyramid stretch", ru = "растяжка пирамида на фитболе" }
+kind = "mobility"
+pattern = "mobility"
+equipment = ["stability_ball"]
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back"]
+contraindicated_by = ["lower_back_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Sit on the ball, then walk the feet forward and lie back until the ball sits under the lower and middle back. Keep the feet wide and flat, let the arms open to the sides and the head rest back toward the ball, and relax for 20-30 seconds. Walk the feet back in to sit up slowly.", ru = "Сядьте на фитбол, пройдите стопами вперёд и откиньтесь назад, чтобы мяч оказался под поясницей и серединой спины. Стопы широко и плотно на полу, руки разведите в стороны, голову опустите назад к мячу и расслабьтесь на 20-30 секунд. Чтобы сесть, медленно переступите стопами обратно." }

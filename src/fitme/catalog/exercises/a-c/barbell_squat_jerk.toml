@@ -1,0 +1,14 @@
+id = "barbell_squat_jerk"
+names = { en = "Squat jerk", ru = "Толчок со стоек в присед" }
+kind = "compound"
+pattern = "vertical_push"
+level = "advanced"
+equipment = ["barbell", "rack"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "knee", "hip", "lower_back", "neck", "ankle"]
+contraindicated_by = ["shoulder_injury_current", "hernia", "elbow_wrist_injury_current", "knee_injury_current", "hip_injury_current", "lower_back_injury_current", "neck_injury_current", "ankle_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Take the bar from the rack at the front of the shoulders. Dip a short way, drive up hard and press under the bar into a deep overhead squat with locked arms. Stand up with the bar overhead. Lower it to the shoulders with control. Keep the area around you clear.", ru = "Снимите штангу со стоек на передние дельты. Короткий подсед, мощный вынос вверх и уход под гриф в глубокий присед с прямыми руками над головой. Встаньте со штангой над головой. Плавно опустите её на плечи. Вокруг должно быть свободное место." }
+load_step_kg = 2.5

@@ -1,0 +1,14 @@
+id = "ez_bar_seated_triceps_extension"
+names = { en = "EZ-bar seated triceps extension", ru = "Французский жим с EZ-грифом сидя" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["ez_bar", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Sit upright on a bench, EZ-bar held overhead with straight arms and an overhand grip. Bend only the elbows to lower the bar behind your head, then extend. Keep the weight light and the upper arms still.", ru = "Сядьте прямо на скамью, EZ-гриф над головой на прямых руках, хват прямой. Сгибайте только локти, опуская гриф за голову, затем разогните руки. Вес лёгкий, плечи неподвижны." }
+search = { en = "seated EZ bar overhead triceps extension", ru = "французский жим с EZ-грифом сидя" }
+load_step_kg = 1.0

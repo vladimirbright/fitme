@@ -1,0 +1,12 @@
+id = "bodyweight_crab_twist_toe_touch"
+names = { en = "Crab twist toe touch", ru = "Касание носка в положении краба" }
+kind = "bodyweight"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Sit with knees bent, hands behind you, and lift your hips into a reverse tabletop. Extend one leg while reaching the opposite hand toward that foot, then return and switch. Keep a steady pace and avoid locking your elbows hard.", ru = "Сядьте, колени согнуты, руки позади, поднимите таз в положение обратного стола. Вытяните одну ногу, одновременно тянясь противоположной рукой к стопе, затем вернитесь и смените. Темп ровный, локти жёстко не замыкайте." }

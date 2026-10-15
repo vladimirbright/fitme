@@ -1,0 +1,13 @@
+id = "machine_assisted_standing_pull_up"
+names = { en = "Assisted standing pull-up machine", ru = "Подтягивания в гравитроне стоя на платформе" }
+kind = "compound"
+pattern = "vertical_pull"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Stand on the platform and grip the handles with palms facing away, a little wider than the shoulders. Pull up until the chin reaches the handles, then lower slowly. Choose an assistance level that keeps every rep smooth.", ru = "Встаньте на платформу и возьмитесь за рукояти хватом сверху чуть шире плеч. Подтянитесь до уровня подбородка у рукоятей и медленно опуститесь. Выберите помощь, при которой каждое повторение плавное." }
+load_step_kg = 2.5

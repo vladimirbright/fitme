@@ -1,0 +1,13 @@
+id = "cable_rope_crossover_seated_row"
+names = { en = "Cable rope crossover seated row", ru = "Тяга каната сидя со скрещиванием" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit at the low cable with feet on the footplates, holding a rope with palms facing each other. Pull the rope toward your torso, letting the hands pass close to each other, then return slowly. Keep the chest tall and avoid rocking.", ru = "Сядьте у нижнего блока, ступни на упорах, возьмите канат ладонями друг к другу. Тяните канат к корпусу, позволяя кистям пройти рядом друг с другом, затем медленно возвращайте. Грудь раскрыта, не раскачивайтесь." }
+load_step_kg = 2.5

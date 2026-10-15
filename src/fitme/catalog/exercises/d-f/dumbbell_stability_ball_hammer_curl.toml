@@ -1,0 +1,12 @@
+id = "dumbbell_stability_ball_hammer_curl"
+names = { en = "Seated dumbbell hammer curl on stability ball", ru = "Молотковые сгибания с гантелями сидя на фитболе" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "stability_ball"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit on a stability ball with feet flat and hips and knees bent about 90 degrees, dumbbells hanging with palms facing inward. Curl them toward your shoulders without leaning back, then lower slowly. Pick a ball that is firm and fully inflated.", ru = "Сядьте на фитбол, стопы на полу, колени согнуты примерно под 90 градусов, гантели свисают, ладони смотрят внутрь. Поднимайте их к плечам, не откидываясь назад, затем медленно опускайте. Мяч должен быть плотным и накачанным." }

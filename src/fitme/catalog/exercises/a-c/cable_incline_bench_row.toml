@@ -1,0 +1,13 @@
+id = "cable_incline_bench_row"
+names = { en = "Cable incline bench row", ru = "Тяга нижнего блока сидя на наклонной скамье" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["cable", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit on an incline bench facing a low pulley, feet on the floor, and hold the handle with straight arms. Pull it toward the chest, drawing the shoulder blades together, then extend the arms slowly.", ru = "Сядьте на наклонную скамью лицом к нижнему блоку, ноги на полу, возьмите рукоять прямыми руками. Тяните к груди, сводя лопатки, затем медленно разогните руки." }
+load_step_kg = 2.5

@@ -1,0 +1,12 @@
+id = "foam_roller_lat_stretch"
+names = { en = "Foam roller lat stretch", ru = "Растяжка широчайших с роллом" }
+kind = "mobility"
+pattern = "mobility"
+equipment = ["foam_roller"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "lower_back_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Kneel on the floor with both hands on the roller in front of you. Roll it forward, sitting your hips back until you feel the sides of your back lengthen. Hold briefly, then roll back. Keep the movement slow and within a comfortable range.", ru = "Встаньте на колени, обе руки на ролле перед собой. Откатите ролл вперёд, отводя таз назад, пока не почувствуете растяжение по бокам спины. Задержитесь, затем верните ролл. Двигайтесь медленно в комфортной амплитуде." }

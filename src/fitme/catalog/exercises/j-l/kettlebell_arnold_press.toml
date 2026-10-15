@@ -1,0 +1,13 @@
+id = "kettlebell_arnold_press"
+names = { en = "Kettlebell Arnold press", ru = "Жим Арнольда с гирями" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["kettlebell"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 4.0 }
+instructions = { en = "Stand holding a kettlebell in each hand in front of your shoulders, palms facing you. Press up while turning your palms forward until your arms are extended, then lower and turn back. Keep a light weight and a steady pace.", ru = "Встаньте, держа по гире перед плечами, ладони к себе. Выжимайте вверх, разворачивая ладони вперёд, до выпрямления рук, затем опускайте, возвращая ладони к себе. Вес лёгкий, темп ровный." }
+load_step_kg = 2.0

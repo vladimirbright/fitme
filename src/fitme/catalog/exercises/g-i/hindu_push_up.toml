@@ -1,0 +1,13 @@
+id = "hindu_push_up"
+names = { en = "Hindu push-up", ru = "Индийские отжимания" }
+kind = "bodyweight"
+pattern = "horizontal_push"
+equipment = []
+level = "advanced"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Start in a downward-dog shape with hips high and hands a little wider than shoulders. Bend the elbows and sweep the chest forward and low to the floor, then press through the arms so the hips rise back up. Keep the movement smooth and stop the upward arch short of a strain in the lower back.", ru = "Примите позу «собака мордой вниз»: таз высоко, руки чуть шире плеч. Согните локти и плавно проведите грудь вперёд и низко над полом, затем выпрямите руки, поднимая таз обратно. Двигайтесь плавно, прогиб вверху не доводите до напряжения в пояснице." }
+load_step_kg = 1.0

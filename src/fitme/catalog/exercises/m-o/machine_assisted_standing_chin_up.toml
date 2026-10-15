@@ -1,0 +1,13 @@
+id = "machine_assisted_standing_chin_up"
+names = { en = "Assisted standing chin-up machine", ru = "Подтягивания обратным хватом в гравитроне стоя" }
+kind = "compound"
+pattern = "vertical_pull"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Stand on the platform and take the handles with palms facing you. Pull the chin up to the handles, driving the elbows down, then lower under control. Start with a high assistance level.", ru = "Встаньте на платформу и возьмитесь за рукояти ладонями к себе. Подтяните подбородок к рукоятям, опуская локти вниз, затем плавно опуститесь. Начните с высокого уровня помощи." }
+load_step_kg = 2.5

@@ -1,0 +1,12 @@
+id = "bodyweight_donkey_calf_raise"
+names = { en = "Donkey calf raise", ru = "Подъём на носки в наклоне (ослик)" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["ankle"]
+contraindicated_by = ["ankle_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand with the balls of your feet on a low step, hinge at the hips and rest your hands on a bench with a flat back. Lower the heels for a gentle stretch, rise onto your toes, pause, then lower slowly.", ru = "Встаньте передней частью стоп на невысокую ступень, наклонитесь в тазобедренных суставах и обопритесь руками о скамью, спина прямая. Опустите пятки до лёгкого растяжения, поднимитесь на носки, задержитесь и медленно опустите." }

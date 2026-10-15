@@ -1,0 +1,13 @@
+id = "machine_horizontal_single_leg_press"
+names = { en = "Machine horizontal single-leg press", ru = "Горизонтальный жим одной ногой в тренажёре" }
+kind = "compound"
+pattern = "squat"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["knee", "hip", "lower_back"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the seat so the knee bends to about a right angle with the foot on the plate. Press with one leg while the other rests, keeping the back on the pad. Lower slowly and avoid locking the knee. Switch legs.", ru = "Выставьте сиденье так, чтобы колено сгибалось примерно до прямого угла. Жмите платформу одной ногой, вторая отдыхает, спина прижата. Опускайте медленно, колено не фиксируйте. Смените ногу." }
+load_step_kg = 2.5

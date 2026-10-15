@@ -1,0 +1,13 @@
+id = "band_close_grip_push_up"
+names = { en = "Band close-grip push-up", ru = "Отжимания узким хватом с лентой на руках" }
+kind = "bodyweight"
+pattern = "horizontal_push"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Loop a band around the upper arms just above the elbows. Hands under the shoulders, body in one line from head to heels. Lower the chest while keeping the elbows tucked against the band, then press back up.", ru = "Наденьте ленту на плечи чуть выше локтей. Руки под плечами, тело — прямая линия от головы до пяток. Опускайте грудь, прижимая локти к корпусу и удерживая ленту, затем выжмите вверх." }
+load_step_kg = 1.0

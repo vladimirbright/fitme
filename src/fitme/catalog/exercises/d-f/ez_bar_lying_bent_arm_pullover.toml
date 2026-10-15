@@ -1,0 +1,12 @@
+id = "ez_bar_lying_bent_arm_pullover"
+names = { en = "EZ-bar lying bent-arm pullover", ru = "Пуловер с EZ-грифом лёжа на согнутых руках" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["ez_bar", "bench"]
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Lie lengthwise on a flat bench, feet on the floor, holding the EZ bar over the chest with elbows bent. Lower the bar in an arc past the top of the head only as far as is comfortable, then pull it back over the chest. Keep a firm grip, the elbows bent throughout and the load light enough that the bar never drifts toward your face.", ru = "Лягте вдоль горизонтальной скамьи, стопы на полу, EZ-гриф над грудью, локти согнуты. Опустите гриф по дуге за голову только в комфортной амплитуде, затем верните его над грудью. Держите гриф крепко, локти всё время согнуты, а вес такой, чтобы гриф не уходил к лицу." }
+load_step_kg = 2.5

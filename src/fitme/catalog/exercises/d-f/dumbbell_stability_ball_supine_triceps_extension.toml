@@ -1,0 +1,14 @@
+id = "dumbbell_stability_ball_supine_triceps_extension"
+names = { en = "Dumbbell supine triceps extension on a stability ball", ru = "Разгибания рук с гантелью лёжа на фитболе" }
+search = { en = "stability ball dumbbell skull crusher", ru = "французский жим гантели на фитболе" }
+kind = "isolation"
+pattern = "accessory"
+level = "advanced"
+equipment = ["dumbbells", "stability_ball"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder", "hip"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current", "hip_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit on a stability ball and walk your feet forward until your head and upper back rest on it, hips level with your knees. Hold one dumbbell in both hands above your chest. Bend the elbows to lower it behind your head with the upper arms pointing up, then straighten the arms. Use a light weight and keep it clear of your face.", ru = "Сядьте на фитбол и переступите стопами вперёд, пока голова и верх спины не лягут на мяч, таз на уровне коленей. Держите одну гантель двумя руками над грудью. Согните локти, опуская её за голову, плечи смотрят вверх, затем выпрямите руки. Вес небольшой, гантель держите вдали от лица." }

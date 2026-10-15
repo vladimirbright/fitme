@@ -1,0 +1,12 @@
+id = "medicine_ball_push_up"
+names = { en = "Push-up on medicine ball", ru = "Отжимания на медболе" }
+kind = "bodyweight"
+pattern = "horizontal_push"
+equipment = ["medicine_ball"]
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Place both hands on top of a medicine ball on a non-slip floor, body in a straight line. Lower the chest toward the ball and press back up. Keep the elbows angled back and the hips level.", ru = "Поставьте обе руки на медбол на нескользком полу, тело прямое. Опустите грудь к мячу и выжмитесь вверх. Локти направлены назад под углом, таз на одном уровне с корпусом." }
+load_step_kg = 1.0

@@ -1,0 +1,12 @@
+id = "smith_machine_reverse_grip_row"
+names = { en = "Smith machine reverse-grip row", ru = "Тяга в машине Смита обратным хватом" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["smith_machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["lower_back", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the safety stops just below the lowest point of the row. Hold the bar with an underhand grip, hands shoulder width, and hinge forward with a flat back. Row the bar to the lower belly with elbows close to the body. Lower to straight arms under control.", ru = "Установите страховочные упоры чуть ниже нижней точки тяги. Возьмите гриф хватом снизу на ширине плеч и наклонитесь с прямой спиной. Тяните гриф к низу живота, локти близко к корпусу. Опустите до прямых рук под контролем." }

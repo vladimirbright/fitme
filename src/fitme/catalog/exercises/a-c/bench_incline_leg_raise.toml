@@ -1,0 +1,12 @@
+id = "bench_incline_leg_raise"
+names = { en = "Incline bench leg raise", ru = "Подъём ног на наклонной скамье" }
+kind = "isolation"
+pattern = "core"
+equipment = ["bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on an incline bench with your head at the top, holding the bench behind your head or at your sides. Raise your straight legs until your hips lift slightly, then lower slowly. Keep your lower back against the pad.", ru = "Лягте на наклонную скамью головой вверх, держась за скамью за головой или по бокам. Поднимите прямые ноги, пока таз слегка не оторвётся, затем медленно опустите. Поясница прижата к спинке." }

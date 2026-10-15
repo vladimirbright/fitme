@@ -1,0 +1,12 @@
+id = "machine_lever_calf_press"
+names = { en = "Seated lever calf press", ru = "Жим носками в рычажном тренажёре сидя" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["ankle", "knee"]
+contraindicated_by = ["ankle_injury_current", "knee_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Adjust the seat so the knees are slightly bent and the balls of the feet sit on the pad with the heels free. Press the pad away by extending the ankles, pause, then let the heels come back slowly. Choose a load you can control through the full range.", ru = "Отрегулируйте сиденье так, чтобы колени были слегка согнуты, а передняя часть стопы стояла на платформе, пятки свободны. Выжмите платформу, разгибая голеностоп, задержитесь и медленно верните пятки назад. Берите вес, который можно контролировать во всей амплитуде." }

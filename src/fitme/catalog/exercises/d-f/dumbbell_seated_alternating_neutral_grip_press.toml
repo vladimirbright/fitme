@@ -1,0 +1,12 @@
+id = "dumbbell_seated_alternating_neutral_grip_press"
+names = { en = "Seated alternating neutral-grip dumbbell press", ru = "Попеременный жим гантелей сидя нейтральным хватом" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit on a bench with a near-vertical backrest, dumbbells at shoulder height, palms facing each other. Press one dumbbell overhead while the other stays at your shoulder, lower it, then press the other. Keep your back against the pad.", ru = "Сядьте на скамью с почти вертикальной спинкой, гантели на уровне плеч, ладони друг к другу. Выжмите одну гантель вверх, вторая остаётся у плеча, опустите её и выжмите другую. Спина прижата к спинке." }

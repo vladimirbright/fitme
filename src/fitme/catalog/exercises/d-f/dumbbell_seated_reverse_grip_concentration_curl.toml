@@ -1,0 +1,12 @@
+id = "dumbbell_seated_reverse_grip_concentration_curl"
+names = { en = "Dumbbell seated reverse-grip concentration curl", ru = "Концентрированное сгибание с гантелью обратным хватом сидя" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit on a bench, feet wide, one dumbbell held with an overhand grip and the back of your upper arm braced against the inside of your thigh. Curl the weight toward your shoulder, then lower under control. Finish all reps, then switch arms.", ru = "Сядьте на скамью, ноги широко, гантель в руке обратным хватом (ладонью вниз), локоть упирается во внутреннюю часть бедра. Согните руку, поднимая гантель к плечу, затем опустите под контролем. Выполните все повторения и смените руку." }

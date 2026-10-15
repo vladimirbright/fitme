@@ -1,0 +1,13 @@
+id = "cable_decline_press"
+names = { en = "Cable decline press", ru = "Жим на блоке с отрицательным наклоном" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["cable", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Place a decline bench between the low pulleys, secure your feet and lie back with a handle in each hand beside the lower chest. Press both handles up over the chest until the arms are straight, then lower under control.", ru = "Поставьте скамью с отрицательным наклоном между нижними блоками, зафиксируйте ноги и лягте, рукояти у нижней части груди. Выжмите обе рукояти вверх над грудью до прямых рук, затем подконтрольно опустите." }
+load_step_kg = 2.5

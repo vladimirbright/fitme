@@ -1,0 +1,12 @@
+id = "dumbbell_decline_one_arm_fly"
+names = { en = "Decline one-arm dumbbell fly", ru = "Разводка одной гантели на скамье с наклоном вниз" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Secure your feet on a decline bench and hold one dumbbell above your chest, palm facing in, elbow slightly bent. Open the arm out to the side in an arc to chest level, then bring it back. Finish all reps on one side, then switch.", ru = "Зафиксируйте ноги на скамье с наклоном вниз, одна гантель над грудью, ладонь смотрит внутрь, локоть слегка согнут. Разведите руку в сторону по дуге до уровня груди и верните обратно. Выполните все повторения на одну сторону, затем смените руку." }

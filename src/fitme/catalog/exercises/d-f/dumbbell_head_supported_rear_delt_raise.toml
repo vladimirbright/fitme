@@ -1,0 +1,12 @@
+id = "dumbbell_head_supported_rear_delt_raise"
+names = { en = "Head-supported dumbbell rear delt raise", ru = "Разведение гантелей в наклоне с опорой лбом о скамью" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "lower_back", "neck"]
+contraindicated_by = ["shoulder_injury_current", "lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand behind an incline bench, hinge forward with a flat back and rest your forehead lightly on the top of the pad, dumbbells hanging below your chest. With a slight elbow bend, raise the dumbbells out to the sides to shoulder line, then lower under control. Do not press your head hard into the pad.", ru = "Встаньте за наклонной скамьёй, наклонитесь вперёд с прямой спиной и слегка упритесь лбом в верх спинки, гантели свисают под грудью. Слегка согнув локти, поднимите гантели в стороны до линии плеч, затем опустите под контролем. Не давите головой на спинку." }

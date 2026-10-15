@@ -1,0 +1,12 @@
+id = "smith_machine_one_arm_row"
+names = { en = "Smith machine one-arm row", ru = "Тяга одной рукой в машине Смита" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["smith_machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["lower_back", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the safety stops just below knee height and stand beside the bar, hinged forward with a flat back and one hand on the bar, the other braced on your thigh. Row the bar toward your hip, then lower to a straight arm. Finish all reps on one side, then switch.", ru = "Установите страховочные упоры чуть ниже уровня колен и встаньте сбоку от грифа, наклонившись с прямой спиной: одна рука на грифе, другая упирается в бедро. Тяните гриф к бедру, затем опустите до прямой руки. Сделайте все повторения на одну сторону, затем смените." }

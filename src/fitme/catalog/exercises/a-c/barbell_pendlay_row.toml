@@ -1,0 +1,12 @@
+id = "barbell_pendlay_row"
+names = { en = "Barbell Pendlay row", ru = "Тяга Пендлея" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Set up with the torso near parallel to the floor and the bar on the floor, back flat. Pull the bar firmly to the lower chest, then lower it back to the floor and reset each rep.", ru = "Примите положение с корпусом почти параллельно полу, штанга на полу, спина прямая. Подтяните штангу к низу груди, затем верните на пол и каждый раз заново займите положение." }

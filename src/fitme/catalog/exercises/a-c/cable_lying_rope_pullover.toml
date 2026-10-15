@@ -1,0 +1,13 @@
+id = "cable_lying_rope_pullover"
+names = { en = "Cable lying rope pullover", ru = "Пуловер на блоке лёжа с канатной рукоятью" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Lie on a flat bench with the head toward a high pulley, rope in both hands, arms above the chest. With slightly bent elbows, lower the rope in an arc behind the head only as far as is comfortable, then bring it back. Keep the load light.", ru = "Лягте на скамью головой к верхнему блоку, канат в обеих руках, руки над грудью. Слегка согнув локти, опустите канат по дуге за голову в комфортной амплитуде и верните. Вес лёгкий." }
+load_step_kg = 2.5

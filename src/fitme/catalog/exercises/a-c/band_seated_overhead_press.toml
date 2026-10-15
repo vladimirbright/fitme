@@ -1,0 +1,13 @@
+id = "band_seated_overhead_press"
+names = { en = "Band seated overhead press", ru = "Жим эспандера вверх сидя" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["resistance_bands", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "calibration" }
+instructions = { en = "Sit on a bench with a light band anchored under your feet or the bench, hands holding it at shoulder height. Press up until your arms are extended, then lower slowly. Keep your back upright against the backrest.", ru = "Сядьте на скамью, лёгкий эспандер закреплён под стопами или скамьёй, руки с ним на уровне плеч. Выжмите вверх до выпрямления рук, затем медленно опустите. Спина прямо у спинки." }
+load_step_kg = 1.0

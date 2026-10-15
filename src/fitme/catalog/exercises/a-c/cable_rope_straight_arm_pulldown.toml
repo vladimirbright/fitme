@@ -1,0 +1,13 @@
+id = "cable_rope_straight_arm_pulldown"
+names = { en = "Cable rope straight-arm pulldown", ru = "Тяга верхнего блока прямыми руками с канатом" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Attach a rope to a high pulley and stand facing it with a slight hip hinge and soft knees. Keeping the arms nearly straight, sweep the rope down to your thighs. Return slowly to shoulder height without leaning into the weight.", ru = "Закрепите канат на верхнем блоке и встаньте лицом к нему, лёгкий наклон корпуса, колени слегка согнуты. Почти прямыми руками ведите канат вниз к бёдрам. Медленно вернитесь на уровень плеч, не наваливаясь на вес." }
+load_step_kg = 1.0

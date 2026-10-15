@@ -1,0 +1,13 @@
+id = "dumbbell_close_grip_press"
+names = { en = "Dumbbell close-grip press", ru = "Жим гантелей узким хватом" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie on a flat bench holding two dumbbells together over your chest, palms facing each other. Lower them to your chest keeping the elbows close to your sides, then press back up. Use a weight you can control without a spotter.", ru = "Лягте на плоскую скамью, гантели вместе над грудью, ладони друг к другу. Опустите к груди, локти прижаты к бокам, затем выжмите вверх. Берите вес, который контролируете без страховки." }
+load_step_kg = 2.0

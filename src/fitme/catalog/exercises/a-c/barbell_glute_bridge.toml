@@ -1,0 +1,12 @@
+id = "barbell_glute_bridge"
+names = { en = "Barbell glute bridge", ru = "Ягодичный мостик со штангой" }
+kind = "compound"
+pattern = "hinge"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["hip", "lower_back", "knee"]
+contraindicated_by = ["hip_injury_current", "lower_back_injury_current", "knee_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Lie on the floor with knees bent and the bar across the hips, with a pad on it. Hold it steady and lift the hips until the body forms a line from knees to shoulders. Lower slowly.", ru = "Лягте на пол, колени согнуты, штанга на бёдрах с накладкой. Удерживайте её и поднимите таз до линии от колен до плеч. Медленно опустите." }

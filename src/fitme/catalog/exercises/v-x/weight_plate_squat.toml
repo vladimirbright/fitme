@@ -1,0 +1,13 @@
+id = "weight_plate_squat"
+names = { en = "Weight plate squat", ru = "Приседания с блином" }
+kind = "compound"
+pattern = "squat"
+equipment = ["weight_plate"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "lower_back"]
+contraindicated_by = ["knee_injury_current", "hernia", "hip_injury_current", "lower_back_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Hold a plate flat against the chest with both hands. Feet shoulder-width, toes slightly out. Sit down and back until the thighs are about parallel, then stand through the whole foot.", ru = "Держите блин плоско у груди двумя руками. Ноги на ширине плеч, носки чуть развёрнуты. Присядьте назад и вниз до бёдер примерно параллельно полу, затем встаньте, опираясь на всю стопу." }
+load_step_kg = 2.5

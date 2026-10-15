@@ -1,0 +1,12 @@
+id = "dumbbell_incline_triceps_extension"
+names = { en = "Incline dumbbell overhead triceps extension", ru = "Разгибания рук с гантелями из-за головы на наклонной скамье" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit back on an incline bench with the dumbbells held straight up toward the ceiling, palms facing each other. Bend the elbows to lower the weights behind your head, then extend. Keep the elbows close together and the weight light.", ru = "Сядьте на наклонную скамью, спина прижата, гантели подняты прямо к потолку, ладони смотрят друг на друга. Согните локти, опуская гантели за голову, затем разогните. Локти держите близко, вес лёгкий." }

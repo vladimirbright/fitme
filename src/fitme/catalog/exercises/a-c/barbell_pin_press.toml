@@ -1,0 +1,12 @@
+id = "barbell_pin_press"
+names = { en = "Barbell pin press", ru = "Жим штанги лёжа от упоров" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["barbell", "rack", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Put the bench in the rack and set the pins so the bar rests a few centimetres above your chest when you lie under it. Grip a little wider than the shoulders, press the bar off the pins and lower it back onto them under control. Pause on the pins every rep, then press again.", ru = "Поставьте скамью в стойку и выставьте упоры так, чтобы штанга лежала в нескольких сантиметрах над грудью, когда вы лежите под ней. Хват чуть шире плеч, выжмите штангу с упоров и под контролем опустите обратно на них. На упорах делайте паузу в каждом повторении, затем жмите снова." }

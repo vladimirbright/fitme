@@ -1,0 +1,12 @@
+id = "dumbbell_standing_concentration_curl"
+names = { en = "Dumbbell standing concentration curl", ru = "Концентрированные сгибания руки с гантелью стоя" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand with feet apart, hinge slightly and rest the free hand on the thigh. Hold a dumbbell underhand with the elbow still. Curl toward the shoulder, then lower until the arm is straight. Keep the back flat.", ru = "Встаньте, ноги шире плеч, слегка наклонитесь и обопритесь свободной рукой о бедро. Гантель хватом снизу, локоть неподвижен. Согните руку к плечу, затем опустите до прямой. Спина ровная." }

@@ -1,0 +1,12 @@
+id = "dumbbell_one_arm_standing_hammer_curl"
+names = { en = "One-arm standing dumbbell hammer curl", ru = "Молотковые сгибания одной рукой стоя" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand tall with a dumbbell in one hand, palm facing your thigh. Curl toward the shoulder without turning the wrist, then lower slowly. Keep the elbow at your side and switch arms after the set.", ru = "Встаньте прямо, гантель в одной руке, ладонь смотрит на бедро. Согните руку к плечу, не поворачивая кисть, затем медленно опустите. Локоть у корпуса, после подхода смените руку." }

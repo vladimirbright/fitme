@@ -1,0 +1,12 @@
+id = "machine_high_row"
+names = { en = "Machine high row", ru = "Высокая тяга в тренажёре" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["machine"]
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Adjust the seat so the handles are above chest height and press the chest to the pad. Pull the handles down and back toward the upper ribs, then let them rise slowly. Keep the shoulders away from the ears.", ru = "Отрегулируйте сиденье так, чтобы рукояти были выше уровня груди, прижмите грудь к подушке. Тяните рукояти вниз и назад к верху рёбер, затем медленно возвращайте. Плечи не поднимайте к ушам." }
+load_step_kg = 2.5

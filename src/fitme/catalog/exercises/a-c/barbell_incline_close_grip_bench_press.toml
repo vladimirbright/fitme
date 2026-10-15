@@ -1,0 +1,12 @@
+id = "barbell_incline_close_grip_bench_press"
+names = { en = "Barbell incline close-grip bench press", ru = "Жим штанги узким хватом на наклонной скамье" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["barbell", "rack", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Set the bench to a moderate incline and the safety arms just below the lowest point. Grip slightly inside shoulder width, unrack and hold over the upper chest. Lower to the upper chest with elbows tucked, then press up.", ru = "Установите скамью под умеренным углом, а страховочные упоры чуть ниже нижней точки. Хват чуть уже плеч, снимите штангу и удерживайте над верхней частью груди. Опустите к верху груди, локти прижаты, затем выжмите вверх." }

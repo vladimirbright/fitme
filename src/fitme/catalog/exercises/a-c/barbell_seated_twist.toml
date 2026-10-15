@@ -1,0 +1,13 @@
+id = "barbell_seated_twist"
+names = { en = "Barbell seated twist", ru = "Повороты сидя со штангой" }
+kind = "isolation"
+pattern = "core"
+equipment = ["barbell", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back"]
+contraindicated_by = ["lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit on a bench, feet flat, a light bar held in front of your chest. Rotate your torso to one side, then the other, keeping your hips square. Never rest the bar behind your neck. Use a light load.", ru = "Сядьте на скамью, стопы на полу, лёгкий гриф удерживайте перед грудью. Поворачивайте корпус в одну сторону, затем в другую, таз неподвижен. Не кладите гриф за шею. Берите лёгкий вес." }
+load_step_kg = 2.5

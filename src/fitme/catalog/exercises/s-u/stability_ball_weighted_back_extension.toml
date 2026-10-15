@@ -1,0 +1,14 @@
+id = "stability_ball_weighted_back_extension"
+names = { en = "Weighted back extension on stability ball", ru = "Гиперэкстензия на фитболе с отягощением" }
+search = { en = "weighted back extension stability ball", ru = "гиперэкстензия на фитболе" }
+kind = "isolation"
+level = "advanced"
+pattern = "accessory"
+equipment = ["stability_ball", "weight_plate"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Lie face down over the ball with hips on it and feet braced against a wall, holding a plate to your chest. Raise the torso to a straight line from head to heels. Lower slowly and stop short of arching the back.", ru = "Лягте животом на фитбол, таз на мяче, стопы упираются в стену, блин прижат к груди. Поднимите корпус до прямой линии от головы до пяток. Медленно опуститесь, не прогибаясь в пояснице." }

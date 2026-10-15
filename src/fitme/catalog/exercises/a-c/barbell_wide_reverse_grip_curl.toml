@@ -1,0 +1,12 @@
+id = "barbell_wide_reverse_grip_curl"
+names = { en = "Barbell wide reverse-grip curl", ru = "Обратные сгибания рук со штангой широким хватом" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Stand tall with an overhand grip, hands wider than the shoulders, bar hanging at arm's length. Curl toward the shoulders with straight wrists, then lower slowly. Keep the load light.", ru = "Встаньте ровно, хват сверху шире плеч, гриф в опущенных руках. Поднимайте к плечам, кисти прямые, затем медленно опустите. Вес лёгкий." }

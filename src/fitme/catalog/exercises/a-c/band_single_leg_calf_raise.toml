@@ -1,0 +1,12 @@
+id = "band_single_leg_calf_raise"
+names = { en = "Band single-leg calf raise", ru = "Подъём на носок на одной ноге с лентой" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["ankle"]
+contraindicated_by = ["ankle_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Stand on one foot with the middle of a band under the ball of that foot and the ends in your hands. Hold a wall or rail for balance. Rise onto your toes, pause, then lower the heel slowly. Finish one side, then switch.", ru = "Встаньте на одну ногу, середина ленты под передней частью стопы, концы в руках. Держитесь за стену или опору. Поднимитесь на носок, задержитесь и медленно опустите пятку. Выполните все повторения на одной ноге, затем смените." }

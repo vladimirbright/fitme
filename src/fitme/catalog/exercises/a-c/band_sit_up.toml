@@ -1,0 +1,12 @@
+id = "band_sit_up"
+names = { en = "Band sit-up", ru = "Подъём корпуса с лентой" }
+kind = "bodyweight"
+pattern = "core"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Anchor the band behind your head and lie on your back, knees bent, holding it with arms straight up. Curl your torso up against the band, then lower slowly. Keep your arms straight and your feet planted.", ru = "Закрепите ленту за головой, лягте на спину, колени согнуты, руки с лентой подняты вверх. Поднимите корпус против сопротивления ленты, затем медленно опуститесь. Руки прямые, стопы на полу." }

@@ -1,0 +1,12 @@
+id = "dumbbell_bent_over_rotating_rear_delt_raise"
+names = { en = "Dumbbell bent-over rotating rear delt raise", ru = "Разведение гантелей в наклоне с поворотом кистей" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Hinge forward at the hips with a flat back and soft knees, dumbbells hanging with palms facing each other. Raise your arms out to the sides, turning the palms down as you reach shoulder line, then lower and turn them back. Use light weights and move slowly.", ru = "Наклонитесь вперёд от бёдер с прямой спиной, колени слегка согнуты, гантели свисают, ладони друг к другу. Поднимайте руки в стороны, разворачивая ладони вниз к линии плеч, затем опускайте и возвращайте ладони обратно. Вес лёгкий, движения медленные." }

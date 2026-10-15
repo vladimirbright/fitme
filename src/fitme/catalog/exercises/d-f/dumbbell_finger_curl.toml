@@ -1,0 +1,12 @@
+id = "dumbbell_finger_curl"
+names = { en = "Dumbbell finger curl", ru = "Сгибания пальцев с гантелью" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit with your forearm on your thigh, palm up, holding a light dumbbell. Let it roll slowly to your fingertips without letting go, then curl the fingers and the dumbbell back up. Keep a firm grip near the bottom.", ru = "Сядьте, предплечье на бедре, ладонь вверх, в руке лёгкая гантель. Медленно позвольте ей скатиться к кончикам пальцев, не выпуская, затем сожмите пальцы и верните гантель вверх. Внизу держите гантель надёжно." }

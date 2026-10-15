@@ -1,0 +1,12 @@
+id = "barbell_standing_reverse_wrist_curl"
+names = { en = "Barbell standing reverse wrist curl", ru = "Обратные сгибания запястий со штангой стоя" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Stand holding the bar in front of your thighs with an overhand grip, arms straight and elbows at your sides. Raise the bar by bending only the wrists, then lower slowly. Keep the load light.", ru = "Встаньте, держа гриф перед бёдрами хватом сверху, руки прямые, локти у боков. Поднимайте гриф, сгибая только запястья, и медленно опускайте. Вес берите небольшой." }

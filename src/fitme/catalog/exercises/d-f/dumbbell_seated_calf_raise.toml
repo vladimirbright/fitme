@@ -1,0 +1,12 @@
+id = "dumbbell_seated_calf_raise"
+names = { en = "Dumbbell seated calf raise", ru = "Подъём на носки сидя с гантелью" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["ankle", "knee"]
+contraindicated_by = ["ankle_injury_current", "knee_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit on a bench with the balls of your feet on a low block or step and a dumbbell held on your lower thighs. Lower the heels for a gentle stretch, rise onto your toes, then lower slowly. Keep a firm hold on the dumbbell.", ru = "Сядьте на скамью, передняя часть стоп на невысокой подставке, на нижней части бёдер гантель, придерживайте её руками. Опустите пятки до лёгкого растяжения, поднимитесь на носки и медленно опустите. Надёжно удерживайте гантель." }

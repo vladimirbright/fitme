@@ -1,0 +1,12 @@
+id = "dumbbell_waiter_curl"
+names = { en = "Dumbbell waiter curl", ru = "Сгибания рук с гантелью «официант»" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand holding one end of a single dumbbell upright in both hands, the top plate resting on your open palms. Curl it toward your chest, keeping your elbows beside your torso, then lower under control. Choose a light weight and keep the dumbbell well supported.", ru = "Встаньте, держа одну гантель вертикально двумя руками, верхний блин лежит на раскрытых ладонях. Согните руки, поднимая гантель к груди, локти у корпуса, затем опустите под контролем. Берите небольшой вес и держите гантель надёжно." }

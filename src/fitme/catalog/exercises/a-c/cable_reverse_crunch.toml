@@ -1,0 +1,13 @@
+id = "cable_reverse_crunch"
+names = { en = "Cable reverse crunch", ru = "Обратные скручивания с блоком" }
+kind = "isolation"
+pattern = "core"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Attach ankle straps to a low pulley and lie on a mat with your feet toward the stack, knees bent above your hips, hands by your sides. Draw your knees toward your chest, curling your pelvis slightly off the mat, then lower slowly. Use a light load and do not let the stack pull your legs down.", ru = "Закрепите манжеты на нижнем блоке и лягте на коврик ногами к тренажёру, колени согнуты над тазом, руки вдоль тела. Подтяните колени к груди, слегка отрывая таз от коврика, затем медленно опустите. Вес лёгкий, не позволяйте блоку тянуть ноги вниз." }
+load_step_kg = 1.0

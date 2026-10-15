@@ -1,0 +1,13 @@
+id = "band_split_squat"
+names = { en = "Band split squat", ru = "Приседания в разножке с эспандером" }
+kind = "compound"
+pattern = "squat"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "ankle"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current"]
+increment_kg = 2.0
+start = { kind = "calibration" }
+instructions = { en = "Stand with the front foot on the middle of a band, ends held at shoulder height, and the other foot a long step behind. Lower straight down until the front thigh is about parallel to the floor, then press back up. Switch legs after the set.", ru = "Встаньте передней стопой на середину эспандера, концы держите на уровне плеч, другая нога отставлена далеко назад. Опуститесь вертикально, пока переднее бедро не станет примерно параллельно полу, затем поднимитесь. После подхода смените ногу." }
+load_step_kg = 1.0

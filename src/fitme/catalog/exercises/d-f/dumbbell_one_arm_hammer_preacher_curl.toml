@@ -1,0 +1,12 @@
+id = "dumbbell_one_arm_hammer_preacher_curl"
+names = { en = "One-arm dumbbell hammer preacher curl", ru = "Молотковые сгибания одной рукой на скамье Скотта" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Rest one upper arm on a preacher pad (or an incline bench with your chest against it), the dumbbell held with the palm facing in. Curl up without lifting the arm off the pad, then lower to a nearly straight arm. Switch sides after the set.", ru = "Положите одно плечо на упор скамьи Скотта (или на наклонную скамью, грудью к спинке), гантель в нейтральном хвате. Согните руку, не отрывая плечо от упора, затем опустите почти до выпрямления. После подхода смените руку." }

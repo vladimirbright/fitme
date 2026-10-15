@@ -1,0 +1,12 @@
+id = "machine_donkey_calf_raise"
+names = { en = "Machine donkey calf raise", ru = "Ослиный подъём на носки в тренажёре" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["ankle", "knee", "lower_back"]
+contraindicated_by = ["ankle_injury_current", "knee_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Stand on the platform with the balls of the feet on the edge, hips hinged and the pad resting on the lower back or hips as the machine is built. Lower the heels for a gentle stretch, then rise as high as you can. Keep the back flat and the knees almost straight.", ru = "Встаньте на платформу передней частью стопы на краю, корпус наклонён, валик лежит на пояснице или тазу согласно конструкции тренажёра. Опустите пятки до лёгкого растяжения, затем поднимитесь как можно выше. Спина ровная, колени почти прямые." }

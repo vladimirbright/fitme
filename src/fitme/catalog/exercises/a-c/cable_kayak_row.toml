@@ -1,0 +1,14 @@
+id = "cable_kayak_row"
+names = { en = "Cable kayak row", ru = "Тяга верхнего блока «байдарка»" }
+search = { en = "cable kayak row", ru = "тяга байдарка на блоке" }
+kind = "compound"
+pattern = "vertical_pull"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Stand facing a high pulley with a long straight bar, hands wide and overhand, knees soft. Pull one end of the bar down toward the same-side hip while the other arm stays long, letting the torso turn a little. Return to the top under control and pull to the other side. Keep the rotation small and the weight light enough to stay smooth.", ru = "Встаньте лицом к верхнему блоку с длинной прямой рукоятью, хват сверху широкий, колени слегка согнуты. Тяните один край рукояти вниз к бедру той же стороны, другая рука остаётся вытянутой, корпус немного поворачивается. Под контролем вернитесь вверх и тяните в другую сторону. Поворот небольшой, вес такой, чтобы движение оставалось плавным." }
+load_step_kg = 2.5

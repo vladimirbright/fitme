@@ -1,0 +1,13 @@
+id = "dumbbell_alternate_seated_hammer_curl"
+names = { en = "Dumbbell alternating seated hammer curl", ru = "Попеременные молотковые сгибания сидя" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit on a bench with a dumbbell in each hand, palms facing inward. Curl one toward your shoulder keeping the palm inward, lower it under control, then curl the other.", ru = "Сядьте на скамью с гантелями, ладони обращены внутрь. Согните одну руку к плечу, не меняя положения кисти, подконтрольно опустите и повторите другой рукой." }
+load_step_kg = 1.0

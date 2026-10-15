@@ -1,0 +1,13 @@
+id = "cable_standing_crunch"
+names = { en = "Cable standing crunch", ru = "Скручивания стоя на блоке" }
+kind = "isolation"
+pattern = "core"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["lower_back", "neck"]
+contraindicated_by = ["lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set a handle or rope on a high pulley and stand facing away, holding it beside your head. Bend forward at the ribs, then return upright slowly. Keep your knees slightly bent and your hips still.", ru = "Закрепите рукоять или канат на верхнем блоке и встаньте к нему спиной, хват у головы. Наклоните корпус вперёд, сближая рёбра и таз, затем медленно вернитесь. Колени слегка согнуты, таз неподвижен." }
+load_step_kg = 1.0

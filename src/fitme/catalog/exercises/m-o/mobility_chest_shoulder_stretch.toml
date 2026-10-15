@@ -1,0 +1,12 @@
+id = "mobility_chest_shoulder_stretch"
+names = { en = "Chest and front-shoulder stretch", ru = "Растяжка груди и передней части плеч" }
+kind = "mobility"
+pattern = "mobility"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand tall and clasp your hands behind your back. Straighten the arms, draw the shoulder blades together and lift the hands slightly until you feel a mild pull across the chest and the front of the shoulders. Hold 20-30 seconds and breathe evenly.", ru = "Встаньте прямо и сцепите кисти за спиной. Выпрямите руки, сведите лопатки и немного поднимите кисти до лёгкого натяжения в груди и передней части плеч. Удерживайте 20-30 секунд, дышите ровно." }

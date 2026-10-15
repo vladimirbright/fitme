@@ -113,7 +113,13 @@ and most Russian names are machine drafts that need language review. No media or
 identifiers are stored. The file is gitignored because the upstream source asks readers to
 review the underlying data terms before redistribution.
 
-You can edit the TOML directly. These entries are for lookup only. The source does not
+Every entry has been triaged (ADR 0008; report in
+[`docs/reports/catalog-import-2026-10-15.md`](docs/reports/catalog-import-2026-10-15.md)):
+984 became reviewed catalog entries, 273 are aliases of one, and 67 stay lookup-only for
+safety or because the movement is unclear. Each entry's `triage` and `catalog_id` fields
+say which applies.
+
+You can edit the TOML directly. The reference entries themselves are for lookup only. The source does not
 provide Fitme's reviewed injury flags, check-in areas, location/equipment rules, load units,
 or progression limits. To make an exercise available in plans, add a reviewed entry to
 [`src/fitme/catalog/exercises/`](src/fitme/catalog/exercises/) and run

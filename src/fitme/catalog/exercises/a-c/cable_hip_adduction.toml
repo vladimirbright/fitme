@@ -1,0 +1,13 @@
+id = "cable_hip_adduction"
+names = { en = "Cable hip adduction", ru = "Приведение ноги на блоке" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["hip"]
+contraindicated_by = ["hip_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Fix an ankle strap to the working leg and stand side-on to a low pulley, one hand on the frame. Draw the straight leg across the body in front of the standing leg, then return slowly. Keep the torso upright.", ru = "Закрепите ножной ремень на рабочей ноге и встаньте боком к нижнему блоку, рука на опоре. Плавно проведите прямую ногу перед опорной через центр тела, затем медленно верните. Корпус вертикально." }
+load_step_kg = 1.0

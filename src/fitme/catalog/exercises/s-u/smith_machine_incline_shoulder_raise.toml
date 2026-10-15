@@ -1,0 +1,14 @@
+id = "smith_machine_incline_shoulder_raise"
+names = { en = "Smith machine incline shoulder raise", ru = "Подъём плеч лёжа на наклонной скамье в Смите" }
+search = { en = "smith incline shoulder raise", ru = "протракция лопаток в Смите на наклонной скамье" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["smith_machine", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set an incline bench under the bar so the bar is over your shoulders, and set the safety stops just below the lowest bar position. Lie back, hold the bar with straight arms and unhook it. Keeping the elbows straight, reach the bar toward the ceiling by spreading the shoulder blades, then let them draw back together. The bar travels only a few centimetres.", ru = "Установите наклонную скамью под гриф так, чтобы он был над плечами, а ограничители — чуть ниже нижней точки движения. Лягте, возьмите гриф прямыми руками и снимите с фиксаторов. Не сгибая локти, тянитесь грифом к потолку, разводя лопатки, затем сведите их обратно. Гриф проходит всего несколько сантиметров." }
+load_step_kg = 2.5

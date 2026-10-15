@@ -1,0 +1,12 @@
+id = "dip_bars_vertical_leg_raise"
+names = { en = "Dip bar leg raise", ru = "Подъём ног в упоре на брусьях" }
+kind = "isolation"
+pattern = "core"
+equipment = ["dip_bars"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "hip"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Support yourself on parallel bars with straight arms, shoulders down, and body steady. Raise straight or slightly bent legs to about hip height or higher, then lower slowly without swinging.", ru = "Упритесь в брусья на прямых руках, плечи опущены, корпус неподвижен. Поднимите прямые или слегка согнутые ноги до уровня таза или выше, затем медленно опустите без раскачки." }

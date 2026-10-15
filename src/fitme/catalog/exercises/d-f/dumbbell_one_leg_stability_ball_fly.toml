@@ -1,0 +1,13 @@
+id = "dumbbell_one_leg_stability_ball_fly"
+names = { en = "One-leg dumbbell fly on stability ball", ru = "Разводка гантелей на фитболе на одной ноге" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "stability_ball"]
+level = "advanced"
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "hip", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "hip_injury_current", "lower_back_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie back on a stability ball with your head and upper back supported, hips level and feet planted. Lift one foot and straighten that leg in line with your body. Holding the dumbbells above your chest with a slight elbow bend, open your arms in an arc to chest level and bring them back. Use light weights; switch legs each set.", ru = "Лягте на фитбол так, чтобы голова и верх спины опирались на мяч, таз на уровне корпуса, стопы на полу. Оторвите одну стопу и выпрямите ногу на одной линии с телом. Гантели над грудью, локти слегка согнуты: разведите руки по дуге до уровня груди и сведите обратно. Вес лёгкий; ногу меняйте в каждом подходе." }

@@ -1,0 +1,12 @@
+id = "dumbbell_reverse_spider_curl"
+names = { en = "Dumbbell reverse spider curl", ru = "Обратные паучьи сгибания с гантелями" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Set an incline bench to about 45 degrees and lie chest-down on it, arms hanging straight, a dumbbell in each hand in an overhand grip. Curl the weights up while the upper arms stay vertical, then lower under control. Use a light weight.", ru = "Установите наклонную скамью примерно на 45 градусов и лягте на неё грудью, руки свисают прямо, гантели хватом сверху. Согните руки, плечи остаются вертикально, затем опустите под контролем. Вес небольшой." }

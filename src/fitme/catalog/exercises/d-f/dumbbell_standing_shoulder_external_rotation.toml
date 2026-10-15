@@ -1,0 +1,12 @@
+id = "dumbbell_standing_shoulder_external_rotation"
+names = { en = "Dumbbell standing shoulder external rotation", ru = "Наружная ротация плеча с гантелями стоя" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand with a light dumbbell in each hand, upper arms out to the sides at about shoulder height and elbows bent to 90 degrees. Keeping the elbows in place, rotate the forearms up until the dumbbells point to the ceiling, then lower them slowly. Keep the weight very light and the range comfortable.", ru = "Встаньте с лёгкими гантелями в руках, плечи отведены в стороны примерно до уровня плеч, локти согнуты под 90 градусов. Не меняя положения локтей, поверните предплечья вверх, пока гантели не будут смотреть к потолку, затем медленно опустите. Вес очень лёгкий, амплитуда комфортная." }

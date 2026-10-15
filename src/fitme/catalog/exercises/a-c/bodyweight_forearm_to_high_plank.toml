@@ -1,0 +1,13 @@
+id = "bodyweight_forearm_to_high_plank"
+names = { en = "Forearm plank to high plank", ru = "Переход из планки на предплечьях в упор" }
+search = { en = "plank up down", ru = "планка вверх-вниз" }
+kind = "bodyweight"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Start in a high plank with hands under shoulders. Lower onto one forearm, then the other, keeping your body in one line. Press back up one hand at a time and alternate which arm leads. Keep your hips from swaying.", ru = "Примите упор лёжа на прямых руках, ладони под плечами. Поочерёдно опуститесь на одно, затем на другое предплечье, тело — прямая линия. Вернитесь в упор, по одной руке, и чередуйте ведущую руку. Таз не раскачивайте." }

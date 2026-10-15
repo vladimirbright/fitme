@@ -1,0 +1,13 @@
+id = "bodyweight_sprint_intervals"
+names = { en = "Outdoor sprint intervals", ru = "Спринтерские рывки на улице" }
+kind = "cardio"
+level = "advanced"
+pattern = "conditioning"
+equipment = []
+load_unit = "total"
+locations = ["outdoor"]
+loads_areas = ["knee", "ankle", "hip"]
+contraindicated_by = ["knee_injury_current", "ankle_injury_current", "hip_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Warm up with an easy jog first. On open, even ground, run hard for the prescribed distance or time, then walk or rest fully before the next sprint. Stop the set if your form falls apart.", ru = "Сначала разомнитесь лёгким бегом. На открытой ровной поверхности пробегите быстро заданную дистанцию или время, затем пройдитесь или отдохните полностью. Закончите подход, если техника разваливается." }

@@ -1,0 +1,13 @@
+id = "bodyweight_swimmer_kicks"
+names = { en = "Swimmer kicks", ru = "Плавательные махи лёжа на животе" }
+kind = "bodyweight"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back", "shoulder"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Lie face down with arms extended overhead. Lift the chest and legs slightly off the floor and flutter the legs in small quick kicks, keeping the neck long. Lower to the floor at the end of the set.", ru = "Лягте на живот, руки вытянуты над головой. Слегка оторвите грудь и ноги от пола и делайте частые небольшие махи ногами, шея вытянута. По окончании подхода опуститесь на пол." }
+load_step_kg = 1.0

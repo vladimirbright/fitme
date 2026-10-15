@@ -1,0 +1,12 @@
+id = "barbell_bench_reverse_wrist_curl"
+names = { en = "Barbell reverse wrist curl over a bench", ru = "Обратные сгибания запястий со штангой через скамью" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["barbell", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Kneel behind a flat bench with your forearms along the pad, palms down, and your wrists just past the far edge, holding the bar shoulder-width. Raise the backs of your hands by bending only the wrists, then lower slowly. Keep the load light.", ru = "Встаньте на колени за горизонтальной скамьёй, предплечья лежат вдоль неё ладонями вниз, кисти чуть за дальним краем, гриф на ширине плеч. Поднимайте тыльную сторону кистей, сгибая только запястья, и медленно опускайте. Вес берите небольшой." }

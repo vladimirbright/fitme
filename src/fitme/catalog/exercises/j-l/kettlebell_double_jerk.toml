@@ -1,0 +1,14 @@
+id = "kettlebell_double_jerk"
+names = { en = "Kettlebell double jerk", ru = "Толчок двух гирь" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["kettlebell"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "hip", "knee", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hip_injury_current", "knee_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 4.0 }
+level = "advanced"
+instructions = { en = "Start with a kettlebell at each shoulder. Dip and drive up through your legs, then quickly drop under the bells into a shallow knee bend as the arms lock out overhead. Stand fully, then lower the bells to the shoulders under control. Use a light weight and clear the space around you.", ru = "Начните с гирей у каждого плеча. Присядьте и оттолкнитесь ногами, затем быстро подсядьте под гири на слегка согнутых ногах, фиксируя руки над головой. Полностью выпрямитесь, затем под контролем опустите гири к плечам. Вес лёгкий, вокруг должно быть свободно." }
+load_step_kg = 2.0

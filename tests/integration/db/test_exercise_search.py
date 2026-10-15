@@ -209,9 +209,10 @@ async def test_barbell_bench_press_becomes_dumbbell_bench_press(
     )
     results = es.find_substitutes(runtime, "barbell_bench_press", home)
     assert results[0].exercise_id == "dumbbell_bench_press" and results[0].close
-    assert {"dumbbell_floor_press", "pushup"} & set(
-        _ids(es.find_substitutes(runtime, "barbell_bench_press", home, limit=8))
-    )
+    catalog = load_catalog()
+    for exercise_id in _ids(results):
+        exercise = catalog.by_id(exercise_id)
+        assert exercise is not None and exercise.pattern == ExercisePattern.HORIZONTAL_PUSH
 
 
 async def test_lat_pulldown_without_a_cable_gives_back_exercises(

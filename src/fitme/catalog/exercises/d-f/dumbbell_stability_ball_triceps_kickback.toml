@@ -1,0 +1,12 @@
+id = "dumbbell_stability_ball_triceps_kickback"
+names = { en = "Seated dumbbell kickback on stability ball", ru = "Разгибания рук с гантелями назад сидя на фитболе" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "stability_ball"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit on a stability ball, lean slightly forward with elbows bent at your sides, dumbbells in hand. Straighten the arms behind you, then bend them again under control. Keep the upper arms against your torso.", ru = "Сядьте на фитбол, слегка наклонитесь вперёд, локти согнуты и прижаты к бокам, в руках гантели. Разогните руки назад, затем снова согните под контролем. Плечи прижаты к корпусу." }

@@ -1,0 +1,13 @@
+id = "cable_low_fly"
+names = { en = "Cable low fly", ru = "Сведение рук в кроссовере снизу вверх" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Attach handles to the low pulleys and stand in the middle with knees slightly bent. With slightly bent elbows, sweep the hands up and forward in an arc until they meet in front of the upper chest. Lower back out under control and keep the torso still.", ru = "Закрепите рукояти на нижних блоках и встаньте посередине, колени слегка согнуты. С чуть согнутыми локтями дугой сведите руки вверх и вперёд до встречи перед верхней частью груди. Подконтрольно опустите, корпус неподвижен." }
+load_step_kg = 1.0

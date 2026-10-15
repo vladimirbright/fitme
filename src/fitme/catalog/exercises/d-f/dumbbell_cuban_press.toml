@@ -1,0 +1,12 @@
+id = "dumbbell_cuban_press"
+names = { en = "Dumbbell Cuban press", ru = "Кубинский жим гантелей" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand holding light dumbbells at your sides. Pull them up to shoulder height with elbows high, rotate your forearms up so the dumbbells are overhead, press to full extension, then reverse the path under control. Keep the weight light.", ru = "Встаньте с лёгкими гантелями вдоль тела. Подтяните их к уровню плеч, локти высоко, разверните предплечья вверх, чтобы гантели оказались над головой, выжмите до выпрямления рук, затем в обратном порядке под контролем верните. Вес лёгкий." }

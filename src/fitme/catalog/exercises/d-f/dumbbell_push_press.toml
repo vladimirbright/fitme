@@ -1,0 +1,13 @@
+id = "dumbbell_push_press"
+names = { en = "Dumbbell push press", ru = "Швунг жимовой с гантелями" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck", "knee"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "neck_injury_current", "knee_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Hold a dumbbell in each hand at shoulder height with your feet shoulder-width apart. Dip a short way by bending the knees, then drive up through your legs and press the dumbbells overhead to full extension. Lower them back to your shoulders under control. Keep your ribs down and your head clear of the weights.", ru = "Гантели на уровне плеч, ноги на ширине плеч. Неглубоко присядьте, согнув колени, затем оттолкнитесь ногами и выжмите гантели вверх до полного выпрямления рук. Под контролем опустите их к плечам. Рёбра опущены, голову не подставляйте под траекторию гантелей." }
+level = "advanced"

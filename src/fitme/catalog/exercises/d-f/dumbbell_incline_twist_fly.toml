@@ -1,0 +1,12 @@
+id = "dumbbell_incline_twist_fly"
+names = { en = "Incline dumbbell twisting fly", ru = "Разводка гантелей с разворотом на наклонной скамье" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Set the bench to a modest incline and lie back with the dumbbells above your chest, palms facing each other. Open your arms in an arc, then bring them together while slowly turning your palms to face forward. Keep elbows slightly bent and the weight light.", ru = "Установите небольшой наклон скамьи и лягте, гантели над грудью, ладони смотрят друг на друга. Разведите руки по дуге, затем сводите, плавно разворачивая ладони вперёд. Локти слегка согнуты, вес лёгкий." }

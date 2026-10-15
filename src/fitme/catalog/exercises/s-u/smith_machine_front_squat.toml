@@ -1,0 +1,13 @@
+id = "smith_machine_front_squat"
+names = { en = "Smith machine front squat", ru = "Фронтальные приседания в тренажёре Смита" }
+kind = "compound"
+pattern = "squat"
+equipment = ["smith_machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["knee", "hip", "lower_back", "shoulder", "neck"]
+contraindicated_by = ["knee_injury_current", "hernia", "hip_injury_current", "lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the bar at shoulder height and rest it on the front of the shoulders, elbows up, fingers light on the bar. Feet slightly forward of the bar line. Sit down with an upright torso, then stand. Set the safety stops below the lowest point.", ru = "Установите гриф на уровне плеч и положите на передние дельты, локти вверх, пальцы слегка придерживают гриф. Стопы чуть впереди линии грифа. Присядьте с вертикальным корпусом и встаньте. Выставьте ограничители ниже нижней точки." }
+load_step_kg = 2.5

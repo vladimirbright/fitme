@@ -1,0 +1,14 @@
+id = "bodyweight_pistol_squat"
+names = { en = "Pistol squat", ru = "Приседания на одной ноге (пистолет)" }
+search = { en = "pistol squat", ru = "пистолет" }
+kind = "bodyweight"
+pattern = "squat"
+level = "advanced"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["knee", "hip", "ankle"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Stand on one leg with the other extended forward. Sit down on the standing leg to a depth you can control, keeping the heel down and chest up, then stand. Hold a support nearby if needed. Switch legs.", ru = "Встаньте на одну ногу, вторую вытяните вперёд. Присядьте на опорной ноге на подконтрольную глубину, пятка на полу, грудь поднята, затем встаньте. При необходимости держитесь за опору. Смените ногу." }

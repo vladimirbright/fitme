@@ -1,0 +1,13 @@
+id = "sledgehammer_tire_strike"
+names = { en = "Sledgehammer tire strike", ru = "Удары кувалдой по шине" }
+kind = "cardio"
+pattern = "conditioning"
+equipment = ["sledgehammer", "tire"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "hip"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Stand facing a large tire with feet wide, holding a sledgehammer with both hands. Lift it overhead and swing it down onto the tire, driving with the hips. Expect the hammer to bounce back: keep a firm grip and guide it away from your face. Keep the area around you clear.", ru = "Встаньте лицом к большой шине, ноги широко, кувалда в двух руках. Поднимите её над головой и ударьте по шине, подключая таз. Кувалда отскакивает: держите её крепко и уводите в сторону от лица. Вокруг должно быть свободно." }
+load_step_kg = 1.0

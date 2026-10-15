@@ -1,0 +1,14 @@
+id = "weight_plate_dip"
+names = { en = "Weighted parallel bar dip", ru = "Отжимания на брусьях с отягощением" }
+kind = "bodyweight"
+level = "advanced"
+pattern = "vertical_push"
+equipment = ["dip_bars", "weight_plate"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Hold a plate between the thighs or on a belt and support yourself on parallel bars with straight arms. Lower until the upper arms are about parallel to the floor, then press up. Start with a light load.", ru = "Закрепите блин на поясе или зажмите между бёдер, обопритесь на брусья на прямых руках. Опуститесь до положения плеч примерно параллельно полу, затем выжмитесь вверх. Начните с небольшого веса." }
+load_step_kg = 2.5

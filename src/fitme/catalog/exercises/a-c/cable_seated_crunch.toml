@@ -1,0 +1,13 @@
+id = "cable_seated_crunch"
+names = { en = "Cable seated crunch", ru = "Скручивания сидя на блоке" }
+kind = "isolation"
+pattern = "core"
+equipment = ["cable", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["lower_back", "neck"]
+contraindicated_by = ["lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Sit on a bench facing away from a high pulley, rope or handle held beside your head. Curl your chest toward your knees, then return upright slowly. Keep the load light and let your trunk, not your arms, do the work.", ru = "Сядьте на скамью спиной к верхнему блоку, канат или рукоять у головы. Сверните грудь к коленям, затем медленно вернитесь. Вес лёгкий, работает корпус, а не руки." }
+load_step_kg = 1.0

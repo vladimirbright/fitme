@@ -1,0 +1,12 @@
+id = "dumbbell_alternating_hammer_curl_and_press"
+names = { en = "Dumbbell standing alternating hammer curl and press", ru = "Попеременные молотковые сгибания и жим гантелей стоя" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand holding a dumbbell in each hand, palms facing your body. Curl one dumbbell with the palm inward, then rotate the wrist and press it overhead and lower it back. Alternate arms. Keep your ribs down and use a light weight.", ru = "Встаньте, в руках гантели, ладони смотрят на корпус. Согните одну руку с гантелью ладонью внутрь, затем поверните кисть, выжмите гантель вверх и опустите обратно. Чередуйте руки. Рёбра не разводите, вес берите небольшой." }

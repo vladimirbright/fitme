@@ -1,0 +1,13 @@
+id = "bodyweight_forward_jump"
+names = { en = "Standing forward jump", ru = "Прыжок вперёд с места" }
+kind = "cardio"
+pattern = "conditioning"
+level = "advanced"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]
+loads_areas = ["knee", "ankle", "hip", "lower_back"]
+contraindicated_by = ["knee_injury_current", "ankle_injury_current", "hip_injury_current", "lower_back_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Stand shoulder-width apart, bend the knees and swing the arms back. Jump forward, extending hips, knees and ankles, and land softly on the balls of the feet with bent knees. Reset between jumps on a flat, non-slip surface.", ru = "Встаньте на ширине плеч, согните колени и отведите руки назад. Прыгните вперёд, разгибая бёдра, колени и голеностопы, и мягко приземлитесь на передний отдел стопы с согнутыми коленями. Между прыжками восстанавливайте стойку на ровной нескользкой поверхности." }

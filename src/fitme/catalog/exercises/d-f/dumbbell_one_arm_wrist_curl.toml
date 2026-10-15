@@ -1,0 +1,12 @@
+id = "dumbbell_one_arm_wrist_curl"
+names = { en = "Dumbbell one-arm wrist curl", ru = "Сгибания запястья с гантелью одной рукой" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit with one forearm on your thigh, palm up, holding a dumbbell with the wrist past the knee. Let it lower, then curl the hand up by bending only the wrist. Finish one side, then switch.", ru = "Сядьте, предплечье одной руки на бедре, ладонь вверх, в руке гантель, кисть свисает за колено. Опустите гантель вниз, затем поднимите кисть, сгибая только запястье. Выполните все повторения одной рукой, затем смените." }

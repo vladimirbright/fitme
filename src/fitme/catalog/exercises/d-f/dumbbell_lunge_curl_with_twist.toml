@@ -1,0 +1,13 @@
+id = "dumbbell_lunge_curl_with_twist"
+names = { en = "Dumbbell lunge with curl and twist", ru = "Выпад со сгибанием рук и поворотом корпуса" }
+kind = "compound"
+pattern = "squat"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "ankle", "lower_back", "elbow_wrist"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current", "lower_back_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand holding dumbbells at your sides. Step forward into a lunge while curling the dumbbells, turn your torso slightly toward the front leg, then turn back and step back to standing. Alternate legs and keep the turn small.", ru = "Встаньте с гантелями по бокам. Шагните вперёд в выпад, сгибая руки с гантелями, слегка поверните корпус к передней ноге, вернитесь и шагните назад. Чередуйте ноги, поворот небольшой." }
+load_step_kg = 1.0

@@ -1,0 +1,12 @@
+id = "barbell_drag_curl"
+names = { en = "Barbell drag curl", ru = "Сгибания рук со штангой «дрэг»" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Stand tall holding the bar underhand at arm's length. Curl by drawing the elbows back so the bar slides up close to the torso, then lower it along the same line. Keep the shoulders relaxed and the load moderate.", ru = "Встаньте ровно, гриф хватом снизу в опущенных руках. Сгибайте руки, отводя локти назад, так что гриф скользит вверх вдоль корпуса, затем опустите по той же линии. Плечи расслаблены, вес умеренный." }

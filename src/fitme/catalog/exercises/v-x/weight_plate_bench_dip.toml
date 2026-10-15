@@ -1,0 +1,14 @@
+id = "weight_plate_bench_dip"
+names = { en = "Weighted bench dip", ru = "Обратные отжимания от скамьи с отягощением" }
+kind = "bodyweight"
+level = "advanced"
+pattern = "vertical_push"
+equipment = ["bench", "weight_plate"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit on the edge of a stable bench, hands beside the hips, a plate resting on the lap. Slide off the edge with the legs forward, bend the elbows to about 90 degrees, then press up. Start with a light plate.", ru = "Сядьте на край устойчивой скамьи, ладони рядом с бёдрами, блин лежит на бёдрах. Сдвиньтесь с края, ноги вперёд, согните локти примерно до 90 градусов, затем выжмитесь вверх. Начните с лёгкого блина." }
+load_step_kg = 2.5

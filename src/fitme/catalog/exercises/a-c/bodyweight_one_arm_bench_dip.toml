@@ -1,0 +1,14 @@
+id = "bodyweight_one_arm_bench_dip"
+names = { en = "One-arm bench dip", ru = "Обратные отжимания от скамьи на одной руке" }
+kind = "bodyweight"
+level = "advanced"
+pattern = "vertical_push"
+equipment = ["bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Sit at the edge of a stable bench with one hand beside the hip, legs extended with heels on the floor. Lower the body by bending the elbow, keeping the back close to the bench, then press up. Switch sides.", ru = "Сядьте на край устойчивой скамьи, одна ладонь рядом с бедром, ноги вытянуты, пятки на полу. Опуститесь, сгибая локоть, спина близко к скамье, затем выжмитесь вверх. Смените руку." }
+load_step_kg = 1.0

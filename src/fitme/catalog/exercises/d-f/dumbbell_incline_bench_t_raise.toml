@@ -1,0 +1,12 @@
+id = "dumbbell_incline_bench_t_raise"
+names = { en = "Incline bench dumbbell T-raise", ru = "Т-разведение гантелей на наклонной скамье" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit on a bench set to about 45 degrees and lean forward so the dumbbells hang straight down, palms facing each other. With nearly straight arms, raise the dumbbells out to the sides to shoulder line, then lower slowly. Keep your neck in line with your spine.", ru = "Сядьте на скамью с наклоном около 45 градусов и подайтесь вперёд, гантели свисают вниз, ладони друг к другу. Почти прямыми руками поднимите гантели в стороны до линии плеч, затем медленно опустите. Шея остаётся продолжением позвоночника." }

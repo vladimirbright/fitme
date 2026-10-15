@@ -1,0 +1,13 @@
+id = "dip_bars_triceps_dip"
+names = { en = "Parallel bar triceps dip", ru = "Отжимания на брусьях на трицепс" }
+kind = "bodyweight"
+pattern = "vertical_push"
+equipment = ["dip_bars"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Support yourself on parallel bars with straight arms and the body upright. Bend the elbows, keeping them close, until the upper arms are about parallel to the floor, then press back up.", ru = "Обопритесь на брусья на прямых руках, корпус вертикально. Сгибайте локти, держа их ближе к телу, пока плечи не станут примерно параллельны полу, затем выжмитесь вверх." }
+load_step_kg = 1.0

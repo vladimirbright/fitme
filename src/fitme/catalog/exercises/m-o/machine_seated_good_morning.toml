@@ -1,0 +1,13 @@
+id = "machine_seated_good_morning"
+names = { en = "Machine seated good morning", ru = "Наклоны сидя в рычажном тренажёре" }
+kind = "compound"
+pattern = "hinge"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit with the pad on the upper back and feet on the footrests. Keeping the back flat, hinge forward from the hips to a comfortable depth, then return upright. Start light.", ru = "Сядьте, валик на верхней части спины, стопы на упорах. Держа спину ровной, наклонитесь вперёд от бёдер на комфортную глубину и вернитесь. Начинайте с лёгкого веса." }
+load_step_kg = 2.5

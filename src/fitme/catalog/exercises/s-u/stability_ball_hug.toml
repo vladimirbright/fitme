@@ -1,0 +1,11 @@
+id = "stability_ball_hug"
+names = { en = "Stability ball hug", ru = "Объятие фитбола" }
+kind = "mobility"
+pattern = "mobility"
+equipment = ["stability_ball"]
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "shoulder", "knee"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "knee_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Kneel behind the ball and wrap your arms around it, chest resting on top. Let the upper back round gently over the ball and breathe slowly for 20-30 seconds. Keep the knees on a soft surface and come up slowly.", ru = "Встаньте на колени за фитболом и обхватите его руками, грудь лежит на мяче. Мягко округлите верх спины над мячом и спокойно дышите 20-30 секунд. Колени на мягкой поверхности, поднимайтесь медленно." }

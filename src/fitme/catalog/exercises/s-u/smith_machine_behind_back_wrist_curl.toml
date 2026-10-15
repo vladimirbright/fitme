@@ -1,0 +1,12 @@
+id = "smith_machine_behind_back_wrist_curl"
+names = { en = "Smith machine behind-the-back wrist curl", ru = "Сгибания запястий за спиной с грифом машины Смита" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["smith_machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["elbow_wrist", "shoulder"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set the bar at hip height and stand with your back to it, holding the bar behind you shoulder-width apart, arms straight down. Curl the wrists to lift the bar slightly, pause, then lower slowly. Keep the elbows close and the load light.", ru = "Установите гриф на уровне бёдер и встаньте к нему спиной, возьмите гриф за спиной хватом на ширине плеч, руки опущены. Согните запястья, слегка поднимая гриф, задержитесь и медленно опустите. Локти близко к телу, вес небольшой." }

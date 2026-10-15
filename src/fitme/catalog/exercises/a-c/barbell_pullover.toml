@@ -1,0 +1,13 @@
+id = "barbell_pullover"
+names = { en = "Barbell pullover", ru = "Пуловер со штангой" }
+kind = "isolation"
+pattern = "accessory"
+level = "advanced"
+equipment = ["barbell", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Lie lengthwise on a bench and hold the bar above the chest with straight arms. Lower it behind the head in an arc within a comfortable range, then bring it back. Keep the load light and the bar away from the face.", ru = "Лягте вдоль скамьи, штанга над грудью на прямых руках. Опустите её по дуге за голову в комфортной амплитуде и верните. Вес лёгкий, гриф вдали от лица." }

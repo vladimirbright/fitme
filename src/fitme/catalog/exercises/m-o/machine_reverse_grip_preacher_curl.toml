@@ -1,0 +1,13 @@
+id = "machine_reverse_grip_preacher_curl"
+names = { en = "Machine reverse-grip preacher curl", ru = "Сгибания в тренажёре Скотта обратным хватом" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Adjust the seat so the upper arms rest on the pad. Hold the handles overhand with straight wrists. Curl toward the shoulders, then lower under control. Use a light load.", ru = "Отрегулируйте сиденье так, чтобы руки выше локтей лежали на подушке. Возьмитесь за рукояти прямым хватом, запястья прямые. Согните руки к плечам, затем подконтрольно опустите. Вес лёгкий." }
+load_step_kg = 1.0

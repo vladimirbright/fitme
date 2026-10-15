@@ -1,0 +1,14 @@
+id = "barbell_single_leg_deadlift"
+names = { en = "Barbell single-leg deadlift", ru = "Становая тяга на одной ноге со штангой" }
+kind = "compound"
+pattern = "hinge"
+level = "advanced"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip", "knee", "ankle"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "knee_injury_current", "ankle_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Hold the bar in front of the thighs and stand on one leg with a soft knee. Hinge at the hip while the other leg extends back, bar close to the leg. Return by driving the hip forward. Use light loads and a clear floor.", ru = "Держите штангу перед бёдрами и встаньте на одну ногу с мягким коленом. Наклонитесь от бедра, другая нога уходит назад, штанга близко к ноге. Вернитесь, выводя таз вперёд. Вес лёгкий, вокруг свободное место." }
+load_step_kg = 2.5

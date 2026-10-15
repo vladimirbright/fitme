@@ -1,0 +1,13 @@
+id = "ez_bar_seated_curl"
+names = { en = "EZ-bar seated curl", ru = "Сгибания рук с EZ-грифом сидя" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["ez_bar", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Sit on the end of a bench, feet flat, the EZ-bar held underhand and resting on the thighs. Keep the elbows by your sides and curl the bar toward your shoulders. Lower it back to the thighs under control without leaning back.", ru = "Сядьте на край скамьи, стопы на полу, EZ-гриф в обратном хвате лежит на бёдрах. Локти у корпуса, поднимите гриф к плечам. Подконтрольно опустите его обратно на бёдра, не отклоняясь назад." }
+load_step_kg = 1.0

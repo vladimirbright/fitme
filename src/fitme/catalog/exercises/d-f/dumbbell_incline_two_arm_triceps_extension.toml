@@ -1,0 +1,12 @@
+id = "dumbbell_incline_two_arm_triceps_extension"
+names = { en = "Incline two-arm dumbbell triceps extension", ru = "Разгибания рук с гантелями лёжа на наклонной скамье" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie back on an incline bench with the arms straight out at a right angle to your torso, dumbbells in hand, palms facing each other. Bend the elbows to lower the weights toward the sides of your head, then extend. Keep the upper arms still and the weight light.", ru = "Лягте на наклонную скамью, руки с гантелями вытянуты под прямым углом к корпусу, ладони смотрят друг на друга. Согните локти, опуская гантели к бокам головы, затем разогните. Плечи неподвижны, вес лёгкий." }

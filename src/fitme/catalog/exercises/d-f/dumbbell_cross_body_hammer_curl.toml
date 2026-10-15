@@ -1,0 +1,13 @@
+id = "dumbbell_cross_body_hammer_curl"
+names = { en = "Dumbbell cross-body hammer curl", ru = "Молотковые сгибания гантелей поперёк корпуса" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand holding a dumbbell in each hand, palms facing inward. Curl one dumbbell diagonally across your body toward the opposite shoulder, lower it under control, then alternate. Keep your upper arm still.", ru = "Встаньте с гантелями, ладони внутрь. Согните руку, ведя гантель по диагонали к противоположному плечу, подконтрольно опустите и чередуйте руки. Плечо неподвижно." }
+load_step_kg = 1.0

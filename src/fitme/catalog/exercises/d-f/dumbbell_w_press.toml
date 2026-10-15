@@ -1,0 +1,12 @@
+id = "dumbbell_w_press"
+names = { en = "Dumbbell W press", ru = "W-жим гантелей сидя" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit on a bench with the backrest upright, dumbbells held low in front of your shoulders with elbows out and slightly forward so your arms form a W. Press the dumbbells up and slightly together until your arms are extended, then lower them back to the W position under control.", ru = "Сядьте на скамью с вертикальной спинкой, гантели у плеч, локти разведены в стороны и чуть вперёд так, что руки образуют букву W. Выжмите гантели вверх и немного друг к другу до выпрямления рук, затем под контролем опустите в исходное положение W." }

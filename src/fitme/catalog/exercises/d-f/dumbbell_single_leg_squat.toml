@@ -1,0 +1,14 @@
+id = "dumbbell_single_leg_squat"
+names = { en = "Dumbbell single-leg squat", ru = "Приседания на одной ноге с гантелями" }
+kind = "compound"
+pattern = "squat"
+level = "advanced"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "ankle", "lower_back"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Hold a dumbbell in each hand and stand on one leg with the other held in front. Sit back and down with the chest up to a depth you control, then stand on the same leg. Keep a wall or rack within reach and use a light load.", ru = "Гантели в обеих руках, встаньте на одну ногу, вторая вытянута вперёд. Присядьте назад и вниз, грудь поднята, на глубину, которую контролируете, и встаньте на той же ноге. Рядом должна быть стена или стойка; вес лёгкий." }
+load_step_kg = 1.0

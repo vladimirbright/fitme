@@ -1,0 +1,13 @@
+id = "hanging_twisting_straight_leg_raise"
+names = { en = "Hanging twisting leg raise", ru = "Подъём прямых ног в висе с поворотом" }
+kind = "isolation"
+pattern = "core"
+equipment = ["pull_up_bar"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]
+loads_areas = ["lower_back", "shoulder", "neck"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+level = "advanced"
+instructions = { en = "Hang from the bar with arms extended. Raise your straight legs and turn them slightly to one side, then lower and alternate sides. Keep the twist small and controlled.", ru = "Повисните на перекладине с прямыми руками. Поднимите прямые ноги, слегка повернув их в сторону, затем опустите и чередуйте стороны. Поворот небольшой и контролируемый." }

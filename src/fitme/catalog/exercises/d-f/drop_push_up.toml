@@ -1,0 +1,12 @@
+id = "drop_push_up"
+names = { en = "Drop push-up", ru = "Отжимания с опусканием на колени" }
+kind = "bodyweight"
+pattern = "horizontal_push"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Start in a high plank. Lower the chest toward the floor under control, then set the knees down and press up from the knees. Return to the plank and repeat. Keep the hips in line with the shoulders.", ru = "Начните с высокой планки. Под контролем опустите грудь к полу, затем поставьте колени на пол и выжмитесь от колен. Вернитесь в планку и повторите. Таз остаётся на одной линии с плечами." }

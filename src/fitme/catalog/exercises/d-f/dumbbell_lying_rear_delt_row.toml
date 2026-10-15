@@ -1,0 +1,13 @@
+id = "dumbbell_lying_rear_delt_row"
+names = { en = "Lying dumbbell rear-delt row", ru = "Тяга гантелей лёжа на заднюю дельту" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie face down on a flat bench, a dumbbell in each hand hanging toward the floor with palms facing in. Pull the elbows up and out to the sides to row the dumbbells toward your ribs, then lower under control. Keep your head neutral and your chest on the bench.", ru = "Лягте животом на ровную скамью, в руках по гантели, они свисают к полу, ладони друг к другу. Подтяните локти вверх и в стороны, ведя гантели к рёбрам, затем опустите под контролем. Голова в нейтральном положении, грудь прижата к скамье." }
+load_step_kg = 1.0

@@ -1,0 +1,13 @@
+id = "cable_overhead_curl"
+names = { en = "Cable overhead curl", ru = "Сгибание рук с верхнего блока к голове" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Stand facing a high pulley and hold a straight bar underhand, arms raised up and forward toward the pulley. Keep the upper arms still and bend only the elbows to bring the bar toward your forehead, stopping short of your face. Straighten the arms under control.", ru = "Встаньте лицом к верхнему блоку, прямой гриф хватом снизу, руки подняты вверх и вперёд к блоку. Не двигая плечами, сгибайте только локти, подводя гриф ко лбу, но не касаясь лица. Подконтрольно выпрямите руки." }
+load_step_kg = 1.0

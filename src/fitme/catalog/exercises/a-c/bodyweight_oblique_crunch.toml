@@ -1,0 +1,12 @@
+id = "bodyweight_oblique_crunch"
+names = { en = "Oblique crunch", ru = "Боковые скручивания на полу" }
+kind = "bodyweight"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back", "neck"]
+contraindicated_by = ["lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on your back, knees bent, feet flat, hands at your temples or crossed on your chest. Curl your shoulders up and turn your chest toward one knee, then lower slowly. Finish all reps on one side or alternate sides.", ru = "Лягте на спину, колени согнуты, стопы на полу, руки у висков или на груди. Оторвите плечи от пола и разверните грудь к одному колену, затем медленно опуститесь. Делайте повторения на одну сторону или чередуйте." }

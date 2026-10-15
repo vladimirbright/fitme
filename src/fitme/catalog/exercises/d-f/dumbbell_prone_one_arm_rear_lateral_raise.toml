@@ -1,0 +1,12 @@
+id = "dumbbell_prone_one_arm_rear_lateral_raise"
+names = { en = "Dumbbell prone one-arm rear lateral raise", ru = "Мах гантелью в сторону лёжа на животе одной рукой" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie face down on a flat bench with a dumbbell hanging from one hand toward the floor. Keeping the arm nearly straight, lift the dumbbell out to the side to shoulder line, then lower under control. Do all reps, then switch arms.", ru = "Лягте на живот на горизонтальную скамью, гантель в одной руке свисает к полу. Почти прямой рукой поднимите гантель в сторону до линии плеча, затем опустите под контролем. Выполните все повторения, затем смените руку." }

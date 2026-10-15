@@ -1,0 +1,13 @@
+id = "cable_standing_straight_bar_row"
+names = { en = "Cable standing straight-bar row", ru = "Тяга прямой рукояти блока стоя" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Attach a straight bar to a cable at chest height, step back and stand with soft knees. Hold the bar with palms down and pull it to your upper chest, elbows wide. Return slowly and keep the torso still.", ru = "Закрепите прямую рукоять на блоке на уровне груди, отойдите назад, колени слегка согнуты. Хват сверху, тяните рукоять к верху груди, локти разведены. Медленно возвращайтесь, корпус неподвижен." }
+load_step_kg = 2.5

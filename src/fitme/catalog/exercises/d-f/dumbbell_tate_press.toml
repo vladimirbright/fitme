@@ -1,0 +1,13 @@
+id = "dumbbell_tate_press"
+names = { en = "Dumbbell Tate press", ru = "Тейт-пресс с гантелями" }
+search = { en = "dumbbell tate press", ru = "тейт пресс гантели" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie on a bench with a dumbbell in each hand above your chest, palms facing your feet. Keep the upper arms still and bend the elbows out to the sides to lower the dumbbell heads toward your chest, then straighten the arms. Use a light weight.", ru = "Лягте на скамью, в руках гантели над грудью, ладони смотрят к ногам. Плечи неподвижны, согните локти в стороны, опуская гантели к груди, затем выпрямите руки. Берите небольшой вес." }

@@ -1,0 +1,12 @@
+id = "barbell_reverse_curl"
+names = { en = "Barbell reverse curl", ru = "Обратные сгибания рук со штангой" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Stand tall holding the bar overhand, hands about shoulder width, elbows beside the torso. Curl the bar toward the shoulders with straight wrists, then lower under control. Keep the load light and avoid swinging.", ru = "Встаньте ровно, держите гриф сверху на ширине плеч, локти у корпуса. Поднимайте гриф к плечам, кисти прямые, затем опускайте под контролем. Вес лёгкий, без раскачки." }

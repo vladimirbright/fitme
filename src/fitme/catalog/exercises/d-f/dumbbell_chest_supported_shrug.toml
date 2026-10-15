@@ -1,0 +1,13 @@
+id = "dumbbell_chest_supported_shrug"
+names = { en = "Chest-supported dumbbell shrug", ru = "Шраги с гантелями лёжа грудью на скамье" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "neck", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "neck_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie chest-down on an incline bench, a dumbbell in each hand hanging below. Keeping the arms straight, lift your shoulders toward your ears, pause, then lower under control. Keep your head in line with the spine.", ru = "Лягте грудью на наклонную скамью, в руках по гантели, они свободно свисают. Не сгибая руки, поднимите плечи к ушам, задержитесь, затем опустите под контролем. Голова на одной линии с позвоночником." }
+load_step_kg = 1.0

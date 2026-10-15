@@ -1,0 +1,12 @@
+id = "band_ab_wheel_rollout"
+names = { en = "Band-assisted ab wheel rollout", ru = "Ролик для пресса с лентой" }
+kind = "bodyweight"
+pattern = "core"
+equipment = ["ab_wheel", "resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Anchor a band to something heavy behind you and loop it around the wheel handle. Kneel on a pad with the wheel under your shoulders and roll forward only as far as you can control, then pull back to your knees. Keep your ribs down and your back flat.", ru = "Закрепите ленту за тяжёлую опору позади и пропустите её через ручку ролика. Встаньте на колени на мат, ролик под плечами; выкатывайтесь вперёд лишь настолько, насколько контролируете, затем вернитесь к коленям. Рёбра опущены, спина ровная." }

@@ -1,0 +1,12 @@
+id = "bodyweight_prone_back_extension"
+names = { en = "Prone back extension", ru = "Подъём корпуса лёжа на животе" }
+search = { en = "prone back extension floor", ru = "подъём корпуса лёжа на животе" }
+kind = "bodyweight"
+pattern = "accessory"
+equipment = []
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back"]
+contraindicated_by = ["lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Lie face down with the legs straight and arms by your sides. Squeeze the glutes and lift the chest a short way off the floor, keeping the neck long. Pause briefly and lower slowly.", ru = "Лягте на живот, ноги прямые, руки вдоль тела. Напрягите ягодицы и поднимите грудь немного над полом, шея остаётся в одной линии с телом. Ненадолго задержитесь и медленно опуститесь." }

@@ -1,0 +1,12 @@
+id = "dumbbell_stability_ball_pullover"
+names = { en = "Dumbbell pullover on stability ball", ru = "Пуловер с гантелью на фитболе" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "stability_ball"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie back on a stability ball with your head and upper back supported, feet wide, hips level. Hold one dumbbell with both hands above your chest, elbows slightly bent. Lower it in an arc behind your head only as far as is comfortable, then bring it back over your chest. Use a light weight.", ru = "Лягте на фитбол: голова и верх спины опираются на мяч, ноги широко, таз на уровне корпуса. Одну гантель держите двумя руками над грудью, локти слегка согнуты. Опустите её по дуге за голову в комфортной амплитуде и верните над грудью. Вес лёгкий." }

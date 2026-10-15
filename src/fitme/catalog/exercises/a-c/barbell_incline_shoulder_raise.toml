@@ -1,0 +1,13 @@
+id = "barbell_incline_shoulder_raise"
+names = { en = "Barbell incline shoulder raise", ru = "Подъём плеч со штангой на наклонной скамье" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["barbell", "rack", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Lie back on an incline bench with a light bar held over your chest on straight arms, taken from a rack. Without bending the elbows, push the bar a little higher by moving the shoulder blades forward, then lower them back. Keep the range small and use a light weight. Set the rack's safety arms below the bar.", ru = "Лягте на наклонную скамью, лёгкая штанга со стойки удерживается над грудью на прямых руках. Не сгибая локти, подтолкните штангу чуть выше, выводя лопатки вперёд, затем вернитесь. Амплитуда небольшая, вес лёгкий. Установите страховочные упоры ниже грифа." }
+search = { en = "barbell incline shoulder raise serratus", ru = "протракция лопаток со штангой на наклонной скамье" }

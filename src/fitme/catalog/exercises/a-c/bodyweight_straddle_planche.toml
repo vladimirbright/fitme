@@ -1,0 +1,13 @@
+id = "bodyweight_straddle_planche"
+names = { en = "Straddle planche", ru = "Планш с разведёнными ногами" }
+kind = "bodyweight"
+level = "advanced"
+pattern = "horizontal_push"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "From a plank with feet wide, lean your shoulders well past your hands and lift your feet off the floor with legs apart. Hold with locked arms and a tight body, then lower. Work over a mat and stop before your wrists lose control.", ru = "Из упора лёжа с широко расставленными ногами сместите плечи далеко за кисти и оторвите ноги от пола. Удерживайте положение на прямых руках с напряжённым телом, затем опуститесь. Работайте над матом и остановитесь, пока кисти держат." }

@@ -1,0 +1,13 @@
+id = "cable_reverse_preacher_curl"
+names = { en = "Cable reverse preacher curl", ru = "Обратное сгибание рук на скамье Скотта на блоке" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Sit or stand at a preacher pad (or a bench set steeply upright) so the backs of your upper arms rest on it. Hold the bar overhand with both upper arms resting on the pad. Curl toward your shoulders with straight wrists, then lower slowly. Use a light weight.", ru = "Займите место у скамьи Скотта (или круто поставленной скамьи) так, чтобы задняя часть плеч лежала на упоре. Держите гриф хватом сверху, оба плеча лежат на упоре. Согните руки к плечам, запястья прямые, затем медленно опустите. Вес лёгкий." }
+load_step_kg = 1.0

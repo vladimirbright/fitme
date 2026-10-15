@@ -1,0 +1,12 @@
+id = "machine_t_bar_row"
+names = { en = "Machine T-bar row", ru = "Тяга Т-грифа в тренажёре" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["machine"]
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the seat and foot plate, press the chest to the pad and take the T-bar handles with an overhand grip. Pull toward the torso, squeeze the shoulder blades together, then release slowly.", ru = "Настройте сиденье и упор для ног, прижмите грудь к подушке и возьмите рукояти Т-грифа хватом сверху. Тяните к корпусу, сведите лопатки, затем медленно отпускайте." }
+load_step_kg = 2.5

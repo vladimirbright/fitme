@@ -1,0 +1,13 @@
+id = "cable_incline_fly"
+names = { en = "Cable incline fly", ru = "Сведение рук в кроссовере на наклонной скамье" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set the handles on the low pulleys and the bench to a modest incline. Sit back with a handle in each hand and arms extended in front of you. With slightly bent elbows, open the arms out to the sides in an arc and bring them back together. Use a light weight.", ru = "Установите рукояти на нижние блоки, скамью с небольшим наклоном. Сядьте, рукояти в руках, руки вытянуты перед собой. С чуть согнутыми локтями разведите руки дугой в стороны и сведите обратно. Вес лёгкий." }
+load_step_kg = 1.0

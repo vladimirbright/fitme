@@ -1,0 +1,12 @@
+id = "dumbbell_forward_lunge_triceps_extension"
+names = { en = "Dumbbell forward lunge with overhead triceps extension", ru = "Выпады вперёд с разгибанием рук с гантелями над головой" }
+kind = "compound"
+pattern = "squat"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "ankle", "lower_back", "shoulder", "elbow_wrist"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current", "lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand with light dumbbells held overhead and step into a forward lunge. Hold the lunge steady, bend the elbows to lower the weights behind your head and extend them again, then push back to standing. Alternate legs and keep the ribs down.", ru = "Встаньте с лёгкими гантелями над головой и сделайте выпад вперёд. Зафиксируйте положение, согните локти, опуская гантели за голову, и снова разогните, затем оттолкнитесь и вернитесь в стойку. Чередуйте ноги, рёбра опущены." }

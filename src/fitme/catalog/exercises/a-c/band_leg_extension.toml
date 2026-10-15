@@ -1,0 +1,13 @@
+id = "band_leg_extension"
+names = { en = "Band leg extension", ru = "Разгибание ноги с эспандером" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee"]
+contraindicated_by = ["knee_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Sit on a sturdy chair with the band anchored low behind it and looped around one ankle. Straighten the knee against the band, pause, then bend it slowly. Keep the thigh on the seat and switch legs.", ru = "Сядьте на устойчивый стул, эспандер закреплён низко позади него, петля на лодыжке. Выпрямите колено против сопротивления ленты, задержитесь и медленно согните. Бедро прижато к сиденью; смените ногу." }
+load_step_kg = 1.0

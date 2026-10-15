@@ -1,0 +1,12 @@
+id = "barbell_prone_incline_curl"
+names = { en = "Barbell prone incline curl", ru = "Сгибания рук со штангой лёжа на наклонной скамье лицом вниз" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["barbell", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Lie face down on an incline bench with the chest on the pad, arms hanging, underhand grip about shoulder width. Curl the bar up without lifting the chest, then lower until the arms are straight. Keep the head neutral.", ru = "Лягте лицом вниз на наклонную скамью, грудь на спинке, руки свисают, хват снизу примерно на ширине плеч. Согните руки, не отрывая грудь, затем опустите до прямых рук. Голова в нейтральном положении." }

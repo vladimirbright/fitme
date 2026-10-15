@@ -1,0 +1,13 @@
+id = "bodyweight_jump_squat"
+names = { en = "Jump squat", ru = "Приседания с выпрыгиванием" }
+kind = "bodyweight"
+pattern = "squat"
+level = "advanced"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["knee", "ankle", "hip"]
+contraindicated_by = ["knee_injury_current", "ankle_injury_current", "hip_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Feet shoulder-width apart. Squat down, then jump up, extending hips, knees and ankles. Land softly on the balls of the feet with bent knees and go straight into the next squat. Stop the set when landings get heavy.", ru = "Ноги на ширине плеч. Присядьте и выпрыгните вверх, полностью разгибая бёдра, колени и голеностоп. Приземляйтесь мягко на переднюю часть стопы с согнутыми коленями и сразу переходите к следующему приседу. Заканчивайте подход, когда приземления становятся тяжёлыми." }

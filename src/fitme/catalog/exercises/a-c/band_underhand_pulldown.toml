@@ -1,0 +1,13 @@
+id = "band_underhand_pulldown"
+names = { en = "Band underhand pulldown", ru = "Тяга эспандера сверху обратным хватом" }
+kind = "compound"
+pattern = "vertical_pull"
+equipment = ["resistance_bands", "pull_up_bar"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "calibration" }
+instructions = { en = "Anchor a band above head height and step back to take up tension. Hold it palms up, a little wider than the shoulders, and pull to the chest leading with the elbows. Return slowly.", ru = "Закрепите эспандер выше головы и отойдите для натяжения. Хват снизу чуть шире плеч, тяните к груди, ведя локтями. Медленно возвращайте." }
+load_step_kg = 1.0

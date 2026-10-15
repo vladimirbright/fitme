@@ -1,0 +1,12 @@
+id = "dumbbell_incline_one_arm_hammer_press"
+names = { en = "Incline one-arm dumbbell hammer press", ru = "Жим гантели одной рукой нейтральным хватом на наклонной скамье" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["dumbbells", "bench"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit back on an incline bench with one dumbbell at shoulder height, palm facing in. Press up and slightly away from your body, then lower under control. Finish one side before switching.", ru = "Сядьте на наклонную скамью, спина прижата, одна гантель у плеча, ладонь смотрит внутрь. Выжмите вверх и чуть от себя, затем подконтрольно опустите. Выполните все повторения на одну сторону, затем смените руку." }

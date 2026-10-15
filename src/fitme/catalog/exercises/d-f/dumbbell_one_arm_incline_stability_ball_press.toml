@@ -1,0 +1,12 @@
+id = "dumbbell_one_arm_incline_stability_ball_press"
+names = { en = "One-arm incline dumbbell press on stability ball", ru = "Жим одной гантели на фитболе с наклоном корпуса" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["dumbbells", "stability_ball"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie back on a stability ball with your upper back supported and torso angled upward, feet wide. Hold one dumbbell at shoulder height and press it up, then lower it under control. Keep your hips from rotating, and switch arms after the set.", ru = "Лягте на фитбол верхней частью спины, корпус наклонён вверх, ноги широко. Одну гантель держите у плеча: выжмите вверх и подконтрольно опустите. Не позволяйте тазу разворачиваться, после подхода смените руку." }

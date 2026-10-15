@@ -1,0 +1,12 @@
+id = "mobility_reverse_clasped_toe_touch"
+names = { en = "Reverse-clasped toe touch", ru = "Наклон к носкам со сцепленными за спиной руками" }
+kind = "mobility"
+pattern = "mobility"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back", "hip", "shoulder"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "shoulder_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand tall and clasp the hands behind the back. Hinge forward from the hips with soft knees and let the clasped arms rise behind you as far as is comfortable. Roll up slowly and repeat.", ru = "Встаньте прямо и сцепите руки за спиной. Наклонитесь от бёдер, колени мягкие, сцепленные руки поднимаются за спиной, насколько комфортно. Медленно выпрямитесь и повторите." }

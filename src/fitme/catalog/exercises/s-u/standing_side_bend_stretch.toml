@@ -1,0 +1,12 @@
+id = "standing_side_bend_stretch"
+names = { en = "Standing side bend stretch", ru = "Растяжка стоя с наклоном вбок" }
+kind = "mobility"
+pattern = "mobility"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back", "shoulder"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand with feet hip-width apart and one arm reaching overhead. Lean sideways away from that arm, keeping both hips level and the chest facing forward. Hold briefly, return upright, and switch sides.", ru = "Встаньте, ноги на ширине таза, одна рука поднята над головой. Наклонитесь в сторону от этой руки, таз ровный, грудь направлена вперёд. Задержитесь, вернитесь и смените сторону." }

@@ -1,0 +1,13 @@
+id = "cable_rope_lat_pulldown"
+names = { en = "Cable rope lat pulldown", ru = "Тяга верхнего блока канатной рукоятью" }
+kind = "compound"
+pattern = "vertical_pull"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Attach a rope to a high pulley and take it with palms facing each other. Lean back slightly and pull the rope to the upper chest, spreading the ends apart. Return slowly with a steady torso.", ru = "Закрепите канатную рукоять на верхнем блоке, ладони смотрят друг на друга. Слегка отклонитесь и тяните канат к верху груди, разводя концы. Медленно верните, корпус стабилен." }
+load_step_kg = 2.5

@@ -1,0 +1,13 @@
+id = "cable_reverse_grip_seated_row"
+names = { en = "Cable reverse-grip seated row", ru = "Тяга нижнего блока сидя обратным хватом" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit with your feet on the footplates and knees soft, holding the bar with an underhand shoulder-width grip. Keep your chest tall and pull the bar to your lower ribs, elbows close to the body. Return slowly without rounding forward.", ru = "Сядьте, ступни на упорах, колени слегка согнуты, возьмите рукоять хватом снизу на ширине плеч. Грудь раскрыта, тяните рукоять к низу рёбер, локти у корпуса. Медленно возвращайтесь, не округляя спину." }
+load_step_kg = 2.5

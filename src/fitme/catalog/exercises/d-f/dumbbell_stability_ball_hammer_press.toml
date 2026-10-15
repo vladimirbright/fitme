@@ -1,0 +1,12 @@
+id = "dumbbell_stability_ball_hammer_press"
+names = { en = "Dumbbell neutral-grip press on stability ball", ru = "Жим гантелей нейтральным хватом лёжа на фитболе" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["dumbbells", "stability_ball"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "hip"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hip_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Roll down on a stability ball until your head and upper back are supported, hips level, feet wide. Press the dumbbells up with palms facing each other, then lower to chest level. Keep the hips up and use a lighter weight than on a bench.", ru = "Опустите спину на фитбол так, чтобы опора была на голове и верхней части спины, таз на уровне, ноги широко. Выжмите гантели вверх, ладони смотрят друг на друга, затем опустите до уровня груди. Таз не опускайте, вес берите меньше, чем на скамье." }

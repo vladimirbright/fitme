@@ -1,0 +1,12 @@
+id = "smith_machine_wide_grip_bench_press"
+names = { en = "Smith machine wide-grip bench press", ru = "Жим лёжа широким хватом в Смите" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["smith_machine", "bench"]
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Slide the bench under the bar and lie back with feet flat. Take a grip clearly wider than shoulders, unhook and lower the bar to the chest, then press up. Set the safety stops below the lowest bar position.", ru = "Подвиньте скамью под гриф и лягте, стопы на полу. Хват заметно шире плеч, снимите гриф, опустите к груди и выжмите вверх. Ограничители установите ниже нижней точки." }
+load_step_kg = 2.5

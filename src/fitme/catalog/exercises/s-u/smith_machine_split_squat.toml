@@ -1,0 +1,13 @@
+id = "smith_machine_split_squat"
+names = { en = "Smith machine split squat", ru = "Сплит-приседания в тренажёре Смита" }
+kind = "compound"
+pattern = "squat"
+equipment = ["smith_machine", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["knee", "hip", "ankle", "lower_back"]
+contraindicated_by = ["knee_injury_current", "hernia", "hip_injury_current", "ankle_injury_current", "lower_back_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Put the rear foot on a bench behind you, front foot far enough ahead that the knee stays over the foot. Rest the bar across the upper back. Lower straight down, then press through the front heel. Set the safety stops below the lowest point, then switch legs.", ru = "Поставьте заднюю ногу на скамью, передняя достаточно далеко, чтобы колено оставалось над стопой. Гриф на верхней части спины. Опуститесь вертикально вниз и поднимитесь, отталкиваясь передней пяткой. Выставьте ограничители ниже нижней точки, затем смените ногу." }
+load_step_kg = 2.5

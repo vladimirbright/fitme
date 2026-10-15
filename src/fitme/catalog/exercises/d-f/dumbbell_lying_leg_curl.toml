@@ -1,0 +1,13 @@
+id = "dumbbell_lying_leg_curl"
+names = { en = "Dumbbell lying leg curl", ru = "Сгибание ног с гантелью лёжа" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee"]
+contraindicated_by = ["knee_injury_current"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie face down on a bench with the knees at the edge and a light dumbbell held between the feet. Curl the heels toward the glutes without lifting the hips, then lower slowly. Use a very light dumbbell held firmly between the feet and lower it to the floor at the end of the set.", ru = "Лягте лицом вниз на скамью, колени у края, лёгкая гантель зажата между стопами. Согните ноги, подтягивая пятки к ягодицам, таз не отрывайте, затем медленно опустите. Гантель очень лёгкая, крепко зажата стопами; в конце подхода опустите её на пол." }
+load_step_kg = 1.0

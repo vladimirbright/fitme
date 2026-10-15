@@ -1,0 +1,12 @@
+id = "barbell_squat_to_bench"
+names = { en = "Barbell squat to bench", ru = "Приседания со штангой на скамью" }
+kind = "compound"
+pattern = "squat"
+equipment = ["barbell", "rack", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "lower_back", "hip", "neck"]
+contraindicated_by = ["knee_injury_current", "lower_back_injury_current", "hip_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Unrack the bar on the upper back and step back, with a bench behind you at about parallel height. Sit back until you lightly touch the bench, then drive up. Do not drop onto it. Set the safety arms below the lowest point.", ru = "Снимите штангу со стойки на верх спины и отойдите; скамья позади на высоте примерно параллели. Присядьте назад до лёгкого касания скамьи и встаньте, не падая на неё. Установите страховочные упоры ниже нижней точки." }

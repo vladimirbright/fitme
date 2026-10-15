@@ -1,0 +1,13 @@
+id = "cable_concentration_triceps_extension"
+names = { en = "Cable seated concentration triceps extension", ru = "Концентрированное разгибание руки на блоке сидя" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Sit beside the pulley with the handle in one hand and the elbow on the inner knee. Straighten the arm fully with the elbow still, then return slowly. Keep the shoulders level.", ru = "Сядьте у блока, рукоять в одной руке, локоть на внутренней стороне колена. Полностью разогните руку, локоть неподвижен, затем медленно вернитесь. Плечи на одном уровне." }
+load_step_kg = 1.0

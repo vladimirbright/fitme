@@ -1,0 +1,12 @@
+id = "barbell_preacher_curl"
+names = { en = "Barbell preacher curl", ru = "Сгибания рук со штангой на скамье Скотта" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["barbell", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit at the preacher bench with the upper arms flat on the pad and the chest against the support. Take the bar underhand, about shoulder width. Curl up toward the shoulders, then lower until the arms are nearly straight, without dropping the bar at the bottom.", ru = "Сядьте за скамью Скотта, плечи лежат на подушке, грудь у опоры. Возьмите гриф снизу примерно на ширине плеч. Согните руки к плечам, затем опустите почти до прямых рук, не роняя гриф внизу." }

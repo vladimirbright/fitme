@@ -1,0 +1,12 @@
+id = "dumbbell_stability_ball_concentration_curl"
+names = { en = "Dumbbell concentration curl on stability ball", ru = "Концентрированные сгибания с гантелью сидя на фитболе" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "stability_ball"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit on a stability ball with feet wide, a dumbbell in one hand and the elbow resting against the inside of the thigh. Curl toward the shoulder, then lower to a straight arm. Finish one side before switching.", ru = "Сядьте на фитбол, ноги широко, гантель в одной руке, локоть упирается во внутреннюю часть бедра. Согните руку к плечу, затем опустите до выпрямления. Выполните все повторения на одну сторону, затем смените руку." }

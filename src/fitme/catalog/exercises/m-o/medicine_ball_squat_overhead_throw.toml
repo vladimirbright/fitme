@@ -1,0 +1,17 @@
+id = "medicine_ball_squat_overhead_throw"
+names = { en = "Medicine ball squat and wall throw", ru = "Присед с броском медбола в стену" }
+search = { en = "wall ball", ru = "броски мяча в стену" }
+kind = "compound"
+level = "advanced"
+pattern = "conditioning"
+equipment = ["medicine_ball"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["knee", "hip", "shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+# conditioning pattern defaults to non-kg; the ball is a real kg implement, so override explicitly
+kg_loadable = true
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand facing a solid wall with a light ball at the chest. Squat, then stand up quickly and throw the ball up and forward against the wall, catching it as it comes back. Use a ball that is easy to catch and keep clear space around you.", ru = "Встаньте лицом к прочной стене, лёгкий мяч у груди. Присядьте, затем быстро выпрямитесь и бросьте мяч вверх и вперёд в стену, поймайте его на возврате. Берите мяч, который легко ловить, и оставьте вокруг свободное место." }
+load_step_kg = 1.0

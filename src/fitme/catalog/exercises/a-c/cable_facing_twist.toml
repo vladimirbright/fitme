@@ -1,0 +1,13 @@
+id = "cable_facing_twist"
+names = { en = "Cable twist facing the stack", ru = "Повороты лицом к блоку" }
+kind = "isolation"
+pattern = "core"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Stand facing the stack, cable at chest height, handle held in both hands in front of your chest. Rotate your torso to one side, then return slowly against the pull. Keep your hips facing forward. Alternate sides.", ru = "Встаньте лицом к тренажёру, блок на уровне груди, рукоять в обеих руках перед грудью. Поверните корпус в сторону, затем медленно вернитесь, сопротивляясь тяге. Таз смотрит вперёд. Чередуйте стороны." }
+load_step_kg = 1.0

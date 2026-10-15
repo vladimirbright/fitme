@@ -1,0 +1,15 @@
+id = "barbell_frankenstein_squat"
+names = { en = "Barbell Frankenstein squat", ru = "Фронтальный присед «Франкенштейн» со штангой" }
+search = { en = "frankenstein squat", ru = "присед франкенштейн" }
+kind = "compound"
+pattern = "squat"
+level = "advanced"
+equipment = ["barbell", "rack"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "lower_back", "hip", "shoulder", "neck"]
+contraindicated_by = ["knee_injury_current", "lower_back_injury_current", "hernia", "hip_injury_current", "shoulder_injury_current", "neck_injury_current"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Set the bar in the rack at shoulder height and the safety arms just below your lowest squat position. Rest the bar on the front of the shoulders and reach both arms straight forward without holding it. Squat down with the torso upright and elbows high, then stand. Keep the load light; if the bar starts to roll, let it fall forward onto the safety arms.", ru = "Установите штангу на стойке на высоте плеч, страховочные упоры чуть ниже нижней точки приседа. Положите гриф на передние дельты и вытяните обе руки прямо вперёд, не держась за штангу. Присядьте с вертикальным корпусом и поднятыми локтями, затем встаньте. Вес лёгкий; если гриф начинает скатываться, отпустите его вперёд на страховочные упоры." }
+load_step_kg = 2.5

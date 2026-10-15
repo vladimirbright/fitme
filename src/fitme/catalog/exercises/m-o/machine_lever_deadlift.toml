@@ -1,0 +1,14 @@
+id = "machine_lever_deadlift"
+names = { en = "Machine lever deadlift", ru = "Тяга в рычажном тренажёре" }
+search = { en = "lever deadlift machine", ru = "становая тяга в рычажном тренажёре" }
+kind = "compound"
+pattern = "hinge"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["lower_back", "hip", "knee"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "knee_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Stand on the platform between the lever handles, feet hip-width. Bend the knees and hinge to grip the handles with a flat back. Stand up by pushing the floor away, hips and shoulders rising together, then lower under control. Start light.", ru = "Встаньте на платформу между рукоятями рычага, ноги на ширине таза. Согните колени и наклонитесь, возьмитесь за рукояти, спина ровная. Встаньте, отталкиваясь от пола, таз и плечи поднимаются вместе, затем опустите под контролем. Начинайте с лёгкого веса." }
+load_step_kg = 2.5

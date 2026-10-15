@@ -1,0 +1,12 @@
+id = "dumbbell_one_arm_standing_reverse_curl"
+names = { en = "One-arm dumbbell reverse curl", ru = "Обратные сгибания с гантелью одной рукой стоя" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand with a dumbbell in one hand using an overhand grip, arm hanging straight. Curl toward the shoulder with the elbow still and the wrist straight, then lower slowly. Switch arms after the set.", ru = "Встаньте, в одной руке гантель хватом сверху, рука свободно опущена. Согните руку к плечу, локоть неподвижен, запястье ровное, затем медленно опустите. После подхода смените руку." }

@@ -1,0 +1,13 @@
+id = "bodyweight_side_lying_curl"
+names = { en = "Bodyweight side-lying curl", ru = "Сгибания руки лёжа на боку без отягощения" }
+kind = "bodyweight"
+pattern = "accessory"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on your side, head resting on the lower arm. Keep the upper arm against your side and bend the elbow to bring the hand toward the shoulder, then lower slowly. Use a slow tempo and switch sides.", ru = "Лягте на бок, голова на нижней руке. Верхнюю руку прижмите к боку, согните локоть, приближая кисть к плечу, затем медленно опустите. Темп медленный, затем смените сторону." }
+load_step_kg = 1.0

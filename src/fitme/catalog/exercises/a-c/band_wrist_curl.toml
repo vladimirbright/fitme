@@ -1,0 +1,12 @@
+id = "band_wrist_curl"
+names = { en = "Band wrist curl", ru = "Сгибания запястий с лентой" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["resistance_bands", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Sit on a bench, forearms on your thighs, palms up, with the band under both feet and its ends in your hands. Curl the hands up by bending only the wrists, then lower slowly. Use light tension.", ru = "Сядьте на скамью, предплечья на бёдрах, ладони вверх; середина ленты под обеими стопами, концы в руках. Сгибайте кисти вверх, работая только запястьями, и медленно опускайте. Берите лёгкое натяжение." }

@@ -1,0 +1,14 @@
+id = "dumbbell_single_leg_deadlift"
+names = { en = "Dumbbell single-leg deadlift", ru = "Становая тяга на одной ноге с гантелью" }
+kind = "compound"
+pattern = "hinge"
+level = "advanced"
+equipment = ["dumbbells"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip", "ankle"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "ankle_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Hold a dumbbell in one hand and stand on the opposite leg with the knee soft. Hinge forward, sending the free leg straight back, until the dumbbell nears the shin. Return to standing by driving the hips forward. Finish one side, then switch.", ru = "Возьмите гантель в одну руку и встаньте на противоположную ногу, колено слегка согнуто. Наклонитесь вперёд, свободная нога уходит прямо назад, пока гантель не окажется у голени. Вернитесь, выводя таз вперёд. Закончите одну сторону и смените." }
+load_step_kg = 1.0

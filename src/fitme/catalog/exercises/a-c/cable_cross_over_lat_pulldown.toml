@@ -1,0 +1,13 @@
+id = "cable_cross_over_lat_pulldown"
+names = { en = "Cable crossover pulldown", ru = "Тяга верхних блоков с перекрёстом" }
+kind = "compound"
+pattern = "vertical_pull"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set both pulleys high and hold a handle in each hand, arms reaching up and slightly forward. Pull the handles down and across in front of the body, then return under control. Keep the chest up and avoid swinging.", ru = "Установите оба блока вверху, возьмите по рукояти, руки тянутся вверх и чуть вперёд. Опустите рукояти вниз и перед собой с перекрёстом, затем верните под контролем. Грудь поднята, без раскачки." }
+load_step_kg = 2.5

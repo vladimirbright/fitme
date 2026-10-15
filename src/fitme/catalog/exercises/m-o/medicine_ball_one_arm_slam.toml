@@ -1,0 +1,16 @@
+id = "medicine_ball_one_arm_slam"
+names = { en = "One-arm medicine ball slam", ru = "Бросок медбола в пол одной рукой" }
+search = { en = "one arm medicine ball slam", ru = "бросок медбола в пол одной рукой" }
+kind = "cardio"
+level = "advanced"
+pattern = "conditioning"
+equipment = ["medicine_ball"]
+# Conditioning, but loaded with a real medicine ball: its kg matters, so it stays kg-loadable.
+kg_loadable = true
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "lower_back", "elbow_wrist", "hip"]
+contraindicated_by = ["shoulder_injury_current", "lower_back_injury_current", "elbow_wrist_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand with feet shoulder-width apart, a light slam ball in one hand. Raise it overhead with a straight arm, then drive it down to the floor beside your front foot, hinging at the hips. Let it settle and pick it up with a flat back; use a ball made for slams and keep your feet clear of where it lands. Switch arms halfway.", ru = "Встаньте, ноги на ширине плеч, лёгкий слэмбол в одной руке. Поднимите его над головой на прямой руке, затем бросьте в пол рядом со стопой, наклоняясь в тазобедренных суставах. Дождитесь, пока мяч остановится, и поднимите его с прямой спиной; используйте мяч для бросков об пол и держите стопы в стороне от места падения. На середине подхода смените руку." }
+load_step_kg = 1.0

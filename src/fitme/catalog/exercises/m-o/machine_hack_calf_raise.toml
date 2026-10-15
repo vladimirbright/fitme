@@ -1,0 +1,13 @@
+id = "machine_hack_calf_raise"
+names = { en = "Hack machine calf raise", ru = "Подъём на носки в гак-машине" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["ankle", "knee", "lower_back"]
+contraindicated_by = ["ankle_injury_current", "knee_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set a light load. Stand with your back to the pad, shoulders under the shoulder pads and the balls of your feet on the low edge of the platform, heels free. Release the safety handles, rise onto your toes, pause, then lower the heels slowly. Lock the safety handles before stepping out.", ru = "Выставьте небольшой вес. Встаньте спиной к упору, плечи под валиками, передняя часть стоп на нижнем краю платформы, пятки свободны. Снимите страховочные рычаги, поднимитесь на носки, задержитесь и медленно опустите пятки. Перед выходом из тренажёра закройте страховочные рычаги." }
+load_step_kg = 1.0

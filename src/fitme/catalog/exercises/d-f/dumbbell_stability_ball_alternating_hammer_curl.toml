@@ -1,0 +1,12 @@
+id = "dumbbell_stability_ball_alternating_hammer_curl"
+names = { en = "Dumbbell seated alternating hammer curl on a stability ball", ru = "Попеременные молотковые сгибания с гантелями сидя на фитболе" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "stability_ball"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit tall on a stability ball, feet flat and wide for balance, a dumbbell in each hand with palms facing your body. Curl one dumbbell toward the shoulder without turning the palm, lower under control, then curl the other. Keep your elbows beside your torso.", ru = "Сядьте ровно на фитбол, стопы на полу на ширине, для устойчивости, в руках гантели, ладони смотрят на корпус. Согните одну руку, поднимая гантель к плечу и не поворачивая кисть, опустите под контролем, затем вторую. Локти у корпуса." }

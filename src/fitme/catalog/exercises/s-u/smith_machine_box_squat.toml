@@ -1,0 +1,13 @@
+id = "smith_machine_box_squat"
+names = { en = "Smith machine squat to bench", ru = "Приседания в тренажёре Смита на скамью" }
+kind = "compound"
+pattern = "squat"
+equipment = ["smith_machine", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["knee", "hip", "lower_back", "neck"]
+contraindicated_by = ["knee_injury_current", "hernia", "hip_injury_current", "lower_back_injury_current", "neck_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Place a bench behind you at a height where your thighs end up about parallel. Set the bar across the upper back, feet slightly forward of the bar line. Sit back until you lightly touch the bench, then stand up. Set the safety stops below the lowest point.", ru = "Поставьте позади скамью такой высоты, чтобы бёдра были примерно параллельны полу. Гриф на верхней части спины, стопы чуть впереди линии грифа. Присядьте назад до лёгкого касания скамьи и встаньте. Выставьте ограничители ниже нижней точки." }
+load_step_kg = 2.5

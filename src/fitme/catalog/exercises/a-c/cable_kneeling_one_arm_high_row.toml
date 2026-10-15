@@ -1,0 +1,13 @@
+id = "cable_kneeling_one_arm_high_row"
+names = { en = "Cable kneeling one-arm high row", ru = "Тяга блока одной рукой стоя на коленях" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the pulley at waist height and kneel facing it, torso upright and hips still. Pull the handle toward your upper chest with the elbow leading, then return slowly. Keep the ribs down and do not lean back. Switch sides after each set.", ru = "Установите блок на уровне пояса и встаньте на колени лицом к нему, корпус прямой, таз неподвижен. Тяните рукоять к верху груди, ведя локтем, затем медленно возвращайте. Рёбра опущены, не отклоняйтесь назад. После подхода смените сторону." }
+load_step_kg = 2.5

@@ -1,0 +1,13 @@
+id = "kettlebell_two_arm_military_press"
+names = { en = "Kettlebell two-arm standing press", ru = "Жим двух гирь стоя" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["kettlebell"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 4.0 }
+instructions = { en = "Stand with feet hip-width apart and a kettlebell at each shoulder. Brace your core and press both kettlebells straight overhead together, then lower them back to the shoulders. Keep your ribs down and your legs still.", ru = "Встаньте, ноги на ширине таза, по гире у каждого плеча. Напрягите корпус и выжмите обе гири вместе строго вверх, затем опустите к плечам. Рёбра опущены, ноги неподвижны." }
+load_step_kg = 2.0

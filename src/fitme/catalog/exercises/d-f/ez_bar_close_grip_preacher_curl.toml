@@ -1,0 +1,12 @@
+id = "ez_bar_close_grip_preacher_curl"
+names = { en = "EZ bar close-grip preacher curl", ru = "Сгибания EZ-грифа узким хватом на скамье Скотта" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["ez_bar", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit at a preacher bench, or at an incline bench with your upper arms on the back pad, an EZ bar held with a close underhand grip. Curl the bar toward your shoulders, then lower until the arms are nearly straight, under control. Use a light bar.", ru = "Сядьте за скамью Скотта (или наклонную скамью, опираясь плечами на спинку), EZ-гриф узким хватом снизу. Согните руки, поднимая гриф к плечам, затем опустите почти до выпрямления под контролем. Берите лёгкий гриф." }

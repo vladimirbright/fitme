@@ -1,0 +1,13 @@
+id = "kettlebell_two_arm_row"
+names = { en = "Two-kettlebell bent-over row", ru = "Тяга двух гирь в наклоне" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["kettlebell"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 4.0 }
+instructions = { en = "Hold a kettlebell in each hand, hinge at the hips with a flat back and let the arms hang. Row both kettlebells toward the lower ribs together, then lower under control. Keep the knees soft and the torso still.", ru = "Возьмите по гире в каждую руку, наклонитесь от таза с ровной спиной, руки свободно висят. Одновременно тяните обе гири к нижним рёбрам, затем опускайте под контролем. Колени слегка согнуты, корпус неподвижен." }
+load_step_kg = 2.0

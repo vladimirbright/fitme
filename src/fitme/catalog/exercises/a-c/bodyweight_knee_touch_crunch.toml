@@ -1,0 +1,12 @@
+id = "bodyweight_knee_touch_crunch"
+names = { en = "Alternating knee touch crunch", ru = "Скручивания с касанием колена" }
+kind = "bodyweight"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back", "neck"]
+contraindicated_by = ["lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on your back, knees bent, feet flat. Lift your shoulder blades and reach one hand across toward the opposite knee, then switch sides. Keep your shoulders off the floor between reaches and your neck relaxed.", ru = "Лягте на спину, колени согнуты, стопы на полу. Оторвите лопатки и потянитесь рукой к противоположному колену, затем смените сторону. Между касаниями плечи остаются над полом, шея расслаблена." }

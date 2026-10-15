@@ -1,0 +1,12 @@
+id = "dumbbell_incline_hammer_curl"
+names = { en = "Incline dumbbell hammer curl", ru = "Молотковые сгибания с гантелями на наклонной скамье" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit back on a bench set to about 45 degrees with a dumbbell hanging in each hand, palms facing each other. Curl both weights up with the palms kept inward and the elbows pointing down, then lower under control.", ru = "Сядьте на скамью с наклоном около 45 градусов, спина прижата, гантели свисают, ладони смотрят друг на друга. Поднимите обе гантели, не меняя положения кистей, локти направлены вниз, затем подконтрольно опустите." }

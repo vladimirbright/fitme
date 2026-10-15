@@ -1,0 +1,12 @@
+id = "machine_back_extension"
+names = { en = "Machine back extension", ru = "Разгибание спины в тренажёре" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["machine"]
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Adjust the seat and pad so your back rests against the pad and your feet are secured. Lean forward a short way under control, then press back to upright. Keep the range modest and the resistance light.", ru = "Отрегулируйте сиденье и упор так, чтобы спина касалась подушки, а стопы были зафиксированы. Под контролем слегка наклонитесь вперёд, затем вернитесь в вертикальное положение. Амплитуда небольшая, сопротивление минимальное." }
+load_step_kg = 2.5

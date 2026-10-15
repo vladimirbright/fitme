@@ -1,0 +1,12 @@
+id = "dumbbell_prone_incline_curl"
+names = { en = "Prone incline dumbbell curl", ru = "Сгибания с гантелями лёжа на наклонной скамье животом вниз" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Set a bench to about 45 degrees and lie face down with the chest against the pad, arms hanging, palms forward. Curl both dumbbells toward your shoulders without lifting the chest, then lower slowly.", ru = "Установите скамью под 45 градусов и лягте животом вниз, грудь на спинке, руки свисают, ладони смотрят вперёд. Поднимите обе гантели к плечам, не отрывая грудь, затем медленно опустите." }

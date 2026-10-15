@@ -1,0 +1,13 @@
+id = "barbell_upright_row"
+names = { en = "Barbell upright row", ru = "Тяга штанги к подбородку" }
+kind = "compound"
+pattern = "vertical_pull"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "neck", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Stand holding a barbell in front of your thighs, overhand grip at about shoulder width. Pull it up along your body to about lower-chest height, elbows leading and staying below shoulder height, then lower under control. Use a light weight and a comfortable range.", ru = "Встаньте, держа штангу перед бёдрами хватом сверху примерно на ширине плеч. Тяните её вдоль тела примерно до нижней части груди, локти ведут движение и остаются ниже уровня плеч, затем опустите под контролем. Вес лёгкий, амплитуда комфортная." }
+load_step_kg = 2.5

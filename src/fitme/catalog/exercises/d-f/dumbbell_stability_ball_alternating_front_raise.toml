@@ -1,0 +1,13 @@
+id = "dumbbell_stability_ball_alternating_front_raise"
+names = { en = "Seated stability-ball alternating dumbbell raise", ru = "Попеременные подъёмы гантелей сидя на фитболе" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "stability_ball"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit tall on a stability ball, feet flat and wide, a light dumbbell in each hand at your sides. Raise one arm forward to shoulder height with a slight elbow bend, then lower slowly and switch. Keep the core braced and the ball steady.", ru = "Сядьте прямо на фитбол, стопы на полу на ширине, в руках по лёгкой гантели вдоль корпуса. Поднимите одну руку вперёд до уровня плеча со слегка согнутым локтем, затем медленно опустите и смените руку. Корпус напряжён, фитбол неподвижен." }
+load_step_kg = 1.0

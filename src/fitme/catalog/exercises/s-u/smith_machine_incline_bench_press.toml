@@ -1,0 +1,12 @@
+id = "smith_machine_incline_bench_press"
+names = { en = "Smith machine incline bench press", ru = "Жим на наклонной скамье в Смите" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["smith_machine", "bench"]
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set a bench at a modest incline under the bar and lie back with feet flat. Take a grip slightly wider than shoulders, unhook and lower the bar to the upper chest, then press up. Set the safety stops below the lowest bar position.", ru = "Установите скамью с небольшим наклоном под гриф, лягте, стопы на полу. Хват чуть шире плеч, снимите гриф, опустите к верху груди и выжмите вверх. Ограничители установите ниже нижней точки." }
+load_step_kg = 2.5

@@ -1,0 +1,12 @@
+id = "dumbbell_lying_wide_curl"
+names = { en = "Lying wide-grip dumbbell curl", ru = "Сгибания с гантелями лёжа на скамье широким хватом" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie on a flat bench with the arms out slightly wider than the shoulders and a dumbbell in each hand, palms up. Curl the weights up in that wide path, pause, then lower slowly. Use a lighter weight than for the standard lying curl.", ru = "Лягте на горизонтальную скамью, руки чуть шире плеч, в руках гантели, ладони вверх. Поднимайте гантели по такой широкой траектории, задержитесь и медленно опустите. Вес берите меньше, чем для обычного сгибания лёжа." }

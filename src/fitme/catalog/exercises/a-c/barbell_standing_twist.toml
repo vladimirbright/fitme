@@ -1,0 +1,13 @@
+id = "barbell_standing_twist"
+names = { en = "Barbell standing twist", ru = "Повороты стоя со штангой" }
+kind = "isolation"
+pattern = "core"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "shoulder"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Stand with a light bar held in front of your chest, elbows bent. Rotate your torso to one side, then the other, pivoting on your feet. Keep the bar in front, never behind your neck. Use a light load.", ru = "Встаньте, лёгкий гриф удерживайте перед грудью, локти согнуты. Поворачивайте корпус в одну сторону, затем в другую, разворачиваясь на стопах. Гриф впереди, не за шеей. Берите лёгкий вес." }
+load_step_kg = 2.5

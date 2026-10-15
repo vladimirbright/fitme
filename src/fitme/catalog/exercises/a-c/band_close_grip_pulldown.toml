@@ -1,0 +1,13 @@
+id = "band_close_grip_pulldown"
+names = { en = "Band close-grip pulldown", ru = "Тяга эспандера сверху узким хватом" }
+kind = "compound"
+pattern = "vertical_pull"
+equipment = ["resistance_bands", "pull_up_bar"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "calibration" }
+instructions = { en = "Anchor a band high on a pull-up bar and step back to take up tension. Hold it with an underhand shoulder-width grip and pull toward the chest, then return slowly. Keep the back straight.", ru = "Закрепите эспандер вверху на перекладине и отойдите, чтобы создать натяжение. Хват снизу на ширине плеч, тяните к груди и медленно возвращайте. Спина прямая." }
+load_step_kg = 1.0

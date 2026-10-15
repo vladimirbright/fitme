@@ -1,0 +1,13 @@
+id = "band_one_arm_twisting_seated_row"
+names = { en = "Band one-arm twisting seated row", ru = "Тяга эспандера сидя одной рукой с поворотом" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["resistance_bands", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "calibration" }
+instructions = { en = "Sit tall on a bench with a band anchored in front, one hand holding it. Pull the elbow back and turn the torso gently toward the pulling arm, then return slowly. Use a light band and a small rotation.", ru = "Сядьте прямо на скамью, эспандер закреплён спереди, держите его одной рукой. Отведите локоть назад и плавно поверните корпус в сторону тянущей руки, затем медленно верните. Лёгкий эспандер, небольшой поворот." }
+load_step_kg = 1.0

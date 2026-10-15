@@ -1,0 +1,13 @@
+id = "dumbbell_reverse_grip_bent_over_row"
+names = { en = "Dumbbell reverse-grip bent-over row", ru = "Тяга гантелей в наклоне обратным хватом" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand with knees soft and hinge forward with a flat back, a dumbbell in each hand with palms facing forward. Row the dumbbells toward your lower ribs, elbows close, then lower under control. Keep the torso still.", ru = "Встаньте, колени слегка согнуты, наклонитесь вперёд с прямой спиной, в руках по гантели, ладони смотрят вперёд. Тяните гантели к низу рёбер, локти близко, затем опускайте под контролем. Корпус неподвижен." }
+load_step_kg = 1.0

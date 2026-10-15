@@ -1,0 +1,13 @@
+id = "cable_reverse_wrist_curl"
+names = { en = "Cable reverse wrist curl", ru = "Обратные сгибания запястий в кроссовере" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set a low pulley with a straight bar and sit on a bench facing it, forearms on your thighs, palms down. Raise the backs of your hands by bending only the wrists, then lower slowly. Keep the load light.", ru = "Установите прямую рукоять на нижний блок и сядьте на скамью лицом к нему, предплечья на бёдрах, ладони вниз. Поднимайте тыльную сторону кистей, сгибая только запястья, и медленно опускайте. Вес берите небольшой." }
+load_step_kg = 1.0

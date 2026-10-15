@@ -1,0 +1,13 @@
+id = "kettlebell_lunge_pass_through"
+names = { en = "Kettlebell lunge with pass-through", ru = "Выпады с передачей гири под ногой" }
+kind = "compound"
+pattern = "squat"
+equipment = ["kettlebell"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "ankle", "lower_back"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 4.0 }
+instructions = { en = "Hold the kettlebell at chest level. Step forward into a lunge and pass the bell under the front thigh from one hand to the other, then push back to standing. Alternate legs. Keep the torso upright and use a light bell.", ru = "Держите гирю у груди. Сделайте шаг вперёд в выпад и передайте гирю под передним бедром из руки в руку, затем оттолкнитесь и вернитесь в стойку. Чередуйте ноги. Корпус прямой, вес гири небольшой." }
+load_step_kg = 2.0

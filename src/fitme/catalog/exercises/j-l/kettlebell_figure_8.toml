@@ -1,0 +1,13 @@
+id = "kettlebell_figure_8"
+names = { en = "Kettlebell figure 8", ru = "Восьмёрка с гирей" }
+kind = "compound"
+pattern = "core"
+equipment = ["kettlebell"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip", "shoulder"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "shoulder_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 4.0 }
+instructions = { en = "Stand wider than shoulders and hinge forward with a flat back. Pass the kettlebell between your legs from hand to hand in a figure-8 path at a steady pace. Keep your chest up and your back flat.", ru = "Встаньте шире плеч и наклонитесь с ровной спиной. Передавайте гирю из руки в руку между ног по траектории восьмёрки в ровном темпе. Грудь вперёд, спина прямая." }
+load_step_kg = 2.0

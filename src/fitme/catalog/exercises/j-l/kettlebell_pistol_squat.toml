@@ -1,0 +1,14 @@
+id = "kettlebell_pistol_squat"
+names = { en = "Kettlebell pistol squat", ru = "Пистолет с гирей" }
+kind = "compound"
+pattern = "squat"
+level = "advanced"
+equipment = ["kettlebell"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "ankle", "lower_back"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 4.0 }
+instructions = { en = "Hold the kettlebell at the chest with both hands. Stand on one leg with the other extended forward. Sit down on the standing leg only as far as you can control, then stand back up. Work next to a wall or rack you can grab, and switch legs.", ru = "Держите гирю у груди двумя руками. Встаньте на одну ногу, вторую вытяните вперёд. Присядьте на опорной ноге только на подконтрольную глубину, затем встаньте. Выполняйте рядом со стеной или стойкой, за которую можно схватиться; смените ногу." }
+load_step_kg = 2.0

@@ -1,0 +1,12 @@
+id = "bodyweight_elbow_to_knee"
+names = { en = "Elbow-to-knee crunch", ru = "Скручивания локоть к колену" }
+kind = "bodyweight"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back", "neck", "hip"]
+contraindicated_by = ["lower_back_injury_current", "neck_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on your back, knees bent, feet flat, hands lightly behind your head. Lift your shoulders and bring one elbow and the opposite knee toward each other, then lower both and switch sides. Move at a steady pace without pulling on your neck.", ru = "Лягте на спину, колени согнуты, стопы на полу, руки легко за головой. Оторвите плечи и сведите локоть с противоположным коленом, затем опуститесь и смените сторону. Двигайтесь ровно, не тяните шею руками." }

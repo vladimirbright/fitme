@@ -1,0 +1,12 @@
+id = "dumbbell_seated_front_raise"
+names = { en = "Seated dumbbell front raise", ru = "Подъём гантелей перед собой сидя" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit tall on a bench with a dumbbell in each hand resting on your thighs. Raise both arms forward to shoulder height with a slight elbow bend, then lower slowly. Keep your back upright.", ru = "Сядьте прямо на скамью, гантели в руках лежат на бёдрах. Поднимите обе руки вперёд до уровня плеч, слегка согнув локти, затем медленно опустите. Спина прямая." }

@@ -1,0 +1,12 @@
+id = "barbell_bench_rollout"
+names = { en = "Barbell rollout from bench", ru = "Выкатывание со штангой со скамьи" }
+kind = "isolation"
+pattern = "core"
+equipment = ["barbell", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Lay a bar with small plates across a flat bench and kneel behind the bench on a pad, hands on the bar shoulder-width apart. Roll the bar forward along the bench only as far as your back stays flat, then pull it back. Stop well before the end of the bench and keep your trunk braced.", ru = "Положите гриф с небольшими блинами поперёк плоской скамьи и встаньте на колени на мат у её края, хват на ширине плеч. Прокатывайте гриф вперёд по скамье, пока спина остаётся ровной, затем верните. Останавливайтесь задолго до конца скамьи, корпус напряжён." }

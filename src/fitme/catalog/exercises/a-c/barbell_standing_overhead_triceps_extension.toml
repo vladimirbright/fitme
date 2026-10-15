@@ -1,0 +1,15 @@
+id = "barbell_standing_overhead_triceps_extension"
+names = { en = "Barbell standing overhead triceps extension", ru = "Французский жим со штангой стоя" }
+kind = "isolation"
+level = "advanced"
+pattern = "accessory"
+equipment = ["barbell", "rack"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder", "lower_back"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+# Calibration; even the empty 20 kg bar is a lot to lower behind the head, hence advanced.
+start = { kind = "calibration" }
+instructions = { en = "Take the bar from a rack at shoulder height, then press it overhead with straight arms and a braced trunk. Bend only the elbows to lower the bar behind your head, then extend. Use a light weight and re-rack it with control.", ru = "Снимите гриф со стойки на уровне плеч и поднимите над головой на прямых руках, корпус напряжён. Сгибайте только локти, опуская гриф за голову, затем разогните. Вес лёгкий, поставьте гриф на стойку подконтрольно." }
+load_step_kg = 2.5

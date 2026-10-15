@@ -1,0 +1,13 @@
+id = "dumbbell_around_the_world"
+names = { en = "Dumbbell standing around the world", ru = "Круговые движения прямыми руками с гантелями" }
+search = { en = "dumbbell around the world shoulder", ru = "around the world с гантелями" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand holding a very light dumbbell in each hand, arms out to the sides at shoulder height. Keeping the arms nearly straight, sweep them forward and up in a slow arc, then return the same way. Use a small range and stop if the weights drift behind your head.", ru = "Встаньте с очень лёгкими гантелями, руки разведены в стороны на уровне плеч. Почти прямыми руками медленно проведите дугу вперёд и вверх, затем вернитесь тем же путём. Амплитуда небольшая; не уводите гантели за голову." }

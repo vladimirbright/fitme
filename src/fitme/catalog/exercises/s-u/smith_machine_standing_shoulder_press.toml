@@ -1,0 +1,13 @@
+id = "smith_machine_standing_shoulder_press"
+names = { en = "Smith machine standing shoulder press", ru = "Жим в машине Смита стоя" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["smith_machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Stand with the bar at shoulder height, overhand grip a little wider than shoulders, feet under the bar and ribs down. Unhook and press straight up until your arms are extended, then lower to the shoulders. Set the safety stops just below the lowest bar position.", ru = "Встаньте, гриф на уровне плеч, хват сверху чуть шире плеч, стопы под грифом, рёбра опущены. Снимите гриф и выжмите строго вверх до выпрямления рук, затем опустите к плечам. Ограничители установите чуть ниже нижней точки грифа." }
+load_step_kg = 2.5

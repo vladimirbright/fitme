@@ -1,0 +1,12 @@
+id = "ez_bar_curl"
+names = { en = "EZ bar curl", ru = "Сгибания рук с EZ-грифом на бицепс" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["ez_bar"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Stand tall holding an EZ bar underhand on the outer bends, about shoulder-width apart, elbows beside your torso. Curl the bar toward your shoulders, then lower under control without swinging.", ru = "Встаньте ровно, EZ-гриф хватом снизу за внешние изгибы, примерно на ширине плеч, локти у корпуса. Согните руки, поднимая гриф к плечам, затем опустите под контролем без раскачки." }

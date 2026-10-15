@@ -1,0 +1,13 @@
+id = "dumbbell_one_arm_bent_over_row"
+names = { en = "Dumbbell one-arm bent-over row", ru = "Тяга гантели одной рукой в наклоне" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["dumbbells"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand with feet shoulder-width, knees soft, and hinge forward with a flat back, a dumbbell in one hand. Row it to your hip, elbow close to the body, then lower under control. Keep the hips and shoulders square and finish one side before switching.", ru = "Встаньте, ноги на ширине плеч, колени слегка согнуты, наклонитесь вперёд с прямой спиной, в одной руке гантель. Подтяните её к бедру, локоть близко к корпусу, затем опустите под контролем. Таз и плечи не разворачивайте, закончите одну сторону и смените." }
+load_step_kg = 1.0

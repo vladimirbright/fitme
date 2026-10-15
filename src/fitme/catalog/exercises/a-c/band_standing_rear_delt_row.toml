@@ -1,0 +1,13 @@
+id = "band_standing_rear_delt_row"
+names = { en = "Band standing rear delt row", ru = "Тяга ленты в наклоне к груди на заднюю дельту" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "shoulder", "elbow_wrist", "hip"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Stand on the middle of a band, hold the handles and hinge forward with a flat back and soft knees. Pull the handles toward your chest with elbows wide, squeeze the shoulder blades, then return under control. Keep the hinge angle fixed.", ru = "Встаньте на середину ленты, возьмите рукоятки и наклонитесь вперёд с ровной спиной и мягкими коленями. Тяните рукоятки к груди, локти в стороны, сведите лопатки, затем верните под контролем. Угол наклона не меняйте." }
+load_step_kg = 1.0

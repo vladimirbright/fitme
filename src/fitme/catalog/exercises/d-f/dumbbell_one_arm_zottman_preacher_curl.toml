@@ -1,0 +1,12 @@
+id = "dumbbell_one_arm_zottman_preacher_curl"
+names = { en = "One-arm Zottman preacher curl", ru = "Сгибания Зоттмана одной рукой на скамье Скотта" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Rest one upper arm on a preacher pad (or an incline bench with your chest against it), palm up. Curl up, turn the palm down at the top, and lower with the overhand grip, then turn back at the bottom. Use a light weight.", ru = "Положите одно плечо на упор скамьи Скотта (или на наклонную скамью, грудью к спинке), ладонь вверх. Согните руку, вверху разверните ладонь вниз и опускайте хватом сверху, внизу вернитесь в исходный хват. Берите лёгкий вес." }

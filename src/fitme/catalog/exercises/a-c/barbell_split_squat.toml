@@ -1,0 +1,12 @@
+id = "barbell_split_squat"
+names = { en = "Barbell split squat", ru = "Приседания в разножке со штангой" }
+kind = "compound"
+pattern = "squat"
+equipment = ["barbell", "rack"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "ankle", "lower_back", "neck"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current", "lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Unrack the bar onto the upper back, step back into clear space and take a long split stance. Lower the back knee toward the floor, torso upright, then press up through the front foot without moving the feet. Switch legs after the set.", ru = "Снимите штангу на верх спины, отойдите на свободное место и займите длинную разножку. Опустите заднее колено к полу, корпус прямой, затем поднимитесь через переднюю ногу, не переставляя стопы. После подхода смените ногу." }

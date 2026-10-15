@@ -1,0 +1,14 @@
+id = "machine_glute_ham_raise"
+names = { en = "Glute-ham raise", ru = "Глют-хэм рейз на тренажёре" }
+search = { en = "glute ham raise", ru = "глют хэм рейз" }
+kind = "bodyweight"
+pattern = "hinge"
+level = "advanced"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["lower_back", "hip", "knee"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "knee_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Adjust the glute-ham bench so the ankles are locked and the hips sit just over the pad. Lower the torso with a straight body, then curl and extend back up using the hamstrings and glutes. Use a controlled range and an assisted or partial version first.", ru = "Отрегулируйте тренажёр так, чтобы лодыжки были зафиксированы, а таз находился чуть над валиком. Опустите корпус прямым телом, затем подтянитесь обратно сгибанием колен и работой задней поверхности бедра и ягодиц. Амплитуда контролируемая, сначала облегчённый вариант." }

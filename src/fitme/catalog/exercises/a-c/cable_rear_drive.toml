@@ -1,0 +1,14 @@
+id = "cable_rear_drive"
+names = { en = "Cable rear drive", ru = "Разгибание руки назад на нижнем блоке" }
+search = { en = "cable rear drive", ru = "разгибание руки назад на нижнем блоке" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Stand upright facing a low pulley, holding the handle in one hand with the elbow bent and tucked at your side. Keep the upper arm still and straighten the arm back past your hip, then return slowly. Switch arms after the set.", ru = "Встаньте прямо лицом к нижнему блоку, рукоять в одной руке, локоть согнут и прижат к боку. Не двигая плечом, разогните руку назад за линию бедра, затем медленно верните. После подхода смените руку." }
+load_step_kg = 1.0

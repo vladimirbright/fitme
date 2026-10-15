@@ -1,0 +1,13 @@
+id = "cable_seated_one_arm_alternating_row"
+names = { en = "Cable seated one-arm alternating row", ru = "Тяга блока сидя поочерёдно одной рукой" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["cable", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit on a bench facing the low cable, feet flat and back tall, a handle in one hand. Pull the handle to your side, elbow close, and return slowly. Alternate arms each rep while keeping the torso still.", ru = "Сядьте на скамью лицом к нижнему блоку, стопы на полу, спина прямая, в одной руке рукоять. Тяните рукоять к боку, локоть близко, затем медленно возвращайте. Меняйте руки каждое повторение, корпус неподвижен." }
+load_step_kg = 2.5

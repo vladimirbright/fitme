@@ -1,0 +1,13 @@
+id = "smith_machine_hip_thrust"
+names = { en = "Smith machine hip thrust", ru = "Ягодичный мостик в Смите" }
+kind = "compound"
+pattern = "hinge"
+equipment = ["smith_machine", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["hip", "lower_back", "knee"]
+contraindicated_by = ["hip_injury_current", "lower_back_injury_current", "knee_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit with your upper back against a bench and the Smith bar over your hips, padded. Plant your feet and lift your hips until your torso and thighs line up. Lower under control and set the safety stops before you start.", ru = "Обопритесь верхней частью спины о скамью, гриф Смита с подушкой лежит на тазу. Поставьте стопы и поднимите таз до линии корпуса и бёдер. Опускайтесь под контролем, заранее выставьте ограничители." }
+load_step_kg = 2.5

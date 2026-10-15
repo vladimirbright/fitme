@@ -1,0 +1,12 @@
+id = "bodyweight_half_squat"
+names = { en = "Half squat", ru = "Неглубокий присед" }
+kind = "bodyweight"
+pattern = "squat"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["knee", "hip"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand with feet shoulder-width apart. Sit back and down only to about half depth, chest up and weight over the whole foot. Pause briefly, then stand up. Keep the knees in line with the toes.", ru = "Встаньте, ноги на ширине плеч. Присядьте назад и вниз примерно до половины амплитуды, грудь поднята, вес на всей стопе. Кратко задержитесь и встаньте. Колени смотрят в сторону носков." }

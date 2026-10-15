@@ -1,0 +1,13 @@
+id = "cable_bench_seated_wide_grip_row"
+names = { en = "Cable seated wide-grip row on a bench", ru = "Тяга нижнего блока сидя на скамье широким хватом" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["cable", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit on a bench facing a low cable with feet braced and take a wide overhand grip. Lean back slightly and pull to the lower chest, then extend the arms slowly. Keep the back flat.", ru = "Сядьте на скамью лицом к нижнему блоку, ноги упёрты, широкий хват сверху. Слегка отклонитесь и тяните к низу груди, затем медленно выпрямите руки. Спина прямая." }
+load_step_kg = 2.5

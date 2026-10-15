@@ -1,0 +1,12 @@
+id = "weight_plate_plank"
+names = { en = "Weighted plank", ru = "Планка с блином на спине" }
+kind = "isolation"
+pattern = "core"
+equipment = ["weight_plate"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set up in a forearm plank on a mat, elbows under shoulders. Have a partner lay a plate flat across your upper back, between the shoulder blades, never on the lower back. Hold a straight line from head to heels, and have the plate lifted off before you lower down.", ru = "Примите планку на предплечьях на коврике, локти под плечами. Попросите партнёра положить блин плашмя на верх спины, между лопатками, но не на поясницу. Удерживайте прямую линию от головы до пяток; перед тем как опуститься, пусть партнёр снимет блин." }

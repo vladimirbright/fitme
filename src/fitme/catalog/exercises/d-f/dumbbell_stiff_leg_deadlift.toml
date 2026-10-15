@@ -1,0 +1,13 @@
+id = "dumbbell_stiff_leg_deadlift"
+names = { en = "Dumbbell stiff-leg deadlift", ru = "Становая тяга с гантелями на прямых ногах" }
+kind = "compound"
+pattern = "hinge"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Hold a dumbbell in each hand in front of the thighs, knees almost straight. Push the hips back, sliding the dumbbells down the legs with a flat back, until the hamstrings stretch. Drive the hips forward to stand.", ru = "Гантели в руках перед бёдрами, колени почти прямые. Отведите таз назад, гантели скользят по ногам, спина прямая, до растяжения задней поверхности бедра. Выведите таз вперёд и выпрямитесь." }
+load_step_kg = 1.0

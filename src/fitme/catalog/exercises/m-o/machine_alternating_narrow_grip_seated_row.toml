@@ -1,0 +1,12 @@
+id = "machine_alternating_narrow_grip_seated_row"
+names = { en = "Machine alternating narrow-grip seated row", ru = "Тяга сидя в тренажёре узким хватом попеременно" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["machine"]
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the seat and foot plate, sit tall with feet braced and take the narrow handles. Pull one handle toward the ribs, return slowly and alternate. Use the lightest resistance first.", ru = "Настройте сиденье и упор для ног, сядьте прямо, стопы упёрты, возьмите узкие рукояти. Тяните одну рукоять к рёбрам, медленно верните и чередуйте руки. Начните с минимального сопротивления." }
+load_step_kg = 2.5

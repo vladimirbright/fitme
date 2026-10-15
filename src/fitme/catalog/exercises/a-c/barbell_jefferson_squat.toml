@@ -1,0 +1,14 @@
+id = "barbell_jefferson_squat"
+names = { en = "Barbell Jefferson squat", ru = "Приседания Джефферсона со штангой" }
+kind = "compound"
+pattern = "squat"
+level = "advanced"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "lower_back", "ankle"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "lower_back_injury_current", "ankle_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Straddle a bar on the floor with a staggered stance, one hand gripping in front and one behind. Stand up with a flat back, lower under control, and keep the knees tracking over the feet. Switch the stance between sets.", ru = "Встаньте над штангой на полу в шаге, одна рука хватом спереди, другая сзади. Поднимитесь с ровной спиной, опуститесь под контролем, колени идут по линии стоп. Меняйте стойку между подходами." }
+load_step_kg = 2.5

@@ -1,0 +1,12 @@
+id = "dumbbell_zottman_preacher_curl"
+names = { en = "Dumbbell seated Zottman preacher curl", ru = "Сгибания Зоттмана с гантелями на скамье Скотта" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit at a preacher bench, or at an incline bench with your upper arms on the back pad, a dumbbell in each hand, palms up. Curl up, turn the palms down at the top, then lower slowly and turn them back up at the bottom. Use a light weight.", ru = "Сядьте за скамью Скотта (или наклонную скамью, опираясь плечами на спинку), в руках гантели ладонями вверх. Согните руки, вверху поверните ладони вниз, медленно опустите и внизу снова поверните вверх. Берите небольшой вес." }

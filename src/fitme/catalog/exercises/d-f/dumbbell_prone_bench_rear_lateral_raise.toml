@@ -1,0 +1,12 @@
+id = "dumbbell_prone_bench_rear_lateral_raise"
+names = { en = "Dumbbell prone bench rear lateral raise", ru = "Разведение гантелей лёжа на животе на скамье" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie face down on a flat bench, a dumbbell in each hand hanging toward the floor, palms facing each other. With a slight bend in the elbows, raise both arms out to the sides to shoulder line, then lower slowly.", ru = "Лягте на живот на горизонтальную скамью, гантели свисают к полу, ладони друг к другу. Слегка согнув локти, поднимите обе руки в стороны до линии плеч, затем медленно опустите." }

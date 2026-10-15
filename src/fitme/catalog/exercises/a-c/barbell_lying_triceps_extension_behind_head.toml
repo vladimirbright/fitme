@@ -1,0 +1,13 @@
+id = "barbell_lying_triceps_extension_behind_head"
+names = { en = "Barbell lying triceps extension behind the head", ru = "Французский жим штанги лёжа за голову" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["barbell", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+level = "advanced"
+instructions = { en = "Lie with the head at the end of the bench, arms straight over the chest, overhand grip about shoulder width. Bend the elbows to lower the bar back past the head, upper arms still, then extend. Use a light load and keep the path clear of your face.", ru = "Лягте так, чтобы голова была у края скамьи, руки прямо над грудью, хват сверху примерно на ширине плеч. Сгибая локти, опустите гриф назад за голову, плечи неподвижны, затем разогните. Вес лёгкий, траектория не задевает лицо." }

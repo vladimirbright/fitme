@@ -1,0 +1,12 @@
+id = "dumbbell_alternating_shoulder_press"
+names = { en = "Dumbbell alternating shoulder press", ru = "Попеременный жим гантелей стоя" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand holding a dumbbell at each shoulder. Press one dumbbell overhead while the other stays at the shoulder, lower it, then press the other. Brace your core and don't lean back.", ru = "Встаньте, гантели у плеч. Выжмите одну гантель вверх, вторая остаётся у плеча, опустите её и выжмите другую. Корпус напряжён, не отклоняйтесь назад." }

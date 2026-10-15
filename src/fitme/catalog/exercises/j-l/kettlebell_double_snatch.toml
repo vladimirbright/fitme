@@ -1,0 +1,14 @@
+id = "kettlebell_double_snatch"
+names = { en = "Kettlebell double snatch", ru = "Рывок двух гирь" }
+kind = "compound"
+pattern = "hinge"
+equipment = ["kettlebell"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "hip", "knee", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hip_injury_current", "knee_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 4.0 }
+level = "advanced"
+instructions = { en = "Hinge at the hips with a kettlebell in each hand, swinging them back between your legs. Drive your hips forward and pull both bells up close to the body, then guide them overhead to locked arms. Lower them under control into the next swing. Use light weights and clear the space around you.", ru = "Наклонитесь в тазобедренных суставах, по гире в каждой руке, гири уходят назад между ног. Толкните таз вперёд и подтяните обе гири близко к телу, затем выведите их над головой до зафиксированных рук. Под контролем опустите их в следующий мах. Вес лёгкий, место свободное." }
+load_step_kg = 2.0

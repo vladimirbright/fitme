@@ -1,0 +1,12 @@
+id = "dumbbell_hammer_bench_press"
+names = { en = "Neutral-grip dumbbell bench press", ru = "Жим гантелей лёжа нейтральным хватом" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie on a flat bench with the dumbbells above your chest, palms facing each other. Lower them to the sides of your chest, elbows close to your body, then press back up.", ru = "Лягте на горизонтальную скамью, гантели над грудью, ладони смотрят друг на друга. Опустите их к бокам груди, локти ближе к корпусу, затем выжмите обратно." }

@@ -1,0 +1,13 @@
+id = "cable_decline_one_arm_press"
+names = { en = "Cable decline one-arm press", ru = "Жим одной рукой на блоке с отрицательным наклоном" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["cable", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Place a decline bench between the low pulleys, secure your feet and lie back holding one handle beside the lower chest. Press it up over the chest until the arm is straight, then lower under control. Keep the torso still and do all reps on one side before switching.", ru = "Поставьте скамью с отрицательным наклоном между нижними блоками, зафиксируйте ноги и лягте, одна рукоять у нижней части груди. Выжмите её вверх над грудью до прямой руки, затем подконтрольно опустите. Корпус неподвижен; все повторы на одну сторону, затем смените." }
+load_step_kg = 2.5

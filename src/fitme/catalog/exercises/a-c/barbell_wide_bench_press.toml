@@ -1,0 +1,12 @@
+id = "barbell_wide_bench_press"
+names = { en = "Barbell wide-grip bench press", ru = "Жим штанги лёжа широким хватом" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["barbell", "rack", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Lie on the bench with feet flat and take a wide grip, forearms staying close to vertical at the bottom. Unrack, lower the bar to the mid-chest, then press back up. Set the rack's safety arms just below the lowest point of the movement.", ru = "Лягте на скамью, стопы на полу, возьмите гриф широким хватом так, чтобы внизу предплечья были близки к вертикали. Снимите штангу, опустите к середине груди и выжмите вверх. Установите страховочные упоры чуть ниже нижней точки движения." }

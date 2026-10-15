@@ -1,0 +1,14 @@
+id = "machine_hip_extension"
+names = { en = "Machine hip extension", ru = "Отведение ноги назад в рычажном тренажёре" }
+search = { en = "glute kickback machine", ru = "отведение ноги назад в тренажёре" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["hip", "lower_back"]
+contraindicated_by = ["hip_injury_current", "lower_back_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the pad height, rest the chest and forearms on the pad and place one foot on the lever. Push the heel back and slightly up until the hip is straight, without arching the lower back, then return slowly. Switch legs.", ru = "Отрегулируйте высоту упора, обопритесь грудью и предплечьями, одну стопу поставьте на рычаг. Выведите пятку назад и чуть вверх до выпрямления бедра, не прогибая поясницу, затем медленно вернитесь. Смените ногу." }
+load_step_kg = 2.5

@@ -1,0 +1,12 @@
+id = "dumbbell_seated_curl_to_press"
+names = { en = "Dumbbell seated curl to shoulder press", ru = "Сгибание рук с гантелями и жим над головой сидя" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit upright on a bench with a dumbbell in each hand, palms forward. Curl both weights to shoulder height, then press them overhead until your arms are straight. Lower to the shoulders and then back down to the start under control. Use a light weight and keep your ribs down.", ru = "Сядьте ровно на скамью, в руках гантели ладонями вперёд. Согните руки, подняв гантели к плечам, затем выжмите их вверх до выпрямления рук. Опустите к плечам и далее вниз под контролем. Берите небольшой вес, рёбра не разводите." }

@@ -1,0 +1,13 @@
+id = "bodyweight_floor_dip"
+names = { en = "Floor triceps dip", ru = "Обратные отжимания от пола" }
+kind = "bodyweight"
+pattern = "vertical_push"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Sit on the floor with knees bent and feet flat, hands behind the hips with fingers toward the feet. Lift the hips slightly, then bend and straighten the elbows to lower and raise the upper body. Keep the shoulders down and move only through a comfortable range.", ru = "Сядьте на пол, колени согнуты, стопы на полу, ладони за тазом, пальцы направлены к стопам. Слегка приподнимите таз, затем сгибайте и разгибайте локти, опуская и поднимая корпус. Плечи опущены, двигайтесь только в комфортной амплитуде." }
+load_step_kg = 1.0

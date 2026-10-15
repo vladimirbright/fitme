@@ -1,0 +1,12 @@
+id = "dumbbell_standing_one_arm_row"
+names = { en = "Dumbbell standing one-arm row", ru = "Тяга гантели в наклоне стоя без опоры" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["dumbbells"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Hinge forward with a flat back, knees soft, and let one dumbbell hang in a neutral grip. Row it to the hip, then lower under control. Keep the torso still; switch sides after the set.", ru = "Наклонитесь с прямой спиной, колени мягкие, гантель свободно висит в нейтральном хвате. Подтяните её к бедру, затем опустите под контролем. Корпус неподвижен; после подхода смените сторону." }

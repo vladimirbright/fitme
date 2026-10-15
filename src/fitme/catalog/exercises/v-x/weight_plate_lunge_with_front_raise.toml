@@ -1,0 +1,13 @@
+id = "weight_plate_lunge_with_front_raise"
+names = { en = "Weight plate lunge with front raise", ru = "Выпады с блином и подъёмом перед собой" }
+kind = "compound"
+pattern = "squat"
+equipment = ["weight_plate"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "ankle", "shoulder", "lower_back"]
+contraindicated_by = ["knee_injury_current", "hernia", "hip_injury_current", "ankle_injury_current", "shoulder_injury_current", "lower_back_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Hold a plate with both hands at the chest. Step forward into a lunge and raise the plate to shoulder height with straight arms. Lower the plate as you push back to standing, then alternate legs.", ru = "Держите блин двумя руками у груди. Шагните вперёд в выпад и поднимите блин на прямых руках до уровня плеч. Опуская блин, оттолкнитесь и вернитесь в стойку, затем смените ногу." }
+load_step_kg = 2.5

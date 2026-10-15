@@ -32,6 +32,14 @@ asked to bring the rest into the plannable catalog.
   used only to confirm what a movement is), complete equipment, a conservative start, and
   contraindications covering every loaded area. True duplicates become aliases.
 
+## Result
+
+908 new catalog entries were imported (145 of them `advanced`), so the catalog went from 190
+to 1,098 exercises. Another 152 reference entries became aliases, and 67 stay lookup-only (44
+for safety, 13 for unclear instructions, 10 for equipment such as climbing ropes). Each batch
+had a writer agent and an adversarial reviewer agent. The full list is in
+`docs/reports/catalog-import-2026-10-15.md`.
+
 ## Consequences
 
 - The setup questionnaire's equipment list is longer. Profiles saved before this keep their

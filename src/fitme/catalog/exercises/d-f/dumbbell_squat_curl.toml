@@ -1,0 +1,13 @@
+id = "dumbbell_squat_curl"
+names = { en = "Dumbbell squat with curl", ru = "Приседание со сгибанием рук с гантелями" }
+kind = "compound"
+pattern = "squat"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "lower_back", "elbow_wrist"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "lower_back_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand with feet shoulder-width apart holding dumbbells at your sides. Squat down and back with chest up, then as you stand curl the dumbbells to your shoulders and lower them again. Keep knees over your toes.", ru = "Встаньте на ширине плеч с гантелями по бокам. Присядьте вниз и назад, грудь поднята; вставая, согните руки, подняв гантели к плечам, затем опустите. Колени над носками." }
+load_step_kg = 1.0

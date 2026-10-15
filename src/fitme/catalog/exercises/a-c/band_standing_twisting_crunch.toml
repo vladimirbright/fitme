@@ -1,0 +1,12 @@
+id = "band_standing_twisting_crunch"
+names = { en = "Band standing twisting crunch", ru = "Скручивания стоя с поворотом с лентой" }
+kind = "isolation"
+pattern = "core"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "neck"]
+contraindicated_by = ["lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Anchor the band high behind you and stand facing away, ends held at your shoulders. Curl forward and turn one elbow toward the opposite knee, then return upright. Keep the range small and your hips still. Alternate sides.", ru = "Закрепите ленту высоко позади и встаньте к опоре спиной, концы у плеч. Скруглитесь вперёд, направляя локоть к противоположному колену, затем выпрямитесь. Амплитуда небольшая, таз неподвижен. Чередуйте стороны." }

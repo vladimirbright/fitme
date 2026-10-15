@@ -1,0 +1,13 @@
+id = "cable_shoulder_press"
+names = { en = "Cable shoulder press", ru = "Жим над головой на блоках" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set both pulleys low and hold a handle in each hand at shoulder height, standing facing away from the stack in a split stance. Press both handles overhead until your arms are extended, then lower to shoulder height. Set the lightest resistance.", ru = "Выставьте оба блока внизу, возьмите по рукоятке на уровне плеч, встаньте спиной к стеку в шаге. Выжмите обе рукояти вверх до выпрямления рук, затем опустите до уровня плеч. Минимальное сопротивление." }
+load_step_kg = 1.0

@@ -1,0 +1,12 @@
+id = "battle_rope_alternating_waves"
+names = { en = "Battle rope alternating waves", ru = "Волны канатами поочерёдно" }
+kind = "cardio"
+pattern = "conditioning"
+equipment = ["battle_rope"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Anchor the rope and hold one end in each hand, feet shoulder-width apart, knees soft. Alternate raising and lowering each arm to make waves, keeping a braced core and steady rhythm. Work in timed intervals and stop when your rhythm breaks down.", ru = "Закрепите канат, по концу в каждой руке, ноги на ширине плеч, колени мягкие. Поочерёдно поднимайте и опускайте руки, создавая волны, корпус напряжён, ритм ровный. Работайте интервалами по времени и останавливайтесь, когда ритм сбивается." }

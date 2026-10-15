@@ -1,0 +1,12 @@
+id = "stability_ball_back_extension_arms_extended"
+names = { en = "Stability-ball back extension, arms extended", ru = "Разгибания спины на фитболе с вытянутыми руками" }
+kind = "bodyweight"
+pattern = "hinge"
+equipment = ["stability_ball"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Lie face down over the ball with hips on it and feet braced against a wall. Reach the arms forward and lift the upper body until it lines up with the legs, then lower slowly. Keep the neck in line with the spine and do not overarch.", ru = "Лягте животом на фитбол, таз на мяче, стопы упираются в стену. Вытяните руки вперёд и поднимите корпус до одной линии с ногами, затем медленно опустите. Шея на одной линии с позвоночником, не прогибайтесь чрезмерно." }

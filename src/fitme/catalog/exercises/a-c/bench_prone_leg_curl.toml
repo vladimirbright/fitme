@@ -1,0 +1,12 @@
+id = "bench_prone_leg_curl"
+names = { en = "Bench prone leg curl", ru = "Сгибание ног лёжа на скамье без отягощения" }
+kind = "bodyweight"
+pattern = "accessory"
+equipment = ["bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee"]
+contraindicated_by = ["knee_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Lie face down on a bench with the knees just past its end, legs straight, hands gripping the bench. Bend the knees to bring the heels toward the glutes, then lower slowly. Keep the hips pressed to the bench.", ru = "Лягте на скамью лицом вниз, колени чуть за краем, ноги прямые, руки держатся за скамью. Согните колени, подтягивая пятки к ягодицам, затем медленно опустите. Таз прижат к скамье." }

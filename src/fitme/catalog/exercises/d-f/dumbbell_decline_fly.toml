@@ -1,0 +1,12 @@
+id = "dumbbell_decline_fly"
+names = { en = "Decline dumbbell fly", ru = "Разводка гантелей на скамье с наклоном вниз" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Secure your feet on a decline bench and hold the dumbbells above your chest, palms facing each other, elbows slightly bent. Open your arms in a wide arc to chest level, then bring them back together. Keep the elbow bend fixed and use light weights.", ru = "Зафиксируйте ноги на скамье с наклоном вниз, гантели над грудью, ладони смотрят друг на друга, локти слегка согнуты. Разведите руки по широкой дуге до уровня груди и сведите обратно. Угол в локтях не меняйте, берите лёгкий вес." }

@@ -1,0 +1,13 @@
+id = "bodyweight_floor_hamstring_curl"
+names = { en = "Floor hamstring curl (heel slide bridge)", ru = "Сгибание ног в мостике со скольжением пяток" }
+kind = "bodyweight"
+pattern = "accessory"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["knee", "hip"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on your back, knees bent, heels on a smooth floor or on socks or a towel. Lift the hips into a bridge. Slide the heels away until the legs are nearly straight, then pull them back in while keeping the hips high. Lower the hips after the set.", ru = "Лягте на спину, колени согнуты, пятки на гладком полу, в носках или на полотенце. Поднимите таз в мостик. Выдвиньте пятки вперёд почти до прямых ног и верните их обратно, удерживая таз вверху. Опустите таз после подхода." }
+load_step_kg = 1.0

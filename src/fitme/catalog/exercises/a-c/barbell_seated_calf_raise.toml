@@ -1,0 +1,12 @@
+id = "barbell_seated_calf_raise"
+names = { en = "Barbell seated calf raise", ru = "Подъём на носки сидя со штангой" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["barbell", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["ankle", "knee"]
+contraindicated_by = ["ankle_injury_current", "knee_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit on a bench with the balls of your feet on a low block or step and a padded bar across your lower thighs, held with both hands. Lower the heels for a gentle stretch, then rise onto your toes and lower slowly. Keep a firm hold on the bar.", ru = "Сядьте на скамью, передняя часть стоп на невысокой подставке, на нижней части бёдер лежит гриф с накладкой, удерживайте его обеими руками. Опустите пятки до лёгкого растяжения, поднимитесь на носки и медленно опустите. Крепко держите гриф." }

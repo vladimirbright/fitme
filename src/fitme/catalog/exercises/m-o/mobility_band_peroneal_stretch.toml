@@ -1,0 +1,12 @@
+id = "mobility_band_peroneal_stretch"
+names = { en = "Band peroneal stretch", ru = "Растяжка малоберцовых мышц с лентой" }
+kind = "mobility"
+pattern = "mobility"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["ankle"]
+contraindicated_by = ["ankle_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Sit with the legs extended and loop a band around the ball of one foot. Holding the ends, draw the foot toward you and slightly inward until you feel a gentle pull along the outer lower leg. Hold 15-30 seconds, then switch legs.", ru = "Сядьте, ноги вытянуты, оберните ленту вокруг передней части одной стопы. Держа концы, подтяните стопу на себя и слегка внутрь до лёгкого натяжения по наружной стороне голени. Удерживайте 15-30 секунд, затем смените ногу." }

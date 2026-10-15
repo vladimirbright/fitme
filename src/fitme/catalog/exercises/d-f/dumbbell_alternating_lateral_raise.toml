@@ -1,0 +1,12 @@
+id = "dumbbell_alternating_lateral_raise"
+names = { en = "Alternating dumbbell lateral raise", ru = "Попеременный мах гантелью в сторону" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand holding a dumbbell in each hand at your sides. Raise one arm out to the side to shoulder height, lower under control, then raise the other. Keep a slight bend in the elbow and avoid swinging.", ru = "Встаньте, гантели в руках вдоль корпуса. Поднимите одну руку в сторону до уровня плеча, опустите под контролем, затем поднимите другую. Локоть слегка согнут, без раскачки." }

@@ -1,0 +1,13 @@
+id = "pull_up_bar_front_lever"
+names = { en = "Front lever", ru = "Передний вис (фронт-левер)" }
+kind = "bodyweight"
+pattern = "core"
+equipment = ["pull_up_bar"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+level = "advanced"
+instructions = { en = "Hang from the bar with arms straight and pull your shoulders down. Lift your body to horizontal, face up, hips and legs in line with the torso, or tuck your knees to make it easier. Hold, then lower with control.", ru = "Повисните на перекладине на прямых руках, опустите плечи вниз. Поднимите тело до горизонтали лицом вверх, таз и ноги в одной линии с корпусом, либо подожмите колени для облегчения. Удержите положение, затем контролируемо опуститесь." }

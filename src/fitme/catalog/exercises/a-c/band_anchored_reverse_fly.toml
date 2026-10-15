@@ -1,0 +1,13 @@
+id = "band_anchored_reverse_fly"
+names = { en = "Band anchored reverse fly", ru = "Обратное разведение с лентой, закреплённой на опоре" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Anchor a light band at chest height and hold the ends, arms forward. With arms nearly straight, open them out to the sides to shoulder height, drawing the shoulder blades together, then return under control. Keep your ribs down.", ru = "Закрепите лёгкую ленту на уровне груди, возьмитесь за концы, руки вперёд. Почти прямыми руками разведите их в стороны до уровня плеч, сводя лопатки, затем верните под контролем. Рёбра опущены." }
+load_step_kg = 1.0

@@ -1,0 +1,12 @@
+id = "stability_ball_push_up"
+names = { en = "Push-up with hands on stability ball", ru = "Отжимания с руками на фитболе" }
+kind = "bodyweight"
+pattern = "horizontal_push"
+equipment = ["stability_ball"]
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Place your hands on top of a stability ball, shoulder-width apart, and walk the feet back until the body is straight. Lower the chest toward the ball, then press back up. Move slowly; widen the feet if the ball wobbles.", ru = "Поставьте руки на фитбол на ширине плеч и отведите ноги назад, чтобы тело стало прямым. Опустите грудь к мячу и выжмитесь обратно. Двигайтесь медленно, при раскачивании мяча поставьте ноги шире." }
+load_step_kg = 1.0

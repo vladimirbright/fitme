@@ -1,0 +1,13 @@
+id = "cable_rope_one_arm_hammer_preacher_curl"
+names = { en = "Cable rope one-arm hammer preacher curl", ru = "Молотковое сгибание одной рукой на скамье Скотта с канатом" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Sit or stand at a preacher pad (or a bench set steeply upright) so the backs of your upper arms rest on it. Hold one end of the rope with the palm facing inward and the working arm on the pad. Curl toward your shoulder, then lower under control. Switch arms after the set.", ru = "Займите место у скамьи Скотта (или круто поставленной скамьи) так, чтобы задняя часть плеч лежала на упоре. Держите один конец каната ладонью внутрь, рабочая рука на упоре. Согните руку к плечу, затем подконтрольно опустите. После подхода смените руку." }
+load_step_kg = 1.0

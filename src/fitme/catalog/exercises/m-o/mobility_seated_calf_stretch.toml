@@ -1,0 +1,12 @@
+id = "mobility_seated_calf_stretch"
+names = { en = "Seated calf stretch", ru = "Растяжка икр сидя" }
+kind = "mobility"
+pattern = "mobility"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["ankle"]
+contraindicated_by = ["ankle_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Sit on the edge of a chair with one leg extended and the heel on the floor. Lean forward from the hips, back straight, until you feel a gentle pull in the calf. Hold 20-30 seconds, then switch legs.", ru = "Сядьте на край стула, одна нога вытянута, пятка на полу. Наклонитесь вперёд от бёдер, спина прямая, до лёгкого натяжения в икре. Удерживайте 20-30 секунд, затем смените ногу." }

@@ -1,0 +1,13 @@
+id = "jump_rope_skipping"
+names = { en = "Jump rope", ru = "Скакалка" }
+kind = "cardio"
+pattern = "conditioning"
+equipment = ["jump_rope"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["ankle", "knee"]
+contraindicated_by = ["ankle_injury_current", "knee_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+search = { en = "jump rope workout", ru = "скакалка упражнение" }
+instructions = { en = "Hold the handles at hip height with the elbows close to the body. Turn the rope with the wrists and hop over it with small jumps. Land softly on the balls of the feet and keep the jumps low. Use a flat, non-slippery surface.", ru = "Держите ручки на уровне бёдер, локти прижаты к корпусу. Вращайте скакалку кистями и перепрыгивайте через неё невысокими прыжками. Приземляйтесь мягко на переднюю часть стопы, прыжки низкие. Занимайтесь на ровной нескользкой поверхности." }

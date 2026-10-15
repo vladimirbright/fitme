@@ -1,0 +1,12 @@
+id = "bodyweight_alternating_toe_touch"
+names = { en = "Alternating toe touch with leg lift", ru = "Касание носка с отведением ноги назад" }
+kind = "bodyweight"
+pattern = "hinge"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back", "hip", "ankle"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "ankle_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Stand with feet hip-width apart and arms out to the sides. Hinge forward at the hips and reach one hand toward the opposite foot while the other leg lifts straight behind you. Return to standing with control and alternate sides. Keep the movement slow and the back flat.", ru = "Встаньте, ноги на ширине таза, руки в стороны. Наклонитесь от бёдер и потянитесь рукой к противоположной стопе, другая нога поднимается прямо назад. Медленно вернитесь в стойку и чередуйте стороны. Движение плавное, спина ровная." }

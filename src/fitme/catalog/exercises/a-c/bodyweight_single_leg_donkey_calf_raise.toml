@@ -1,0 +1,12 @@
+id = "bodyweight_single_leg_donkey_calf_raise"
+names = { en = "Single-leg donkey calf raise", ru = "Ослиный подъём на носок на одной ноге" }
+kind = "isolation"
+pattern = "accessory"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["ankle", "lower_back"]
+contraindicated_by = ["ankle_injury_current", "lower_back_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand on one foot and hinge forward at the hips, resting both hands on a wall, rail or sturdy surface. Rise onto the ball of the foot as high as you can, pause, then lower the heel slowly. Finish all reps, then switch legs.", ru = "Встаньте на одну ногу, наклонитесь вперёд в тазобедренных суставах и обопритесь обеими руками о стену, перила или устойчивую опору. Поднимитесь на носок как можно выше, задержитесь и медленно опустите пятку. Выполните все повторения, затем смените ногу." }

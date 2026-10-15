@@ -1,0 +1,13 @@
+id = "hanging_pike"
+names = { en = "Hanging pike", ru = "Складка в висе" }
+kind = "isolation"
+pattern = "core"
+equipment = ["pull_up_bar"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]
+loads_areas = ["lower_back", "shoulder", "neck"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+level = "advanced"
+instructions = { en = "Hang from the bar with arms extended. Keeping your legs straight, raise them up toward the bar, then lower slowly. Keep your shoulders active and avoid swinging.", ru = "Повисните на перекладине с прямыми руками. Держа ноги прямыми, поднимите их к перекладине, затем медленно опустите. Плечи активны, не раскачивайтесь." }

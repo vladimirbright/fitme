@@ -1,0 +1,12 @@
+id = "mobility_knee_circles"
+names = { en = "Knee circles", ru = "Круговые движения коленями" }
+kind = "mobility"
+pattern = "mobility"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["knee"]
+contraindicated_by = ["knee_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand with feet together and hands resting on your knees, knees slightly bent and heels down. Make slow, small circles with your knees, several in one direction, then reverse.", ru = "Встаньте, ноги вместе, ладони на коленях, колени слегка согнуты, пятки на полу. Выполняйте медленные небольшие круги коленями несколько раз в одну сторону, затем в другую." }

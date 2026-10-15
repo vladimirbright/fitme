@@ -1,0 +1,12 @@
+id = "dumbbell_standing_one_arm_neutral_grip_press"
+names = { en = "Standing one-arm neutral-grip dumbbell press", ru = "Жим гантели одной рукой стоя нейтральным хватом" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["dumbbells"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand with feet shoulder-width apart and a dumbbell at shoulder height, palm facing in. Brace your core and press the dumbbell overhead to full extension, then lower it back to your shoulder. Do all reps, then switch arms.", ru = "Встаньте, ноги на ширине плеч, гантель на уровне плеча, ладонь внутрь. Напрягите корпус и выжмите гантель вверх до выпрямления руки, затем опустите к плечу. Выполните все повторения, затем смените руку." }

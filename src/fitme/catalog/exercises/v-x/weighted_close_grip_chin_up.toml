@@ -1,0 +1,13 @@
+id = "weighted_close_grip_chin_up"
+names = { en = "Weighted close-grip chin-up", ru = "Подтягивания узким обратным хватом с отягощением" }
+kind = "compound"
+level = "advanced"
+pattern = "vertical_pull"
+equipment = ["pull_up_bar", "weight_plate"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Attach a plate to a belt and hang from the bar, palms facing you, hands about shoulder width or closer. Pull your chin above the bar without swinging. Lower to straight arms under control.", ru = "Прикрепите блин к поясу и повисните на перекладине ладонями к себе, хват не шире плеч. Подтянитесь подбородком выше перекладины без раскачки. Опуститесь до прямых рук под контролем." }

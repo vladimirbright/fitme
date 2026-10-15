@@ -1,0 +1,14 @@
+id = "dumbbell_one_arm_snatch"
+names = { en = "Dumbbell one-arm snatch", ru = "Рывок гантели одной рукой" }
+kind = "compound"
+pattern = "hinge"
+level = "advanced"
+equipment = ["dumbbells"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip", "knee", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "knee_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand over a dumbbell on the floor and hinge down to grip it. Extend hips and knees and pull the dumbbell close to the body, then punch it overhead to a straight arm. Lower it back down under control and keep the area overhead clear. Start very light.", ru = "Встаньте над гантелью на полу и наклонитесь, чтобы взять её. Разогните бёдра и колени, подтяните гантель близко к телу и выведите её над головой до прямой руки. Контролируемо опустите обратно; пространство над головой свободно. Начинайте с очень лёгкого веса." }
+load_step_kg = 1.0

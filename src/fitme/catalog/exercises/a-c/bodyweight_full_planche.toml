@@ -1,0 +1,13 @@
+id = "bodyweight_full_planche"
+names = { en = "Full planche", ru = "Планша" }
+kind = "bodyweight"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+level = "advanced"
+instructions = { en = "From a push-up position with hands by your hips, lean forward and lift your feet until your body is a straight horizontal line supported only by your hands. Hold, then lower. Work up through the tuck and lean versions first.", ru = "Из упора лёжа с руками у бёдер наклонитесь вперёд и оторвите ноги, пока тело не станет прямой горизонтальной линией на одних руках. Удержите положение и опуститесь. Сначала освойте версии с подтянутыми ногами и наклоном." }

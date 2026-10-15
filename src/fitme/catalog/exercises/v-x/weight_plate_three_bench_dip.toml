@@ -1,0 +1,14 @@
+id = "weight_plate_three_bench_dip"
+names = { en = "Weighted three-bench dip", ru = "Отжимания на трёх скамьях с отягощением" }
+kind = "bodyweight"
+level = "advanced"
+pattern = "vertical_push"
+equipment = ["bench", "weight_plate"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set two stable benches parallel, slightly wider than the shoulders, and a third across their ends. Hands on the parallel benches, heels on the third, a plate resting on the thighs. Bend the elbows until the upper arms are about level with the floor, then press up. Start with a light plate.", ru = "Поставьте две устойчивые скамьи параллельно, чуть шире плеч, а третью поперёк перед ними. Руки на параллельных скамьях, пятки на третьей, блин лежит на бёдрах. Сгибайте локти, пока плечи не станут примерно параллельны полу, затем выжмитесь вверх. Начните с лёгкого блина." }
+load_step_kg = 2.5

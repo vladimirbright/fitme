@@ -1,0 +1,12 @@
+id = "hanging_knee_raise"
+names = { en = "Hanging knee raise", ru = "Подъём коленей в висе" }
+kind = "bodyweight"
+pattern = "core"
+equipment = ["pull_up_bar"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]
+loads_areas = ["lower_back", "shoulder", "neck"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Hang from the bar with arms straight and feet off the floor. Bend your knees and bring them toward your chest without swinging. Lower slowly until your legs hang straight. Step down from the bar if your grip tires.", ru = "Повисните на перекладине с прямыми руками. Согните колени и подтяните их к груди без раскачки. Медленно опустите ноги до прямого виса. Если хват устаёт, спуститесь с перекладины." }

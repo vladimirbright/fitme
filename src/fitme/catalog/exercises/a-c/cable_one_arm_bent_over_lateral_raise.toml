@@ -1,0 +1,13 @@
+id = "cable_one_arm_bent_over_lateral_raise"
+names = { en = "Cable one-arm bent-over lateral raise", ru = "Разведение одной руки в наклоне на блоке" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Stand side-on to a low pulley and take the handle in the far hand. Hinge forward at the hips with a flat back so the arm hangs below the chest. Raise the arm out to the side to shoulder level with a slight elbow bend, then lower slowly. Use a light weight and switch arms after the set.", ru = "Встаньте боком к нижнему блоку и возьмите рукоять дальней рукой. Наклонитесь вперёд от бёдер с прямой спиной, рука свисает под грудью. Поднимите руку в сторону до уровня плеча, локоть слегка согнут, затем медленно опустите. Вес лёгкий; после подхода смените руку." }
+load_step_kg = 1.0

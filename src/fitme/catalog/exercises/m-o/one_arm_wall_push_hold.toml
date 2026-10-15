@@ -1,0 +1,12 @@
+id = "one_arm_wall_push_hold"
+names = { en = "One-arm wall push hold", ru = "Упор одной рукой в стену" }
+kind = "bodyweight"
+pattern = "accessory"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand facing a wall and place one palm on it at shoulder height with the arm straight. Lean in slightly and press the palm into the wall, pulling the shoulder down. Hold for a few seconds, release, and switch arms.", ru = "Встаньте лицом к стене, ладонь одной руки на стене на уровне плеча, рука прямая. Слегка подайтесь вперёд и надавите ладонью в стену, опуская плечо вниз. Удерживайте несколько секунд, расслабьтесь и смените руку." }

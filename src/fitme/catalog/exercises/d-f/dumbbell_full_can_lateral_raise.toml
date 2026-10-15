@@ -1,0 +1,12 @@
+id = "dumbbell_full_can_lateral_raise"
+names = { en = "Dumbbell full can lateral raise", ru = "Махи гантелями в стороны большими пальцами вверх" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand holding a dumbbell in each hand with thumbs up. Raise your arms diagonally out in front of you to shoulder height, then lower under control. Keep your elbows soft and avoid swinging.", ru = "Встаньте с гантелями в руках, большие пальцы вверх. Поднимайте руки по диагонали вперёд-в стороны до уровня плеч, затем опустите под контролем. Локти мягкие, без раскачки." }

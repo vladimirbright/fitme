@@ -1,0 +1,13 @@
+id = "cable_lying_triceps_extension"
+names = { en = "Cable lying triceps extension", ru = "Разгибание рук лёжа на блоке" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Lie on a flat bench with your head toward a low pulley and hold the rope with palms facing each other, arms straight above your chest. Bend only at the elbows to lower the rope toward your forehead, stopping short of touching, then extend the arms.", ru = "Лягте на плоскую скамью головой к нижнему блоку, канат в руках ладонями друг к другу, руки прямые над грудью. Сгибая только локти, опустите канат ко лбу, не касаясь, затем выпрямите руки." }
+load_step_kg = 1.0

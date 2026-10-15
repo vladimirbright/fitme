@@ -1,0 +1,12 @@
+id = "mobility_back_chest_stretch"
+names = { en = "Back and chest stretch", ru = "Растяжка спины и груди" }
+kind = "mobility"
+pattern = "mobility"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand tall and reach the arms forward, then clasp the hands and turn the palms away. Round the upper back slightly and push the hands forward, hold, then release. Move into the stretch gently.", ru = "Встаньте прямо, вытяните руки вперёд, сцепите пальцы и выверните ладони от себя. Слегка округлите верх спины и тянитесь руками вперёд, задержитесь и отпустите. Входите в растяжку плавно." }

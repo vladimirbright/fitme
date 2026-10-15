@@ -1,0 +1,13 @@
+id = "cable_staggered_crossover"
+names = { en = "Cable staggered-stance crossover", ru = "Сведение рук в кроссовере в шаговой стойке" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set both pulleys at chest height and take a handle in each hand. Step forward into a split stance with a slight lean, arms out to the sides and elbows slightly bent. Bring the hands together in front of the chest in an arc, then open back out under control.", ru = "Установите оба блока на уровне груди и возьмите по рукояти. Шагните вперёд в шаговую стойку с лёгким наклоном, руки в стороны, локти слегка согнуты. Дугой сведите кисти перед грудью, затем подконтрольно разведите." }
+load_step_kg = 1.0

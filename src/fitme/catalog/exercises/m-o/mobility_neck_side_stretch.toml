@@ -1,0 +1,12 @@
+id = "mobility_neck_side_stretch"
+names = { en = "Neck side stretch", ru = "Растяжка шеи в сторону" }
+kind = "mobility"
+pattern = "mobility"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["neck"]
+contraindicated_by = ["neck_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Sit or stand tall with the shoulders relaxed. Tilt the head to one side, ear toward the shoulder, until you feel a gentle pull. Hold 15-30 seconds, then switch sides. Do not force the range.", ru = "Сядьте или встаньте прямо, плечи расслаблены. Наклоните голову в сторону, ухо к плечу, до лёгкого натяжения. Удерживайте 15-30 секунд, затем смените сторону. Не форсируйте амплитуду." }

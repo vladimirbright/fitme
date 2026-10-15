@@ -1,0 +1,12 @@
+id = "machine_reverse_grip_vertical_row"
+names = { en = "Machine reverse-grip vertical row", ru = "Вертикальная тяга в тренажёре обратным хватом" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["machine"]
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the seat, press the chest to the pad and take the handles with an underhand grip. Pull the elbows back along the sides, then return slowly. Keep the chest on the pad throughout.", ru = "Настройте сиденье, прижмите грудь к подушке и возьмите рукояти хватом снизу. Тяните локти назад вдоль корпуса, затем медленно возвращайте. Грудь остаётся на подушке." }
+load_step_kg = 2.5

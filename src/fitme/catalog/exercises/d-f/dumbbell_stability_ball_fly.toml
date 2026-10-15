@@ -1,0 +1,12 @@
+id = "dumbbell_stability_ball_fly"
+names = { en = "Dumbbell fly on stability ball", ru = "Разводка гантелей на фитболе" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "stability_ball"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit on a stability ball, walk your feet forward and lie back until your head and upper back rest on the ball, hips level. Hold the dumbbells above your chest, elbows slightly bent, and open your arms in an arc to chest level, then bring them together. Keep your feet wide and use light weights.", ru = "Сядьте на фитбол, пройдите стопами вперёд и лягте так, чтобы голова и верх спины опирались на мяч, таз на одном уровне с корпусом. Гантели над грудью, локти слегка согнуты: разведите руки по дуге до уровня груди и сведите обратно. Ноги широко, вес лёгкий." }

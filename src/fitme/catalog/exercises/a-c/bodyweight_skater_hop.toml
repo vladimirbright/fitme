@@ -1,0 +1,13 @@
+id = "bodyweight_skater_hop"
+names = { en = "Skater hop", ru = "Прыжки конькобежца" }
+kind = "cardio"
+pattern = "conditioning"
+level = "advanced"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["knee", "ankle", "hip"]
+contraindicated_by = ["knee_injury_current", "ankle_injury_current", "hip_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand on one leg with a slight knee bend. Hop sideways to the other foot, swinging the free leg behind, and land softly with the knee over the toes. Alternate sides with low, controlled hops.", ru = "Встаньте на одну ногу, колено слегка согнуто. Перепрыгните вбок на другую ногу, свободную ногу уводя назад, и мягко приземлитесь, колено над носком. Чередуйте стороны невысокими подконтрольными прыжками." }

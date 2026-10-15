@@ -1,0 +1,13 @@
+id = "bodyweight_pike_to_cobra_push_up"
+names = { en = "Pike-to-cobra push-up", ru = "Отжимание из уголка в кобру" }
+search = { en = "dive bomber push-up", ru = "отжимания дайв-бомбер" }
+kind = "bodyweight"
+pattern = "vertical_push"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Start with the hips high in an inverted V. Bend the elbows and sweep the chest forward and low, then straighten the arms and lift the chest, hips toward the floor. Reverse the path back to the V. Move slowly and keep the lift of the chest gentle.", ru = "Начните с поднятым тазом в позиции перевёрнутой буквы V. Согните локти и проведите грудь вперёд и низко, затем выпрямите руки и поднимите грудь, таз опущен к полу. Обратным путём вернитесь в V. Двигайтесь медленно, подъём груди плавный." }

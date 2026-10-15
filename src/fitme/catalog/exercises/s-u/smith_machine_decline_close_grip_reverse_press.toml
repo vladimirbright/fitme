@@ -1,0 +1,12 @@
+id = "smith_machine_decline_close_grip_reverse_press"
+names = { en = "Smith machine decline close-grip reverse press", ru = "Жим в Смите головой вниз узким обратным хватом" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["smith_machine", "bench"]
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set a decline bench under the bar and hook your feet securely. Take a close underhand grip, unhook and lower the bar to the lower chest with elbows tucked, then press up. Keep the wrists straight and set the safety stops low.", ru = "Установите скамью с отрицательным наклоном и надёжно зафиксируйте ноги. Узкий хват снизу, снимите гриф, опустите к нижней части груди, локти прижаты, и выжмите вверх. Запястья прямые, ограничители установите низко." }
+load_step_kg = 2.5

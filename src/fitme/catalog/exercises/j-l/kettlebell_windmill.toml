@@ -1,0 +1,14 @@
+id = "kettlebell_windmill"
+names = { en = "Kettlebell windmill", ru = "Мельница с гирей" }
+kind = "compound"
+pattern = "core"
+equipment = ["kettlebell"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "shoulder", "hip", "elbow_wrist", "neck"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "hip_injury_current", "elbow_wrist_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 4.0 }
+level = "advanced"
+instructions = { en = "Hold a kettlebell locked out overhead, feet wider than shoulders, rear foot turned out. Push your hips back toward the weighted side and lower your free hand along your leg, eyes on the bell, then stand up. Start light.", ru = "Держите гирю над головой на прямой руке, ноги шире плеч, дальняя стопа развёрнута наружу. Отведите таз назад в сторону гири и опускайте свободную руку вдоль ноги, взгляд на гире, затем выпрямитесь. Начните с лёгкого веса." }
+load_step_kg = 2.0

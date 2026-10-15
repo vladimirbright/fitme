@@ -1,0 +1,14 @@
+id = "barbell_landmine_rotation"
+names = { en = "Landmine rotation", ru = "Ротации со штангой в лендмайне" }
+search = { en = "landmine 180", ru = "лендмайн 180 ротации" }
+kind = "compound"
+pattern = "core"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "shoulder", "elbow_wrist", "hip"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+level = "advanced"
+instructions = { en = "Anchor one end of the bar in a landmine base or a corner. Hold the free end at chest height with both hands and rotate your torso and the bar side to side in a controlled arc, pivoting your feet. Keep the arc small and under control.", ru = "Закрепите один конец грифа в упоре или в углу. Держите свободный конец двумя руками на уровне груди и поворачивайте корпус вместе с грифом из стороны в сторону по контролируемой дуге, разворачивая стопы. Дуга небольшая, движение под контролем." }

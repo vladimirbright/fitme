@@ -1,0 +1,14 @@
+id = "barbell_stiff_leg_good_morning"
+names = { en = "Barbell stiff-leg good morning", ru = "Наклоны со штангой на спине на прямых ногах" }
+kind = "compound"
+level = "advanced"
+pattern = "hinge"
+equipment = ["barbell", "rack"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip", "neck"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Bar on the upper back as in a squat, feet hip-width, knees nearly straight. Push the hips back and hinge until the torso is close to parallel with the floor, then drive the hips forward to stand. Set the rack's safety arms below the lowest point and use a light bar.", ru = "Штанга на верхней части спины, как в приседе, ноги на ширине таза, колени почти прямые. Отведите таз назад и наклонитесь, пока корпус не станет почти параллелен полу, затем выведите таз вперёд и выпрямитесь. Страховочные упоры стойки выставьте ниже нижней точки, вес лёгкий." }
+load_step_kg = 2.5

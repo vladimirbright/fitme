@@ -1,0 +1,12 @@
+id = "dumbbell_alternating_biceps_curl"
+names = { en = "Dumbbell alternating biceps curl", ru = "Попеременные сгибания рук с гантелями на бицепс" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand with a dumbbell in each hand, palms forward. Curl one dumbbell to the shoulder while the other arm stays down, lower it under control, then switch. Keep the elbows beside the torso and avoid swinging.", ru = "Встаньте с гантелями в руках, ладони вперёд. Поднимите одну гантель к плечу, вторая рука внизу, опустите под контролем и смените руку. Локти у корпуса, без раскачки." }

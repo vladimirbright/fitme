@@ -1,0 +1,13 @@
+id = "bodyweight_v_sit"
+names = { en = "V-sit", ru = "V-подъём лёжа" }
+kind = "bodyweight"
+level = "advanced"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back", "hip", "neck"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Sit with legs extended, lean back, and lift your legs and chest together so your body forms a V, arms reaching toward your feet. Hold briefly, then lower slowly. Bend your knees if your back rounds sharply.", ru = "Сядьте с вытянутыми ногами, откиньтесь и одновременно поднимите ноги и грудь, тело образует букву V, руки тянутся к стопам. Ненадолго задержитесь, затем медленно опуститесь. Если спина сильно округляется, согните колени." }

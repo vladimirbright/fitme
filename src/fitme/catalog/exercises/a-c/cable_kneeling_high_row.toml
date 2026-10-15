@@ -1,0 +1,13 @@
+id = "cable_kneeling_high_row"
+names = { en = "Cable kneeling high row", ru = "Тяга верхнего блока стоя на коленях" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Kneel facing a cable set at chest height or above and hold a straight bar. Pull it to the upper abdomen with the chest tall, then return slowly. Keep the hips steady.", ru = "Встаньте на колени лицом к блоку на уровне груди или выше, держите прямую рукоять. Тяните её к верху живота с поднятой грудью, затем медленно верните. Таз неподвижен." }
+load_step_kg = 2.5

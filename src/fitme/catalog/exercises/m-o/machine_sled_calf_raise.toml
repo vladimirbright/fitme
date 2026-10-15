@@ -1,0 +1,12 @@
+id = "machine_sled_calf_raise"
+names = { en = "Angled sled calf raise, facing the machine", ru = "Подъём на носки в наклонной машине лицом к тренажёру" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["ankle", "knee", "lower_back"]
+contraindicated_by = ["ankle_injury_current", "knee_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set a light load. Face the angled sled with the shoulders under the pads, body leaning slightly forward, balls of the feet on the platform edge and heels free. Release the safety handles, rise as high as you can, pause, then lower the heels slowly. Lock the safety handles before stepping out.", ru = "Выставьте небольшой вес. Встаньте лицом к наклонной платформе тренажёра, плечи под валиками, корпус слегка наклонён вперёд, передняя часть стоп на краю платформы, пятки свободны. Снимите страховочные рычаги, поднимитесь на носки как можно выше, задержитесь и медленно опустите пятки. Перед тем как выйти, закройте страховочные рычаги." }

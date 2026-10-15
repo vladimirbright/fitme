@@ -1,0 +1,13 @@
+id = "ez_bar_decline_close_grip_press"
+names = { en = "EZ bar decline close-grip triceps press", ru = "Жим EZ-грифа ко лбу узким хватом на скамье с обратным наклоном" }
+kind = "isolation"
+pattern = "accessory"
+level = "advanced"
+equipment = ["ez_bar", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Lie on a decline bench with your feet secured and an EZ bar held in a close grip above your chest. Bend the elbows to bring the bar toward your forehead while the elbows drift slightly forward, then press back up. Use a light bar and move slowly.", ru = "Лягте на скамью с обратным наклоном, ноги зафиксированы, EZ-гриф узким хватом над грудью. Согните локти, опуская гриф ко лбу, локти слегка уходят вперёд, затем выжмите обратно. Берите лёгкий гриф и двигайтесь медленно." }

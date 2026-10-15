@@ -1,0 +1,13 @@
+id = "machine_one_arm_shoulder_press"
+names = { en = "Machine one-arm shoulder press", ru = "Жим одной рукой в тренажёре" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the lightest resistance and adjust the seat so the handle starts at shoulder height, back against the pad. Press with one arm until it is extended, then lower slowly. Finish one side, then switch.", ru = "Установите минимальное сопротивление и отрегулируйте сиденье так, чтобы рукоять была на уровне плеча, спина прижата к спинке. Выжмите одной рукой до выпрямления, затем медленно опустите. Выполните одну сторону, затем смените." }
+load_step_kg = 2.5

@@ -1,0 +1,13 @@
+id = "bodyweight_standing_single_leg_curl"
+names = { en = "Standing single-leg curl", ru = "Сгибание ноги стоя" }
+kind = "isolation"
+pattern = "accessory"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["knee", "ankle"]
+contraindicated_by = ["knee_injury_current", "ankle_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand tall beside a wall or chair for light support. Shift onto one leg and bend the other knee, bringing the heel toward the glutes while the thighs stay side by side. Lower slowly, finish the reps and switch legs.", ru = "Встаньте прямо рядом со стеной или стулом для лёгкой опоры. Перенесите вес на одну ногу и сгибайте другую в колене, подтягивая пятку к ягодицам, бёдра рядом друг с другом. Медленно опустите, закончите повторения и смените ногу." }
+load_step_kg = 1.0

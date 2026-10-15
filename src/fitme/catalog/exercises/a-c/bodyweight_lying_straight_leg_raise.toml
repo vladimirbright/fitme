@@ -1,0 +1,12 @@
+id = "bodyweight_lying_straight_leg_raise"
+names = { en = "Lying straight leg raise", ru = "Подъём прямых ног лёжа" }
+kind = "bodyweight"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on your back, hands under your hips, legs straight. Raise your legs toward the ceiling, then lower them slowly, stopping before your lower back arches. Bend your knees a little if the lowering feels hard to control.", ru = "Лягте на спину, руки под тазом, ноги прямые. Поднимите ноги к потолку, затем медленно опустите, останавливаясь до того, как поясница начнёт прогибаться. Если трудно контролировать опускание, слегка согните колени." }

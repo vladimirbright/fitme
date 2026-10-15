@@ -1,0 +1,12 @@
+id = "mobility_standing_hamstring_stretch_towel"
+names = { en = "Standing hamstring and calf stretch with a towel", ru = "Растяжка задней поверхности бедра и икры с полотенцем" }
+kind = "mobility"
+pattern = "mobility"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["hip", "ankle"]
+contraindicated_by = ["hip_injury_current", "ankle_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand facing a low step and put one heel on it, leg straight. Loop a towel around the ball of that foot and hold both ends. Hinge forward from the hips with a flat back and pull the toes gently toward you. Hold 20 to 30 seconds, then switch legs.", ru = "Встаньте лицом к низкой ступени и поставьте на неё пятку одной ноги, нога прямая. Накиньте полотенце на переднюю часть стопы и держите концы. Наклонитесь от бёдер с ровной спиной и мягко потяните носок на себя. Задержитесь на 20-30 секунд и смените ногу." }

@@ -1,0 +1,12 @@
+id = "bodyweight_plank_with_twist"
+names = { en = "Plank with twist", ru = "Планка с поворотом корпуса" }
+kind = "bodyweight"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Hold a high plank, hands under shoulders. Rotate your torso and lift one arm toward the ceiling, then return and switch sides. Keep your hips steady and move slowly.", ru = "Примите высокую планку, руки под плечами. Поверните корпус и поднимите одну руку к потолку, затем вернитесь и смените сторону. Таз неподвижен, двигайтесь медленно." }

@@ -1,0 +1,12 @@
+id = "dumbbell_one_arm_bent_over_kickback"
+names = { en = "Dumbbell one-arm triceps kickback", ru = "Разгибание руки с гантелью в наклоне" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder", "lower_back"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand with knees slightly bent and hinge forward with a flat back, the free hand on your thigh. Hold the elbow at your side, bent, then straighten the arm backward and return under control. Switch arms after the set.", ru = "Встаньте, слегка согните колени и наклонитесь вперёд с ровной спиной, свободная рука на бедре. Локоть прижат к боку и согнут, разогните руку назад и под контролем вернитесь. После подхода смените руку." }

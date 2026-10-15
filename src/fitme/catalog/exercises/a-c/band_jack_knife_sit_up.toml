@@ -1,0 +1,13 @@
+id = "band_jack_knife_sit_up"
+names = { en = "Band jackknife sit-up", ru = "Складка лёжа с лентой" }
+kind = "bodyweight"
+level = "advanced"
+pattern = "core"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "shoulder", "hip"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Lie on your back, legs straight, a band held taut between your hands overhead. Fold up by lifting legs and torso toward each other, then lower both slowly. Keep the pace smooth without swinging.", ru = "Лягте на спину, ноги прямые, лента натянута в руках над головой. Сложитесь, сближая ноги и корпус, затем медленно опустите обе части. Темп плавный, без раскачки." }

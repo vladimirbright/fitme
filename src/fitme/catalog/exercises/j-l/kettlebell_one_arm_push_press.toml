@@ -1,0 +1,14 @@
+id = "kettlebell_one_arm_push_press"
+names = { en = "Kettlebell one-arm push press", ru = "Швунг гири одной рукой" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["kettlebell"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "hip", "knee", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hip_injury_current", "knee_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 4.0 }
+level = "advanced"
+instructions = { en = "Stand with one kettlebell racked at the shoulder. Dip slightly at the knees, then drive up and press the kettlebell overhead to full extension. Lower it back to the rack under control. Finish all reps on one side before switching, and keep the area around you clear.", ru = "Встаньте, гиря у плеча. Слегка присядьте, затем оттолкнитесь ногами и выжмите гирю вверх до полного выпрямления руки. Под контролем верните её к плечу. Выполните все повторения на одну сторону, затем смените; вокруг должно быть свободно." }
+load_step_kg = 2.0

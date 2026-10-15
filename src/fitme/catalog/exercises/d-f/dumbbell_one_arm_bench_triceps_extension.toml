@@ -1,0 +1,12 @@
+id = "dumbbell_one_arm_bench_triceps_extension"
+names = { en = "Seated one-arm dumbbell overhead triceps extension", ru = "Разгибание руки с гантелью из-за головы сидя на скамье" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit upright on a bench with a dumbbell overhead in one hand and the other hand on the bench for support. Bend the elbow to lower the weight behind your head, then extend. Keep the upper arm close to your head and switch arms after the set.", ru = "Сядьте прямо на скамью, гантель над головой в одной руке, вторая рука опирается на скамью. Согните локоть, опуская гантель за голову, затем разогните. Плечо близко к голове, после подхода смените руку." }

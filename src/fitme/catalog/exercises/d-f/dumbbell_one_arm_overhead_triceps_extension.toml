@@ -1,0 +1,12 @@
+id = "dumbbell_one_arm_overhead_triceps_extension"
+names = { en = "Dumbbell one-arm overhead triceps extension", ru = "Разгибание руки с гантелью из-за головы одной рукой" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand with feet shoulder-width apart and one dumbbell raised overhead in one hand, upper arm close to your head. Bend the elbow to lower the weight behind your head, then straighten the arm. Steady the working arm with your free hand if needed. Use a light weight.", ru = "Встаньте, ноги на ширине плеч, гантель в одной руке поднята над головой, плечо рядом с головой. Согните локоть, опуская гантель за голову, затем выпрямите руку. При необходимости придерживайте рабочую руку свободной. Берите небольшой вес." }

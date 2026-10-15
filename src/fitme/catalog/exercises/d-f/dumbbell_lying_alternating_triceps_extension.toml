@@ -1,0 +1,12 @@
+id = "dumbbell_lying_alternating_triceps_extension"
+names = { en = "Dumbbell lying alternating triceps extension", ru = "Попеременные разгибания рук с гантелями лёжа" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie on a flat bench with a dumbbell in each hand, arms straight above your chest. Bend one elbow to lower that dumbbell beside your head while the other arm stays extended, then straighten it and alternate. Use a light weight.", ru = "Лягте на горизонтальную скамью, в руках гантели, руки прямые над грудью. Согните один локоть, опуская гантель рядом с головой, вторая рука остаётся прямой, затем разогните и чередуйте руки. Вес лёгкий." }

@@ -1,0 +1,13 @@
+id = "barbell_hack_squat"
+names = { en = "Barbell hack squat", ru = "Гакк-приседания со штангой" }
+kind = "compound"
+pattern = "squat"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "lower_back"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Stand with the bar on the floor behind your heels and grip it behind your legs. Stand tall, then squat down with the chest up and the bar close to the legs. Drive up through the whole foot.", ru = "Встаньте, штанга лежит на полу позади пяток; возьмите её хватом сзади. Выпрямитесь, затем присядьте с поднятой грудью, штанга близко к ногам. Поднимитесь, опираясь на всю стопу." }
+load_step_kg = 2.5

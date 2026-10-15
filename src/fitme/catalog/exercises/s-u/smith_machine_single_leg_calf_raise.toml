@@ -1,0 +1,12 @@
+id = "smith_machine_single_leg_calf_raise"
+names = { en = "Smith machine single-leg calf raise", ru = "Подъём на носок на одной ноге в машине Смита" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["smith_machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["ankle", "knee", "lower_back", "neck"]
+contraindicated_by = ["ankle_injury_current", "knee_injury_current", "lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the bar at shoulder height and step under it with the bar across the upper back, not the neck. Stand on one foot with the other foot tucked behind, then unhook. Rise onto the ball of the foot, pause, lower slowly, and re-hook the bar before stepping away.", ru = "Установите гриф на уровне плеч и встаньте под него, гриф лежит на верхней части спины, не на шее. Встаньте на одну ногу, вторую подожмите назад, затем снимите гриф с фиксаторов. Поднимитесь на носок, задержитесь, медленно опустите и верните гриф на фиксаторы, прежде чем отойти." }

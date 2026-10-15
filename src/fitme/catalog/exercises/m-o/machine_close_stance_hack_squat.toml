@@ -1,0 +1,13 @@
+id = "machine_close_stance_hack_squat"
+names = { en = "Close-stance machine hack squat", ru = "Гакк-приседания в тренажёре с узкой постановкой" }
+kind = "compound"
+pattern = "squat"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["knee", "hip", "lower_back"]
+contraindicated_by = ["knee_injury_current", "hernia", "hip_injury_current", "lower_back_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the lightest resistance. Stand in the machine with back and shoulders on the pads and feet close together, a little forward on the platform. Release the safety handles, sit down until the thighs are about parallel, then press up. Re-engage the safeties when done.", ru = "Установите минимальное сопротивление. Встаньте в тренажёр, спина и плечи на упорах, стопы вместе и чуть впереди на платформе. Снимите страховку, присядьте до бёдер примерно параллельно полу и выжмите вверх. После подхода верните страховку." }
+load_step_kg = 2.5

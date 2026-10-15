@@ -1,0 +1,13 @@
+id = "band_straight_leg_deadlift"
+names = { en = "Band straight-leg deadlift", ru = "Становая тяга на прямых ногах с эспандером" }
+kind = "compound"
+pattern = "hinge"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["hip", "lower_back"]
+contraindicated_by = ["hip_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "calibration" }
+instructions = { en = "Stand on a band and hold its ends with straight arms. With soft knees, push the hips back and lower the hands along the legs, back flat. Stand up by driving the hips forward.", ru = "Встаньте на эспандер и держите концы прямыми руками. С мягкими коленями отведите таз назад и опустите руки вдоль ног, спина прямая. Поднимитесь, выводя таз вперёд." }
+load_step_kg = 1.0

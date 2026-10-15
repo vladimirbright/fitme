@@ -1,0 +1,14 @@
+id = "kettlebell_one_arm_clean_and_jerk"
+names = { en = "Kettlebell one-arm clean and jerk", ru = "Взятие на грудь и толчок гири одной рукой" }
+kind = "compound"
+pattern = "hinge"
+equipment = ["kettlebell"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "hip", "knee", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hip_injury_current", "knee_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 4.0 }
+level = "advanced"
+instructions = { en = "Hinge at the hips with the kettlebell between your feet, then drive your hips forward and pull the bell close to the body into the rack at your shoulder. Dip and drive up to jerk it overhead to a locked arm. Lower it back to the rack, then to the floor, under control. Clear the space around you.", ru = "Наклонитесь в тазобедренных суставах, гиря между стопами, затем толкните таз вперёд и подтяните гирю близко к телу к плечу. Присядьте и оттолкнитесь, выталкивая гирю вверх до зафиксированной руки. Под контролем верните её к плечу, затем вниз. Вокруг должно быть свободно." }
+load_step_kg = 2.0

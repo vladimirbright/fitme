@@ -1,0 +1,12 @@
+id = "dumbbell_front_raise_overhead"
+names = { en = "Dumbbell front raise to overhead", ru = "Подъём гантелей перед собой выше головы" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand holding a light dumbbell in each hand in front of your thighs, overhand grip. With nearly straight arms, raise the dumbbells forward and up until they are overhead, then lower slowly. Keep your ribs down and do not arch your back.", ru = "Встаньте, лёгкие гантели хватом сверху перед бёдрами. Почти прямыми руками поднимите гантели вперёд и вверх над головой, затем медленно опустите. Рёбра опущены, поясницу не прогибайте." }

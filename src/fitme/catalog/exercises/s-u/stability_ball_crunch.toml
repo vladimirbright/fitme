@@ -1,0 +1,12 @@
+id = "stability_ball_crunch"
+names = { en = "Stability ball crunch", ru = "Скручивания на фитболе" }
+kind = "isolation"
+pattern = "core"
+equipment = ["stability_ball"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "neck"]
+contraindicated_by = ["lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Sit on the ball, walk your feet forward until your lower back rests on it, feet wide and flat. Hands lightly at your temples, curl your shoulders up, then lower back over the ball under control. Keep your feet planted so the ball does not roll.", ru = "Сядьте на мяч и пройдите стопами вперёд, пока поясница не ляжет на мяч; стопы широко и плотно на полу. Руки у висков, оторвите плечи вверх, затем под контролем опуститесь назад. Не сдвигайте стопы, чтобы мяч не катился." }

@@ -1,0 +1,11 @@
+id = "stability_ball_lying_side_stretch"
+names = { en = "Stability ball lying side stretch", ru = "Боковая растяжка лёжа на фитболе" }
+kind = "mobility"
+pattern = "mobility"
+equipment = ["stability_ball"]
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on your side with the ball under your head and top arm resting on it, legs extended. Reach the top arm forward and overhead, let the torso rotate slightly and hold 20-30 seconds. Switch sides.", ru = "Лягте на бок, мяч под головой, верхняя рука лежит на нём, ноги вытянуты. Потяните верхнюю руку вперёд и над головой, позвольте корпусу слегка повернуться и удерживайте 20-30 секунд. Смените сторону." }

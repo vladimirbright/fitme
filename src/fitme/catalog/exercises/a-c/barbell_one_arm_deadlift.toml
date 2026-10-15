@@ -1,0 +1,15 @@
+id = "barbell_one_arm_deadlift"
+names = { en = "Barbell one-arm deadlift", ru = "Становая тяга штанги одной рукой" }
+search = { en = "barbell suitcase deadlift", ru = "становая тяга штанги одной рукой сбоку" }
+kind = "compound"
+pattern = "hinge"
+level = "advanced"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip", "knee", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "knee_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Stand beside the bar at its centre and grip it with one hand. Keep the back flat, stand up by pushing the floor away, and avoid leaning to the side. Lower it back under control. Switch hands after the set.", ru = "Встаньте сбоку от штанги у её центра и возьмите гриф одной рукой. Спина ровная, поднимитесь, отталкиваясь от пола, без наклона в сторону. Опустите штангу под контролем. После подхода смените руку." }
+load_step_kg = 2.5

@@ -1,0 +1,13 @@
+id = "cable_kneeling_rope_rear_delt_row"
+names = { en = "Cable kneeling rope rear delt row", ru = "Тяга каната на блоке с колен на заднюю дельту" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Attach a rope to a low pulley and kneel facing the stack, arms extended. Pull the rope toward your upper chest with elbows wide, squeeze the shoulder blades, then return under control. Keep your torso upright and the resistance light.", ru = "Закрепите канат на нижнем блоке, встаньте на колени лицом к стеку, руки вытянуты. Тяните канат к верху груди, локти в стороны, сведите лопатки, затем верните под контролем. Корпус вертикально, сопротивление лёгкое." }
+load_step_kg = 1.0

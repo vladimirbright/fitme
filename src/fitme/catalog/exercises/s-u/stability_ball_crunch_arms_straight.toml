@@ -1,0 +1,12 @@
+id = "stability_ball_crunch_arms_straight"
+names = { en = "Stability ball crunch, arms straight", ru = "Скручивания на фитболе с прямыми руками" }
+kind = "isolation"
+pattern = "core"
+equipment = ["stability_ball"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "neck"]
+contraindicated_by = ["lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Lie back on the ball with your lower back supported, feet wide and flat, arms reaching straight up. Curl your torso up and reach toward the ceiling, then lower slowly. Keep your feet planted so the ball stays still.", ru = "Лягте спиной на мяч, поясница опирается на него, стопы широко и плотно на полу, руки подняты вверх. Скрутите корпус вверх, тянясь руками к потолку, затем медленно опуститесь. Стопы не двигаются, мяч стоит на месте." }

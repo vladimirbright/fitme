@@ -1,0 +1,14 @@
+id = "barbell_zercher_squat"
+names = { en = "Barbell zercher squat", ru = "Приседания Зерхера со штангой" }
+kind = "compound"
+pattern = "squat"
+level = "advanced"
+equipment = ["barbell", "rack"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "lower_back", "elbow_wrist"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "lower_back_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the bar in the rack at about hip height. Cradle it in the crooks of the elbows, lift it out and step back. Squat down with the chest tall, then stand up. Set the safety arms just below the bar's lowest point.", ru = "Установите штангу на стойке примерно на высоте бёдер. Уложите её в сгибы локтей, снимите и отойдите. Присядьте с поднятой грудью и встаньте. Страховочные упоры поставьте чуть ниже нижней точки штанги." }
+load_step_kg = 2.5

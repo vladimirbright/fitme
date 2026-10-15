@@ -1,0 +1,12 @@
+id = "foam_roller_hip_roll"
+names = { en = "Foam roller seated hip roll", ru = "Растяжка бёдер с роликом сидя" }
+kind = "mobility"
+pattern = "mobility"
+equipment = ["foam_roller"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["hip", "knee"]
+contraindicated_by = ["hip_injury_current", "knee_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Sit with the roller under the thighs and hands on the floor behind you. Roll slowly while drawing the knees toward the chest, pause, then roll back and extend the legs.", ru = "Сядьте, ролик под бёдрами, руки опираются сзади на пол. Медленно прокатывайтесь, подтягивая колени к груди, задержитесь и вернитесь, выпрямляя ноги." }

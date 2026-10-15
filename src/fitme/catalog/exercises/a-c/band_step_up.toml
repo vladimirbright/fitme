@@ -1,0 +1,13 @@
+id = "band_step_up"
+names = { en = "Band step-up", ru = "Зашагивания на скамью с эспандером" }
+kind = "compound"
+pattern = "squat"
+equipment = ["resistance_bands", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "ankle"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current"]
+increment_kg = 2.0
+start = { kind = "calibration" }
+instructions = { en = "Place a loop band just above the knees and face a sturdy bench or step. Step up with one foot, pressing the knee out against the band, and bring the other foot up. Step down under control and alternate legs.", ru = "Наденьте петлю эспандера чуть выше колен и встаньте лицом к устойчивой скамье или степу. Поднимитесь одной ногой, разводя колено против эспандера, и приставьте вторую. Спуститесь под контролем и чередуйте ноги." }
+load_step_kg = 1.0

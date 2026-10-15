@@ -1,0 +1,13 @@
+id = "cable_twisting_pull"
+names = { en = "Cable twisting one-arm pull", ru = "Тяга блока одной рукой с поворотом корпуса" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Stand facing a low pulley, feet shoulder-width, knees soft, one arm extended on the handle. Pull the handle to your side and rotate the torso slightly away at the end. Return slowly to square and keep the rotation small. Switch sides after each set.", ru = "Встаньте лицом к нижнему блоку, ноги на ширине плеч, колени слегка согнуты, рука с рукоятью вытянута. Тяните рукоять к боку и в конце слегка поверните корпус. Медленно вернитесь в исходное положение, поворот небольшой. После подхода смените сторону." }
+load_step_kg = 2.5

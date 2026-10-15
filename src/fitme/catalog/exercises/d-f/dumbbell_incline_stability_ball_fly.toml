@@ -1,0 +1,12 @@
+id = "dumbbell_incline_stability_ball_fly"
+names = { en = "Incline dumbbell fly on stability ball", ru = "Разводка гантелей на фитболе с наклоном корпуса" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "stability_ball"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie back on a stability ball with your upper back on the ball and your hips lower, so your torso angles upward; feet wide. Hold the dumbbells above your chest with a slight elbow bend, open your arms in an arc to chest level, then bring them together. Use light weights.", ru = "Лягте на фитбол верхней частью спины, таз ниже, корпус наклонён вверх; ноги широко. Гантели над грудью, локти слегка согнуты: разведите руки по дуге до уровня груди и сведите обратно. Вес лёгкий." }

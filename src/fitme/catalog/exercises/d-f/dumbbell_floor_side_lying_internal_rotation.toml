@@ -1,0 +1,12 @@
+id = "dumbbell_floor_side_lying_internal_rotation"
+names = { en = "Dumbbell floor side-lying internal rotation", ru = "Внутренняя ротация плеча с гантелью лёжа на боку на полу" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie on your side on the floor with a light dumbbell in the lower hand, elbow bent 90 degrees and pinned to your side. Rotate the forearm up toward your torso, then lower slowly. Keep the weight light.", ru = "Лягте на бок на пол, в нижней руке лёгкая гантель, локоть согнут под 90 градусов и прижат к боку. Поверните предплечье вверх к корпусу, затем медленно опустите. Вес берите небольшой." }

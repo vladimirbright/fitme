@@ -1,0 +1,14 @@
+id = "weight_plate_sissy_squat"
+names = { en = "Weight plate sissy squat", ru = "Сисси-приседание с блином" }
+kind = "compound"
+pattern = "squat"
+level = "advanced"
+equipment = ["weight_plate"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "ankle", "hip"]
+contraindicated_by = ["knee_injury_current", "ankle_injury_current", "hip_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Hold a plate at the chest and a post with the other hand. Rise onto the balls of the feet, push the knees forward and lean back as you lower. Use a shallow, controlled range, then return upright.", ru = "Держите блин у груди, другой рукой опору. Поднимитесь на носки, выводите колени вперёд и наклоняйтесь назад, опускаясь. Работайте в неглубокой подконтрольной амплитуде, затем вернитесь вверх." }
+load_step_kg = 2.5

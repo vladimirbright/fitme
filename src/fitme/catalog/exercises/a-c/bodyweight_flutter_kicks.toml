@@ -1,0 +1,12 @@
+id = "bodyweight_flutter_kicks"
+names = { en = "Flutter kicks", ru = "Флаттер-кикс" }
+kind = "bodyweight"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on your back with hands by the sides or under the hips and legs straight. Lift the heels a few centimetres off the floor and alternate small up-and-down kicks. Keep the lower back pressed down and stop the set when it lifts.", ru = "Лягте на спину, руки вдоль тела или под тазом, ноги прямые. Приподнимите пятки на несколько сантиметров и чередуйте небольшие махи вверх-вниз. Поясница прижата к полу; завершите подход, если она отрывается." }

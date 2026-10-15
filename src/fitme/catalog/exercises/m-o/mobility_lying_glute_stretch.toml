@@ -1,0 +1,12 @@
+id = "mobility_lying_glute_stretch"
+names = { en = "Lying figure-four glute stretch", ru = "Растяжка ягодичных лёжа «четвёрка»" }
+kind = "mobility"
+pattern = "mobility"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["hip"]
+contraindicated_by = ["hip_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on your back. Cross one ankle over the opposite thigh just above the knee. Hold the thigh of the lower leg and draw it toward the chest until you feel the stretch in the outer hip. Hold, then switch sides.", ru = "Лягте на спину. Положите щиколотку одной ноги на противоположное бедро чуть выше колена. Обхватите бедро нижней ноги и подтяните к груди, пока не почувствуете растяжение в наружной части бедра. Задержитесь и смените сторону." }

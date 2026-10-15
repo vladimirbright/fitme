@@ -1,0 +1,12 @@
+id = "dumbbell_seated_one_arm_supported_rear_delt_raise"
+names = { en = "Dumbbell seated one-arm supported rear delt raise", ru = "Разведение гантели на заднюю дельту сидя с опорой одной рукой" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit on a bench and lean forward, resting your free hand on the bench for support. With a dumbbell in the other hand, raise the arm out to the side to shoulder line with a slight elbow bend, then lower under control. Do all reps, then switch arms.", ru = "Сядьте на скамью и наклонитесь вперёд, свободной рукой обопритесь о скамью. С гантелью в другой руке поднимите руку в сторону до линии плеча, слегка согнув локоть, затем опустите под контролем. Выполните все повторения, затем смените руку." }

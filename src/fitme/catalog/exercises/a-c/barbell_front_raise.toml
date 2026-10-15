@@ -1,0 +1,14 @@
+id = "barbell_front_raise"
+names = { en = "Barbell front raise", ru = "Подъём штанги перед собой" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+# Calibration, not the empty 20 kg bar: too heavy a first raise for a novice.
+start = { kind = "calibration" }
+instructions = { en = "Stand holding a light bar in front of your thighs, overhand grip at shoulder width. With nearly straight arms, raise the bar forward to shoulder height, then lower slowly. Don't swing or lean back.", ru = "Встаньте, держа лёгкий гриф перед бёдрами хватом сверху на ширине плеч. Почти прямыми руками поднимите штангу вперёд до уровня плеч, затем медленно опустите. Не раскачивайтесь и не отклоняйтесь назад." }
+load_step_kg = 2.5

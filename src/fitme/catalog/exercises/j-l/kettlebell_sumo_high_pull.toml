@@ -1,0 +1,15 @@
+id = "kettlebell_sumo_high_pull"
+names = { en = "Kettlebell sumo high pull", ru = "Тяга гири сумо к груди" }
+search = { en = "kettlebell sumo high pull", ru = "тяга гири сумо к подбородку" }
+kind = "compound"
+level = "advanced"
+pattern = "hinge"
+equipment = ["kettlebell"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip", "knee", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "knee_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 4.0 }
+instructions = { en = "Stand wide with toes turned out, holding one kettlebell with both hands between the legs. Drive through the legs and stand tall while pulling the elbows up and out, the bell rising to chest height. Lower it under control; use a light bell and a clear space around you.", ru = "Встаньте широко, носки развёрнуты, гиря в обеих руках между ног. Оттолкнитесь ногами и выпрямитесь, поднимая локти вверх и в стороны, гиря идёт до уровня груди. Опустите под контролем; берите лёгкую гирю и оставьте вокруг свободное место." }
+load_step_kg = 2.0

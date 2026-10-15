@@ -1,0 +1,13 @@
+id = "weighted_hanging_leg_raise"
+names = { en = "Weighted hanging leg raise", ru = "Подъём ног в висе с отягощением" }
+kind = "isolation"
+level = "advanced"
+pattern = "core"
+equipment = ["pull_up_bar", "weight_plate"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "shoulder", "neck", "hip"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "neck_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Hang from a bar with a weight belt or a plate secured at your hips. Raise straight legs to about hip height or higher, then lower slowly without swinging. Start with a very light load.", ru = "Повисните на перекладине, пояс с отягощением или блин закреплены на бёдрах. Поднимите прямые ноги до уровня таза или выше, затем медленно опустите без раскачки. Начинайте с очень лёгкого веса." }

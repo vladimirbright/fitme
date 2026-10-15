@@ -1,0 +1,13 @@
+id = "cable_one_arm_preacher_curl"
+names = { en = "Cable one-arm preacher curl", ru = "Сгибание руки на скамье Скотта на блоке" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Sit or stand at a preacher pad (or a bench set steeply upright) so the backs of your upper arms rest on it. Hold the handle underhand with the working arm resting on the pad. Curl toward your shoulder without lifting the elbow, then lower until the arm is nearly straight. Switch arms after the set.", ru = "Займите место у скамьи Скотта (или круто поставленной скамьи) так, чтобы задняя часть плеч лежала на упоре. Рабочая рука лежит на упоре, рукоять хватом снизу. Согните руку к плечу, не отрывая локоть, и опустите почти до выпрямления. После подхода смените руку." }
+load_step_kg = 1.0

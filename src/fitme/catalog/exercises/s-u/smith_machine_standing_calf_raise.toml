@@ -1,0 +1,12 @@
+id = "smith_machine_standing_calf_raise"
+names = { en = "Smith machine standing calf raise", ru = "Подъём на носки стоя в машине Смита" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["smith_machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["ankle", "knee", "lower_back", "neck"]
+contraindicated_by = ["ankle_injury_current", "knee_injury_current", "lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the bar at shoulder height and step under it with the bar across the upper back, not the neck, feet flat on the floor. Unhook, rise onto the balls of the feet as high as you can, pause, then lower slowly. Re-hook the bar before stepping away.", ru = "Установите гриф на уровне плеч и встаньте под него, гриф лежит на верхней части спины, не на шее, стопы на полу. Снимите гриф с фиксаторов, поднимитесь на носки как можно выше, задержитесь и медленно опуститесь. Верните гриф на фиксаторы, прежде чем отойти." }

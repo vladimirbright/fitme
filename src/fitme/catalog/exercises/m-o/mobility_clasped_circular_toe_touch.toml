@@ -1,0 +1,12 @@
+id = "mobility_clasped_circular_toe_touch"
+names = { en = "Clasped-hands circular toe touch", ru = "Круговой наклон к носкам со сцепленными руками" }
+kind = "mobility"
+pattern = "mobility"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand with feet wide enough to balance and clasp the hands in front. Hinge forward with soft knees and trace a slow circle toward the toes and across the feet with the hands. Reverse direction after a few reps and stay within a comfortable range.", ru = "Встаньте устойчиво, сцепите руки перед собой. Наклонитесь вперёд с мягкими коленями и медленно проведите руками круг у носков и над стопами. Через несколько повторений смените направление; амплитуда комфортная." }

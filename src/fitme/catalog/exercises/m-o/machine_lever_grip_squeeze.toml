@@ -1,0 +1,12 @@
+id = "machine_lever_grip_squeeze"
+names = { en = "Lever grip squeeze", ru = "Сжатие рукоятей в рычажном тренажёре" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Sit with the back straight and feet flat, holding the handles. Squeeze them toward each other, hold for a second, then let them open slowly. Use a light load and keep the wrists in line with the forearms.", ru = "Сядьте с прямой спиной, стопы на полу, возьмитесь за рукояти. Сожмите их навстречу друг другу, задержитесь на секунду и медленно разведите. Берите небольшой вес, кисти в одной линии с предплечьями." }

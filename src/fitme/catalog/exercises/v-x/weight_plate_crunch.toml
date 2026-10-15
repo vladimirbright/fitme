@@ -1,0 +1,13 @@
+id = "weight_plate_crunch"
+names = { en = "Weight plate crunch", ru = "Скручивания с блином" }
+search = { en = "weighted crunch", ru = "скручивания с отягощением" }
+kind = "isolation"
+pattern = "core"
+equipment = ["weight_plate"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "neck"]
+contraindicated_by = ["lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Lie on your back, knees bent, feet flat, a plate held against your chest. Curl your shoulders off the floor, then lower back slowly. Start light and keep your neck relaxed.", ru = "Лягте на спину, колени согнуты, стопы на полу, блин прижат к груди. Оторвите плечи от пола, затем медленно опуститесь. Начинайте с лёгкого веса, шея расслаблена." }

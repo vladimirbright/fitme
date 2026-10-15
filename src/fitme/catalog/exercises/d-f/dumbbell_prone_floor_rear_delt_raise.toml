@@ -1,0 +1,12 @@
+id = "dumbbell_prone_floor_rear_delt_raise"
+names = { en = "Dumbbell prone floor rear delt raise", ru = "Разведение гантелей лёжа на животе на полу" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie face down on the floor with your arms extended forward, a light dumbbell in each hand, palms facing each other. Keeping a slight bend in the elbows, lift your arms up and out to the sides, then lower under control. Keep your forehead near the floor.", ru = "Лягте на живот на пол, руки вытянуты вперёд, в каждой лёгкая гантель, ладони друг к другу. Слегка согнув локти, поднимите руки вверх и в стороны, затем опустите под контролем. Лоб держите ближе к полу." }

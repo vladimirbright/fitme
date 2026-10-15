@@ -1,0 +1,12 @@
+id = "weight_plate_svend_press"
+names = { en = "Svend press", ru = "Жим Свенда с блином" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["weight_plate"]
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Stand with a plate held between your palms at chest height, elbows bent. Squeeze the palms together and push the plate straight forward until your arms are extended, then bring it back to the chest. Keep the squeeze throughout.", ru = "Встаньте, блин зажат между ладонями на уровне груди, локти согнуты. Сжимая ладони, вытолкните блин вперёд до выпрямления рук и верните к груди. Сжимайте ладони на протяжении всего движения." }
+load_step_kg = 2.5

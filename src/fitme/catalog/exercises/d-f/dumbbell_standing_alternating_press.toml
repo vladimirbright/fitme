@@ -1,0 +1,12 @@
+id = "dumbbell_standing_alternating_press"
+names = { en = "Standing alternating dumbbell press", ru = "Попеременный жим гантелей стоя" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand with feet shoulder-width apart, dumbbells at shoulder height, palms forward. Press one dumbbell overhead to full extension, lower it back to your shoulder, then press the other. Brace your core and keep your ribs down.", ru = "Встаньте, ноги на ширине плеч, гантели на уровне плеч, ладони вперёд. Выжмите одну гантель вверх до выпрямления руки, опустите к плечу, затем выжмите другую. Напрягите корпус, рёбра опущены." }

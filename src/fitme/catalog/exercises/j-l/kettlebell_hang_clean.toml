@@ -1,0 +1,14 @@
+id = "kettlebell_hang_clean"
+names = { en = "Kettlebell hang clean", ru = "Взятие гири на грудь из виса" }
+kind = "compound"
+pattern = "hinge"
+level = "advanced"
+equipment = ["kettlebell"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 4.0 }
+instructions = { en = "Stand with the kettlebell hanging in front of the thighs. Hinge back, let it swing between the legs, then drive the hips forward and guide the bell to the rack position at the shoulder with the elbow tucked. Lower it back with control. Keep a clear area around you.", ru = "Встаньте, гиря висит перед бёдрами. Отведите таз назад, пусть гиря пройдёт между ног, затем резко разогните таз и направьте гирю в стойку у плеча, локоть прижат. Опустите гирю обратно под контролем. Рядом должно быть свободное место." }
+load_step_kg = 2.0

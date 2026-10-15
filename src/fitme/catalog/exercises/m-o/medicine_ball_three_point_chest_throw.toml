@@ -1,0 +1,15 @@
+id = "medicine_ball_three_point_chest_throw"
+names = { en = "Medicine ball chest throw from three-point stance", ru = "Бросок медбола от груди из стойки на трёх опорах" }
+search = { en = "medicine ball chest push from 3 point stance", ru = "бросок медбола от груди из низкой стойки" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["medicine_ball"]
+load_unit = "total"
+level = "advanced"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "knee"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "knee_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Crouch in a three-point stance a few steps from a solid wall, back flat, one hand on the floor and the ball on the floor in front of you. Rise and step forward, bringing the ball to your chest with both hands, then push it straight into the wall. Let it drop or catch it softly, then walk back and reset before each rep. Use a light ball and keep the area clear of people.", ru = "Встаньте в низкую стойку на трёх опорах в нескольких шагах от прочной стены: спина ровная, одна рука на полу, медбол на полу перед вами. Поднимаясь, шагните вперёд, подведите мяч к груди двумя руками и толкните его прямо в стену. Дайте мячу упасть или мягко поймайте его, затем вернитесь и займите исходное положение перед каждым повторением. Берите лёгкий мяч, рядом не должно быть людей." }
+load_step_kg = 1.0

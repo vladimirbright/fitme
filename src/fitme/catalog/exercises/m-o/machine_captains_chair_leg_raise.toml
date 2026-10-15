@@ -1,0 +1,12 @@
+id = "machine_captains_chair_leg_raise"
+names = { en = "Captain's chair leg raise", ru = "Подъём прямых ног в упоре на локтях" }
+kind = "bodyweight"
+pattern = "core"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["lower_back", "hip", "shoulder"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "shoulder_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Rest your forearms on the pads with your back against the backrest. Raise your straight legs in front of you to about hip height, then lower slowly without swinging. Keep your back pressed to the pad.", ru = "Обопритесь предплечьями на подушки, спина прижата к спинке. Поднимите прямые ноги перед собой примерно до уровня таза, затем медленно опустите без раскачки. Спина прижата к опоре." }

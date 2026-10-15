@@ -1,0 +1,13 @@
+id = "bodyweight_planche_lean"
+names = { en = "Planche lean", ru = "Наклон в планше" }
+kind = "bodyweight"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+level = "advanced"
+instructions = { en = "From a push-up position with hands turned slightly out, lean forward until your shoulders are past your hands and your arms stay straight. Hold briefly, then rock back. Keep your body in a straight line.", ru = "Из упора лёжа с чуть развёрнутыми руками наклоняйтесь вперёд, пока плечи не окажутся впереди кистей, руки остаются прямыми. Коротко задержитесь, затем вернитесь назад. Тело держите прямой линией." }

@@ -1,0 +1,13 @@
+id = "band_seated_close_grip_pulldown"
+names = { en = "Band seated close-grip pulldown", ru = "Тяга эспандера сверху сидя узким хватом" }
+kind = "compound"
+pattern = "vertical_pull"
+equipment = ["resistance_bands", "pull_up_bar", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "calibration" }
+instructions = { en = "Anchor a band high on a pull-up bar and sit on a bench facing it. Take a narrow grip and pull the band to the chest with a straight back, then release slowly.", ru = "Закрепите эспандер вверху на перекладине и сядьте на скамью лицом к нему. Узкий хват, тяните к груди с прямой спиной, затем медленно отпустите." }
+load_step_kg = 1.0

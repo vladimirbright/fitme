@@ -1,0 +1,13 @@
+id = "cable_lying_fly"
+names = { en = "Cable lying fly", ru = "Сведение рук в кроссовере лёжа" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Place a flat bench between the low pulleys and lie back with feet on the floor, a handle in each hand and arms above the chest. With slightly bent elbows, lower the arms out to the sides in an arc, then bring them back together over the chest.", ru = "Поставьте горизонтальную скамью между нижними блоками и лягте, стопы на полу, рукояти в руках, руки над грудью. С чуть согнутыми локтями дугой опустите руки в стороны, затем сведите над грудью." }
+load_step_kg = 1.0

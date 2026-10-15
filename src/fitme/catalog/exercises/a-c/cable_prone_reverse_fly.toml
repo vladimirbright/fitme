@@ -1,0 +1,13 @@
+id = "cable_prone_reverse_fly"
+names = { en = "Cable prone reverse fly", ru = "Обратное разведение на блоке лёжа на скамье" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Lie face down on a flat bench with a handle from a low pulley in each hand, arms reaching forward. With soft elbows, raise your arms out to the sides to shoulder height, then lower under control. Use light resistance.", ru = "Лягте лицом вниз на горизонтальную скамью, в руках рукояти от нижнего блока, руки тянутся вперёд. С мягкими локтями поднимите руки в стороны до уровня плеч, затем опустите под контролем. Сопротивление лёгкое." }
+load_step_kg = 1.0

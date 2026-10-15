@@ -1,0 +1,12 @@
+id = "isometric_chest_squeeze"
+names = { en = "Isometric chest squeeze", ru = "Изометрическое сведение ладоней перед грудью" }
+kind = "bodyweight"
+pattern = "accessory"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand with feet shoulder-width apart and press your palms together in front of your chest, elbows out. Squeeze steadily for a few seconds without holding your breath, then release. Keep your shoulders down.", ru = "Встаньте ноги на ширине плеч и прижмите ладони друг к другу перед грудью, локти разведены. Плавно давите несколько секунд, не задерживая дыхание, затем расслабьтесь. Плечи опущены." }

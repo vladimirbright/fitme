@@ -1,0 +1,12 @@
+id = "dumbbell_supported_one_arm_lateral_raise"
+names = { en = "Dumbbell supported one-arm lateral raise", ru = "Мах гантелью в сторону одной рукой с опорой" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand beside a stable surface such as a wall or a rack upright and hold it with your free hand. With a dumbbell in the other hand, raise the arm out to the side to shoulder height with a slight elbow bend, then lower slowly. Do all reps, then switch sides.", ru = "Встаньте сбоку от устойчивой опоры, например стены или стойки, и держитесь за неё свободной рукой. С гантелью в другой руке поднимите руку в сторону до уровня плеча, слегка согнув локоть, затем медленно опустите. Выполните все повторения, затем смените сторону." }

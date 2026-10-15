@@ -1,0 +1,13 @@
+id = "dumbbell_incline_y_raise"
+names = { en = "Incline dumbbell Y-raise", ru = "Подъём гантелей буквой Y на наклонной скамье" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie chest-down on a bench set to a moderate incline, light dumbbells hanging below with palms facing in. With elbows slightly bent, raise the arms forward and out in a Y shape to head level, then lower slowly. Use light weights and avoid shrugging.", ru = "Лягте грудью на скамью с умеренным наклоном, лёгкие гантели свисают, ладони смотрят друг на друга. Слегка согнув локти, поднимите руки вперёд и в стороны буквой Y до уровня головы, затем медленно опустите. Вес лёгкий, плечи не поднимайте." }
+load_step_kg = 0.5

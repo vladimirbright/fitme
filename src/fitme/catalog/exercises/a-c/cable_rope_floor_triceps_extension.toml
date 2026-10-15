@@ -1,0 +1,13 @@
+id = "cable_rope_floor_triceps_extension"
+names = { en = "Cable rope lying floor triceps extension", ru = "Разгибание рук с канатом лёжа на полу" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Lie on the floor with your head toward a low pulley, holding the rope with palms facing each other and arms straight up. Bend only at the elbows to lower the rope toward your forehead, stopping short of touching, then extend.", ru = "Лягте на пол головой к нижнему блоку, канат ладонями друг к другу, руки подняты вверх. Сгибая только локти, опустите канат ко лбу, не касаясь, затем выпрямите руки." }
+load_step_kg = 1.0

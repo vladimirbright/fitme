@@ -1,0 +1,13 @@
+id = "cable_rope_hammer_curl"
+names = { en = "Cable rope hammer curl", ru = "Молотковые сгибания рук на нижнем блоке с канатом" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Attach a rope to a low pulley, stand tall and hold the ends with palms facing each other, elbows by the torso. Curl the rope toward the shoulders, then lower under control without leaning back.", ru = "Прикрепите канат к нижнему блоку, встаньте ровно, держите концы ладонями друг к другу, локти у корпуса. Согните руки, поднимая канат к плечам, затем опустите под контролем, не отклоняясь назад." }
+load_step_kg = 1.0

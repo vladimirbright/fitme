@@ -1,0 +1,13 @@
+id = "cable_v_bar_seated_row"
+names = { en = "Cable V-bar seated row", ru = "Тяга нижнего блока сидя V-образной рукоятью" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit at the low cable with feet on the footplates and knees soft, holding the V-handle. Keep your chest tall and pull the handle to your lower ribs, elbows close. Return slowly without rounding forward.", ru = "Сядьте у нижнего блока, ступни на упорах, колени слегка согнуты, возьмитесь за V-образную рукоять. Грудь раскрыта, тяните рукоять к низу рёбер, локти близко. Медленно возвращайтесь, не округляя спину." }
+load_step_kg = 2.5

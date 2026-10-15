@@ -1,0 +1,13 @@
+id = "cable_shrug"
+names = { en = "Cable shrug", ru = "Шраги в блоке" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "neck", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "neck_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Attach a straight bar to a low pulley and stand close to it, holding the bar in front of your thighs with straight arms. Raise your shoulders straight up toward your ears, pause, then lower under control. Keep the arms long and the head level.", ru = "Закрепите прямую рукоять на нижнем блоке и встаньте вплотную, рукоять перед бёдрами, руки прямые. Поднимите плечи строго вверх к ушам, задержитесь, затем опустите под контролем. Руки не сгибайте, голова ровно." }
+load_step_kg = 1.0

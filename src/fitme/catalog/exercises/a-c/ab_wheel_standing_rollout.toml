@@ -1,0 +1,13 @@
+id = "ab_wheel_standing_rollout"
+names = { en = "Standing ab wheel rollout", ru = "Ролик для пресса стоя" }
+kind = "isolation"
+level = "advanced"
+pattern = "core"
+equipment = ["ab_wheel"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Stand holding the wheel in front of your feet, hips hinged slightly. Roll forward with straight arms and a braced core, only as far as your back stays flat, then pull the wheel back. Build range gradually.", ru = "Встаньте, колесо перед стопами, таз слегка отведён. Катите его вперёд на прямых руках с напряжённым корпусом ровно до тех пор, пока спина ровная, затем верните. Амплитуду увеличивайте постепенно." }

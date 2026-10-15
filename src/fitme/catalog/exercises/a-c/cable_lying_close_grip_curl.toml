@@ -1,0 +1,13 @@
+id = "cable_lying_close_grip_curl"
+names = { en = "Cable lying close-grip curl", ru = "Сгибание рук лёжа на блоке узким хватом" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Lie face up on a flat bench with a straight bar on a low pulley, underhand grip about shoulder-width or slightly narrower. Keep your elbows close to your sides, curl the bar toward your chest, then lower under control.", ru = "Лягте на плоскую скамью лицом вверх, гриф нижнего блока хватом снизу на ширине плеч или чуть уже. Локти у корпуса: согните руки, подняв гриф к груди, затем опустите под контролем." }
+load_step_kg = 1.0

@@ -1,0 +1,12 @@
+id = "dumbbell_lying_elbow_press"
+names = { en = "Dumbbell lying elbow press", ru = "Разгибания рук с гантелями лёжа к плечам" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie on a flat bench with dumbbells above your chest, palms facing each other. Bend only the elbows to bring the weights toward your shoulders, then press them back up by extending the elbows. Keep the upper arms still.", ru = "Лягте на горизонтальную скамью, гантели над грудью, ладони смотрят друг на друга. Сгибайте только локти, опуская гантели к плечам, затем разгибайте руки обратно вверх. Плечи неподвижны." }

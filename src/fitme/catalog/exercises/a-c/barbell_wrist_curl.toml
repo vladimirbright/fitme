@@ -1,0 +1,12 @@
+id = "barbell_wrist_curl"
+names = { en = "Barbell wrist curl", ru = "Сгибания запястий со штангой" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["barbell", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit on a bench with forearms on your thighs, palms up, holding the bar shoulder-width with the wrists past your knees. Curl the bar up by bending only the wrists, then lower slowly. Keep the load light.", ru = "Сядьте на скамью, предплечья на бёдрах, ладони вверх, гриф на ширине плеч, кисти свисают за колени. Поднимайте гриф, сгибая только запястья, и медленно опускайте. Вес берите небольшой." }

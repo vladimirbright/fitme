@@ -1,0 +1,12 @@
+id = "ez_bar_reverse_grip_bent_over_row"
+names = { en = "EZ-bar reverse-grip bent-over row", ru = "Тяга EZ-грифа в наклоне обратным хватом" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["ez_bar"]
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Hold the EZ bar with an underhand grip, hinge forward from the hips with a flat back and the bar hanging at arm's length. Row the bar toward the lower ribs, then lower it under control. Hold the torso angle steady and keep the load moderate.", ru = "Возьмите EZ-гриф хватом снизу, наклонитесь вперёд от таза с ровной спиной, гриф на вытянутых руках. Тяните гриф к нижним рёбрам, затем опускайте под контролем. Угол корпуса не меняйте, вес умеренный." }
+load_step_kg = 2.5

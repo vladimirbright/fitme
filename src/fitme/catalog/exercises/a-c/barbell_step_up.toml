@@ -1,0 +1,14 @@
+id = "barbell_step_up"
+names = { en = "Barbell step-up", ru = "Зашагивание со штангой" }
+kind = "compound"
+pattern = "squat"
+level = "advanced"
+equipment = ["barbell", "rack", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "lower_back", "ankle", "neck"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "lower_back_injury_current", "ankle_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Set the bar on your upper back as for a squat and stand facing a low, stable bench. Place the whole foot on the bench and drive up until the hip and knee are straight, then step down under control. Keep the bench low and the steps slow; unrack and re-rack the bar at a rack with safety arms.", ru = "Установите штангу на верх спины, как для приседа, и встаньте лицом к низкой устойчивой скамье. Поставьте на неё всю стопу и поднимитесь до выпрямления бедра и колена, затем контролируемо сойдите. Скамья невысокая, шаги медленные; снимайте и возвращайте штангу на стойку со страховочными упорами." }
+load_step_kg = 2.5

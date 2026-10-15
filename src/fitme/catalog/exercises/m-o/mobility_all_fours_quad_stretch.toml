@@ -1,0 +1,12 @@
+id = "mobility_all_fours_quad_stretch"
+names = { en = "All-fours quad stretch", ru = "Растяжка квадрицепса на четвереньках" }
+kind = "mobility"
+pattern = "mobility"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["knee", "hip"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Start on hands and knees, hands under the shoulders. Lift one foot and hold it with the hand on the same side, drawing the heel toward the glutes. Keep the hips level and hold, then switch sides.", ru = "Встаньте на четвереньки, руки под плечами. Поднимите одну стопу и придержите её рукой с той же стороны, подтягивая пятку к ягодицам. Таз ровно; задержитесь и смените сторону." }

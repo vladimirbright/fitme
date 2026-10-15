@@ -1,0 +1,12 @@
+id = "bodyweight_pelvic_tilt_bridge"
+names = { en = "Pelvic tilt bridge", ru = "Мостик с подкруткой таза" }
+kind = "bodyweight"
+pattern = "hinge"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on your back, knees bent, feet flat. Tilt the pelvis and lift the hips by squeezing the glutes, hold briefly at the top, then lower slowly.", ru = "Лягте на спину, колени согнуты, стопы на полу. Подкрутите таз и поднимите бёдра, напрягая ягодицы, задержитесь вверху и медленно опуститесь." }

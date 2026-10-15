@@ -1,0 +1,13 @@
+id = "skin_the_cat"
+names = { en = "Skin the cat", ru = "Переворот назад в висе" }
+kind = "bodyweight"
+level = "advanced"
+pattern = "core"
+equipment = ["pull_up_bar"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Hang from a bar with a firm grip. Tuck the knees up and rotate backward until the hips pass through the arms and the body hangs inverted behind you, then lower the feet toward the floor at a slow pace. Reverse the same path to come back. Stay within a range you control and keep the floor clear.", ru = "Повисните на перекладине, хват надёжный. Подтяните колени и вращайтесь назад, пока таз не пройдёт между руками и тело не окажется перевёрнутым за перекладиной, затем медленно опустите стопы к полу. Вернитесь тем же путём в обратном порядке. Работайте в подконтрольной амплитуде, место под вами свободно." }

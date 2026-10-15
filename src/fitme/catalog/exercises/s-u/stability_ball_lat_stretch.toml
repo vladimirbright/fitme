@@ -1,0 +1,11 @@
+id = "stability_ball_lat_stretch"
+names = { en = "Stability ball lat stretch", ru = "Растяжка широчайших на фитболе" }
+kind = "mobility"
+pattern = "mobility"
+equipment = ["stability_ball"]
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Sit on the ball with feet flat and one arm raised overhead. Lean sideways away from the raised arm until you feel a gentle pull along the side of the torso. Hold 20-30 seconds, return upright and switch sides.", ru = "Сядьте на фитбол, стопы на полу, одна рука поднята вверх. Наклонитесь в сторону от поднятой руки до лёгкого натяжения вдоль бока. Удерживайте 20-30 секунд, вернитесь и смените сторону." }

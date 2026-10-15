@@ -1,0 +1,13 @@
+id = "cable_upright_row"
+names = { en = "Cable upright row", ru = "Тяга к груди стоя на нижнем блоке" }
+kind = "compound"
+pattern = "vertical_pull"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "neck", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Attach a bar or rope to a low pulley and stand facing the stack with an overhand grip. Pull up along your body to about lower-chest height, elbows leading and below shoulder height, then lower under control. Use light resistance.", ru = "Закрепите гриф или канат на нижнем блоке, встаньте лицом к стеку, хват сверху. Тяните вдоль тела примерно до нижней части груди, локти ведут и остаются ниже плеч, затем опустите под контролем. Сопротивление лёгкое." }
+load_step_kg = 1.0

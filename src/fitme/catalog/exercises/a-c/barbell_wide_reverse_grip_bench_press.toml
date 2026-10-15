@@ -1,0 +1,13 @@
+id = "barbell_wide_reverse_grip_bench_press"
+names = { en = "Barbell wide reverse-grip bench press", ru = "Жим штанги лёжа широким обратным хватом" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["barbell", "rack", "bench"]
+load_unit = "total"
+level = "advanced"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Lie on the bench with feet flat and take a wide underhand grip. Unrack, lower the bar under control to the lower chest, then press back up. Use a lighter weight than usual. Wrap the thumbs fully around the bar. Set the rack's safety arms just below the lowest point of the movement.", ru = "Лягте на скамью, стопы на полу, возьмите гриф широким обратным хватом. Снимите штангу, под контролем опустите к нижней части груди и выжмите вверх. Вес берите меньше обычного. Обхватывайте гриф большими пальцами. Установите страховочные упоры чуть ниже нижней точки движения." }

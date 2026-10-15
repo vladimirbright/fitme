@@ -1,0 +1,13 @@
+id = "barbell_lying_row"
+names = { en = "Lying barbell row", ru = "Тяга штанги лёжа на скамье" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["barbell", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Lie face down on a high bench with the bar on the floor beneath you, chest just past the edge. Take an overhand grip a little wider than the shoulders and row the bar up toward your chest, then lower it under control. Keep your head in line with your spine.", ru = "Лягте животом на высокую скамью, гриф на полу под вами, грудь у края. Возьмитесь хватом сверху чуть шире плеч и тяните гриф к груди, затем опускайте под контролем. Голова на одной линии с позвоночником." }
+load_step_kg = 2.5

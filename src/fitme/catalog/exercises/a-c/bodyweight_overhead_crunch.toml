@@ -1,0 +1,12 @@
+id = "bodyweight_overhead_crunch"
+names = { en = "Crunch with arms overhead", ru = "Скручивания с руками над головой" }
+kind = "bodyweight"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back", "neck"]
+contraindicated_by = ["lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on your back, knees bent, feet flat, arms extended overhead beside your ears. Curl your shoulders off the floor and reach forward, then lower slowly. Keep your arms in line with your torso and do not swing them.", ru = "Лягте на спину, колени согнуты, стопы на полу, руки вытянуты вверх рядом с ушами. Оторвите плечи от пола, тянясь руками вперёд, затем медленно опуститесь. Руки остаются в одной линии с корпусом, не раскачивайте их." }

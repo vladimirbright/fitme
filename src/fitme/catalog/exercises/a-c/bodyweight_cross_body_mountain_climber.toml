@@ -1,0 +1,12 @@
+id = "bodyweight_cross_body_mountain_climber"
+names = { en = "Cross-body mountain climber", ru = "Скалолаз с касанием локтя" }
+kind = "cardio"
+pattern = "conditioning"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["elbow_wrist", "lower_back", "knee", "shoulder"]
+contraindicated_by = ["elbow_wrist_injury_current", "lower_back_injury_current", "knee_injury_current", "shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Start in a high plank, hands under shoulders. Drive one knee toward the opposite elbow, return it, then switch legs. Keep your hips level and move at a pace you can control.", ru = "Примите высокую планку, ладони под плечами. Подтяните колено к противоположному локтю, верните ногу, затем смените. Таз на одном уровне, темп контролируемый." }

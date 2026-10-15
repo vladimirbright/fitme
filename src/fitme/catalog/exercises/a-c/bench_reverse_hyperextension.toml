@@ -1,0 +1,12 @@
+id = "bench_reverse_hyperextension"
+names = { en = "Bench reverse hyperextension", ru = "Обратная гиперэкстензия на скамье" }
+kind = "bodyweight"
+pattern = "hinge"
+equipment = ["bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Lie face down on a bench with the hips at the edge, legs hanging, hands holding the bench. Raise the straight legs to about hip level, squeeze the glutes, then lower slowly.", ru = "Лягте на скамью лицом вниз, таз у края, ноги свисают, руки держатся за скамью. Поднимите прямые ноги примерно до уровня таза, напрягите ягодицы и медленно опустите." }

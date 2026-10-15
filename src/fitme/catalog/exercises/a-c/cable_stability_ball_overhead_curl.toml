@@ -1,0 +1,13 @@
+id = "cable_stability_ball_overhead_curl"
+names = { en = "Cable overhead curl on stability ball", ru = "Сгибание рук над головой на блоке, сидя на фитболе" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable", "stability_ball"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Sit upright on a stability ball with feet planted wide, holding the cable attachment underhand with arms extended overhead. Keep the upper arms still and bend the elbows to bring the handle toward your head, then extend under control.", ru = "Сядьте ровно на фитбол, ноги широко, рукоять блока хватом снизу в руках, вытянутых над головой. Плечи неподвижны: согните локти, приближая рукоять к голове, затем подконтрольно выпрямите." }
+load_step_kg = 1.0

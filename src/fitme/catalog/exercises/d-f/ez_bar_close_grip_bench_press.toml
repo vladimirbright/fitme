@@ -1,0 +1,13 @@
+id = "ez_bar_close_grip_bench_press"
+names = { en = "EZ-bar close-grip bench press", ru = "Жим EZ-грифа лёжа узким хватом" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["ez_bar", "rack", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the rack's safety arms just below the lowest point. Lie on the bench, feet flat, hands on the inner bends of the EZ-bar. Unrack and lower the bar to the lower chest with elbows tucked, then press up.", ru = "Установите страховочные упоры стойки чуть ниже нижней точки. Лягте на скамью, стопы на полу, хват по внутренним изгибам EZ-грифа. Снимите гриф и опустите к нижней части груди, локти прижаты, затем выжмите вверх." }
+load_step_kg = 2.5

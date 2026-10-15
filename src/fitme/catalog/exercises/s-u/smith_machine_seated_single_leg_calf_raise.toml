@@ -1,0 +1,12 @@
+id = "smith_machine_seated_single_leg_calf_raise"
+names = { en = "Smith machine seated single-leg calf raise", ru = "Подъём на носок сидя на одной ноге в машине Смита" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["smith_machine", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["ankle", "knee"]
+contraindicated_by = ["ankle_injury_current", "knee_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit on a bench under the bar with the ball of one foot on a low block, heel free. Rest the bar on the thigh just above the knee, with a pad, and unhook it. Raise the heel, pause, lower slowly, then re-hook the bar before standing. Switch legs.", ru = "Сядьте на скамью под гриф, передняя часть одной стопы на невысоком блоке, пятка свободна. Положите гриф на бедро чуть выше колена, подложив мягкую накладку, и снимите его с фиксаторов. Поднимите пятку, задержитесь, медленно опустите и верните гриф на фиксаторы, прежде чем встать. Смените ногу." }

@@ -1,0 +1,13 @@
+id = "cable_one_arm_incline_press"
+names = { en = "Cable one-arm incline press", ru = "Жим одной рукой на блоке на наклонной скамье" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["cable", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the bench to an incline facing away from the stack with the pulley low. Sit back, feet flat, with one handle at shoulder height. Press it up and forward until the arm is straight, then return under control. Do all reps on one side before switching.", ru = "Установите наклонную скамью спиной к тренажёру, блок внизу. Сядьте, стопы на полу, рукоять на уровне плеча. Выжмите её вверх и вперёд до прямой руки, затем вернитесь под контролем. Все повторы на одну сторону, затем смените." }
+load_step_kg = 2.5

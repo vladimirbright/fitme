@@ -1,0 +1,13 @@
+id = "cable_incline_two_arm_curl"
+names = { en = "Cable incline two-arm curl", ru = "Сгибание рук на блоках на наклонной скамье" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set an incline bench between two low pulleys and sit with your back and head against the pad, a handle in each hand and arms hanging down. Curl both handles toward your shoulders with the upper arms still, then lower slowly.", ru = "Поставьте наклонную скамью между двумя нижними блоками и сядьте, прижав спину и затылок, в каждой руке рукоять, руки опущены. Согните руки к плечам, не двигая плечами, затем медленно опустите." }
+load_step_kg = 1.0

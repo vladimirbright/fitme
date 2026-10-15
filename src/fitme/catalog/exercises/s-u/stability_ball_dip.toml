@@ -1,0 +1,13 @@
+id = "stability_ball_dip"
+names = { en = "Stability ball dip", ru = "Обратные отжимания от фитбола" }
+kind = "bodyweight"
+pattern = "vertical_push"
+equipment = ["stability_ball"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Place a stability ball against a wall so it cannot roll, then sit on it with feet flat and wide and hands on the ball beside your hips. Press through your hands to lift your hips just off the ball, then lower under control until you touch it lightly again. Keep the range short and the elbows close to your sides.", ru = "Поставьте фитбол к стене, чтобы он не откатывался, сядьте на него, стопы на полу на ширине, ладони на мяче рядом с бёдрами. Выжмитесь руками, приподняв таз над мячом, затем под контролем опуститесь до лёгкого касания. Амплитуда небольшая, локти у корпуса." }
+load_step_kg = 1.0

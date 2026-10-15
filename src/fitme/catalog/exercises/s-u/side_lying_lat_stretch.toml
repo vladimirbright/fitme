@@ -1,0 +1,12 @@
+id = "side_lying_lat_stretch"
+names = { en = "Side-lying lat stretch", ru = "Растяжка широчайших лёжа на боку" }
+kind = "mobility"
+pattern = "mobility"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on your side with legs stacked and bent, the lower arm reaching overhead along the floor. Reach the fingertips farther away while pressing the lower ribs toward the floor. Hold briefly, then switch sides.", ru = "Лягте на бок, ноги согнуты и лежат друг на друге, нижняя рука вытянута над головой по полу. Тянитесь пальцами дальше, прижимая нижние рёбра к полу. Задержитесь, затем смените сторону." }

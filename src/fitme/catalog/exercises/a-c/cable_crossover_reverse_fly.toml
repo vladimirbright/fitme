@@ -1,0 +1,13 @@
+id = "cable_crossover_reverse_fly"
+names = { en = "Cable crossover reverse fly", ru = "Обратное разведение на блоках в кроссовере" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "lower_back", "hip"]
+contraindicated_by = ["shoulder_injury_current", "lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set both pulleys low, cross the cables and hold the opposite handles. Hinge forward slightly with a flat back, then open your arms out and up to shoulder height with elbows soft. Return under control and keep the resistance light.", ru = "Выставьте оба блока внизу, скрестите тросы и возьмите рукояти накрест. Слегка наклонитесь вперёд с ровной спиной, разведите руки в стороны и вверх до уровня плеч, локти мягкие. Верните под контролем, сопротивление лёгкое." }
+load_step_kg = 1.0

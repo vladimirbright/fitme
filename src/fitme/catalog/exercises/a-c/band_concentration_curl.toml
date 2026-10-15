@@ -1,0 +1,13 @@
+id = "band_concentration_curl"
+names = { en = "Band concentration curl", ru = "Концентрированные сгибания рук с лентой" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Sit with the feet wide, one foot pinning the band. Lean forward and rest the elbow of the working arm on the inner thigh. Curl the hand toward the shoulder, then lower slowly until the arm is straight.", ru = "Сядьте, ноги шире плеч, одной ногой прижмите ленту. Наклонитесь вперёд и упритесь локтем рабочей руки во внутреннюю часть бедра. Согните руку к плечу, затем медленно опустите до выпрямления." }
+load_step_kg = 1.0

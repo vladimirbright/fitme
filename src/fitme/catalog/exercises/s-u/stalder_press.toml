@@ -1,0 +1,14 @@
+id = "stalder_press"
+names = { en = "Stalder press", ru = "Стальдер-пресс (подъём в стойку на руках)" }
+kind = "bodyweight"
+level = "advanced"
+pattern = "vertical_push"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist", "neck", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Sit in a wide straddle on a mat with clear space around you, hands flat on the floor between the legs. Lean the shoulders forward over the hands and lift the hips and straight legs off the floor, pressing up into a handstand. If you pass the balance point, step or roll out.", ru = "Сядьте в широкий шпагат-развал на мате, вокруг свободное место, ладони на полу между ногами. Подайте плечи вперёд над руками и оторвите таз и прямые ноги от пола, выходя в стойку на руках. Если перевалились за точку равновесия, сойдите шагом или кувырком." }
+search = { en = "stalder press handstand", ru = "стальдер пресс в стойку на руках" }

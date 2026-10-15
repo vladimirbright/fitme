@@ -1,0 +1,12 @@
+id = "mobility_overhead_triceps_stretch"
+names = { en = "Overhead triceps stretch", ru = "Растяжка трицепса за головой" }
+kind = "mobility"
+pattern = "mobility"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Raise one arm overhead and bend the elbow so the hand reaches down the back. Use the other hand to ease the elbow gently toward the head. Hold, then switch sides.", ru = "Поднимите одну руку вверх и согните в локте, кисть опускается к спине. Другой рукой мягко подтяните локоть к голове. Задержитесь, затем смените сторону." }

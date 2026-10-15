@@ -1,0 +1,12 @@
+id = "machine_hyperextension"
+names = { en = "Hyperextension", ru = "Гиперэкстензия" }
+search = { en = "45 degree hyperextension", ru = "гиперэкстензия" }
+kind = "bodyweight"
+pattern = "hinge"
+equipment = ["machine"]
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Set the pad so it supports the upper thighs and hook your feet under the rollers. Cross the arms on the chest, lower the torso with a flat back, then raise it until it is in line with the legs. Do not lift above that line.", ru = "Отрегулируйте упор так, чтобы он поддерживал верх бёдер, зафиксируйте стопы под валиками. Скрестите руки на груди, опустите корпус с ровной спиной и поднимите до одной линии с ногами. Выше этой линии не поднимайтесь." }

@@ -1,0 +1,12 @@
+id = "dumbbell_one_arm_upright_row"
+names = { en = "Dumbbell one-arm upright row", ru = "Тяга гантели к подбородку одной рукой" }
+kind = "compound"
+pattern = "accessory"
+equipment = ["dumbbells"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand holding a dumbbell in front of your thighs with an overhand grip. Pull it up along your body, elbow leading, to about chest height, then lower under control. Keep your elbow no higher than your shoulder. Do all reps, then switch arms.", ru = "Встаньте, гантель хватом сверху перед бёдрами. Тяните её вдоль корпуса вверх, ведя локтем, примерно до уровня груди, затем опустите под контролем. Локоть не выше плеча. Выполните все повторения, затем смените руку." }

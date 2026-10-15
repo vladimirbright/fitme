@@ -1,0 +1,13 @@
+id = "cable_two_arm_triceps_kickback"
+names = { en = "Cable two-arm triceps kickback", ru = "Разгибание рук назад на блоке двумя руками" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Face a pair of low pulleys with a handle in each hand, knees soft, hinged forward with a flat back and upper arms pinned to your sides. Straighten both elbows backward without moving the upper arms, then bend them again slowly.", ru = "Встаньте лицом к двум нижним блокам, в каждой руке рукоять, колени слегка согнуты, наклон вперёд с ровной спиной, локти прижаты к корпусу. Разогните руки назад, не двигая плечами, затем медленно согните." }
+load_step_kg = 1.0

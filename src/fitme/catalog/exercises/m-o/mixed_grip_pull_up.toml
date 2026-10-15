@@ -1,0 +1,12 @@
+id = "mixed_grip_pull_up"
+names = { en = "Mixed grip pull-up", ru = "Подтягивания разным хватом" }
+kind = "bodyweight"
+pattern = "vertical_pull"
+equipment = ["pull_up_bar"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Hang from the bar with one palm facing away and the other facing you, hands about shoulder width. Pull your chin above the bar, keeping the shoulders down. Lower fully under control. Swap which hand is underhand on the next set.", ru = "Повисните на перекладине: одна ладонь от себя, другая к себе, руки примерно на ширине плеч. Подтянитесь подбородком выше перекладины, плечи опущены. Полностью опуститесь под контролем. В следующем подходе поменяйте хваты местами." }

@@ -1,0 +1,13 @@
+id = "cable_seated_overhead_curl"
+names = { en = "Cable seated overhead curl", ru = "Сгибание рук на верхнем блоке сидя" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Sit on a bench facing a high pulley and hold the bar underhand with your arms raised toward the pulley. Keep the upper arms still and bend the elbows to bring the bar toward your forehead, stopping short of your face, then straighten the arms under control.", ru = "Сядьте на скамью лицом к верхнему блоку, гриф хватом снизу, руки подняты к блоку. Не двигая плечами, согните локти, подводя гриф ко лбу и не касаясь лица, затем подконтрольно выпрямите руки." }
+load_step_kg = 1.0

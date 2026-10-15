@@ -1,0 +1,13 @@
+id = "band_one_arm_standing_low_row"
+names = { en = "Band one-arm standing low row", ru = "Тяга эспандера к поясу одной рукой стоя" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "hip"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "calibration" }
+instructions = { en = "Anchor a band at waist height, face it and step back for tension. Hinge slightly with a flat back and pull the band to the waist with one hand. Return slowly, then switch sides.", ru = "Закрепите эспандер на уровне пояса, встаньте лицом и отойдите для натяжения. Слегка наклонитесь с прямой спиной и тяните эспандер к поясу одной рукой. Медленно верните, затем смените сторону." }
+load_step_kg = 1.0

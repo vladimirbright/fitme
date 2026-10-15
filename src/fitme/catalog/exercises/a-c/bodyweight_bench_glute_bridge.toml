@@ -1,0 +1,13 @@
+id = "bodyweight_bench_glute_bridge"
+names = { en = "Bench glute bridge", ru = "Ягодичный мостик с опорой на скамью" }
+search = { en = "bodyweight hip thrust", ru = "ягодичный мостик от скамьи" }
+kind = "bodyweight"
+pattern = "hinge"
+equipment = ["bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Sit on the floor in front of a bench and rest the upper back on its edge, feet flat and knees bent. Squeeze the glutes and lift the hips until the body is level from shoulders to knees. Pause at the top, then lower under control.", ru = "Сядьте на пол перед скамьёй и обопритесь верхней частью спины о её край, стопы на полу, колени согнуты. Напрягите ягодицы и поднимите таз до прямой линии от плеч до колен. Задержитесь вверху и плавно опуститесь." }

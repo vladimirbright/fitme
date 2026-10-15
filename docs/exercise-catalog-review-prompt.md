@@ -18,7 +18,7 @@ language, and project-posture rules are binding.
   instructions have not passed Fitme safety review.
 - `src/fitme/catalog/exercises/` is the **only** catalog the plan generator may use: one
   file per exercise, `<range>/<id>.toml` (ADR 0006; field notes in its `README.md`). It
-  currently has 190 reviewed entries. Its schema is defined by
+  currently has 1,098 reviewed entries (145 of them `level = "advanced"`, ADR 0008). Its schema is defined by
   `src/fitme/domain/catalog.py`, and its allowed enum values are in
   `src/fitme/domain/enums.py`. Read nearby entries before editing it.
 - The reference marks 23 name-only possible catalog matches, 146 entries needing equipment
@@ -26,8 +26,10 @@ language, and project-posture rules are binding.
   name. These markers identify work; they do not prove that entries are equivalent or safe.
 - A first triage pass (2026-10-15) gave every entry `triage = "alias" | "promoted" |
   "lookup_only"`, with `catalog_id`, `related_catalog_id`, `lookup_only_reasons` and
-  `pending_language_review`. Its en/ru review was model-only. Treat these fields as a starting
-  point to re-check, not as settled decisions.
+  `pending_language_review`. A second pass (ADR 0008) imported most of the rest: 984 entries
+  are now promoted, 273 are aliases and 67 stay lookup-only with a reason. Both passes were
+  model reviews, with no human review yet. Treat these fields as a starting point to
+  re-check, not as settled decisions.
 - The source repository is `https://github.com/tool-source/base-exercises-dataset`; Chinese
   names came from `https://github.com/muxuezzz/exercises-dataset-zh-cn`. Keep the source
   data local until its redistribution terms have been resolved.

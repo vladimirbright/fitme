@@ -1,0 +1,12 @@
+id = "dumbbell_wall_ball_calf_raise_ankle_squeeze"
+names = { en = "Dumbbell wall-ball calf raise with ankle squeeze", ru = "Подъём на носки с гантелями и мячом у стены, мяч между лодыжками" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "stability_ball"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["ankle"]
+contraindicated_by = ["ankle_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand with a stability ball between your lower back and a wall, a dumbbell in each hand at your sides, feet hip-width. Hold a small ball or rolled towel between your ankles. Rise onto the balls of your feet, pause, then lower the heels slowly. Keep light pressure on the ball.", ru = "Встаньте так, чтобы фитбол был между поясницей и стеной, в руках по гантели вдоль корпуса, ноги на ширине таза. Удерживайте между лодыжками небольшой мяч или свёрнутое полотенце. Поднимитесь на носки, задержитесь и медленно опустите пятки. Слегка прижимайтесь к мячу." }

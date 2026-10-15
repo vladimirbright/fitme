@@ -1,0 +1,13 @@
+id = "weighted_pull_up"
+names = { en = "Weighted pull-up", ru = "Подтягивания с отягощением" }
+kind = "compound"
+level = "advanced"
+pattern = "vertical_pull"
+equipment = ["pull_up_bar", "weight_plate"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Attach a plate to a belt and hang from the bar with an overhand grip, slightly wider than shoulders. Pull your chin above the bar, then lower to straight arms under control.", ru = "Прикрепите блин к поясу и повисните на перекладине хватом сверху чуть шире плеч. Подтянитесь подбородком выше перекладины, затем опуститесь до прямых рук под контролем." }

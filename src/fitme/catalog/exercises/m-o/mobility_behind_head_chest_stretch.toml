@@ -1,0 +1,12 @@
+id = "mobility_behind_head_chest_stretch"
+names = { en = "Hands-behind-head chest stretch", ru = "Растяжка груди с руками за головой" }
+kind = "mobility"
+pattern = "mobility"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand tall with feet shoulder-width apart and fingers lightly interlaced behind your head. Open the elbows out to the sides and gently draw the shoulder blades together until you feel a mild pull across the chest. Do not pull on the head. Hold 15-30 seconds, breathing evenly.", ru = "Встаньте прямо, ноги на ширине плеч, пальцы свободно сцеплены за головой. Разведите локти в стороны и мягко сведите лопатки до лёгкого натяжения в груди. Не тяните голову руками. Удерживайте 15-30 секунд, дышите ровно." }

@@ -1,0 +1,12 @@
+id = "stability_ball_prone_leg_raise"
+names = { en = "Stability ball plank leg raise", ru = "Подъём ноги в планке с голенями на фитболе" }
+search = { en = "exercise ball prone leg raise", ru = "подъём ног на фитболе в упоре лёжа" }
+kind = "bodyweight"
+pattern = "core"
+equipment = ["stability_ball"]
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Walk out on the hands until the shins rest on the ball, hands under the shoulders and the body straight. Lift one leg a short way off the ball, hold briefly, lower it and switch legs. Keep the abdomen braced so the lower back does not sag, and walk back in when the form slips.", ru = "Пройдите на руках вперёд, пока голени не окажутся на фитболе, ладони под плечами, тело прямое. Приподнимите одну ногу над мячом на небольшую высоту, ненадолго задержитесь, опустите и смените ногу. Живот напряжён, поясница не провисает; когда техника теряется, вернитесь назад." }

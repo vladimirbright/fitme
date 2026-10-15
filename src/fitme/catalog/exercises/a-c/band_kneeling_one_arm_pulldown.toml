@@ -1,0 +1,13 @@
+id = "band_kneeling_one_arm_pulldown"
+names = { en = "Band kneeling one-arm pulldown", ru = "Тяга эспандера сверху одной рукой с колен" }
+kind = "compound"
+pattern = "vertical_pull"
+equipment = ["resistance_bands", "pull_up_bar"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "calibration" }
+instructions = { en = "Kneel under a band anchored high and hold it in one hand with the arm reaching up. Pull the elbow down toward the ribs, then return slowly. Finish all reps, then switch arms.", ru = "Встаньте на колени под эспандером, закреплённым вверху, возьмите его одной рукой, рука тянется вверх. Опустите локоть к рёбрам, затем медленно верните. Сделайте все повторения, затем смените руку." }
+load_step_kg = 1.0

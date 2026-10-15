@@ -1,0 +1,12 @@
+id = "bodyweight_step_calf_raise"
+names = { en = "Step calf raise", ru = "Подъём на носки на ступени" }
+kind = "isolation"
+pattern = "accessory"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["ankle"]
+contraindicated_by = ["ankle_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand with the balls of the feet on the edge of a sturdy step and the heels hanging off, one hand on a rail or wall. Lower the heels below the step for a gentle stretch, then rise as high as you can. Pause, then lower slowly.", ru = "Встаньте передней частью стопы на край устойчивой ступени, пятки свисают, одной рукой держитесь за перила или стену. Опустите пятки ниже ступени до лёгкого растяжения, затем поднимитесь как можно выше. Задержитесь и медленно опуститесь." }

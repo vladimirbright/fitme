@@ -1,0 +1,12 @@
+id = "stability_ball_weighted_side_bend"
+names = { en = "Stability ball side bend with plate", ru = "Наклоны в сторону на фитболе с блином" }
+kind = "isolation"
+pattern = "core"
+equipment = ["stability_ball", "weight_plate"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit tall on a stability ball with feet wide, holding a plate in one hand at your side and your other hand on your hip. Bend toward the weighted side, then return upright. Finish one side before switching.", ru = "Сядьте прямо на фитбол, ноги широко, блин в одной руке вдоль корпуса, другая рука на поясе. Наклонитесь в сторону блина, затем вернитесь. Закончите одну сторону, затем смените." }

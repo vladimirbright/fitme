@@ -1,0 +1,12 @@
+id = "band_kneeling_twisting_crunch"
+names = { en = "Band kneeling twisting crunch", ru = "Скручивания с поворотом на коленях с лентой" }
+kind = "isolation"
+pattern = "core"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Anchor the band at waist height and kneel facing away, hands at your chest holding it. Curl down and rotate one shoulder toward the opposite hip, then return upright. Move through a short, controlled range. Finish one side, then switch.", ru = "Закрепите ленту на уровне пояса и встаньте на колени спиной к опоре, руки с лентой у груди. Сверните корпус вниз с поворотом плеча к противоположному бедру, затем вернитесь. Амплитуда небольшая и контролируемая. Закончите одну сторону, затем смените." }

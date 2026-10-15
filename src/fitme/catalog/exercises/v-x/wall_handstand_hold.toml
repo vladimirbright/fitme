@@ -1,0 +1,13 @@
+id = "wall_handstand_hold"
+names = { en = "Wall handstand hold", ru = "Стойка на руках у стены" }
+kind = "bodyweight"
+level = "advanced"
+pattern = "vertical_push"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Place your hands shoulder-width apart on the floor a short distance from a wall and kick up until the heels touch it. Keep the arms locked and the body in a line, and hold. Come down by lowering the legs slowly, one at a time.", ru = "Поставьте ладони на ширине плеч на небольшом расстоянии от стены и поднимите ноги, пока пятки не коснутся стены. Руки прямые, тело в одну линию, удерживайте положение. Опускайтесь медленно, по одной ноге." }

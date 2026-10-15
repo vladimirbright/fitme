@@ -1,0 +1,12 @@
+id = "bodyweight_lying_knee_tuck"
+names = { en = "Lying knee tuck", ru = "Подтягивание коленей к груди лёжа" }
+kind = "bodyweight"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["hip", "lower_back"]
+contraindicated_by = ["hip_injury_current", "lower_back_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on your back with legs extended, hands beside you. Bend the knees and draw them toward the chest, pause, then lower the legs slowly without arching the back.", ru = "Лягте на спину, ноги вытянуты, руки вдоль тела. Согните колени и подтяните их к груди, задержитесь и медленно опустите ноги, не прогибая поясницу." }

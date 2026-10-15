@@ -1,0 +1,13 @@
+id = "machine_kneeling_leg_curl"
+names = { en = "Machine kneeling leg curl", ru = "Сгибание ног в тренажёре стоя на коленях" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["knee"]
+contraindicated_by = ["knee_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Kneel on the pad facing the machine with the lower legs under the roller. Hold the handles, curl the heels toward the glutes without shifting the torso, then lower slowly.", ru = "Встаньте на колени на подушку, голени под валиком. Держитесь за рукояти, сгибайте колени, подтягивая пятки к ягодицам и не раскачивая корпус, затем медленно опускайте." }
+load_step_kg = 1.0

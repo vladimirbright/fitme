@@ -1,0 +1,13 @@
+id = "machine_reverse_hyperextension"
+names = { en = "Machine reverse hyperextension", ru = "Обратная гиперэкстензия в тренажёре" }
+kind = "isolation"
+pattern = "hinge"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Lie face down with the hips on the pad, hold the handles and hook the heels under the roller. Raise the legs to about hip level without swinging, then lower with control. Use a light weight.", ru = "Лягте лицом вниз, таз на подушке, держитесь за рукояти, пятки под валиком. Поднимите ноги примерно до уровня таза без раскачивания, затем опустите под контролем. Вес лёгкий." }
+load_step_kg = 2.5

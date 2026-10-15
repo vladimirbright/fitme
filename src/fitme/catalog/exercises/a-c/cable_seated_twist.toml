@@ -1,0 +1,13 @@
+id = "cable_seated_twist"
+names = { en = "Cable seated twist", ru = "Повороты сидя на блоке" }
+kind = "isolation"
+pattern = "core"
+equipment = ["cable", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["lower_back"]
+contraindicated_by = ["lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Sit on a bench side-on to a cable set at chest height, arms extended holding the handle. Rotate your torso away from the stack, then return slowly. Keep your hips square. Finish one side, then switch.", ru = "Сядьте на скамью боком к блоку на уровне груди, руки вытянуты с рукоятью. Поверните корпус от тренажёра, затем медленно вернитесь. Таз неподвижен. Закончите одну сторону, затем смените." }
+load_step_kg = 1.0

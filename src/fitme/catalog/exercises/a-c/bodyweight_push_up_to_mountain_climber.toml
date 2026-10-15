@@ -1,0 +1,12 @@
+id = "bodyweight_push_up_to_mountain_climber"
+names = { en = "Push-up to mountain climber", ru = "Отжимание с переходом в «скалолаза»" }
+kind = "cardio"
+pattern = "conditioning"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "knee"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "knee_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Start in a high plank. Do one push-up, then drive the knees toward the chest alternately for a few quick reps. Return to a steady plank and repeat. Keep the hips level and the core braced.", ru = "Примите упор лёжа. Сделайте одно отжимание, затем несколько быстрых повторений, поочерёдно подтягивая колени к груди. Вернитесь в ровный упор и повторите. Таз на одном уровне, корпус напряжён." }

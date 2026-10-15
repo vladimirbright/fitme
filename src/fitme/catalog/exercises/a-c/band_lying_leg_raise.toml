@@ -1,0 +1,12 @@
+id = "band_lying_leg_raise"
+names = { en = "Band lying leg raise", ru = "Подъём прямых ног лёжа с лентой" }
+kind = "bodyweight"
+pattern = "core"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Lie on your back with a band around the arches of your feet, ends in your hands. Lift both straight legs until vertical, then lower slowly without arching your back. Stop the descent before your lower back lifts off the floor.", ru = "Лягте на спину, лента на сводах стоп, концы в руках. Поднимите прямые ноги до вертикали и медленно опустите, не прогибая поясницу. Остановите опускание, пока поясница не отрывается от пола." }

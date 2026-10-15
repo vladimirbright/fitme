@@ -1,0 +1,12 @@
+id = "wide_hand_push_up"
+names = { en = "Wide-hand push-up", ru = "Отжимания широкой постановкой рук" }
+kind = "bodyweight"
+pattern = "horizontal_push"
+equipment = []
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Place hands clearly wider than shoulders, body straight. Lower the chest to just above the floor and press back up. Keep the elbows from flaring out fully.", ru = "Поставьте руки заметно шире плеч, тело прямое. Опустите грудь почти до пола и выжмитесь вверх. Не разводите локти полностью в стороны." }
+load_step_kg = 1.0

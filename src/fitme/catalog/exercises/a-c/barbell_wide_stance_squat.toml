@@ -1,0 +1,12 @@
+id = "barbell_wide_stance_squat"
+names = { en = "Barbell wide-stance squat", ru = "Приседания со штангой широкой постановкой ног" }
+kind = "compound"
+pattern = "squat"
+equipment = ["barbell", "rack"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "lower_back", "neck"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Place the bar on the upper back with feet well wider than the shoulders, toes turned out. Sit straight down between the legs with the knees following the toes, then stand. Set the safety arms below the lowest point.", ru = "Положите штангу на верх спины, ноги заметно шире плеч, носки развёрнуты. Присядьте вертикально между ног, колени идут по линии носков, затем встаньте. Страховочные упоры ниже нижней точки." }

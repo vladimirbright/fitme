@@ -1,0 +1,12 @@
+id = "barbell_close_grip_curl"
+names = { en = "Barbell close-grip curl", ru = "Сгибания рук со штангой узким хватом" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Stand tall with an underhand grip, hands closer than shoulder width, elbows against the torso. Curl the bar to the shoulders, then lower under control without leaning back.", ru = "Встаньте ровно, хват снизу уже плеч, локти прижаты к корпусу. Поднимите гриф к плечам, затем опустите под контролем, не отклоняясь назад." }

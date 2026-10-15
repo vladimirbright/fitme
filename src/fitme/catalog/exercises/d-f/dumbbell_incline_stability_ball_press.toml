@@ -1,0 +1,12 @@
+id = "dumbbell_incline_stability_ball_press"
+names = { en = "Incline dumbbell press on stability ball", ru = "Жим гантелей на фитболе с наклоном корпуса" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["dumbbells", "stability_ball"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit on a stability ball and walk your feet forward until your upper back rests on the ball and your torso angles upward, feet wide. Hold the dumbbells at shoulder height and press them up, then lower under control. Keep your hips steady.", ru = "Сядьте на фитбол и пройдите стопами вперёд, чтобы верх спины лёг на мяч, а корпус смотрел вверх под углом, ноги широко. Гантели на уровне плеч: выжмите их вверх и подконтрольно опустите. Таз держите устойчиво." }

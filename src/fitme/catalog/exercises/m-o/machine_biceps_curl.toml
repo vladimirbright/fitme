@@ -1,0 +1,13 @@
+id = "machine_biceps_curl"
+names = { en = "Machine biceps curl", ru = "Сгибания рук на бицепс в тренажёре" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Adjust the seat and sit with your back on the pad. Hold the handles underhand with elbows by your sides. Curl the handles up, then lower under control to nearly straight arms.", ru = "Отрегулируйте сиденье и сядьте, прижав спину к опоре. Возьмитесь за рукояти обратным хватом, локти у корпуса. Согните руки, затем подконтрольно опустите почти до прямых рук." }
+load_step_kg = 1.0

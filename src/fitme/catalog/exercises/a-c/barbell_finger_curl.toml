@@ -1,0 +1,12 @@
+id = "barbell_finger_curl"
+names = { en = "Barbell finger curl", ru = "Сгибания пальцев со штангой" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["barbell", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit on a bench with forearms on your thighs, palms up, holding a bar shoulder-width with the wrists past your knees. Let the bar roll to your fingertips without letting go, then curl the fingers and bar back up. Keep the load light.", ru = "Сядьте на скамью, предплечья на бёдрах, ладони вверх, гриф на ширине плеч, кисти свисают за колени. Позвольте грифу скатиться к кончикам пальцев, не выпуская, затем сожмите пальцы и верните гриф вверх. Вес берите небольшой." }

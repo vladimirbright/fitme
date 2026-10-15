@@ -1,0 +1,13 @@
+id = "weight_plate_straight_bar_dip"
+names = { en = "Weighted straight bar dip", ru = "Отжимания на перекладине с отягощением" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["pull_up_bar", "weight_plate"]
+level = "advanced"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Wear a weight belt with a plate and support yourself on a fixed straight bar at waist height, hands on it in front. Lower by bending the elbows to about 90 degrees, then press up. Keep the movement slow and do not drop into the bottom.", ru = "Наденьте пояс с блином и обопритесь на закреплённую перекладину на уровне пояса, руки впереди. Опуститесь, сгибая локти примерно до 90 градусов, затем выжмитесь вверх. Двигайтесь медленно, не проваливайтесь в нижней точке." }
+load_step_kg = 2.5

@@ -1,0 +1,13 @@
+id = "dumbbell_sumo_pull_through"
+names = { en = "Dumbbell sumo pull-through", ru = "Протяжка с гантелью в сумо-стойке" }
+kind = "compound"
+pattern = "hinge"
+equipment = ["dumbbells"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip", "knee"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "knee_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand wide with toes turned out and hang one dumbbell between the legs with both hands. Sit the hips back and let the dumbbell travel between the knees, then drive the hips forward to stand tall. Keep the back flat and the arms long.", ru = "Встаньте широко, носки развёрнуты, одна гантель между ног в обеих руках. Отведите таз назад, гантель проходит между коленей, затем выведите таз вперёд и выпрямитесь. Спина ровная, руки прямые." }
+load_step_kg = 1.0

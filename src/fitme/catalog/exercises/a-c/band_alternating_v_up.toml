@@ -1,0 +1,13 @@
+id = "band_alternating_v_up"
+names = { en = "Band alternating V-up", ru = "V-подъёмы с лентой поочерёдно" }
+kind = "bodyweight"
+level = "advanced"
+pattern = "core"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "shoulder", "hip"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Lie on your back, legs straight, a band held taut between your hands overhead. Lift your torso and one leg together, reaching toward the raised foot, then lower. Alternate legs each rep. Lower under control and keep the band steady.", ru = "Лягте на спину, ноги прямые, лента натянута в руках над головой. Одновременно поднимите корпус и одну ногу, тянясь к стопе, затем опуститесь. Меняйте ногу каждое повторение. Опускайтесь под контролем, лента натянута ровно." }

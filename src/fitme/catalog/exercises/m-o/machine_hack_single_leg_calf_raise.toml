@@ -1,0 +1,13 @@
+id = "machine_hack_single_leg_calf_raise"
+names = { en = "Hack machine single-leg calf raise", ru = "Подъём на носок на одной ноге в гак-машине" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["ankle", "knee", "lower_back"]
+contraindicated_by = ["ankle_injury_current", "knee_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set a light load. Stand with your back to the pad, shoulders under the shoulder pads and the ball of one foot on the low edge of the platform, the other foot lifted. Release the safety handles, rise onto the toes, pause, then lower the heel slowly. Lock the safety handles before switching legs.", ru = "Выставьте небольшой вес. Встаньте спиной к упору, плечи под валиками, передняя часть одной стопы на нижнем краю платформы, другая нога на весу. Снимите страховочные рычаги, поднимитесь на носок, задержитесь и медленно опустите пятку. Перед сменой ноги закройте страховочные рычаги." }
+load_step_kg = 1.0

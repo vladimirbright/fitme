@@ -1,0 +1,13 @@
+id = "bosu_ball_squat"
+names = { en = "Bosu ball squat", ru = "Приседания на босу" }
+kind = "bodyweight"
+pattern = "squat"
+equipment = ["bosu_ball"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "ankle"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Place the bosu dome-side up on a non-slip floor, beside a wall or rack for support. Step on and stand with feet shoulder-width. Sit back and down to a comfortable depth, weight on the heels, then stand. Step off carefully.", ru = "Положите босу куполом вверх на нескользкий пол рядом со стеной или стойкой для опоры. Встаньте на неё, ноги на ширине плеч. Присядьте назад и вниз на комфортную глубину, вес на пятках, затем встаньте. Осторожно сойдите." }
+load_step_kg = 1.0

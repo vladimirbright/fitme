@@ -1,0 +1,13 @@
+id = "back_lever"
+names = { en = "Back lever", ru = "Задний вис (бэк-левер)" }
+kind = "bodyweight"
+pattern = "core"
+level = "advanced"
+equipment = ["pull_up_bar"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Hang from the bar, tuck the knees and rotate backward until the body is face down. Extend slowly toward a horizontal line and hold briefly, then return the same way under control. Start with the tucked version.", ru = "Повисните на перекладине, подтяните колени и перевернитесь назад лицом вниз. Медленно вытягивайтесь к горизонтальной линии, задержитесь ненадолго и вернитесь тем же путём под контролем. Начинайте с группировкой." }

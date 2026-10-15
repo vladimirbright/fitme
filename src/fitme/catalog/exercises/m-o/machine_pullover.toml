@@ -1,0 +1,12 @@
+id = "machine_pullover"
+names = { en = "Machine pullover", ru = "Пуловер в тренажёре" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["machine"]
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Adjust the seat so the shoulders line up with the machine's pivot and rest the back on the pad. Pull the bar or handles in an arc down toward the hips with slightly bent elbows, then return slowly without overreaching behind the head.", ru = "Отрегулируйте сиденье так, чтобы плечи были на уровне оси тренажёра, спина лежит на подушке. Тяните рукояти по дуге вниз к бёдрам, локти слегка согнуты, затем медленно возвращайте, не заводя руки далеко за голову." }
+load_step_kg = 2.5

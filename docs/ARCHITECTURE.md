@@ -296,7 +296,7 @@ DB, `catalog_search_fts` and `catalog_embeddings` (migration 0009, refreshed at 
 `services/exercise_search.py` ranks an already-filtered allowed set for free-text search,
 substitutes and `plan_generate`'s candidate pool; it never adds an exercise.
 
-The catalog holds roughly 100 exercises covering every location in §5.1 (hand-written plus reviewed generated candidates). Pick
+The catalog holds about 1,100 exercises covering every location in §5.1: the hand-written core plus reviewed entries imported from the local reference library (ADRs 0007, 0008). Pick
 calibration start loads conservatively: an empty bar, the lightest dumbbell/machine stack, or
 bodyweight.
 

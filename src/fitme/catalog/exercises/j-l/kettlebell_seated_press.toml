@@ -1,0 +1,13 @@
+id = "kettlebell_seated_press"
+names = { en = "Kettlebell seated press", ru = "Жим гирь сидя" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["kettlebell", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 4.0 }
+instructions = { en = "Sit on a bench with the backrest upright and a kettlebell at each shoulder. Press both overhead until your arms are extended, then lower them back to shoulder height under control. Keep your back against the pad.", ru = "Сядьте на скамью с вертикальной спинкой, по гире у каждого плеча. Выжмите обе гири вверх до выпрямления рук, затем под контролем опустите к плечам. Спина прижата к спинке." }
+load_step_kg = 2.0

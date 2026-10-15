@@ -1,0 +1,14 @@
+id = "cable_lying_leg_curl"
+names = { en = "Cable lying leg curl", ru = "Сгибание ног лёжа на блоке" }
+search = { en = "cable inverse leg curl", ru = "сгибание ног на нижнем блоке лёжа" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["knee"]
+contraindicated_by = ["knee_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set a low pulley with an ankle strap, secure it on the ankles and lie face down on a bench holding its handles. Curl the heels toward the glutes without lifting the hips, then lower slowly with a light load.", ru = "Поставьте нижний блок с ножным ремнём, закрепите его на лодыжках и лягте лицом вниз на скамью, держась за рукояти. Согните ноги, подтягивая пятки к ягодицам, таз не отрывайте, затем медленно опустите. Вес лёгкий." }
+load_step_kg = 1.0

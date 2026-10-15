@@ -1,0 +1,13 @@
+id = "cable_deadlift"
+names = { en = "Cable deadlift", ru = "Становая тяга на блоке" }
+kind = "compound"
+pattern = "hinge"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Face a low pulley with a bar or handles, feet hip-width, and hinge down to take hold with a flat back. Stand by driving the hips forward, arms long. Lower by pushing the hips back and keep the weight light enough to hold the flat back.", ru = "Встаньте лицом к нижнему блоку с грифом или рукоятями, ноги на ширине таза, наклонитесь и возьмитесь за них с прямой спиной. Поднимитесь, выводя таз вперёд, руки прямые. Опускайтесь, отводя таз назад; вес такой, чтобы спина оставалась ровной." }
+load_step_kg = 2.5

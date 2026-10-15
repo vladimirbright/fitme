@@ -1,0 +1,13 @@
+id = "cable_squat_curl"
+names = { en = "Cable squat with curl", ru = "Приседание со сгибанием рук на блоке" }
+kind = "compound"
+pattern = "squat"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["knee", "hip", "lower_back", "elbow_wrist"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "lower_back_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Stand facing a low pulley, feet shoulder-width, holding the handle underhand. Sit back and down into a squat while curling the handle toward your shoulders, then stand and lower the handle. Keep your chest up and knees over your toes.", ru = "Встаньте лицом к нижнему блоку, ноги на ширине плеч, рукоять хватом снизу. Присядьте назад и вниз, одновременно сгибая руки к плечам, затем встаньте и опустите рукоять. Грудь поднята, колени над носками." }
+load_step_kg = 1.0

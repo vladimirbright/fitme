@@ -1,0 +1,12 @@
+id = "barbell_forward_lunge"
+names = { en = "Barbell forward lunge", ru = "Выпады вперёд со штангой" }
+kind = "compound"
+pattern = "squat"
+equipment = ["barbell", "rack"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "ankle", "lower_back", "neck"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current", "lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Unrack the bar on the upper back and step back into clear space. Step forward and lower until both knees are bent, torso upright. Push back to the start and alternate legs. If balance shifts, reset before the next rep.", ru = "Снимите штангу на верх спины и отойдите на свободное место. Шагните вперёд и опуститесь, пока обе ноги не согнутся, корпус прямой. Оттолкнитесь назад и чередуйте ноги. Если теряете равновесие, соберитесь перед следующим повтором." }

@@ -1,0 +1,12 @@
+id = "stability_ball_back_extension_arms_crossed"
+names = { en = "Stability-ball back extension, arms crossed", ru = "Разгибания спины на фитболе со скрещёнными руками" }
+kind = "bodyweight"
+pattern = "hinge"
+equipment = ["stability_ball"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Lie face down over the ball with hips on it, legs straight and toes braced on the floor or a wall, arms crossed over the chest. Raise the upper body until the body forms one line, then lower slowly. Keep the movement smooth.", ru = "Лягте животом на фитбол, таз на мяче, ноги прямые, носки упираются в пол или стену, руки скрещены на груди. Поднимите корпус до одной линии с ногами, затем медленно опустите. Движение плавное." }

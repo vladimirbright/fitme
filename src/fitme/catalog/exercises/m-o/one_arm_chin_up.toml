@@ -1,0 +1,13 @@
+id = "one_arm_chin_up"
+names = { en = "One-arm chin-up", ru = "Подтягивание обратным хватом на одной руке" }
+kind = "bodyweight"
+level = "advanced"
+pattern = "vertical_pull"
+equipment = ["pull_up_bar"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Hang from the bar with one hand, palm facing you, the other arm held away from the bar. Pull your chin above the bar without swinging. Lower slowly until the arm is straight. Do equal reps on each side.", ru = "Повисните на перекладине на одной руке ладонью к себе, вторая рука свободна и не касается перекладины. Подтянитесь подбородком выше перекладины без раскачки. Медленно опуститесь до прямой руки. Выполните одинаковое число повторений на каждую сторону." }

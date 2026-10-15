@@ -1,0 +1,12 @@
+id = "bodyweight_spider_push_up"
+names = { en = "Spider push-up", ru = "Отжимания «паук»" }
+kind = "bodyweight"
+pattern = "horizontal_push"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist", "hip"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hip_injury_current"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Start in a push-up position, body in a straight line. As you lower, bring one knee toward the same elbow, keeping the foot off the floor. Press back up, return the leg and repeat on the other side.", ru = "Примите упор лёжа, тело на одной линии. Опускаясь, подтяните одно колено к локтю той же стороны, стопа не касается пола. Выжмите вверх, верните ногу и повторите в другую сторону." }

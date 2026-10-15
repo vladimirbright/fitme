@@ -1,0 +1,12 @@
+id = "bodyweight_seated_side_crunch"
+names = { en = "Seated side crunch", ru = "Боковые наклоны сидя у стены" }
+kind = "bodyweight"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back", "neck"]
+contraindicated_by = ["lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Sit with your back against a wall, knees bent and feet flat, hands at your temples. Lean your torso toward one side, then return upright. Complete all reps on one side, then switch. Keep your neck relaxed.", ru = "Сядьте спиной к стене, колени согнуты, стопы на полу, руки у висков. Наклоните корпус в сторону, затем вернитесь. Выполните все повторения на одну сторону, затем смените. Шея расслаблена." }

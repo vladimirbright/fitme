@@ -1,0 +1,13 @@
+id = "barbell_lying_triceps_extension"
+names = { en = "Barbell lying triceps extension (skull crusher)", ru = "Французский жим штанги лёжа" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["barbell", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+level = "advanced"
+instructions = { en = "Lie on a bench, arms straight over the chest, overhand grip about shoulder width. Bend only the elbows to lower the bar to just above the forehead, then extend. Use a load you can fully control and stop the set if the bar drifts toward your face.", ru = "Лягте на скамью, руки прямо над грудью, хват сверху примерно на ширине плеч. Сгибайте только локти, опуская гриф к уровню чуть выше лба, затем разогните. Берите вес, который полностью контролируете; прекратите подход, если гриф уходит к лицу." }

@@ -1,0 +1,13 @@
+id = "cable_reverse_grip_pushdown"
+names = { en = "Cable reverse-grip pushdown", ru = "Разгибание рук на верхнем блоке обратным хватом" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Face a high pulley and hold a bar underhand, elbows at your sides. Straighten the arms downward, then let the bar rise under control without letting the elbows drift forward.", ru = "Встаньте лицом к верхнему блоку, гриф хватом снизу, локти у корпуса. Выпрямите руки вниз, затем подконтрольно дайте грифу подняться, не выводя локти вперёд." }
+load_step_kg = 1.0

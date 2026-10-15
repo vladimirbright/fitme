@@ -1,0 +1,12 @@
+id = "machine_leg_press_calf_press"
+names = { en = "Leg press calf press", ru = "Жим носками в тренажёре для жима ногами" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["ankle", "knee"]
+contraindicated_by = ["ankle_injury_current", "knee_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Sit in the leg press with the balls of the feet low on the platform, heels hanging off, knees nearly straight but not locked. Press the platform by extending the ankles, pause, then bring the heels back slowly. Set the safety stops before you start and do not lock the knees.", ru = "Сядьте в тренажёр для жима ногами, передняя часть стопы внизу платформы, пятки свисают, колени почти прямые, но не заблокированы. Выжмите платформу, разгибая голеностоп, задержитесь и медленно верните пятки. Заранее выставьте ограничители и не блокируйте колени." }

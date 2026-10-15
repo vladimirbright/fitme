@@ -1,0 +1,13 @@
+id = "bodyweight_negative_crunch"
+names = { en = "Slow-lowering crunch", ru = "Скручивания с медленным опусканием" }
+search = { en = "negative crunch", ru = "негативные скручивания" }
+kind = "bodyweight"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back", "neck"]
+contraindicated_by = ["lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on your back, knees bent, feet flat, hands lightly at your temples. Curl your shoulders up in one smooth motion, then take about three seconds to lower them back to the floor. Keep your neck relaxed.", ru = "Лягте на спину, колени согнуты, стопы на полу, руки у висков. Плавно оторвите плечи от пола, затем опускайтесь около трёх секунд. Шея расслаблена." }

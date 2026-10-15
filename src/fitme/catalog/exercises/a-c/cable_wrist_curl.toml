@@ -1,0 +1,13 @@
+id = "cable_wrist_curl"
+names = { en = "Cable wrist curl", ru = "Сгибания запястий в кроссовере" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Attach a straight bar to a low pulley and sit on a bench facing it, forearms on your thighs, palms up. Curl the bar up by bending only the wrists, then lower slowly. Keep the load light.", ru = "Закрепите прямую рукоять на нижнем блоке и сядьте на скамью лицом к нему, предплечья на бёдрах, ладони вверх. Поднимайте рукоять, сгибая только запястья, и медленно опускайте. Вес берите небольшой." }
+load_step_kg = 1.0

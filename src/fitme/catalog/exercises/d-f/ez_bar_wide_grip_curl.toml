@@ -1,0 +1,13 @@
+id = "ez_bar_wide_grip_curl"
+names = { en = "EZ-bar wide-grip curl", ru = "Сгибания рук с EZ-грифом широким хватом" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["ez_bar"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Stand holding the EZ-bar underhand on the outer bends, wider than the shoulders. Keep the elbows by your sides and curl the bar to shoulder height, then lower under control.", ru = "Встаньте, возьмите EZ-гриф обратным хватом по внешним изгибам, шире плеч. Локти у корпуса, поднимите гриф до уровня плеч, затем опустите под контролем." }
+load_step_kg = 1.0

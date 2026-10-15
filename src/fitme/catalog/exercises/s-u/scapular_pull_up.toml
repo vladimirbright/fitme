@@ -1,0 +1,12 @@
+id = "scapular_pull_up"
+names = { en = "Scapular pull-up", ru = "Лопаточные подтягивания" }
+kind = "bodyweight"
+pattern = "accessory"
+equipment = ["pull_up_bar"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Hang from the bar with straight arms. Without bending the elbows, pull the shoulder blades down and back so the body rises a few centimetres. Release slowly back to a full hang.", ru = "Повисните на перекладине на прямых руках. Не сгибая локти, опустите и сведите лопатки так, чтобы тело поднялось на несколько сантиметров. Медленно вернитесь в полный вис." }

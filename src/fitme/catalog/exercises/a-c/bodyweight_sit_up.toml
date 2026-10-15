@@ -1,0 +1,12 @@
+id = "bodyweight_sit_up"
+names = { en = "Sit-up", ru = "Подъём корпуса из положения лёжа" }
+kind = "bodyweight"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back", "neck", "hip"]
+contraindicated_by = ["lower_back_injury_current", "neck_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on your back, knees bent, feet flat, arms crossed over your chest. Curl your torso up toward your knees, then lower with control. Keep your neck relaxed and do not yank with your arms. Anchor your feet only if needed.", ru = "Лягте на спину, колени согнуты, стопы на полу, руки скрещены на груди. Поднимите корпус к коленям, затем опуститесь под контролем. Шея расслаблена, не рвите руками. Стопы фиксируйте только при необходимости." }

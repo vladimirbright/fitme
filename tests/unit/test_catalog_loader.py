@@ -132,3 +132,17 @@ def test_a_stray_file_or_folder_is_rejected_not_skipped(tmp_path: Path) -> None:
         read_exercises(_catalog_root(tmp_path / "one", {"a-c/notes.txt": "x"}))
     with pytest.raises(CatalogLayoutError, match="unexpected catalog entry"):
         read_exercises(_catalog_root(tmp_path / "two", {"misc/band_row.toml": 'id = "band_row"\n'}))
+
+
+def test_every_listed_location_can_have_the_exercise_equipment() -> None:
+    """A location in `locations` must be able to offer all of the exercise's equipment:
+    the gym default set, the home questionnaire's choices, or the apartment/outdoor
+    defaults. Otherwise the entry is unreachable there, or the data is wrong."""
+    possible = {**LOCATION_DEFAULT_EQUIPMENT, Location.HOME_EQUIPMENT: HOME_SELECTABLE_EQUIPMENT}
+    problems = [
+        f"{exercise.id} @ {location.value}"
+        for exercise in load_catalog().exercise
+        for location in exercise.locations
+        if not set(exercise.equipment) <= possible[location]
+    ]
+    assert problems == []

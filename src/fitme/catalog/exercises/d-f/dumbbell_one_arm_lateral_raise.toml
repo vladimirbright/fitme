@@ -1,0 +1,12 @@
+id = "dumbbell_one_arm_lateral_raise"
+names = { en = "Dumbbell one-arm lateral raise", ru = "Мах гантелью в сторону одной рукой" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand holding a dumbbell in one hand at your side. With a slightly bent elbow, raise the arm out to the side to shoulder height, then lower under control. Do all reps, then switch arms. Avoid leaning away from the weight.", ru = "Встаньте, гантель в одной руке вдоль корпуса. Слегка согнув локоть, поднимите руку в сторону до уровня плеча, затем опустите под контролем. Выполните все повторения, затем смените руку. Не отклоняйтесь корпусом в противоположную сторону." }

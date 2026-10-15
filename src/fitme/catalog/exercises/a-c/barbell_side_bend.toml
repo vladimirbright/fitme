@@ -1,0 +1,13 @@
+id = "barbell_side_bend"
+names = { en = "Barbell side bend", ru = "Боковые наклоны со штангой" }
+kind = "isolation"
+pattern = "core"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back"]
+contraindicated_by = ["lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Stand holding a light bar in both hands at thigh level. Bend sideways in a small range, sliding the bar down the leg, then return upright. Keep hips and chest facing forward. Take the bar from a rack or the floor with a flat back. Alternate sides.", ru = "Встаньте, лёгкий гриф в обеих руках на уровне бёдер. Наклонитесь в сторону в небольшой амплитуде, скользя грифом вдоль ноги, затем вернитесь. Таз и грудь смотрят вперёд. Берите гриф со стойки или с пола с ровной спиной. Чередуйте стороны." }
+load_step_kg = 2.5

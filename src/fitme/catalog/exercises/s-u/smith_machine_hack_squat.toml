@@ -1,0 +1,13 @@
+id = "smith_machine_hack_squat"
+names = { en = "Smith machine hack squat", ru = "Гакк-приседания в тренажёре Смита" }
+kind = "compound"
+pattern = "squat"
+equipment = ["smith_machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["knee", "hip", "lower_back", "neck"]
+contraindicated_by = ["knee_injury_current", "hernia", "hip_injury_current", "lower_back_injury_current", "neck_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the bar at shoulder height. Stand with your back to the bar, feet shoulder-width and clearly forward of the bar line, bar across the upper back. Sit down with the torso tilted slightly back, then press up. Set the safety stops below the lowest point.", ru = "Установите гриф на уровне плеч. Встаньте спиной к грифу, ноги на ширине плеч и заметно впереди линии грифа, гриф на верхней части спины. Присядьте, чуть откинув корпус назад, и поднимитесь. Выставьте ограничители ниже нижней точки." }
+load_step_kg = 2.5

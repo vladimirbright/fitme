@@ -1,0 +1,13 @@
+id = "cable_one_arm_reverse_preacher_curl"
+names = { en = "Cable one-arm reverse preacher curl", ru = "Обратное сгибание руки на скамье Скотта на блоке" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["cable", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Sit or stand at a preacher pad (or a bench set steeply upright) so the backs of your upper arms rest on it. Hold the handle overhand with the working arm resting on the pad. Curl toward your shoulder keeping the wrist straight, then lower under control. Use a lighter weight than for an underhand curl and switch arms after the set.", ru = "Займите место у скамьи Скотта (или круто поставленной скамьи) так, чтобы задняя часть плеч лежала на упоре. Рабочая рука лежит на упоре, рукоять хватом сверху. Согните руку к плечу, запястье прямое, затем подконтрольно опустите. Вес легче, чем при хвате снизу; после подхода смените руку." }
+load_step_kg = 1.0

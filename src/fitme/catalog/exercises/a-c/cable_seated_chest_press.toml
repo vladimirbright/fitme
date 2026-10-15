@@ -1,0 +1,13 @@
+id = "cable_seated_chest_press"
+names = { en = "Cable seated chest press", ru = "Жим от груди сидя на блоках" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["cable", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set a bench with a back pad between the stacks, handles at chest height. Sit with your back against the pad and feet flat, a handle in each hand at the chest. Press forward until the arms are straight, then return under control.", ru = "Поставьте скамью со спинкой между блоками, рукояти на уровне груди. Сядьте, спина прижата, стопы на полу, рукояти у груди. Выжмите вперёд до прямых рук, затем вернитесь под контролем." }
+load_step_kg = 2.5

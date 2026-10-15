@@ -1,0 +1,12 @@
+id = "band_vertical_pallof_press"
+names = { en = "Band vertical Pallof press", ru = "Вертикальный жим Паллофа с лентой" }
+kind = "isolation"
+pattern = "core"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Anchor the band at chest height and stand side-on, stepping away until taut, hands at your chest. Press your hands straight up overhead without leaning or turning, then lower back to your chest. Finish one side, then switch.", ru = "Закрепите ленту на уровне груди, встаньте боком и отойдите до натяжения, руки у груди. Выжмите руки вверх над головой, не наклоняясь и не поворачиваясь, затем верните к груди. Закончите одну сторону, затем смените." }

@@ -1,0 +1,13 @@
+id = "muscle_up"
+names = { en = "Muscle-up", ru = "Выход силой" }
+kind = "bodyweight"
+level = "advanced"
+pattern = "vertical_pull"
+equipment = ["pull_up_bar"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Hang from the bar with a false or full overhand grip. Pull explosively until the bar reaches your chest, then rotate your wrists and elbows over the bar. Press up to straight arms above the bar. Lower back down slowly under control, and only try it with a strong pull-up and dip base.", ru = "Повисните на перекладине хватом сверху. Резко подтяните тело, пока перекладина не окажется у груди, затем переведите кисти и локти над перекладиной. Выжмите тело до прямых рук над перекладиной. Медленно опуститесь под контролем; выполняйте только при уверенных подтягиваниях и отжиманиях на брусьях." }

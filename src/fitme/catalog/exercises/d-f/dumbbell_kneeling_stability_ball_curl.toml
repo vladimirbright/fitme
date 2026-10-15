@@ -1,0 +1,12 @@
+id = "dumbbell_kneeling_stability_ball_curl"
+names = { en = "Kneeling dumbbell curl over stability ball", ru = "Сгибания с гантелями на фитболе стоя на коленях" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "stability_ball"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Kneel behind a stability ball and rest the backs of your upper arms on top of it, a dumbbell in each hand with palms up. Curl the weights toward your shoulders, then lower until the arms are straight. Keep the ball steady against your chest.", ru = "Встаньте на колени перед фитболом и положите на него плечи сзади, в руках гантели, ладони вверх. Согните руки, поднимая гантели к плечам, затем опустите до выпрямления. Мяч держите устойчиво у груди." }

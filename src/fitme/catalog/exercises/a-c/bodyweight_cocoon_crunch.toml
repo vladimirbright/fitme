@@ -1,0 +1,12 @@
+id = "bodyweight_cocoon_crunch"
+names = { en = "Cocoon crunch", ru = "Скручивания «кокон»" }
+kind = "bodyweight"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back", "neck", "hip"]
+contraindicated_by = ["lower_back_injury_current", "neck_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on your back with arms stretched overhead and legs extended just above the floor. Pull your knees in toward your chest while lifting your shoulders and bringing your arms forward past your knees. Extend back out slowly. Bend your knees more if your lower back arches.", ru = "Лягте на спину, руки вытянуты за головой, ноги прямые чуть над полом. Подтяните колени к груди, одновременно отрывая плечи и вынося руки вперёд за колени. Медленно вытянитесь обратно. Если поясница прогибается, сильнее согните колени." }

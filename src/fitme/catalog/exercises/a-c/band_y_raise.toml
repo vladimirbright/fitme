@@ -1,0 +1,13 @@
+id = "band_y_raise"
+names = { en = "Band Y-raise", ru = "Подъём рук буквой Y с лентой" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Hold a light band in front of your thighs with a shoulder-width grip. With nearly straight arms, raise them up and out into a Y shape to just above head height, then lower under control. Keep your neck long and ribs down.", ru = "Держите лёгкую ленту перед бёдрами хватом на ширине плеч. Почти прямыми руками поднимите их вверх и в стороны буквой Y чуть выше уровня головы, затем опустите под контролем. Шея длинная, рёбра опущены." }
+load_step_kg = 1.0

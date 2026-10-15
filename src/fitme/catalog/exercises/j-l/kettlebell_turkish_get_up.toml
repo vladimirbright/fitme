@@ -1,0 +1,14 @@
+id = "kettlebell_turkish_get_up"
+names = { en = "Kettlebell Turkish get-up", ru = "Турецкий подъём с гирей" }
+kind = "compound"
+pattern = "core"
+level = "advanced"
+equipment = ["kettlebell"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "hip", "knee", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hip_injury_current", "knee_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 4.0 }
+instructions = { en = "Lie on your back with the kettlebell in one hand, arm straight up and eyes on the bell. Rise in stages through the elbow, hand and knee to standing, then reverse each stage. Keep the arm vertical throughout. Start with no weight or a light one.", ru = "Лягте на спину, гиря в одной руке, рука прямо вверх, взгляд на гирю. Поднимайтесь поэтапно через локоть, ладонь и колено до стойки, затем повторите этапы в обратном порядке. Рука с гирей всё время вертикальна. Начинайте без веса или с лёгкой гирей." }
+load_step_kg = 2.0

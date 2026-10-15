@@ -1,0 +1,13 @@
+id = "band_prone_leg_curl"
+names = { en = "Band prone leg curl", ru = "Сгибание ног с эспандером лёжа на животе" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["resistance_bands", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee"]
+contraindicated_by = ["knee_injury_current"]
+increment_kg = 2.0
+start = { kind = "calibration" }
+instructions = { en = "Anchor a band low behind a bench and loop it around both ankles. Lie face down on the bench and curl the heels toward the glutes, then lower slowly. Keep the hips pressed down.", ru = "Закрепите эспандер низко позади скамьи и наденьте петлю на обе щиколотки. Лягте на скамью лицом вниз и согните ноги, подтягивая пятки к ягодицам, затем медленно опустите. Таз прижат." }
+load_step_kg = 1.0

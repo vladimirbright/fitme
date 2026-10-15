@@ -1,0 +1,13 @@
+id = "band_v_up"
+names = { en = "Band V-up", ru = "V-подъёмы с лентой" }
+kind = "bodyweight"
+level = "advanced"
+pattern = "core"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "shoulder", "hip"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Lie on your back, legs straight, a band held taut between your hands overhead. Lift your torso and both legs together, reaching toward your feet, then lower slowly. Use a light band and avoid dropping your legs.", ru = "Лягте на спину, ноги прямые, лента натянута в руках над головой. Одновременно поднимите корпус и обе ноги, тянясь к стопам, затем медленно опуститесь. Берите лёгкую ленту, ноги не бросайте." }

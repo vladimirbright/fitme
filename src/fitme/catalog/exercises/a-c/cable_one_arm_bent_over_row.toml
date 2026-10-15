@@ -1,0 +1,13 @@
+id = "cable_one_arm_bent_over_row"
+names = { en = "Cable one-arm bent-over row", ru = "Тяга блока одной рукой в наклоне" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "hip"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Stand facing a low cable, feet shoulder-width, knees soft, and hinge forward with a flat back. Pull the handle to your lower ribs, elbow close to your side, then extend the arm under control. Keep the hips and shoulders square, and finish all reps before switching sides.", ru = "Встаньте лицом к нижнему блоку, ноги на ширине плеч, колени слегка согнуты, наклонитесь вперёд с прямой спиной. Тяните рукоять к низу рёбер, локоть у корпуса, затем под контролем выпрямите руку. Таз и плечи не разворачивайте, все повторения делайте на одну сторону, затем смените." }
+load_step_kg = 2.5

@@ -1,0 +1,14 @@
+id = "pull_up_bar_gorilla_chin"
+names = { en = "Gorilla chin-up", ru = "Подтягивание в стиле гориллы" }
+search = { en = "gorilla chin crunch", ru = "подтягивания горилла с подъёмом коленей" }
+kind = "compound"
+pattern = "vertical_pull"
+equipment = ["pull_up_bar"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+level = "advanced"
+instructions = { en = "Hang from the bar with an underhand grip, shoulder-width, arms extended. Pull up until your chin clears the bar and raise your knees toward your chest at the top, then lower your legs and body slowly. Keep swinging to a minimum.", ru = "Повисните на перекладине обратным хватом на ширине плеч, руки прямые. Подтянитесь до подбородка над перекладиной и в верхней точке подтяните колени к груди, затем медленно опустите ноги и корпус. Раскачивание сведите к минимуму." }

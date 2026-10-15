@@ -1,0 +1,12 @@
+id = "dumbbell_preacher_hammer_curl"
+names = { en = "Dumbbell hammer preacher curl", ru = "Молотковые сгибания с гантелями на скамье Скотта" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Rest both upper arms on a preacher pad (or an incline bench with your chest against it), palms facing each other. Curl both dumbbells up with the grip kept neutral, then lower to nearly straight arms.", ru = "Положите оба плеча на упор скамьи Скотта (или на наклонную скамью, грудью к спинке), ладони смотрят друг на друга. Поднимите обе гантели, сохраняя нейтральный хват, затем опустите почти до выпрямления рук." }

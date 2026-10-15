@@ -1,0 +1,13 @@
+id = "barbell_reverse_grip_decline_bench_press"
+names = { en = "Barbell reverse-grip decline bench press", ru = "Жим штанги обратным хватом на скамье с отрицательным наклоном" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["barbell", "rack", "bench"]
+load_unit = "total"
+level = "advanced"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Lie on a decline bench with your feet secured and take an underhand grip about shoulder width. Unrack, lower the bar under control to the lower chest with elbows tucked, then press back up. Use a lighter weight than usual. Wrap the thumbs fully around the bar. Set the rack's safety arms just below the lowest point of the movement.", ru = "Лягте на скамью с отрицательным наклоном, ноги зафиксированы, возьмите гриф обратным хватом примерно на ширине плеч. Снимите штангу, под контролем опустите к нижней части груди, локти прижаты, и выжмите вверх. Вес берите меньше обычного. Обхватывайте гриф большими пальцами. Установите страховочные упоры чуть ниже нижней точки движения." }

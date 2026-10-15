@@ -1,0 +1,12 @@
+id = "machine_reverse_t_bar_row"
+names = { en = "Machine reverse-grip T-bar row", ru = "Тяга Т-грифа в тренажёре обратным хватом" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["machine"]
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the seat and foot plate, press the chest to the pad and grip the T-bar handles with palms up. Pull toward the chest, pause, then extend the arms slowly. Keep the back flat.", ru = "Настройте сиденье и упор для ног, прижмите грудь к подушке и возьмите рукояти Т-грифа ладонями вверх. Тяните к груди, задержитесь, затем медленно разгибайте руки. Спина прямая." }
+load_step_kg = 2.5

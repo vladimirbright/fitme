@@ -1,0 +1,12 @@
+id = "dumbbell_reverse_grip_bench_press"
+names = { en = "Reverse-grip dumbbell bench press", ru = "Жим гантелей лёжа обратным хватом" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Lie on a flat bench, feet on the floor, holding the dumbbells above your chest with palms facing your feet. Lower them toward your chest, then press back up. Use a light weight, keep your wrists straight and avoid flaring the elbows far out.", ru = "Лягте на горизонтальную скамью, стопы на полу, гантели над грудью, ладони смотрят в сторону ног. Опустите их к груди и выжмите обратно. Вес лёгкий, запястья прямые, локти сильно в стороны не разводите." }

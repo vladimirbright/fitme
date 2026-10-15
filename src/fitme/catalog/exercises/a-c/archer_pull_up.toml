@@ -1,0 +1,13 @@
+id = "archer_pull_up"
+names = { en = "Archer pull-up", ru = "Подтягивания лучника" }
+kind = "bodyweight"
+pattern = "vertical_pull"
+level = "advanced"
+equipment = ["pull_up_bar"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Hang from the bar with a wide grip. Pull toward one hand while the opposite arm stays straight, then lower under control and alternate sides. Master standard pull-ups first.", ru = "Повисните на перекладине широким хватом. Подтягивайтесь к одной руке, вторая остаётся прямой, затем опуститесь под контролем и смените сторону. Сначала освойте обычные подтягивания." }

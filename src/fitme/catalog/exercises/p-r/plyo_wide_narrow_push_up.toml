@@ -1,0 +1,13 @@
+id = "plyo_wide_narrow_push_up"
+names = { en = "Plyometric wide-to-narrow push-up", ru = "Плиометрические отжимания широко-узко" }
+kind = "bodyweight"
+pattern = "horizontal_push"
+equipment = []
+level = "advanced"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Start in a plank with hands wide. Lower the chest, push up so the hands briefly leave the floor, and land with the hands closer together. Lower again, push up and land with the hands wide. Alternate on a non-slip floor and stop when landings lose control.", ru = "Примите упор лёжа, руки широко. Опустите грудь, оттолкнитесь так, чтобы ладони ненадолго оторвались от пола, и приземлитесь с более узкой постановкой. Снова опуститесь, оттолкнитесь и приземлитесь широко. Чередуйте на нескользком полу и прекращайте, когда приземление теряет контроль." }
+load_step_kg = 1.0

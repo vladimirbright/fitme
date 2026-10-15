@@ -1,0 +1,13 @@
+id = "smith_machine_seated_shoulder_press"
+names = { en = "Smith machine seated shoulder press", ru = "Жим в машине Смита сидя" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["smith_machine", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Place an upright bench under the bar, sit with your back supported and the bar at shoulder height, overhand grip a little wider than shoulders. Unhook and press up until your arms are extended, then lower to shoulder height. Set the safety stops just below your lowest position.", ru = "Поставьте скамью с вертикальной спинкой под гриф, сядьте с опорой для спины, гриф на уровне плеч, хват сверху чуть шире плеч. Снимите гриф и выжмите вверх до выпрямления рук, затем опустите к плечам. Ограничители установите чуть ниже нижней точки." }
+load_step_kg = 2.5

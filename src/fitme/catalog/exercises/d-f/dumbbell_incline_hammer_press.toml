@@ -1,0 +1,12 @@
+id = "dumbbell_incline_hammer_press"
+names = { en = "Incline neutral-grip dumbbell press", ru = "Жим гантелей нейтральным хватом на наклонной скамье" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Set the bench to a modest incline and lie back with the dumbbells at shoulder height, palms facing each other. Press them up and slightly together, then lower under control, elbows close to your body.", ru = "Установите небольшой наклон скамьи и лягте, гантели у плеч, ладони смотрят друг на друга. Выжмите их вверх и чуть внутрь, затем подконтрольно опустите, локти ближе к корпусу." }

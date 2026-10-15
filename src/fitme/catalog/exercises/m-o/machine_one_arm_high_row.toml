@@ -1,0 +1,12 @@
+id = "machine_one_arm_high_row"
+names = { en = "Machine one-arm high row", ru = "Высокая тяга в тренажёре одной рукой" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["machine"]
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Adjust the seat and sit facing the machine, one hand on the high handle. Pull the elbow down and back toward the side of the ribs, then return slowly. Keep the torso square and repeat on the other side.", ru = "Настройте сиденье и сядьте лицом к тренажёру, одна рука на верхней рукояти. Тяните локоть вниз и назад к боку, затем медленно возвращайте. Корпус не разворачивайте; повторите другой рукой." }
+load_step_kg = 2.5

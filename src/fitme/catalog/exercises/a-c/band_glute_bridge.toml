@@ -1,0 +1,13 @@
+id = "band_glute_bridge"
+names = { en = "Band glute bridge", ru = "Ягодичный мостик с эспандером" }
+kind = "compound"
+pattern = "hinge"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["hip", "lower_back", "knee"]
+contraindicated_by = ["hip_injury_current", "lower_back_injury_current", "knee_injury_current"]
+increment_kg = 2.0
+start = { kind = "calibration" }
+instructions = { en = "Lie on your back with knees bent, feet flat, and a loop band just above the knees. Press the knees gently outward and lift the hips until the body forms a line from knees to shoulders. Lower under control.", ru = "Лягте на спину, колени согнуты, стопы на полу, петля эспандера чуть выше колен. Слегка разводите колени в стороны и поднимите таз до линии от колен до плеч. Опустите под контролем." }
+load_step_kg = 1.0

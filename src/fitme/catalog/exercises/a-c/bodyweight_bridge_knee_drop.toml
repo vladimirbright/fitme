@@ -1,0 +1,13 @@
+id = "bodyweight_bridge_knee_drop"
+names = { en = "Glute bridge with knee drop", ru = "Ягодичный мостик с поворотом коленей" }
+kind = "bodyweight"
+pattern = "accessory"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["hip", "lower_back"]
+contraindicated_by = ["hip_injury_current", "lower_back_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on your back, knees bent and feet on the floor. Lift into a bridge. Keeping the hips up, let both knees tip gently to one side, then bring them back to centre and tip to the other side. Lower the hips after the set.", ru = "Лягте на спину, колени согнуты, стопы на полу. Поднимите таз в мостик. Удерживая таз вверху, плавно опустите оба колена в одну сторону, верните в центр и опустите в другую. Опустите таз после подхода." }
+load_step_kg = 1.0

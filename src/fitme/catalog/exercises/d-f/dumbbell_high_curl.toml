@@ -1,0 +1,12 @@
+id = "dumbbell_high_curl"
+names = { en = "Dumbbell high curl", ru = "Сгибания с гантелями с поднятыми локтями" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand tall and raise your arms out to the sides to shoulder height, a light dumbbell in each hand, palms up. Bend the elbows to bring the weights toward your head, then straighten the arms again. Keep the elbows level with the shoulders and avoid leaning back.", ru = "Встаньте прямо и разведите руки в стороны до уровня плеч, в руках лёгкие гантели, ладони вверх. Сгибайте локти, приближая гантели к голове, затем снова выпрямите руки. Локти держите на уровне плеч, не отклоняйтесь назад." }

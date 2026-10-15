@@ -1,0 +1,14 @@
+id = "kettlebell_one_arm_snatch"
+names = { en = "Kettlebell one-arm snatch", ru = "Рывок гири одной рукой" }
+kind = "compound"
+pattern = "hinge"
+equipment = ["kettlebell"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "hip", "knee", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hip_injury_current", "knee_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 4.0 }
+level = "advanced"
+instructions = { en = "Hinge at the hips with the kettlebell swinging back between your legs. Drive your hips forward and pull the bell up close to the body, then guide it overhead to a locked arm. Let it fall back along the same path into the next swing. Finish one side before switching; use a light weight and clear space.", ru = "Наклонитесь в тазобедренных суставах, гиря уходит назад между ног. Толкните таз вперёд и подтяните гирю близко к телу, затем выведите её над головой до зафиксированной руки. Дайте ей вернуться по тому же пути в следующий мах. Выполните одну сторону и смените; вес лёгкий, место свободное." }
+load_step_kg = 2.0

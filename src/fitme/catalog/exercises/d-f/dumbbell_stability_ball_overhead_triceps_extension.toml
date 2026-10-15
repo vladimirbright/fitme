@@ -1,0 +1,12 @@
+id = "dumbbell_stability_ball_overhead_triceps_extension"
+names = { en = "Dumbbell one-arm overhead triceps extension on a stability ball", ru = "Разгибание руки с гантелью из-за головы сидя на фитболе" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "stability_ball"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit tall on a stability ball with feet flat and wide, one dumbbell raised overhead, upper arm close to your head. Bend the elbow to lower the weight behind your head, then straighten the arm. Finish all reps, then switch arms. Use a light weight.", ru = "Сядьте ровно на фитбол, стопы на полу на ширине, гантель в одной руке поднята над головой, плечо рядом с головой. Согните локоть, опуская гантель за голову, затем выпрямите руку. Выполните все повторения и смените руку. Берите небольшой вес." }

@@ -1,0 +1,12 @@
+id = "resistance_band_seated_row"
+names = { en = "Resistance band seated row", ru = "Тяга эспандера сидя на полу" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Sit on the floor with legs extended and the band looped around both feet, holding the ends with palms facing each other. Sit tall and pull the hands to your lower ribs, squeezing the shoulder blades. Return slowly without rounding forward.", ru = "Сядьте на пол, ноги вытянуты, лента обёрнута вокруг обеих стоп, концы в руках, ладони смотрят друг на друга. Держа спину прямой, тяните руки к нижним рёбрам, сводя лопатки. Медленно вернитесь, не заваливаясь вперёд." }

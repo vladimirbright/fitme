@@ -1,0 +1,12 @@
+id = "dumbbell_seated_bent_arm_lateral_raise"
+names = { en = "Seated bent-arm dumbbell lateral raise", ru = "Подъём согнутых рук с гантелями в стороны сидя" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit tall on a bench holding a dumbbell in each hand with the elbows bent to about 90 degrees. Raise your elbows out to the sides to shoulder height, keeping the bend fixed, then lower under control.", ru = "Сядьте прямо на скамью, гантели в руках, локти согнуты примерно под 90 градусов. Поднимите локти в стороны до уровня плеч, сохраняя угол в локтях, затем опустите под контролем." }

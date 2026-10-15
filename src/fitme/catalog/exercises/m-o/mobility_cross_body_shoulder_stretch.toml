@@ -1,0 +1,11 @@
+id = "mobility_cross_body_shoulder_stretch"
+names = { en = "Cross-body shoulder stretch", ru = "Растяжка заднего пучка плеча рукой поперёк груди" }
+kind = "mobility"
+pattern = "mobility"
+equipment = []
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand tall and bring one arm across your chest at shoulder height. Hold it just above the elbow with the other hand and draw it gently toward you until you feel a mild pull. Hold 20-30 seconds, breathe evenly, then switch sides.", ru = "Встаньте прямо и заведите одну руку поперёк груди на уровне плеч. Придерживайте её другой рукой чуть выше локтя и мягко притягивайте к себе до лёгкого натяжения. Удерживайте 20-30 секунд, дышите ровно, затем смените сторону." }

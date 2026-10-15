@@ -1,0 +1,13 @@
+id = "dumbbell_alternating_seated_curl_on_stability_ball"
+names = { en = "Dumbbell alternating seated curl on stability ball", ru = "Попеременные сгибания рук сидя на фитболе" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "stability_ball"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit upright on a stability ball, feet flat and wide, a dumbbell in each hand. Curl one dumbbell while turning the palm toward your shoulder, lower it under control, then curl the other.", ru = "Сядьте ровно на фитбол, ступни на полу, ноги широко, в руках гантели. Согните одну руку, поворачивая ладонь к плечу, подконтрольно опустите и повторите другой рукой." }
+load_step_kg = 1.0

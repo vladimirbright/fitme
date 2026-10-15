@@ -1,0 +1,13 @@
+id = "cable_pro_lat_bar_pulldown"
+names = { en = "Cable pulldown with pro lat bar", ru = "Тяга верхнего блока профессиональным грифом" }
+kind = "compound"
+pattern = "vertical_pull"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Adjust the seat so your thighs sit snug under the pads. Take the bar slightly wider than the shoulders and pull it to the upper chest, elbows moving down and back. Let it rise under control without leaning back more than slightly.", ru = "Отрегулируйте сиденье так, чтобы бёдра были зафиксированы под валиками. Возьмите гриф чуть шире плеч и тяните к верху груди, локти идут вниз и назад. Отпускайте под контролем, отклоняясь назад не более чем слегка." }
+load_step_kg = 2.5

@@ -1,0 +1,13 @@
+id = "band_shrug"
+names = { en = "Band shrug", ru = "Шраги с эспандером" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "neck", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "neck_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.0
+start = { kind = "calibration" }
+instructions = { en = "Stand on a band and hold the ends at your thighs with straight arms. Lift the shoulders straight up, then lower slowly. Keep the elbows straight and the neck relaxed.", ru = "Встаньте на эспандер и держите концы у бёдер прямыми руками. Поднимите плечи строго вверх, затем медленно опустите. Локти прямые, шея расслаблена." }
+load_step_kg = 1.0

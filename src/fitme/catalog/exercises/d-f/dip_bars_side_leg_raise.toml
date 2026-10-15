@@ -1,0 +1,12 @@
+id = "dip_bars_side_leg_raise"
+names = { en = "Dip bar side leg raise", ru = "Подъём ног в стороны в упоре на брусьях" }
+kind = "isolation"
+pattern = "core"
+equipment = ["dip_bars"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "hip"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Support yourself on parallel bars with straight arms and shoulders pressed down. Raise both legs together out to one side, then lower them to the centre. Alternate sides and avoid swinging.", ru = "Упритесь в брусья на прямых руках, плечи опущены. Поднимите обе ноги вместе в сторону, затем опустите по центру. Чередуйте стороны, без раскачки." }

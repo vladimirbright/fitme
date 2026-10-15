@@ -1,0 +1,12 @@
+id = "barbell_low_bar_squat"
+names = { en = "Barbell low-bar squat", ru = "Приседания со штангой на задних дельтах" }
+kind = "compound"
+pattern = "squat"
+equipment = ["barbell", "rack"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "lower_back", "hip", "neck", "shoulder", "elbow_wrist"]
+contraindicated_by = ["knee_injury_current", "lower_back_injury_current", "hip_injury_current", "neck_injury_current", "hernia", "shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Set the bar across the rear shoulders, below the top of the traps. Lean the torso forward slightly, sit back and down to about parallel, then drive up. Set the safety arms just below the lowest point.", ru = "Расположите штангу на задних дельтах, ниже верха трапеций. Слегка наклоните корпус вперёд, присядьте назад и вниз до параллели и встаньте. Страховочные упоры поставьте чуть ниже нижней точки." }

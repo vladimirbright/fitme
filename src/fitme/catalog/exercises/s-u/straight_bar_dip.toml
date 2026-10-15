@@ -1,0 +1,13 @@
+id = "straight_bar_dip"
+names = { en = "Straight bar dip", ru = "Отжимания на прямой перекладине" }
+kind = "bodyweight"
+pattern = "vertical_push"
+equipment = ["pull_up_bar"]
+load_unit = "total"
+level = "advanced"
+locations = ["public_gym", "studio_gym", "home_equipment", "outdoor"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Support yourself on a fixed straight bar at about waist height, bar in front of the hips and arms straight. Lean slightly forward and bend the elbows to lower the chest toward the bar, about to a right angle at the elbows. Press back up and avoid swinging the legs.", ru = "Обопритесь на закреплённую прямую перекладину примерно на уровне пояса, перекладина перед тазом, руки прямые. Слегка наклонитесь вперёд и сгибайте локти, опуская грудь к перекладине примерно до прямого угла в локтях. Выжмитесь обратно, ноги не раскачивайте." }

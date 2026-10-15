@@ -15,6 +15,8 @@ Signals, each optional:
   prefix ("гантелей" -> "гантел*", "спины" -> "спин*"); a Latin word drops a plural "s"
   ("curls" -> "curl*"). Filler words ("exercise", "without", "упражнение", "без") are
   ignored: lexical matching can't read a negation.
+- **name prefix** — a name that starts with the query's words, shortest first, so the plain
+  movement outranks its variants ("жим гантелей" -> "Жим гантелей лёжа").
 - **pattern words** — a body-region or muscle word ("back", "грудь", "biceps") selects the
   movement patterns it belongs to (`_PATTERN_WORDS`), ranked compound first.
 - **semantic** — cosine similarity to the query's embedding, only when
@@ -243,6 +245,25 @@ def exact_matches(exercises: Iterable[Exercise], text: str) -> list[str]:
     return found
 
 
+def name_prefix_matches(exercises: Iterable[Exercise], text: str) -> list[str]:
+    """Exercises with a name that starts with the query's word stems, in order ("жим
+    гантелей" -> "Жим гантелей лёжа", not "Кубинский жим гантелей"); shortest name first,
+    so the plain movement comes before its variants."""
+    stems = _query_stems(text)
+    if not stems:
+        return []
+    hits: list[tuple[int, str]] = []
+    for exercise in exercises:
+        for name in (*exercise.names.values(), *exercise.search.values()):
+            words = _TOKEN_RE.findall(_fold(name))
+            if len(words) >= len(stems) and all(
+                word.startswith(stem) for word, stem in zip(words, stems, strict=False)
+            ):
+                hits.append((len(words), exercise.id))
+                break
+    return [exercise_id for _length, exercise_id in sorted(hits)]
+
+
 async def _fts_ranked(db: Database, text: str) -> list[str]:
     expression = fts_expression(text)
     if expression is None:
@@ -325,6 +346,8 @@ async def search(
 
     for exercise_id in exact_matches(pool, text):
         add(exercise_id, 1.0, "exact name match")
+    for rank, exercise_id in enumerate(name_prefix_matches(pool, text), start=1):
+        add(exercise_id, 1.0 / (RRF_K + rank), f"name starts with the query (rank {rank})")
     fts = [exercise_id for exercise_id in await _fts_ranked(db, text) if exercise_id in allowed]
     for rank, exercise_id in enumerate(fts, start=1):
         add(exercise_id, 1.0 / (RRF_K + rank), f"full-text rank {rank}")

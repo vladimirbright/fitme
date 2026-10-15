@@ -1,0 +1,12 @@
+id = "dumbbell_incline_alternating_press"
+names = { en = "Incline alternating dumbbell press", ru = "Попеременный жим гантелей на наклонной скамье" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Set the bench to a modest incline and hold the dumbbells at shoulder height. Press one dumbbell up, lower it, then press the other, keeping your back on the pad and your torso still.", ru = "Установите небольшой наклон скамьи и держите гантели у плеч. Выжмите одну гантель вверх, опустите, затем выжмите другую; спина прижата к скамье, корпус неподвижен." }

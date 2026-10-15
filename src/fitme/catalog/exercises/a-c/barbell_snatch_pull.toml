@@ -1,0 +1,14 @@
+id = "barbell_snatch_pull"
+names = { en = "Snatch pull", ru = "Рывковая тяга" }
+kind = "compound"
+pattern = "hinge"
+level = "advanced"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip", "knee", "shoulder"]
+contraindicated_by = ["lower_back_injury_current", "hernia", "hip_injury_current", "knee_injury_current", "shoulder_injury_current"]
+increment_kg = 2.5
+start = { kind = "kg", kg = 20.0 }
+instructions = { en = "Use a wide snatch grip, bar over mid-foot, back flat. Pull the bar off the floor, finish with a full hip and knee extension and a shrug, and let the elbows travel up and out. Lower the bar with control. Keep the weight light enough that the bar stays close.", ru = "Широкий рывковый хват, гриф над серединой стопы, спина прямая. Оторвите гриф от пола, завершите полным разгибанием бёдер и коленей с шрагом, локти уходят вверх и в стороны. Плавно опустите гриф. Берите вес, при котором гриф остаётся близко к телу." }
+load_step_kg = 2.5

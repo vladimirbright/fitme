@@ -1,0 +1,13 @@
+id = "machine_assisted_triceps_dip"
+names = { en = "Machine assisted kneeling triceps dip", ru = "Отжимания на брусьях в тренажёре с помощью, стоя на коленях" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the assistance so every rep stays smooth. Kneel on the pad, grip the handles, torso upright. Lower by bending the elbows until the upper arms are about level with the floor, then press back up. Keep the shoulders down, away from the ears.", ru = "Установите помощь так, чтобы каждое повторение было плавным. Встаньте на колени на подушку, возьмитесь за рукояти, корпус прямой. Опуститесь, сгибая локти, пока плечи не окажутся примерно параллельно полу, затем выжмите вверх. Плечи опущены, не тянитесь к ушам." }
+load_step_kg = 2.5

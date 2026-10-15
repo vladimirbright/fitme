@@ -1,0 +1,14 @@
+id = "dumbbell_curl_stork_stance"
+names = { en = "Dumbbell curl in stork stance", ru = "Сгибания рук с гантелями на одной ноге" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells"]
+level = "advanced"
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist"]
+contraindicated_by = ["elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand on one leg with the other extended behind you, resting on its toes, a dumbbell in each hand. Curl both dumbbells toward your shoulders, then lower under control. Stay near a wall or rack for balance and switch legs after the set.", ru = "Встаньте на одну ногу, вторая отведена назад на носок, в руках гантели. Согните руки, подняв гантели к плечам, затем подконтрольно опустите. Стойте рядом с опорой; после подхода смените ногу." }
+load_step_kg = 1.0

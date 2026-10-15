@@ -1,0 +1,12 @@
+id = "dumbbell_decline_bench_press"
+names = { en = "Decline dumbbell press", ru = "Жим гантелей на скамье с наклоном вниз" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Secure your feet on a decline bench and hold a dumbbell in each hand above your chest. Lower them to the sides of your chest under control, then press back up. Use a weight you can control without a spotter.", ru = "Зафиксируйте ноги на скамье с наклоном вниз, гантели в руках над грудью. Подконтрольно опустите их к бокам груди, затем выжмите обратно. Берите вес, с которым справитесь без страховки." }

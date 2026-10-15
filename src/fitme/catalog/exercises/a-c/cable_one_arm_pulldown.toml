@@ -1,0 +1,13 @@
+id = "cable_one_arm_pulldown"
+names = { en = "Cable one-arm pulldown", ru = "Тяга верхнего блока одной рукой" }
+kind = "compound"
+pattern = "vertical_pull"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Attach a single handle to a high pulley and stand or sit facing it, torso upright. Pull the handle down to the side of your chest, elbow travelling down along the body. Let it rise slowly until the arm is long, without being pulled off balance. Do all reps on one side, then switch.", ru = "Закрепите одиночную рукоять на верхнем блоке, встаньте или сядьте лицом к нему, корпус прямой. Тяните рукоять вниз к боку груди, локоть идёт вниз вдоль корпуса. Медленно верните руку вверх до вытянутого положения, не позволяя весу сдвигать вас. Все повторения на одну сторону, затем смените." }
+load_step_kg = 2.5

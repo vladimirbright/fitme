@@ -1,0 +1,12 @@
+id = "mobility_seated_piriformis_stretch"
+names = { en = "Seated piriformis twist stretch", ru = "Растяжка ягодиц со скручиванием сидя" }
+kind = "mobility"
+pattern = "mobility"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["hip", "lower_back"]
+contraindicated_by = ["hip_injury_current", "lower_back_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Sit with legs extended. Bend one knee and place the foot outside the opposite knee, then rotate the torso toward the bent knee with the opposite elbow against it. Hold, then switch sides.", ru = "Сядьте, ноги вытянуты. Согните одну ногу и поставьте стопу снаружи от противоположного колена, затем поверните корпус к согнутому колену, упираясь в него противоположным локтем. Задержитесь и смените сторону." }

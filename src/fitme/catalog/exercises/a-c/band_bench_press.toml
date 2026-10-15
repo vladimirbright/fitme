@@ -1,0 +1,12 @@
+id = "band_bench_press"
+names = { en = "Band bench press", ru = "Жим лёжа с эспандером" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["resistance_bands", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Anchor the band under the bench or run it behind your back, then lie on the bench with feet flat on the floor. Hold the handles at chest level and press them up until the arms are straight. Lower slowly back to the chest. Check that the band is secured before every set.", ru = "Закрепите ленту под скамьёй или заведите её за спину и лягте на скамью, стопы на полу. Держите рукояти на уровне груди и выжимайте вверх до прямых рук. Медленно опустите к груди. Перед каждым подходом проверяйте крепление ленты." }

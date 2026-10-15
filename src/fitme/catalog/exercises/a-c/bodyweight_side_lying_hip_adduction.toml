@@ -1,0 +1,13 @@
+id = "bodyweight_side_lying_hip_adduction"
+names = { en = "Side-lying hip adduction", ru = "Приведение ноги лёжа на боку" }
+kind = "isolation"
+pattern = "accessory"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["hip"]
+contraindicated_by = ["hip_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on your side, head on the bottom arm. Bend the top knee and rest that foot on the floor in front of you. Lift the straight bottom leg a short way toward the ceiling, then lower it slowly. Switch sides after the set.", ru = "Лягте на бок, голова на нижней руке. Согните верхнюю ногу и поставьте стопу на пол перед собой. Прямую нижнюю ногу поднимите на небольшую высоту вверх и медленно опустите. После подхода смените сторону." }
+load_step_kg = 1.0

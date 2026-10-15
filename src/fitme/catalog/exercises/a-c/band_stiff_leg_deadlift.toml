@@ -1,0 +1,13 @@
+id = "band_stiff_leg_deadlift"
+names = { en = "Band stiff-leg deadlift", ru = "Становая тяга на прямых ногах с эспандером" }
+kind = "compound"
+pattern = "hinge"
+equipment = ["resistance_bands"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["hip", "lower_back"]
+contraindicated_by = ["hip_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "calibration" }
+instructions = { en = "Stand on the middle of a band, feet hip-width, and hold the ends at the thighs. Keeping the knees almost straight, push the hips back and lower the torso with a flat back. Stand up by driving the hips forward.", ru = "Встаньте на середину эспандера, ноги на ширине таза, концы держите у бёдер. Колени почти прямые, отведите таз назад и наклоните корпус с ровной спиной. Выпрямитесь, выводя таз вперёд." }
+load_step_kg = 1.0

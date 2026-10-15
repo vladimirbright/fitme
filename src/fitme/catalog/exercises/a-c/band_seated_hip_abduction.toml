@@ -1,0 +1,13 @@
+id = "band_seated_hip_abduction"
+names = { en = "Band seated hip abduction", ru = "Разведение ног сидя с эспандером" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["resistance_bands", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["hip", "knee"]
+contraindicated_by = ["hip_injury_current", "knee_injury_current"]
+increment_kg = 2.0
+start = { kind = "calibration" }
+instructions = { en = "Sit upright on a bench with a loop band just above the knees and feet flat. Press the knees outward against the band, pause, and return slowly. Keep the torso tall.", ru = "Сядьте прямо на скамью, петля эспандера чуть выше колен, стопы на полу. Разведите колени в стороны против эспандера, задержитесь и медленно верните. Корпус прямой." }
+load_step_kg = 1.0

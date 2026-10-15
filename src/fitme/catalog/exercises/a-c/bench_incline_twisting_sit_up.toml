@@ -1,0 +1,12 @@
+id = "bench_incline_twisting_sit_up"
+names = { en = "Incline bench twisting sit-up", ru = "Подъём корпуса с поворотом на скамье для пресса" }
+kind = "isolation"
+pattern = "core"
+equipment = ["bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["lower_back", "neck", "hip"]
+contraindicated_by = ["lower_back_injury_current", "neck_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Lie back on an angled ab bench with your feet hooked under the pads and hands lightly at your temples. Curl up and rotate to bring one elbow toward the opposite knee, then lower and alternate sides. Keep the movement smooth and do not pull on your neck.", ru = "Лягте на наклонную скамью для пресса, зацепив стопы под валиками, руки легко у висков. Поднимитесь и повернитесь, подводя локоть к противоположному колену, затем опуститесь и смените сторону. Двигайтесь плавно, шею не тяните." }

@@ -1,0 +1,12 @@
+id = "dumbbell_seated_reverse_grip_overhead_triceps_extension"
+names = { en = "Dumbbell seated reverse-grip one-arm overhead triceps extension", ru = "Разгибание руки с гантелью из-за головы сидя обратным хватом" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["dumbbells", "bench"]
+load_unit = "single_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Sit upright on a bench with one dumbbell raised overhead, palm facing you. Bend the elbow to lower the weight behind your head while the upper arm stays vertical, then straighten the arm. Finish all reps, then switch arms. Use a light weight.", ru = "Сядьте ровно на скамью, гантель в одной руке поднята над головой, ладонь смотрит на вас. Согните локоть, опуская гантель за голову, плечо остаётся вертикально, затем выпрямите руку. Выполните все повторения и смените руку. Берите небольшой вес." }

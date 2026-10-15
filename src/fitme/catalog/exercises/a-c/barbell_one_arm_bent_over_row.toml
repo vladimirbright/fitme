@@ -1,0 +1,13 @@
+id = "barbell_one_arm_bent_over_row"
+names = { en = "Barbell one-arm bent-over row", ru = "Тяга штанги в наклоне одной рукой" }
+kind = "compound"
+pattern = "horizontal_pull"
+level = "advanced"
+equipment = ["barbell"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Hinge forward with a flat back, one hand gripping the bar at its centre so it stays level, the other braced on a thigh. Row the bar to the lower ribs, elbow close to the body, then lower it under control. Keep the torso from twisting; switch sides.", ru = "Наклонитесь с прямой спиной, одна рука держит штангу точно посередине, чтобы гриф не перекашивался, другая упирается в бедро. Тяните штангу к низу рёбер, локоть у корпуса, затем опустите под контролем. Корпус не скручивайте; смените сторону." }

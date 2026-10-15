@@ -1,0 +1,13 @@
+id = "dumbbell_step_up_reverse_lunge"
+names = { en = "Dumbbell step-up to reverse lunge", ru = "Зашагивание с гантелями и выпадом назад" }
+kind = "compound"
+pattern = "squat"
+equipment = ["dumbbells", "bench"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "ankle", "lower_back"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Hold a dumbbell in each hand facing a low bench. Step up with one foot, bring the other beside it, then step back down to the floor one foot at a time. Take a long step back with the leg that led into a reverse lunge, then return to standing. Move slowly and switch the leading leg each rep.", ru = "Гантели в руках, встаньте лицом к низкой скамье. Поднимитесь на неё одной ногой, приставьте вторую, затем по одной сойдите на пол. Ведущей ногой сделайте широкий шаг назад в выпад и вернитесь в стойку. Двигайтесь медленно и меняйте ведущую ногу в каждом повторении." }
+load_step_kg = 1.0

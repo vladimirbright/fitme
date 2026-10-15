@@ -1,0 +1,12 @@
+id = "bodyweight_side_bend"
+names = { en = "Standing side bend", ru = "Боковые наклоны стоя" }
+kind = "bodyweight"
+pattern = "core"
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["lower_back"]
+contraindicated_by = ["lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "bodyweight" }
+instructions = { en = "Stand tall, feet hip-width apart, arms along your sides. Slide one hand down the thigh toward the knee, bending sideways in a small range, then return upright. Keep hips and chest facing forward. Finish one side, then switch.", ru = "Встаньте прямо, ноги на ширине таза, руки вдоль тела. Скользите ладонью по бедру к колену, наклоняясь в сторону в небольшой амплитуде, затем вернитесь. Таз и грудь смотрят вперёд. Закончите одну сторону, затем смените." }

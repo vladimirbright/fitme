@@ -1,0 +1,13 @@
+id = "cable_rope_seated_row"
+names = { en = "Cable rope seated row", ru = "Тяга каната сидя" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit with your feet on the footplates and knees soft, holding the rope with palms facing each other. Pull the rope to your lower chest, drawing elbows back, then return slowly. Keep the back flat and do not swing the torso.", ru = "Сядьте, ступни на упорах, колени слегка согнуты, канат ладонями друг к другу. Тяните канат к низу груди, отводя локти назад, затем медленно возвращайте. Спина прямая, не раскачивайте корпус." }
+load_step_kg = 2.5

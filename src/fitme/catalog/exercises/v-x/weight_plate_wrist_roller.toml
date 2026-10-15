@@ -1,0 +1,12 @@
+id = "weight_plate_wrist_roller"
+names = { en = "Weight plate wrist roller", ru = "Кистевой ролик с блином" }
+kind = "isolation"
+pattern = "accessory"
+equipment = ["weight_plate"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["elbow_wrist", "shoulder"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Tie a rope to a handle bar and attach a light plate to the other end of the rope. Stand with the arms extended in front and roll the rope up by turning the wrists, then lower the plate slowly. Use a light load and keep the shoulders relaxed.", ru = "Привяжите верёвку к ручке и закрепите на другом конце лёгкий блин. Встаньте, руки вытянуты вперёд, наматывайте верёвку вращением запястий, затем медленно опустите блин. Берите небольшой вес, плечи расслаблены." }

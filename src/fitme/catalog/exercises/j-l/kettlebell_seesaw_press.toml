@@ -1,0 +1,13 @@
+id = "kettlebell_seesaw_press"
+names = { en = "Kettlebell seesaw press", ru = "Жим гирь «качели»" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["kettlebell"]
+load_unit = "per_implement"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 2.0
+start = { kind = "kg", kg = 4.0 }
+instructions = { en = "Stand with a kettlebell at each shoulder. Press one overhead while lowering the other from overhead to the shoulder, so the two pass each other mid-way in a steady rhythm. Keep your torso upright and the weight light enough to stay in control.", ru = "Встаньте, по гире у каждого плеча. Выжимайте одну гирю вверх, одновременно опуская другую с вытянутой руки к плечу, так что гири встречаются на полпути в ровном ритме. Корпус прямой, вес такой, чтобы контролировать движение." }
+load_step_kg = 2.0

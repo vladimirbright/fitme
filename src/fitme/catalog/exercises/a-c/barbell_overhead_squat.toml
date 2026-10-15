@@ -1,0 +1,14 @@
+id = "barbell_overhead_squat"
+names = { en = "Barbell overhead squat", ru = "Приседания со штангой над головой" }
+kind = "compound"
+pattern = "squat"
+level = "advanced"
+equipment = ["barbell", "rack"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "lower_back", "shoulder", "elbow_wrist", "ankle"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "ankle_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Unrack the bar onto the front shoulders, step back and press it overhead with a wide grip and locked arms. Squat with the bar stacked over the mid-foot, then stand. Start very light, keep clear space around you, and if the bar drifts forward, step back and let it drop in front.", ru = "Снимите штангу на передние дельты, отойдите и выжмите её над головой широким хватом на прямых руках. Присядьте так, чтобы штанга оставалась над серединой стопы, затем встаньте. Начинайте с очень лёгкого веса, вокруг должно быть свободно; если штанга уходит вперёд, шагните назад и сбросьте её перед собой." }
+load_step_kg = 2.5

@@ -1,0 +1,13 @@
+id = "weight_plate_cossack_squat"
+names = { en = "Weight plate Cossack squat", ru = "Казачьи приседания с блином" }
+kind = "compound"
+pattern = "squat"
+equipment = ["weight_plate"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["knee", "hip", "ankle"]
+contraindicated_by = ["knee_injury_current", "hernia", "hip_injury_current", "ankle_injury_current"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Hold a plate at chest height. Take a wide stance, toes slightly out. Shift onto one leg and sit down on it while the other leg stays straight, heel or toes up. Use a depth you control, then push back to centre and alternate sides.", ru = "Держите блин у груди. Широкая стойка, носки чуть развёрнуты. Перенесите вес на одну ногу и присядьте на ней, другая нога остаётся прямой. Опускайтесь на подконтрольную глубину, затем вернитесь в центр и смените сторону." }
+load_step_kg = 2.5

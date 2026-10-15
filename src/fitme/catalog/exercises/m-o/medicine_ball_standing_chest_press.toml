@@ -1,0 +1,13 @@
+id = "medicine_ball_standing_chest_press"
+names = { en = "Medicine ball standing chest press", ru = "Жим медбола от груди стоя" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["medicine_ball"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "kg", kg = 2.0 }
+instructions = { en = "Stand with feet shoulder-width apart, ball held at chest height. Press it straight forward until your arms are extended, pause, then bring it back to the chest with control. Keep the torso upright.", ru = "Встаньте, ноги на ширине плеч, мяч у груди. Выжмите его вперёд до выпрямления рук, задержитесь и под контролем верните к груди. Корпус прямой." }
+load_step_kg = 1.0

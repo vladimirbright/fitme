@@ -1,0 +1,13 @@
+id = "medicine_ball_close_grip_push_up"
+names = { en = "Medicine ball close-grip push-up", ru = "Отжимания узким хватом на медицинболе" }
+kind = "bodyweight"
+pattern = "horizontal_push"
+equipment = ["medicine_ball"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Start in a high plank with both hands on a medicine ball placed on a flat floor. Lower the chest toward the ball with elbows close to the sides, then press up. Keep the ball from rolling by pressing evenly.", ru = "Примите упор лёжа, обе ладони на медицинболе, лежащем на ровном полу. Опустите грудь к мячу, локти у корпуса, затем отожмитесь. Давите ровно, чтобы мяч не укатился." }
+load_step_kg = 1.0

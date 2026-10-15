@@ -1,0 +1,13 @@
+id = "barbell_rack_pull"
+names = { en = "Barbell rack pull", ru = "Тяга штанги со стоек" }
+kind = "compound"
+pattern = "hinge"
+equipment = ["barbell", "rack"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["lower_back", "hip", "knee"]
+contraindicated_by = ["lower_back_injury_current", "hip_injury_current", "knee_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the bar on the rack at knee height. Grip it just outside the legs, flatten the back, and stand by driving the hips forward. Lower it back to the supports under control.", ru = "Установите штангу на стойке на высоте колен. Возьмите её чуть шире ног, выпрямите спину и поднимитесь, выводя таз вперёд. Опустите штангу на упоры под контролем." }
+load_step_kg = 2.5

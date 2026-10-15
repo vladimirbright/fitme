@@ -1,0 +1,13 @@
+id = "cable_one_arm_incline_press_stability_ball"
+names = { en = "Cable one-arm incline press on a stability ball", ru = "Жим одной рукой на блоке на фитболе с опорой на наклонную скамью" }
+kind = "compound"
+pattern = "horizontal_push"
+equipment = ["cable", "stability_ball", "bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Sit on the stability ball with your back against an incline bench and feet planted wide. Hold one handle at shoulder height, elbow bent. Press up and forward until the arm is straight, then return slowly. Keep the hips steady and switch arms after the set.", ru = "Сядьте на фитбол, спиной опираясь на наклонную скамью, ноги широко и устойчиво. Рукоять на уровне плеча, локоть согнут. Выжмите вверх и вперёд до прямой руки, затем медленно вернитесь. Таз устойчив; после подхода смените руку." }
+load_step_kg = 2.5

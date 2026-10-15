@@ -1,0 +1,12 @@
+id = "stability_ball_hip_flexor_stretch"
+names = { en = "Stability ball hip flexor stretch", ru = "Растяжка сгибателей бедра с фитболом" }
+kind = "mobility"
+pattern = "mobility"
+equipment = ["stability_ball"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["hip", "knee"]
+contraindicated_by = ["hip_injury_current", "knee_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Kneel on one knee with the other foot resting on a stability ball in front, holding it steady with a hand if needed. Keep most of the weight on the back knee, tuck the pelvis and shift the hips gently forward. Hold 20-30 seconds, then switch sides.", ru = "Встаньте на одно колено, другая стопа стоит на фитболе перед вами, при необходимости придерживайте мяч рукой. Основной вес на заднем колене; подведите таз и мягко сместите бёдра вперёд. Удерживайте 20-30 секунд, затем смените сторону." }

@@ -1,0 +1,13 @@
+id = "cable_v_bar_standing_twist_row"
+names = { en = "Cable V-bar standing twist row", ru = "Тяга V-образной рукояти стоя с поворотом корпуса" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Step back from the cable with feet shoulder-width and a flat back, holding the V-bar. Pull it toward your torso and turn the torso slightly to one side at the end, then return square. Alternate sides and keep the rotation small and slow.", ru = "Отойдите от блока, ноги на ширине плеч, спина прямая, V-образная рукоять в руках. Тяните её к корпусу и в конце немного поверните корпус в сторону, затем вернитесь в исходное положение. Чередуйте стороны, поворот небольшой и медленный." }
+load_step_kg = 2.5

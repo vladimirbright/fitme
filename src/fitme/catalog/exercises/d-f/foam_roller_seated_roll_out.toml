@@ -1,0 +1,11 @@
+id = "foam_roller_seated_roll_out"
+names = { en = "Seated foam roller reach", ru = "Сидя: выкат ролла вперёд" }
+kind = "mobility"
+pattern = "mobility"
+equipment = ["foam_roller"]
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder"]
+contraindicated_by = ["shoulder_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Sit on the floor with legs extended, a roller resting on the thighs, hands on top of it. Lean slightly forward and roll the roller along the thighs and shins as the arms reach straight ahead, then roll it back. Keep the motion small and slow.", ru = "Сядьте на пол, ноги вытянуты, ролл лежит на бёдрах, руки сверху. Слегка наклонитесь и прокатите ролл по бёдрам и голеням, вытягивая руки вперёд, затем верните назад. Движение небольшое и медленное." }

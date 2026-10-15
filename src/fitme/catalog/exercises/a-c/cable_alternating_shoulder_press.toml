@@ -1,0 +1,13 @@
+id = "cable_alternating_shoulder_press"
+names = { en = "Cable alternating shoulder press", ru = "Попеременный жим одной рукой на блоках" }
+kind = "compound"
+pattern = "vertical_push"
+equipment = ["cable"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "neck"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "neck_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Set both pulleys low and hold a handle in each hand at shoulder height, standing facing away from the stack in a split stance. Press one handle overhead, lower it, then press the other. Set the lightest resistance and stay tall.", ru = "Выставьте оба блока внизу, возьмите по рукоятке на уровне плеч, встаньте спиной к стеку в шаге. Выжмите одну рукоять вверх, опустите, затем выжмите другую. Минимальное сопротивление, корпус прямой." }
+load_step_kg = 1.0

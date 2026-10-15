@@ -1,0 +1,12 @@
+id = "smith_machine_bent_over_row"
+names = { en = "Smith machine bent-over row", ru = "Тяга в наклоне в машине Смита" }
+kind = "compound"
+pattern = "horizontal_pull"
+equipment = ["smith_machine"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym"]
+loads_areas = ["lower_back", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+increment_kg = 2.5
+start = { kind = "calibration" }
+instructions = { en = "Set the safety stops just below the lowest point of the row. Hold the bar with an overhand grip and hinge forward at the hips with a flat back, knees soft. Row the bar to your lower ribs, then lower to straight arms. Keep the torso still.", ru = "Установите страховочные упоры чуть ниже нижней точки тяги. Возьмите гриф хватом сверху и наклонитесь от бёдер с прямой спиной, колени слегка согнуты. Тяните гриф к нижним рёбрам, затем опустите до прямых рук. Корпус неподвижен." }

@@ -1,0 +1,12 @@
+id = "mobility_side_lying_adductor_stretch"
+names = { en = "Side-lying adductor stretch", ru = "Растяжка приводящих мышц лёжа на боку" }
+kind = "mobility"
+pattern = "mobility"
+equipment = ["bench"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["hip"]
+contraindicated_by = ["hip_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Lie on your side next to a bench with the bottom knee bent. Lift the straight top leg and rest the inner edge of that foot on the bench. Let the hips relax toward the floor until you feel a mild stretch along the inner thigh. Hold, then switch sides.", ru = "Лягте на бок рядом со скамьёй, нижняя нога согнута в колене. Поднимите прямую верхнюю ногу и положите стопу внутренним краем на скамью. Расслабьте таз вниз к полу до лёгкого растяжения по внутренней стороне бедра. Задержитесь и смените сторону." }
