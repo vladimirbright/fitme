@@ -24,6 +24,7 @@ from fitme.domain.enums import (
     VALID_LOADS_AREAS,
     ExerciseKind,
     ExercisePattern,
+    Experience,
     Location,
     ScreeningFlag,
 )
@@ -143,6 +144,11 @@ def _build_parser() -> argparse.ArgumentParser:
         )
         sub.add_argument("--exclude", help="Comma-separated exercise ids to leave out.")
         sub.add_argument(
+            "--experience",
+            choices=[item.value for item in Experience],
+            help="Training experience; advanced exercises need 2y_5y or gt_5y (default: none).",
+        )
+        sub.add_argument(
             "--avoid-area",
             action="append",
             default=[],
@@ -249,6 +255,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 location=args.location,
                 equipment=args.equipment,
                 flags=args.flag,
+                experience=args.experience,
                 patterns=args.pattern,
                 kinds=args.kind,
                 exclude=args.exclude,
@@ -262,6 +269,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 location=args.location,
                 equipment=args.equipment,
                 flags=args.flag,
+                experience=args.experience,
                 exclude=args.exclude,
                 avoid_areas=args.avoid_area,
                 limit=args.limit,

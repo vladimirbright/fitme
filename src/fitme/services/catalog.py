@@ -11,8 +11,9 @@ from collections.abc import Sequence
 
 from fitme.catalog import load_catalog
 from fitme.domain.catalog import Catalog, Exercise
-from fitme.domain.enums import Equipment, Location
+from fitme.domain.enums import Equipment, Experience, Location
 from fitme.domain.screening import ScreeningFlagState
+from fitme.guards.experience import exercise_level_allowed
 from fitme.guards.screening import exercise_allowed
 
 
@@ -31,6 +32,7 @@ def available_exercises(
     location: Location,
     equipment: frozenset[Equipment],
     flags: Sequence[ScreeningFlagState],
+    experience: Experience | None = None,
 ) -> list[Exercise]:
     """The catalog exercises usable for this `location` + `equipment` + `flags` combination:
     fits the location, every piece of required equipment is in `equipment`, and no active
@@ -39,6 +41,8 @@ def available_exercises(
     `fitme.catalog.load_catalog()`'s result) and the equipment set they resolved (A§5.1: the
     profile's own selection for `home_equipment`, or
     `fitme.domain.catalog.LOCATION_DEFAULT_EQUIPMENT` for every other location).
+    `advanced` exercises need `experience` of two years or more
+    (`guards.experience.exercise_level_allowed`); left out, they are excluded.
     """
     return [
         exercise
@@ -46,4 +50,5 @@ def available_exercises(
         if location in exercise.locations
         and all(item in equipment for item in exercise.equipment)
         and exercise_allowed(exercise, flags).ok
+        and exercise_level_allowed(exercise, experience).ok
     ]

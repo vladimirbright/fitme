@@ -16,6 +16,7 @@ from fitme.domain.enums import (
     VALID_LOADS_AREAS,
     Equipment,
     ExerciseKind,
+    ExerciseLevel,
     ExercisePattern,
     Location,
     ScreeningFlag,
@@ -47,6 +48,23 @@ _KG_LOAD_EQUIPMENT = frozenset(
         Equipment.KETTLEBELL.value,
         Equipment.MACHINE.value,
         Equipment.CABLE.value,
+        Equipment.EZ_BAR.value,
+        Equipment.TRAP_BAR.value,
+        Equipment.SMITH_MACHINE.value,
+        Equipment.MEDICINE_BALL.value,
+        Equipment.WEIGHT_PLATE.value,
+        Equipment.SLED.value,
+    }
+)
+# Loaded with 1.25 kg plates per side, like a barbell: rounded to 2.5 kg by default.
+_PLATE_LOADED_EQUIPMENT = frozenset(
+    {
+        Equipment.BARBELL.value,
+        Equipment.EZ_BAR.value,
+        Equipment.TRAP_BAR.value,
+        Equipment.SMITH_MACHINE.value,
+        Equipment.WEIGHT_PLATE.value,
+        Equipment.SLED.value,
     }
 )
 _LOAD_UNIT_REQUIRED_EQUIPMENT = frozenset({Equipment.DUMBBELLS.value, Equipment.KETTLEBELL.value})
@@ -60,6 +78,8 @@ class Exercise(BaseModel):
     id: str
     names: dict[str, str]  # lang -> display name
     kind: ExerciseKind
+    # `advanced`: offered only to experienced users (`guards.experience`). Default `general`.
+    level: ExerciseLevel = ExerciseLevel.GENERAL
     # M3 addition: the movement pattern this exercise trains (`ExercisePattern`). Used by
     # `services.catalog.available_exercises` and its "every location has a workable
     # full-body set" test to check that each location offers every primary pattern.
@@ -178,7 +198,7 @@ class Exercise(BaseModel):
             return data
         equipment = data.get("equipment") or []
         # `equipment` is still raw (str) data at this point, before enum coercion.
-        is_barbell = Equipment.BARBELL.value in equipment
+        is_barbell = any(item in _PLATE_LOADED_EQUIPMENT for item in equipment)
         data = dict(data)
         data["load_step_kg"] = _BARBELL_LOAD_STEP_KG if is_barbell else _DEFAULT_LOAD_STEP_KG
         return data
@@ -242,9 +262,18 @@ LOCATION_DEFAULT_EQUIPMENT: dict[Location, frozenset[Equipment]] = {
 # leg-press machine or a cable stack is not something the setup questionnaire should offer as
 # a home-equipment option (A§5.1 step 9's equipment multi-select uses this set, not the full
 # `Equipment` enum).
-HOME_SELECTABLE_EQUIPMENT: frozenset[Equipment] = frozenset(Equipment) - frozenset(
-    {Equipment.MACHINE, Equipment.CABLE}
+GYM_ONLY_EQUIPMENT: frozenset[Equipment] = frozenset(
+    {
+        Equipment.MACHINE,
+        Equipment.CABLE,
+        Equipment.SMITH_MACHINE,
+        Equipment.SLED,
+        Equipment.BATTLE_ROPE,
+        Equipment.TIRE,
+        Equipment.SLEDGEHAMMER,
+    }
 )
+HOME_SELECTABLE_EQUIPMENT: frozenset[Equipment] = frozenset(Equipment) - GYM_ONLY_EQUIPMENT
 
 
 def _is_band_only(equipment: list[str]) -> bool:

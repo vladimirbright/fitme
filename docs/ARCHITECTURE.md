@@ -283,6 +283,13 @@ Catalog invariants, enforced by `fitme catalog check` and tests:
   barbell deadlift starts at `calibration`, with the bar at standard height.
 - **No internal references** ("A§", "AGENTS") in user-visible names or instructions.
 
+**Level and extended equipment (ADR 0008).** `level = "advanced"` marks advanced gymnastics,
+Olympic lifts and similar; `guards.experience` (rule `plan.experience_level`) and
+`available_exercises` keep them away from anyone with less than two years of training, and
+unknown experience fails closed. `Equipment` also covers EZ/trap bars, a Smith machine, balls,
+rollers, plates, dip bars, a plyo box, ropes, a sled, a tire and a sledgehammer;
+`GYM_ONLY_EQUIPMENT` lists the ones the home questionnaire doesn't offer.
+
 **Search (ADR 0007).** Derived, rebuildable indexes sit next to the catalog: the shipped
 embedding file `catalog/search_index.sqlite` (built by `fitme catalog index`) and, in the app
 DB, `catalog_search_fts` and `catalog_embeddings` (migration 0009, refreshed at startup).

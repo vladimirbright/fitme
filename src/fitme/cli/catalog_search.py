@@ -27,7 +27,14 @@ from fitme.domain.catalog import (
     Catalog,
     Exercise,
 )
-from fitme.domain.enums import Equipment, ExerciseKind, ExercisePattern, Location, ScreeningFlag
+from fitme.domain.enums import (
+    Equipment,
+    ExerciseKind,
+    ExercisePattern,
+    Experience,
+    Location,
+    ScreeningFlag,
+)
 from fitme.domain.screening import ScreeningFlagState
 from fitme.llm.embeddings import Embedder, EmbeddingError, OpenAICompatibleEmbedder
 from fitme.services import catalog_index, exercise_search
@@ -62,6 +69,7 @@ def candidates(
     location: str,
     equipment: str | None,
     flags: Sequence[str],
+    experience: str | None = None,
 ) -> list[Exercise]:
     """The hard filter, exactly as plans use it: location, equipment, contraindications."""
     where = Location(location)
@@ -72,7 +80,8 @@ def candidates(
     else:
         kit = LOCATION_DEFAULT_EQUIPMENT[where]
     states = [ScreeningFlagState(flag=ScreeningFlag(flag), value="yes") for flag in flags]
-    return available_exercises(catalog, where, kit, states)
+    level = Experience(experience) if experience else None
+    return available_exercises(catalog, where, kit, states, level)
 
 
 async def _scratch(
@@ -110,6 +119,7 @@ def search(
     location: str,
     equipment: str | None,
     flags: Sequence[str],
+    experience: str | None = None,
     patterns: Sequence[str],
     kinds: Sequence[str],
     exclude: str | None,
@@ -132,7 +142,9 @@ def search(
                 avoid_areas=frozenset(avoid_areas),
                 limit=limit,
             )
-            pool = candidates(catalog, location=location, equipment=equipment, flags=flags)
+            pool = candidates(
+                catalog, location=location, equipment=equipment, flags=flags, experience=experience
+            )
             _print(catalog, await exercise_search.search(db, runtime, pool, query))
         finally:
             await db.close()
@@ -152,6 +164,7 @@ def substitutes(
     equipment: str | None,
     flags: Sequence[str],
     exclude: str | None,
+    experience: str | None = None,
     avoid_areas: Sequence[str] = (),
     limit: int,
 ) -> int:
@@ -160,7 +173,9 @@ def substitutes(
     async def run() -> int:
         db, runtime = await _scratch(catalog, semantic=False)
         try:
-            pool = candidates(catalog, location=location, equipment=equipment, flags=flags)
+            pool = candidates(
+                catalog, location=location, equipment=equipment, flags=flags, experience=experience
+            )
             results = exercise_search.find_substitutes(
                 runtime,
                 exercise_id,

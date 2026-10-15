@@ -98,6 +98,24 @@ class Equipment(StrEnum):
     # doesn't offer them (`domain.catalog.HOME_SELECTABLE_EQUIPMENT`).
     MACHINE = "machine"
     CABLE = "cable"
+    # Added with the reference-library import (2026-10-15). Home-selectable unless listed in
+    # `domain.catalog.GYM_ONLY_EQUIPMENT`.
+    EZ_BAR = "ez_bar"
+    TRAP_BAR = "trap_bar"
+    SMITH_MACHINE = "smith_machine"
+    MEDICINE_BALL = "medicine_ball"
+    STABILITY_BALL = "stability_ball"
+    BOSU_BALL = "bosu_ball"
+    FOAM_ROLLER = "foam_roller"
+    AB_WHEEL = "ab_wheel"
+    WEIGHT_PLATE = "weight_plate"
+    DIP_BARS = "dip_bars"
+    PLYO_BOX = "plyo_box"
+    JUMP_ROPE = "jump_rope"
+    BATTLE_ROPE = "battle_rope"
+    SLED = "sled"
+    TIRE = "tire"
+    SLEDGEHAMMER = "sledgehammer"
 
 
 class ScreeningFlag(StrEnum):
@@ -260,6 +278,15 @@ class RefusalCode(StrEnum):
     # M7 (A§6.5.1): today's workout fails a per-prescription guard at Start / Save to plan,
     # after load substitution — the stored plan needs updating in /plan.
     NO_SAFE_WORKOUT = "no_safe_workout"
+
+
+class ExerciseLevel(StrEnum):
+    """Catalog `exercise.level`: `advanced` moves (advanced gymnastics, Olympic lifts,
+    single-limb loaded variations) are offered only to users with at least two years of
+    training (`guards.experience`)."""
+
+    GENERAL = "general"
+    ADVANCED = "advanced"
 
 
 class ExerciseKind(StrEnum):

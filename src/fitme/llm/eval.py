@@ -25,7 +25,7 @@ from typing import Any, Literal
 
 from fitme.catalog import load_catalog
 from fitme.domain.catalog import Catalog
-from fitme.domain.enums import Equipment, Location
+from fitme.domain.enums import Equipment, Experience, Location
 from fitme.domain.models import Plan, Refusal
 from fitme.domain.screening import ScreeningFlagState
 from fitme.guards.context import GuardContext
@@ -78,7 +78,10 @@ def _build_context(fixture: Mapping[str, Any], catalog: Catalog) -> UserContext:
     equipment = frozenset(Equipment(item) for item in fixture["equipment"])
     flag_states = _flag_states(fixture)
     allowed_ids = [
-        exercise.id for exercise in available_exercises(catalog, location, equipment, flag_states)
+        exercise.id
+        for exercise in available_exercises(
+            catalog, location, equipment, flag_states, Experience(fixture["experience"])
+        )
     ]
     history = [ExerciseHistorySummary.model_validate(entry) for entry in fixture.get("history", [])]
     return build_user_context(
@@ -107,6 +110,7 @@ def _guard_context(fixture: Mapping[str, Any], catalog: Catalog) -> GuardContext
         equipment=frozenset(Equipment(item) for item in fixture["equipment"]),
         location=Location(fixture["location"]),
         sessions_per_week=fixture["sessions_per_week"],
+        experience=Experience(fixture["experience"]),
     )
 
 

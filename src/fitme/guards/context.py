@@ -11,7 +11,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 
 from fitme.domain.catalog import Catalog
-from fitme.domain.enums import CheckinAnswer, Equipment, HealthHoldReason, Location
+from fitme.domain.enums import CheckinAnswer, Equipment, Experience, HealthHoldReason, Location
 from fitme.domain.screening import ScreeningFlagState
 from fitme.guards.checkins import flagged_areas_from
 
@@ -29,6 +29,9 @@ class GuardContext:
     equipment: frozenset[Equipment]
     location: Location
     sessions_per_week: int
+    # The profile's training experience; `None` (unknown) keeps every `advanced` catalog
+    # exercise out (`guards.experience`, fail closed).
+    experience: Experience | None = None
     # The user's currently open health holds (A§4.2 `health_holds`, already filtered by the
     # caller to `cleared_at IS NULL`); any open hold refuses plan generation (A§6.6, B4).
     holds: Sequence[HealthHoldReason] = field(default_factory=tuple)

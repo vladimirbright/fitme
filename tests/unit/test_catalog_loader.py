@@ -18,6 +18,7 @@ from fitme.catalog import (
     read_exercises,
 )
 from fitme.domain.catalog import (
+    GYM_ONLY_EQUIPMENT,
     HOME_SELECTABLE_EQUIPMENT,
     LOCATION_DEFAULT_EQUIPMENT,
     Catalog,
@@ -32,7 +33,7 @@ def test_load_catalog_returns_a_reasonable_number_of_exercises() -> None:
     This is a sanity ceiling against a data bug (an accidental duplication loop, a bad
     merge), not the real content target — the docs' number is intentionally left as-is."""
     catalog = load_catalog()
-    assert 45 <= len(catalog.exercise) <= 300
+    assert 45 <= len(catalog.exercise) <= 2000
 
 
 def test_load_catalog_is_cached() -> None:
@@ -73,13 +74,10 @@ def test_home_selectable_equipment_excludes_machine_and_cable() -> None:
 
 
 def test_home_selectable_equipment_includes_everything_else() -> None:
-    assert (
-        frozenset(Equipment)
-        - {
-            Equipment.MACHINE,
-            Equipment.CABLE,
-        }
-        == HOME_SELECTABLE_EQUIPMENT
+    assert frozenset(Equipment) - GYM_ONLY_EQUIPMENT == HOME_SELECTABLE_EQUIPMENT
+    assert {Equipment.MACHINE, Equipment.CABLE, Equipment.SMITH_MACHINE} <= GYM_ONLY_EQUIPMENT
+    assert {Equipment.EZ_BAR, Equipment.STABILITY_BALL, Equipment.DIP_BARS} <= (
+        HOME_SELECTABLE_EQUIPMENT
     )
 
 

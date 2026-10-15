@@ -477,6 +477,7 @@ def build_inputs(catalog: Catalog, snapshot: Snapshot, settings: Settings, user_
         equipment=profile.equipment,
         location=profile.location,
         sessions_per_week=profile.sessions_per_week,
+        experience=profile.experience,
         holds=snapshot.holds,
         history_max_kg=snapshot.history_max,
         current_load_kg=_current_loads(snapshot),
@@ -486,7 +487,9 @@ def build_inputs(catalog: Catalog, snapshot: Snapshot, settings: Settings, user_
         weekly_cap_kg=_weekly_caps(catalog, settings),
         default_weekly_cap_kg=settings.max_weekly_increment_kg,
     )
-    allowed = available_exercises(catalog, profile.location, profile.equipment, snapshot.flags)
+    allowed = available_exercises(
+        catalog, profile.location, profile.equipment, snapshot.flags, profile.experience
+    )
     user_context = build_user_context(
         user_id=user_id,
         language=snapshot.language,

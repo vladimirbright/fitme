@@ -135,7 +135,11 @@ async def allowed_exercises_for_edit(db: Database, user_id: int) -> list[Exercis
     if snapshot.profile is None:
         return None
     return available_exercises(
-        load_catalog(), snapshot.profile.location, snapshot.profile.equipment, snapshot.flags
+        load_catalog(),
+        snapshot.profile.location,
+        snapshot.profile.equipment,
+        snapshot.flags,
+        snapshot.profile.experience,
     )
 
 
