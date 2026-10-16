@@ -939,7 +939,10 @@ def _current_block(active: training.ActiveSession | None) -> dict[str, object] |
             {
                 "exercise_id": item.exercise_id,
                 "sets": item.sets,
+                "measure": item.measure.value,
                 "reps": [item.reps_min, item.reps_max],
+                "seconds": item.seconds,
+                "meters": item.meters,
                 "load": item.load.model_dump(mode="json"),
             }
             for item in block.items
