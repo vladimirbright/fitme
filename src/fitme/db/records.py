@@ -166,6 +166,10 @@ class SessionOutcome:
     # nothing was performed). Only the LLM history summary (A§6.4 step 2: "last working load,
     # reps, historical max") reads it; the load engine never does.
     min_reps_performed: int | None = None
+    # ADR 0014: the user did more than prescribed (an extra set, or a heavier load on every
+    # set) with every prescribed set at least at the prescription. The engine treats it like
+    # `hit_reps_max`: one increment from the *prescribed* load, under the same guards.
+    exceeded_prescription: bool = False
 
 
 @dataclass(frozen=True, slots=True)

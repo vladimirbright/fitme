@@ -185,7 +185,9 @@ def next_load(
     - the last session was itself a calibration session (no prescribed load) -> anchor on
       what the user logged, held (there is no prescribed load to progress from); if nothing
       usable was logged, calibration again. Never the catalog kg start;
-    - the last session hit `reps_max` -> propose `planned_load_kg + increment_kg` (the
+    - the last session hit `reps_max`, or did more than prescribed (`exceeded_prescription`,
+      ADR 0014: an extra set or a heavier load on every set, every prescribed set at least
+      at the prescription) -> propose `planned_load_kg + increment_kg` (the
       *prescribed* load, not what was actually logged — B3: self-escalating by logging a
       heavier weight than prescribed must not jump the next prescription; it only raises the
       historical max the ceiling guard uses), gated by `checkins.increase_allowed`,
@@ -258,7 +260,10 @@ def next_load(
             kind=LoadKind.HOLD,
         )
 
-    if last.hit_reps_max:
+    if last.hit_reps_max or last.exceeded_prescription:
+        # ADR 0014: doing more than prescribed (an extra set, a heavier load on every set)
+        # earns the same one increment as topping the rep range, from the prescribed load.
+        earned = "hit reps_max" if last.hit_reps_max else "did more than prescribed"
         proposed_kg = prescribed_kg + exercise.increment_kg
         checkins_verdict = increase_allowed(exercise, checkins, flagged_areas)
         weekly_verdict = check_weekly_increment(
@@ -276,14 +281,14 @@ def next_load(
         if checkins_verdict.ok and weekly_verdict.ok and ceiling_verdict.ok:
             return LoadDecision(
                 load=Load(kind="kg", kg=proposed_kg),
-                reason="hit reps_max; increment applied",
+                reason=f"{earned}; increment applied",
                 guards_fired=fired,
                 kind=LoadKind.INCREASE,
             )
         first_failure = next(verdict for verdict in fired if not verdict.ok)
         return _within_ceiling(
             prescribed_kg,
-            f"hit reps_max, but held: {first_failure.detail}",
+            f"{earned}, but held: {first_failure.detail}",
             fired,
             exercise=exercise,
             history=history,

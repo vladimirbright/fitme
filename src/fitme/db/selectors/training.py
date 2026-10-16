@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 
 import aiosqlite
 
@@ -262,9 +262,9 @@ async def recent_session_outcomes(
 
     Only `workout_sessions.status = 'completed'` sessions count at all (B3/A§7.3): a halted,
     aborted or still-`in_progress` session's rows are excluded outright, as if that session
-    hadn't happened for progression purposes. Only prescribed sets are judged: a set done
-    beyond the prescription (ADR 0012) neither makes nor breaks a success. Within a
-    completed session:
+    hadn't happened for progression purposes. `hit_reps_max` and `below_reps_min` judge the
+    prescribed sets only; a set done beyond the prescription (ADR 0012) counts towards
+    `exceeded_prescription` alone. Within a completed session:
 
     - `hit_reps_max` (success) requires every prescribed set to have been *performed* (not
       `skipped`, with a logged `actual_reps`) at or above the prescribed load, with
@@ -275,6 +275,10 @@ async def recent_session_outcomes(
       set fell below `planned_reps_min`.
     - A skipped/unlogged set contributes to neither flag on its own; it just prevents
       `hit_reps_max`.
+    - `exceeded_prescription` (ADR 0014): every prescribed set performed at or above the
+      prescribed kg load with at least `planned_reps_min` reps, and the user did more than
+      prescribed — an extra set at or above that load and minimum, or every prescribed set at
+      a heavier load. Only with a prescribed kg load (never after calibration).
 
     "Most recent" is by `finished_at` (then id), not by id alone (M11): imported history
     (`fitme history import`) is inserted after the fact with its real, older timestamps, and
@@ -284,10 +288,10 @@ async def recent_session_outcomes(
     """
     async with conn.execute(
         "SELECT w.id, s.actual_load_kg, s.actual_reps, s.planned_load_kg, "
-        "s.planned_reps_min, s.planned_reps_max, s.skipped, s.source "
+        "s.planned_reps_min, s.planned_reps_max, s.skipped, s.source, "
+        "s.extra_for_block IS NOT NULL "
         "FROM set_logs s JOIN workout_sessions w ON w.id = s.session_id "
         "WHERE w.user_id = ? AND s.exercise_id = ? AND w.status = 'completed' "
-        "AND s.extra_for_block IS NULL "
         "ORDER BY w.finished_at DESC, w.id DESC, s.set_index ASC",
         (user_id, exercise_id),
     ) as cursor:
@@ -326,9 +330,10 @@ async def recent_session_outcomes_by_exercise(
     `recent_session_outcomes`; an exercise with no completed session has no entry."""
     async with conn.execute(
         "SELECT w.id, s.actual_load_kg, s.actual_reps, s.planned_load_kg, "
-        "s.planned_reps_min, s.planned_reps_max, s.skipped, s.source, s.exercise_id "
+        "s.planned_reps_min, s.planned_reps_max, s.skipped, s.source, "
+        "s.extra_for_block IS NOT NULL, s.exercise_id "
         "FROM set_logs s JOIN workout_sessions w ON w.id = s.session_id "
-        "WHERE w.user_id = ? AND w.status = 'completed' AND s.extra_for_block IS NULL "
+        "WHERE w.user_id = ? AND w.status = 'completed' "
         "ORDER BY w.finished_at DESC, w.id DESC, s.set_index ASC",
         (user_id,),
     ) as cursor:
@@ -336,7 +341,7 @@ async def recent_session_outcomes_by_exercise(
 
     rows_by_exercise: dict[str, list[aiosqlite.Row]] = {}
     for row in rows:
-        rows_by_exercise.setdefault(row[8], []).append(row)
+        rows_by_exercise.setdefault(row[9], []).append(row)
     return {
         exercise_id: _group_outcomes(exercise_rows, limit=limit)
         for exercise_id, exercise_rows in rows_by_exercise.items()
@@ -352,7 +357,11 @@ def _constant_or_max(values: set[float]) -> float | None:
     return next(iter(values)) if len(values) == 1 else max(values)
 
 
-def _session_outcome_from_set_rows(set_rows: list[aiosqlite.Row]) -> SessionOutcome:
+def _session_outcome_from_set_rows(all_rows: list[aiosqlite.Row]) -> SessionOutcome:
+    # ADR 0012: the prescribed sets decide the outcome; extra sets (row[8]) only count
+    # towards `exceeded_prescription`.
+    set_rows = [row for row in all_rows if not row[8]]
+    extra_rows = [row for row in all_rows if row[8]]
     logged_loads = {row[1] for row in set_rows if row[1] is not None}
     load_kg = _constant_or_max(logged_loads)
     planned_loads = {row[3] for row in set_rows if row[3] is not None}
@@ -385,20 +394,62 @@ def _session_outcome_from_set_rows(set_rows: list[aiosqlite.Row]) -> SessionOutc
 
     hit_reps_max = all_performed_at_or_above_target
     below_reps_min = (not hit_reps_max) and any_performed_below_min
-    if any(row[7] == _SOURCE_IMPORT for row in set_rows):
+    exceeded_prescription = _exceeded_prescription(set_rows, extra_rows)
+    if any(row[7] == _SOURCE_IMPORT for row in all_rows):
         # M11: an imported session (`fitme history import`) is real history — it sets the
         # historical max and is the load the engine holds at — but it is never a *success*
         # (no increase is earned from it) and never a failure (no decrease is triggered by
         # it). Progression starts from the first session logged through the app.
         hit_reps_max = False
         below_reps_min = False
+        exceeded_prescription = False
     return SessionOutcome(
         load_kg=load_kg,
         planned_load_kg=planned_load_kg,
         hit_reps_max=hit_reps_max,
         below_reps_min=below_reps_min,
         min_reps_performed=min_reps_performed,
+        exceeded_prescription=exceeded_prescription,
     )
+
+
+def _exceeded_prescription(
+    set_rows: Sequence[aiosqlite.Row], extra_rows: Sequence[aiosqlite.Row]
+) -> bool:
+    """ADR 0014: every prescribed set done at or above its kg load and `reps_min`, plus
+    more than prescribed — an extra set at that standard, or a heavier load on every set."""
+    if not set_rows:
+        return False
+    floor_kg: float | None = None
+    floor_reps: int | None = None
+    heavier_on_every_set = True
+    for row in set_rows:
+        actual_load_kg, actual_reps, planned_load_kg, reps_min = row[1], row[2], row[3], row[4]
+        skipped = row[6]
+        if (
+            skipped
+            or actual_reps is None
+            or actual_load_kg is None
+            or planned_load_kg is None
+            or planned_load_kg <= 0
+            or reps_min is None
+            or actual_load_kg < planned_load_kg
+            or actual_reps < reps_min
+        ):
+            return False
+        heavier_on_every_set = heavier_on_every_set and actual_load_kg > planned_load_kg
+        floor_kg = planned_load_kg if floor_kg is None else max(floor_kg, planned_load_kg)
+        floor_reps = reps_min if floor_reps is None else max(floor_reps, reps_min)
+    assert floor_kg is not None and floor_reps is not None
+    extra_at_standard = any(
+        not row[6]
+        and row[1] is not None
+        and row[2] is not None
+        and row[1] >= floor_kg
+        and row[2] >= floor_reps
+        for row in extra_rows
+    )
+    return heavier_on_every_set or extra_at_standard
 
 
 async def list_open_health_holds(

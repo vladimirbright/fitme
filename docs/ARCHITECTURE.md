@@ -859,6 +859,11 @@ double progression:
   passes →
   propose + `increment_kg`, then check `check_weekly_increment` and `check_ceiling`. If
   either fails, keep the load.
+- **Did more than prescribed** (ADR 0014): every prescribed set performed at or above the
+  prescribed kg load with at least reps_min, plus an extra set at that standard (ADR 0012)
+  or a heavier load on every prescribed set → the same single increment from the
+  **prescribed** load, under the same guards. Only the prescribed sets decide success and
+  failure otherwise: an extra set never makes or breaks `hit_reps_max`.
 - **Any set below reps_min** → hold. Two sessions in a row below reps_min → propose −10%,
   floored to the implement step, and always at least one step down. If that would reach
   ≤ 0, fall back to a `calibration` load (log what you used). Never fall back to the
