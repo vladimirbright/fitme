@@ -31,6 +31,14 @@ SQLite file; SQL is never mocked.
 The repo root holds the operator's personal data (`fitme.db`, `training.toml`, `*.import.toml`,
 `.env`). Stage files by explicit path, never `git add -A` / `git add .`.
 
+## Workflow
+
+Every change goes through a pull request so an external reviewer can review it: a branch off
+an up-to-date `main`, `make check` green, then `gh pr create`. Never push to `main` directly;
+review and merging are the owner's. The PR description says what changed and why, what was
+tested, and anything the operator must do after merging (e.g. `make migrate`,
+`make catalog-index`).
+
 ## Architecture
 
 One process (`fitme serve`): aiogram long-polling bot + FastAPI/uvicorn website + a daily
