@@ -773,7 +773,8 @@ async def test_sets_done_beyond_the_prescription_are_logged_as_reported(
     ]  # fmt: skip
     extra = squats[3]
     assert (extra.extra_for_block, extra.extra_for_item) == (0, 0)
-    assert extra.planned_reps_max is None and extra.actual_load_kg == squats[0].planned_load_kg
+    assert extra.planned_reps_max is None
+    assert extra.planned_load_kg == extra.actual_load_kg == squats[0].planned_load_kg
     assert "Push-up" in _last_text(session)  # the block advanced
     assert any(row.exercise_id == "pushup" for row in rows)  # the next block's rows exist
 

@@ -15,7 +15,9 @@ exercise as planned (two sets). The log was wrong, and so was the reply.
 
 - A set done beyond the prescription is a `set_logs` row of its own (migration 0013):
   `extra_for_block` / `extra_for_item` name the block and item it belongs to, the planned
-  columns are NULL, and the actual result is written when the row is created. Prescribed
+  reps/time/distance columns are NULL, `planned_load_kg` is the item's prescribed load (the
+  reference a later correction's plausibility check uses, like a prescribed row's), and the
+  actual result is written when the row is created. Prescribed
   rows keep both columns NULL and keep being matched by position, so an extra row never
   shifts that matching; `assign_rows` appends an item's extra rows after its prescribed ones.
 - `log_exercise_results` takes the prescribed sets (each exactly once, as before), then
@@ -35,4 +37,6 @@ exercise as planned (two sets). The log was wrong, and so was the reply.
 - The ✅ button and the ✏️ Correct/Fix flow still log exactly the prescribed sets; extra sets
   go through the assistant.
 - A post-session correction (`fix_logged_sets`) can change an extra set's reps and kg like
-  any other reps set; a timed or distance extra set is refused like a prescribed one.
+  any other reps set, checked against the same prescribed load; a timed or distance extra
+  set is refused like a prescribed one. Its `set_number` counts across the session, so it
+  is no longer bounded by one prescription's sets.

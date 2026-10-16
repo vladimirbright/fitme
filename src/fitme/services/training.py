@@ -1764,14 +1764,15 @@ async def _insert_extra_set(
     prescription: Prescription,
     result: SetResult,
 ) -> int:
-    """A set done beyond the prescription (ADR 0012): its own row, with no planned target,
-    tied to its block and item."""
+    """A set done beyond the prescription (ADR 0012): its own row, tied to its block and item,
+    with no planned reps/time/distance target. `planned_load_kg` is the item's prescribed
+    load: the plausibility reference a later correction is checked against."""
     return await insert_set_log(
         conn,
         session_id=session_id,
         exercise_id=prescription.exercise_id,
         set_index=result.set_index,
-        planned_load_kg=None,
+        planned_load_kg=prescription.load.kg,
         planned_reps_min=None,
         planned_reps_max=None,
         actual_load_kg=result.load_kg if result.load_kg is not None else prescription.load.kg,
