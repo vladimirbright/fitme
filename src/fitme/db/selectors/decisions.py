@@ -315,10 +315,13 @@ async def get_latest_plan_round_decision(
     """The newest `plan_generate`/`plan_revise`/`plan_import`/`refusal`/`plan_confirm`
     decision for this user, or `None`. `services.planning.confirm_plan` compares a draft's id
     against this to reject a stale Confirm (a draft superseded by a newer round or already
-    confirmed)."""
+    confirmed). An attempt its round did not choose (an outcome with `chosen: false`, ADR
+    0009's best-of) is skipped: the round's draft is the attempt it showed."""
     async with conn.execute(
         f"SELECT {_DECISION_COLUMNS} FROM decisions WHERE user_id = ? "
-        f"AND kind IN ({_PLAN_ROUND_KINDS_SQL}) ORDER BY id DESC LIMIT 1",
+        f"AND kind IN ({_PLAN_ROUND_KINDS_SQL}) "
+        "AND NOT EXISTS (SELECT 1 FROM decision_outcomes o WHERE o.decision_id = decisions.id "
+        "AND json_extract(o.outcome, '$.chosen') = 0) ORDER BY id DESC LIMIT 1",
         (user_id, *_PLAN_ROUND_KINDS),
     ) as cursor:
         row = await cursor.fetchone()
