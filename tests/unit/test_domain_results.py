@@ -9,7 +9,15 @@ import math
 import pytest
 from pydantic import ValidationError
 
-from fitme.domain.results import ChangeReps, ParsedResults, Recap, SetResult, SwapExercise
+from fitme.domain.results import (
+    MAX_EXTRA_SETS,
+    MAX_SET_INDEX,
+    ChangeReps,
+    ParsedResults,
+    Recap,
+    SetResult,
+    SwapExercise,
+)
 
 
 class TestSetResult:
@@ -69,7 +77,12 @@ class TestSetResult:
         with pytest.raises(ValidationError):
             SetResult(set_index=0, reps=8)
         with pytest.raises(ValidationError):
-            SetResult(set_index=11, reps=8)
+            SetResult(set_index=MAX_SET_INDEX + 1, reps=8)
+
+    def test_a_ten_set_prescription_leaves_room_for_every_extra_set(self) -> None:
+        # ADR 0012: `Prescription.sets` <= 10, then up to MAX_EXTRA_SETS beyond it.
+        assert MAX_SET_INDEX == 10 + MAX_EXTRA_SETS
+        assert SetResult(set_index=MAX_SET_INDEX, reps=8).set_index == MAX_SET_INDEX
 
 
 class TestParsedResults:

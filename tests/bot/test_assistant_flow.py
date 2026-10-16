@@ -58,7 +58,7 @@ from fitme.db.selectors.users import get_telegram_account_by_telegram_user_id
 from fitme.domain.assistant import AssistantTurn
 from fitme.domain.enums import AREA_FLAGS, RED_FLAGS, Measure, RefusalCode
 from fitme.domain.models import Block, Load, Plan, Prescription, Refusal, ScheduledDay, Workout
-from fitme.domain.results import ParsedResults
+from fitme.domain.results import MAX_EXTRA_SETS, ParsedResults
 from fitme.i18n import t
 from fitme.llm.agents import assistant_agent, plan_generate_agent, result_parse_agent
 from fitme.services import exclusions, planning, training
@@ -752,7 +752,7 @@ async def test_sets_done_beyond_the_prescription_are_logged_as_reported(
     session_id = await _start_workout(db, settings, seeded)
     five = [{"set_index": i, "reps": 5} for i in range(1, 6)]
     skipped_extra = [*five[:3], {"set_index": 4, "skipped": True}]
-    too_many = [{"set_index": i, "reps": 5} for i in range(1, 3 + training.MAX_EXTRA_SETS + 2)]
+    too_many = [{"set_index": i, "reps": 5} for i in range(1, 3 + MAX_EXTRA_SETS + 2)]
     gap = [*five[:3], {"set_index": 5, "reps": 5}]
     squat = {"exercise_id": "barbell_back_squat"}
     llm.steps = [

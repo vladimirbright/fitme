@@ -19,7 +19,8 @@ exercise as planned (two sets). The log was wrong, and so was the reply.
   rows keep both columns NULL and keep being matched by position, so an extra row never
   shifts that matching; `assign_rows` appends an item's extra rows after its prescribed ones.
 - `log_exercise_results` takes the prescribed sets (each exactly once, as before), then
-  sets numbered on from `sets + 1`: at most 5 extra, none of them skipped. They pass the
+  sets numbered on from `sets + 1`: at most 5 extra (`domain.results.MAX_EXTRA_SETS`; a
+  set index goes up to 15, as a prescription has at most 10 sets), none of them skipped. They pass the
   same plausibility checks as the prescribed sets.
 - `log_exercise_as_planned` is not for a report that differs from the plan, including the
   number of sets (prompt `assistant.v9`).

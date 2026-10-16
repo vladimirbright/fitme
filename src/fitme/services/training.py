@@ -125,7 +125,7 @@ from fitme.domain.enums import (
 )
 from fitme.domain.guard_types import GuardVerdict
 from fitme.domain.models import Block, LoadChange, Plan, Prescription, Refusal, Workout
-from fitme.domain.results import ParsedResults, SetResult
+from fitme.domain.results import MAX_EXTRA_SETS, ParsedResults, SetResult
 from fitme.domain.screening import ScreeningFlagState
 from fitme.guards import stop_words
 from fitme.guards.checkins import flagged_areas_from
@@ -150,7 +150,6 @@ EVENT_START = "start"
 _EVENT_PARSE = "parse"
 _PARSE_SHOWN = "shown"
 _EVENT_ASSISTANT_LOG = "assistant_log"  # ADR 0005: logged by the assistant, no Correct step
-MAX_EXTRA_SETS = 5  # ADR 0012: sets the assistant may log beyond one prescription
 _ENGINE_RULE = "loads.engine"
 
 
