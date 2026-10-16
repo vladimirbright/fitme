@@ -311,7 +311,7 @@ def _good_boxing_plan() -> Plan:
                 *warm_up(),
                 *single(
                     rx("bodyweight_skater_hop", 4, reps=(6, 8)),
-                    rx("bodyweight_shadow_boxing_hook", 4, seconds=120, rest=60),
+                    rx("bodyweight_shadow_boxing", 4, seconds=120, rest=60),
                     rx("dumbbell_farmer_carry", 3, meters=30, rest=60),
                     rx("plank", 3, seconds=40, rest=45),
                 ),

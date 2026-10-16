@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
+from datetime import timedelta
 from pathlib import Path
 from typing import Any
 
@@ -234,7 +235,12 @@ async def test_plan_menu_offers_paste_next_to_new_plan(
 
 
 async def test_pasted_program_imports_with_hints_and_unmatched_and_confirm_saves_origin_import(
-    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
+    dispatcher: Dispatcher,
+    bot: Bot,
+    session: FakeSession,
+    db: Database,
+    llm: FakeLlm,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     user_id = await _ready(dispatcher, bot, db)
     expected = user_plan_import()
@@ -292,6 +298,11 @@ async def test_pasted_program_imports_with_hints_and_unmatched_and_confirm_saves
     # The saved plan shows the same hint, and /train's review and first block do too.
     await _click(dispatcher, bot, PlanMenu(action="view", plan_id=plans[0].id))
     assert _HINT_SQUAT in "\n".join(_texts(session)[-3:])
+    # /train suggests the workout scheduled today: make today a Monday (workout A).
+    real_now = clock.now
+    start = real_now()
+    monday_noon = (start - timedelta(days=start.weekday())).replace(hour=12)
+    monkeypatch.setattr(clock, "now", lambda: real_now() + (monday_noon - start))
     await _send(dispatcher, bot, "/train")
     await _click(dispatcher, bot, _last_action(session, "tp:workout:"))
     await _click(dispatcher, bot, _last_action(session, "tr:precheck_no:"))

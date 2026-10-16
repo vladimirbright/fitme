@@ -406,7 +406,7 @@ async def test_a_boxing_pool_offers_drills_that_train_each_requested_quality(
     pool = await es.plan_candidates(
         db, runtime, _gym(), request=_BOXING_REQUEST, qualities=qualities
     )
-    assert "bodyweight_shadow_boxing_hook" in pool
+    assert "bodyweight_shadow_boxing" in pool
     for quality in qualities:
         trained = [i for i in pool if quality in catalog.by_id(i).qualities]  # type: ignore[union-attr]
         assert trained, quality

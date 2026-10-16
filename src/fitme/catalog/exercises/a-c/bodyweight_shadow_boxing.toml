@@ -1,0 +1,14 @@
+id = "bodyweight_shadow_boxing"
+names = { en = "Shadow boxing", ru = "Бой с тенью" }
+search = { en = "shadow boxing shadowboxing punch combinations boxing footwork rounds", ru = "бой с тенью удары в воздух комбинации ударов работа ног раунды" }
+kind = "cardio"
+pattern = "conditioning"
+measures = ["time"]
+qualities = ["agility", "conditioning"]
+equipment = []
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["shoulder", "hip"]
+contraindicated_by = ["shoulder_injury_current", "hip_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand in your boxing stance with hands up and chin down, with clear space around you. For the whole round, move on the balls of your feet (steps forward, back, to the sides and pivots) and throw light combinations: jabs, crosses, hooks and uppercuts, returning the hands to guard after every punch. Keep the punches relaxed and fast, never snap the elbow straight, and breathe out with each punch.", ru = "Встаньте в боевую стойку: руки у лица, подбородок опущен, вокруг свободное место. Весь раунд двигайтесь на передней части стопы (шаги вперёд, назад, в стороны, развороты) и наносите лёгкие серии ударов: прямые, боковые и снизу, после каждого удара возвращая руки к лицу. Бейте расслабленно и быстро, не выпрямляйте локоть рывком, на каждом ударе выдыхайте." }
