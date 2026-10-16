@@ -15,10 +15,10 @@ from typing import Any
 import pytest
 from aiogram import Bot, Dispatcher
 from aiogram.methods import AnswerCallbackQuery, SendMessage
-from conftest import FakeSession, callback_update, make_user, message_update
 from pydantic_ai.messages import ModelMessage, ModelRequest, ModelResponse, ToolCallPart
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
+from conftest import FakeSession, callback_update, make_user, message_update
 from fitme import clock
 from fitme.bot.app import build_dispatcher
 from fitme.bot.callback_data import HoldClear, PlanMenu, TrainAction, TrainPick

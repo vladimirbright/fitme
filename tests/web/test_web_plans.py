@@ -7,9 +7,9 @@ from __future__ import annotations
 import html
 from datetime import timedelta
 
-from conftest import SentCode, get_csrf_token, login
 from httpx import AsyncClient
 
+from conftest import SentCode, get_csrf_token, login
 from fitme import clock
 from fitme.config.content import content_version
 from fitme.db.connection import Database
