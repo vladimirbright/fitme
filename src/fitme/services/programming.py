@@ -16,6 +16,7 @@ next to them, and nothing here is a guard.
 
 from __future__ import annotations
 
+import re
 from collections.abc import Sequence
 
 from fitme.domain.enums import BlockRole, Preference, Quality
@@ -76,15 +77,21 @@ def fatigue_budget(sport_sessions_per_week: int | None) -> str:
     return "normal"
 
 
-_SPLIT_WORDS = ("split", "upper/lower", "upper lower", "сплит", "верх/низ", "верх-низ")
+# A split as a whole word — not "split squat", "split jump", "сплит-приседания" — or the
+# upper/lower and верх/низ shapes.
+_SPLIT_RE = re.compile(
+    r"\b(?:split|сплит\w*)\b(?![\s-]*(?:squat|jump|stance|lunge|присед|выпад|прыж))"
+    r"|\bupper\s*[/-]?\s*lower\b|\bверх\s*[/-]\s*низ\b",
+    re.UNICODE,
+)
 
 
 def split_wanted(context: UserContext, request: str | None) -> bool:
     """A split is what the user asked for: the `split` preference, or the request's words —
     only what it asks *for* (`exercise_search.positive_request`): "no split", "без сплита"
-    or "не сплит, а фулбоди" is not a request for one."""
-    text = exercise_search.positive_request(request).lower() if request else ""
-    return Preference.SPLIT in context.preferences or any(word in text for word in _SPLIT_WORDS)
+    or "не сплит, а фулбоди" is not a request for one, and neither is a split squat."""
+    text = exercise_search.positive_request(request) if request else ""
+    return Preference.SPLIT in context.preferences or _SPLIT_RE.search(text) is not None
 
 
 def brief(

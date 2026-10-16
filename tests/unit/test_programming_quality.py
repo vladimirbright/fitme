@@ -526,7 +526,16 @@ def test_the_speed_cue_fits_the_block_and_the_measure() -> None:
 
 
 def test_a_negated_split_request_is_not_a_split_request() -> None:
-    for request in ("no split, full body please", "без сплита", "не сплит, а фулбоди"):
+    for request in (
+        "no split, full body please",
+        "без сплита",
+        "не сплит, а фулбоди",
+        "I don't want a split",
+        "I don’t want a split",
+        "I dont want a split",
+        "more split squats",
+        "болгарские сплит-приседания",
+    ):
         assert not programming.split_wanted(_context(), request), request
     for request in ("upper/lower split", "сплит верх/низ"):
         assert programming.split_wanted(_context(), request), request
@@ -601,9 +610,45 @@ def test_speed_work_in_a_superset_needs_recovery_across_the_round() -> None:
 
     throw = rx("medicine_ball_chest_pass", 3, reps=(5, 5), rest=0)
     no_rest = findings(throw, rx("side_plank", 3, seconds=20, rest=0, load={"kind": "bodyweight"}))
-    assert len(no_rest) == 1 and "20 s recovery per superset round" in no_rest[0]
+    assert len(no_rest) == 1 and "0 s rest per superset round" in no_rest[0]
+    # A long partner exercise is work, not rest: still no recovery for the throw.
+    long_plank = findings(
+        throw, rx("side_plank", 3, seconds=60, rest=0, load={"kind": "bodyweight"})
+    )
+    assert len(long_plank) == 1 and "0 s rest per superset round" in long_plank[0]
     rested = findings(
         rx("medicine_ball_chest_pass", 3, reps=(5, 5), rest=15),
         rx("side_plank", 3, seconds=20, rest=60, load={"kind": "bodyweight"}),
     )
     assert rested == []
+
+
+def test_a_mislabeled_heavy_lift_still_counts_as_tiring_work() -> None:
+    week = plan(
+        [(0, "A")],
+        workout(
+            "A",
+            "Lower",
+            [
+                role(BlockRole.WARM_UP, rx("jump_rope_skipping", 2, seconds=120, rest=30)),
+                role(BlockRole.ACCESSORY, rx("barbell_back_squat", 4, reps=(4, 6))),
+                role(BlockRole.ACCESSORY, rx("medicine_ball_chest_pass", 4, reps=(5, 5))),
+            ],
+        ),
+    )
+    order = [f.detail for f in review(week, ReviewContext(_CATALOG)) if f.rule == "quality.order"]
+    assert len(order) == 1 and "after heavy barbell_back_squat" in order[0]
+    # Conditioning-paced work, whatever its label, is tiring too.
+    ropes = plan(
+        [(0, "A")],
+        workout(
+            "A",
+            "Upper",
+            [
+                role(BlockRole.WARM_UP, rx("jump_rope_skipping", 2, seconds=120, rest=30)),
+                role(BlockRole.ACCESSORY, rx("battle_rope_alternating_waves", 4, seconds=30)),
+                role(BlockRole.ACCESSORY, rx("medicine_ball_chest_pass", 4, reps=(5, 5))),
+            ],
+        ),
+    )
+    assert "quality.order" in rules(review(ropes, ReviewContext(_CATALOG)))

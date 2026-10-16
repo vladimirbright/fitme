@@ -73,7 +73,9 @@ always pooled. `exercise_facts` gain `intensity` and, when true, `specific`.
 per block), the main (first two) and secondary qualities, the structure
 (`full_body_varied_emphasis` up to three sessions a week, `full_body_or_upper_lower` above,
 `split_as_requested` when the preference or the request asks for a split — only its
-affirmative part counts: "no split" or "без сплита" is not a request for one), the other sport's
+affirmative part counts: "no split", "I don't want a split" or "без сплита" is not a request
+for one, and the word must mean the week's structure — "split squats" doesn't count; the
+shared negation reading now also knows contractions), the other sport's
 fatigue budget and the session order. `plan_generate.v6` works in that order: the week, each
 workout's objectives, each block's role, then exercises and intensity by stimulus.
 `plan_revise.v4` gets the role and `rir` rules.
@@ -91,12 +93,14 @@ refusals; the guards stay the errors):
   lift or anything that isn't general preparation (`role`; and a heavy session whose first
   block holds no real warm-up work still gets `warm_up`); a warm-up after the main work, or
   any fast (`speed`, not heavy) exercise after strength or conditioning work, whatever its
-  block is called, except in warm-up, conditioning and mobility blocks (`order`). Without stated roles they are inferred (the leading warm-up-like blocks, heavy
+  block is called, except in warm-up, conditioning and mobility blocks (`order`). Tiring work
+  is known by its role or by what it is — a heavy lift, or `pace` work outside the warm-up and
+  cool-down — so a mislabeled block doesn't hide it. Without stated roles they are inferred (the leading warm-up-like blocks, heavy
   lifts, then the first exercise's main quality);
 - *prescription*: `speed` work in sets above 10 reps (unless also conditioning or agility) or
-  with less than 45 s recovery before its next set — its rest in a single block; in a
-  superset the rest of the round (the other exercises' work, every transition and the round
-  rest);
+  with less than 45 s rest before its next set — its rest in a single block; in a superset
+  every rest of the round (transitions and the round rest; the other exercises' work is work,
+  not rest);
 - *week*: with two or three sessions, a region (lower body, pressing, pulling) with at least
   six weekly sets all in one session, unless a split is wanted (`split`); a session estimated
   over 1.25× the session length (`duration`; about 4 s a rep, 1.2 s a meter, a minute of setup

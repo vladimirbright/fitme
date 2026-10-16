@@ -66,8 +66,11 @@ _SEMANTIC_LIMIT = 50
 _MAX_QUERY_LENGTH = 200
 _TOKEN_RE = re.compile(r"\w+", re.UNICODE)
 _CYRILLIC_RE = re.compile(r"[а-яё]")
+# Contractions ("don't", "won't", with either apostrophe, or without one) negate too.
 _NEGATION_RE = re.compile(
-    r"\b(no|not|without|except|avoid|skip|instead|без|не|кроме|никаких|вместо)\b", re.UNICODE
+    r"\b(no|not|never|without|except|avoid|skip|instead|\w+n['’]t|dont|doesnt|didnt|wont|"
+    r"без|не|кроме|никаких|вместо)\b",
+    re.UNICODE,
 )
 # Words that say nothing about which exercise is meant; matching them only adds noise.
 _STOP_WORDS = frozenset(

@@ -397,11 +397,20 @@ def _role_findings(workout: Workout, ctx: ReviewContext) -> list[GuardVerdict]:
                     "fast work before strength and conditioning work, while fresh",
                 )
             )
-        if role in (BlockRole.STRENGTH, BlockRole.CONDITIONING) and tiring is None and exercises:
-            tiring = (
-                f"{'heavy ' if any(is_heavy(i, e) for i, e in exercises) else ''}"
-                f"{exercises[0][1].id}"
-            )
+        # Tiring work by its role or, whatever the block is called, by what it is: a heavy
+        # lift, or conditioning-paced work outside the warm-up and cool-down.
+        if tiring is None:
+            heavy = [e for i, e in exercises if is_heavy(i, e)]
+            paced = [
+                e
+                for i, e in exercises
+                if intensity_mode(e, i.measure) == IntensityMode.PACE
+                and role not in (BlockRole.WARM_UP, BlockRole.MOBILITY)
+            ]
+            if heavy:
+                tiring = f"heavy {heavy[0].id}"
+            elif paced or (role in (BlockRole.STRENGTH, BlockRole.CONDITIONING) and exercises):
+                tiring = (paced or [exercises[0][1]])[0].id
     return findings
 
 
@@ -432,16 +441,14 @@ def _prescription_findings(workout: Workout, ctx: ReviewContext) -> list[GuardVe
                         "per set",
                     )
                 )
-            # Recovery before the next fast set: its rest in a single block; in a superset,
-            # the whole round besides itself — the other exercises, every transition and the
-            # round's rest.
+            # Rest before the next fast set: its own rest in a single block; in a superset,
+            # every rest of the round (transitions and the round's rest). The other
+            # exercises' work is work, not recovery.
             recovery = float(item.rest_seconds)
             if block.kind == "superset":
-                recovery = sum(other.rest_seconds for other in block.items) + sum(
-                    _work_seconds(other, limits) for other in block.items if other is not item
-                )
+                recovery = float(sum(other.rest_seconds for other in block.items))
             if recovery < limits.power_rest_min_seconds:
-                where = "rest" if block.kind == "single" else "recovery per superset round"
+                where = "rest" if block.kind == "single" else "rest per superset round"
                 findings.append(
                     _finding(
                         "prescription",
