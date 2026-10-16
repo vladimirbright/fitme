@@ -245,9 +245,9 @@ async def _four_squat_sets_then_finish(
 async def test_a_set_count_suggestion_follows_what_was_done_and_is_applied(
     dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
 ) -> None:
-    """ADR 0015: more sets only up to what was done today (4 of 3 here); fewer only where
-    sets were left undone (the skipped push-ups), down to what was done and at most two
-    fewer; no-op and unknown-exercise changes are dropped."""
+    """ADR 0015: more sets only up to what was done today (4 of 3 here); never for an
+    exercise in a superset (the push-ups share their rounds with the bench press); no-op and
+    unknown-exercise changes are dropped."""
     user_id, plan_id, _ = await _ready(dispatcher, bot, db)
     llm.recap_responses.append(
         Recap(
@@ -257,7 +257,7 @@ async def test_a_set_count_suggestion_follows_what_was_done_and_is_applied(
                 ChangeSets(exercise_id=_SQUAT, sets=4),
                 ChangeSets(exercise_id=_SQUAT, sets=3),  # no change: dropped
                 ChangeSets(exercise_id=_PUSHUP, sets=4),  # none done: dropped
-                ChangeSets(exercise_id=_PUSHUP, sets=2),  # skipped today: kept
+                ChangeSets(exercise_id=_PUSHUP, sets=2),  # in a superset: dropped
                 ChangeSets(exercise_id="not_in_the_plan", sets=4),  # dropped
             ],
         )
@@ -267,26 +267,53 @@ async def test_a_set_count_suggestion_follows_what_was_done_and_is_applied(
     )
     suggestions = [m for m in _sent(session) if (m.text or "").startswith("Suggested change")]
     assert [m.text for m in suggestions] == [
-        t("recap.suggestion_sets", "en", name="Barbell back squat", sets=4),
-        t("recap.suggestion_sets", "en", name="Push-up", sets=2),
+        t("recap.suggestion_sets", "en", name="Barbell back squat", sets=4)
     ]
 
-    second = _last_action(session, "apply")
-    assert second.item == 1
-    await _click(dispatcher, bot, second.model_copy(update={"item": 0}))  # the squat's
+    await _click(dispatcher, bot, _last_action(session, "apply"))
 
     assert _last_text(session) == t("recap.applied", "en", name="Home plan", version=2)
     async with db.read() as conn:
         versions = await list_plan_versions(conn, plan_id)
     saved = Plan.model_validate(versions[-1].body)
     assert saved.workouts[0].blocks[0].items[0].sets == 4
-    assert saved.workouts[0].blocks[1].items[1].sets == 3  # the other suggestion not applied
+    assert saved.workouts[0].blocks[1].items[1].sets == 3
 
-    await _click(dispatcher, bot, second)  # the push-ups': today's workout A only
-    async with db.read() as conn:
-        saved = Plan.model_validate((await list_plan_versions(conn, plan_id))[-1].body)
-    assert saved.workouts[0].blocks[1].items[1].sets == 2
-    assert saved.workouts[1].blocks[0].items[0].sets == 3  # workout B's push-ups untouched
+
+def test_a_set_count_change_follows_todays_results() -> None:
+    """ADR 0015, the pure rule: up to what was done and two either way; fewer only after a
+    shortfall, not below what was done."""
+
+    def today(done: int, planned: int = 3) -> list[recap.ExerciseSummary]:
+        return [
+            recap.ExerciseSummary(
+                exercise_id=_SQUAT,
+                planned_sets=planned,
+                done_sets=done,
+                skipped_sets=planned - min(done, planned),
+                planned_reps_min=8,
+                planned_reps_max=10,
+                planned_load=Load(kind="kg", kg=40.0),
+                actual_reps=[],
+                actual_kg=[],
+                total_reps=0,
+                volume_kg=0.0,
+            )
+        ]
+
+    def problem(sets: int, planned: int, summaries: list[recap.ExerciseSummary]) -> str | None:
+        return recap._set_change_problem(
+            ChangeSets(exercise_id=_SQUAT, sets=sets), planned, summaries
+        )
+
+    assert problem(4, 3, today(4)) is None
+    assert problem(5, 3, today(5)) is None
+    assert problem(6, 3, today(6)) is not None  # three more than planned
+    assert problem(5, 3, today(4)) is not None  # more than was done
+    assert problem(2, 3, today(3)) is not None  # every set done: no basis for fewer
+    assert problem(2, 3, today(2)) is None
+    assert problem(1, 3, today(2)) is not None  # below what was done
+    assert problem(4, 3, []) is not None  # not in today's workout
 
 
 async def test_a_set_count_suggestion_is_rechecked_on_a_plan_edited_since(
