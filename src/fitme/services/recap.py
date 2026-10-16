@@ -470,6 +470,11 @@ def _set_change_problems(
         for item in targets
         if (problem := _set_change_problem(change, item.sets, summaries)) is not None
     ]
+    occurrences = _set_change_targets(plan, workout_key, change.exercise_id)
+    if len(occurrences) > 1 or sum(1 for i in summaries if i.exercise_id == change.exercise_id) > 1:
+        # Each changed prescription must rest on its own results; with the exercise twice in
+        # the workout that pairing is ambiguous.
+        problems.append("it appears more than once in the workout")
     if _in_a_superset(plan, workout_key, change.exercise_id):
         # A superset's exercises share their rounds (plan_quality checks equal set counts);
         # one exercise's count can't change on its own.

@@ -316,6 +316,15 @@ def test_a_set_count_change_follows_todays_results() -> None:
     assert problem(4, 3, []) is not None  # not in today's workout
 
 
+def test_a_set_count_change_is_refused_for_an_exercise_done_twice() -> None:
+    plan = make_plan()
+    squat = plan.workouts[0].blocks[0]
+    plan.workouts[0].blocks.append(squat.model_copy(deep=True))
+    change = ChangeSets(exercise_id=_SQUAT, sets=4)
+    _targets, problems = recap._set_change_problems(change, plan, "A", [])
+    assert any("more than once" in problem for problem in problems)
+
+
 async def test_a_set_count_suggestion_is_rechecked_on_a_plan_edited_since(
     dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
 ) -> None:
