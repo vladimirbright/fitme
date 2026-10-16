@@ -1050,6 +1050,45 @@ async def test_a_timed_and_a_distance_set_are_shown_and_logged_in_their_measure(
     assert all(row.performed for row in rows)
 
 
+async def test_a_timed_exercise_done_with_an_extra_set_is_logged_in_seconds(
+    dispatcher: Dispatcher,
+    bot: Bot,
+    db: Database,
+    settings: Settings,
+    session: FakeSession,
+    llm: ScriptedLlm,
+) -> None:
+    """ADR 0012, the reported case: "сделал три подхода" of a timed exercise. The model
+    sees the block's seconds target, so it can give the extra set the planned time."""
+    plan = _plan()
+    shadow = Prescription(
+        exercise_id="plank",
+        sets=2,
+        measure=Measure.TIME,
+        seconds=120,
+        load=Load(kind="bodyweight"),
+        rest_seconds=45,
+    )
+    plan.workouts[0].blocks = [Block(kind="single", items=[shadow]), *plan.workouts[0].blocks]
+    seeded = await _ready(dispatcher, bot, db, plan)
+    session_id = await _start_workout(db, settings, seeded)
+    three = [{"set_index": i, "seconds": 120} for i in (1, 2, 3)]
+    llm.steps = [
+        Call("log_exercise_results", {"exercise_id": "plank", "sets": three}),
+        say("Записал три подхода."),
+    ]
+    await _send(dispatcher, bot, "сделал три подхода")
+
+    shown = llm.prompts()[-1]["state"]["current_block"]["exercises"][0]
+    assert (shown["sets"], shown["measure"], shown["seconds"]) == (2, "time", 120)
+    async with db.read() as conn:
+        rows = await list_set_logs_for_session(conn, session_id)
+    planks = [row for row in rows if row.exercise_id == "plank"]
+    assert [(r.set_index, r.planned_seconds, r.actual_seconds, r.extra) for r in planks] == [
+        (1, 120, 120, False), (2, 120, 120, False), (3, None, 120, True),
+    ]  # fmt: skip
+
+
 async def test_never_squats_is_stored_for_every_plan_and_shown_with_what_it_covers(
     dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
 ) -> None:
