@@ -187,21 +187,7 @@ async def test_an_extra_set_raises_the_load_and_the_recap_says_why(
     range — the engine raises it one increment, and the recap names the reason."""
     user_id, _, version_id = await _ready(dispatcher, bot, db)
     await _seed_completed_session(db, user_id, version_id, loads={_SQUAT: 40.0}, reps=9)
-    session_id = await _to_first_block(dispatcher, bot, session)
-    four = tuple(SetResult(set_index=i, reps=9) for i in (1, 2, 3, 4))
-    logged = await training.log_items(
-        db,
-        user_id,
-        session_id,
-        0,
-        [training.ItemLog(_SQUAT, training.ItemLogKind.RESULTS, four)],
-        prompt=PromptMeta(template_name="assistant", version=9, model="test"),
-        report_extra={},
-    )
-    assert logged.status == Status.OK
-    await _send(dispatcher, bot, "/train")
-    await _click(dispatcher, bot, _last_action(session, "resume"))  # the next block
-    await _finish_block(dispatcher, bot, session)
+    session_id = await _four_squat_sets_then_finish(dispatcher, bot, session, db, user_id)
 
     text = _recap_message(session)
     assert "Barbell back squat: 4/3 sets, 36 reps" in text
@@ -222,34 +208,64 @@ async def test_an_extra_set_raises_the_load_and_the_recap_says_why(
     assert next(e for e in model_input if e["exercise_id"] == _SQUAT)["extra_sets"] == 1
 
 
-async def test_a_set_count_suggestion_is_applied_to_the_plan(
+async def _four_squat_sets_then_finish(
+    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, user_id: int
+) -> int:
+    """Workout A with four sets of the three-set squat (the assistant's path, ADR 0012)."""
+    session_id = await _to_first_block(dispatcher, bot, session)
+    four = tuple(SetResult(set_index=i, reps=9, load_kg=40.0) for i in (1, 2, 3, 4))
+    logged = await training.log_items(
+        db,
+        user_id,
+        session_id,
+        0,
+        [training.ItemLog(_SQUAT, training.ItemLogKind.RESULTS, four)],
+        prompt=PromptMeta(template_name="assistant", version=9, model="test"),
+        report_extra={},
+    )
+    assert logged.status == Status.OK
+    await _send(dispatcher, bot, "/train")
+    await _click(dispatcher, bot, _last_action(session, "resume"))  # the next block
+    await _finish_block(dispatcher, bot, session)
+    return session_id
+
+
+async def test_a_set_count_suggestion_follows_what_was_done_and_is_applied(
     dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
 ) -> None:
+    """ADR 0015: more sets only up to what was done today (4 of 3 here) and at most two
+    fewer; no-op and unknown-exercise changes are dropped."""
     user_id, plan_id, _ = await _ready(dispatcher, bot, db)
     llm.recap_responses.append(
         Recap(
             text="",
             suggestions=[
+                ChangeSets(exercise_id=_SQUAT, sets=5),  # only 4 done: dropped
                 ChangeSets(exercise_id=_SQUAT, sets=4),
                 ChangeSets(exercise_id=_SQUAT, sets=3),  # no change: dropped
+                ChangeSets(exercise_id=_PUSHUP, sets=4),  # 3 done: dropped
+                ChangeSets(exercise_id=_PUSHUP, sets=1),  # two fewer: kept
                 ChangeSets(exercise_id="not_in_the_plan", sets=4),  # dropped
             ],
         )
     )
-    await _complete_a(dispatcher, bot, session)
+    await _four_squat_sets_then_finish(dispatcher, bot, session, db, user_id)
     suggestions = [m for m in _sent(session) if (m.text or "").startswith("Suggested change")]
     assert [m.text for m in suggestions] == [
-        t("recap.suggestion_sets", "en", name="Barbell back squat", sets=4)
+        t("recap.suggestion_sets", "en", name="Barbell back squat", sets=4),
+        t("recap.suggestion_sets", "en", name="Push-up", sets=1),
     ]
 
-    await _click(dispatcher, bot, _last_action(session, "apply"))
+    second = _last_action(session, "apply")
+    assert second.item == 1
+    await _click(dispatcher, bot, second.model_copy(update={"item": 0}))  # the squat's
 
     assert _last_text(session) == t("recap.applied", "en", name="Home plan", version=2)
     async with db.read() as conn:
         versions = await list_plan_versions(conn, plan_id)
     saved = Plan.model_validate(versions[-1].body)
     assert saved.workouts[0].blocks[0].items[0].sets == 4
-    assert saved.workouts[0].blocks[1].items[1].sets == 3  # others untouched
+    assert saved.workouts[0].blocks[1].items[1].sets == 3  # the other suggestion not applied
 
 
 async def test_an_unanswered_checkin_blocks_the_increase_and_fine_unblocks_it(
