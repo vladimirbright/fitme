@@ -42,6 +42,7 @@ from fitme.db.selectors.training import (
     recent_session_outcomes_by_exercise,
 )
 from fitme.domain.enums import CheckinAnswer
+from fitme.services import log_edit
 
 
 async def _insert_plan_version(db: Database, user_id: int) -> int:
@@ -256,7 +257,7 @@ async def test_a_set_beyond_the_prescription_neither_makes_nor_breaks_a_success(
     minimum) or at 8 doesn't change the outcome."""
     plan_version_id = await _insert_plan_version(db, user_id)
     extra = {
-        "planned_load_kg": None,
+        "planned_load_kg": 40.0,
         "planned_reps_min": None,
         "planned_reps_max": None,
         "actual_load_kg": 40.0,
@@ -273,6 +274,28 @@ async def test_a_set_beyond_the_prescription_neither_makes_nor_breaks_a_success(
 
     assert success[0].hit_reps_max is True and success[0].below_reps_min is False
     assert latest[0].hit_reps_max is False and latest[0].below_reps_min is False
+
+
+async def test_a_correction_to_a_set_beyond_the_prescription_is_checked_like_a_prescribed_one(
+    db: Database, user_id: int
+) -> None:
+    """ADR 0012: an extra set keeps its item's prescribed load as the plausibility reference,
+    so a correction can't slip a load past the check by landing on an extra row."""
+    plan_version_id = await _insert_plan_version(db, user_id)
+    heavy = {"planned_load_kg": 100.0, "actual_load_kg": 100.0, "actual_reps": 5}
+    await _log_session(db, user_id, plan_version_id, sets=[heavy])
+    done = {"planned_load_kg": 60.0, "actual_load_kg": 60.0, "actual_reps": 5}
+    session_id = await _log_session(
+        db, user_id, plan_version_id, sets=[done, {**done, "extra_for": (0, 0)}]
+    )
+
+    def fix(set_number: int, kg: float) -> list[log_edit.SetFix]:
+        return [log_edit.SetFix("barbell_back_squat", set_number, 5, kg)]
+
+    prescribed = await log_edit.fix_logged_sets(db, user_id, session_id, fix(1, 107.5))
+    extra = await log_edit.fix_logged_sets(db, user_id, session_id, fix(2, 107.5))
+
+    assert prescribed.status == extra.status == log_edit.LogEditStatus.IMPLAUSIBLE
 
 
 async def test_recent_session_outcomes_below_reps_min(db: Database, user_id: int) -> None:

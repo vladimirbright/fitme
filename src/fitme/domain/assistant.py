@@ -26,9 +26,9 @@ from fitme.domain.models import (
     ScheduledDay,
     _trim_title,
 )
-from fitme.domain.results import MAX_SET_INDEX
 
 _STRICT_CONFIG = ConfigDict(extra="forbid", allow_inf_nan=False)
+MAX_SESSION_SET_NUMBER = 200  # a sanity bound only
 
 MAX_OPS = 20
 MESSAGE_MAX_LENGTH = 2000
@@ -149,7 +149,9 @@ class FixLoggedSet(BaseModel):
     model_config = _STRICT_CONFIG
 
     exercise_id: str
-    set_number: Annotated[int, Field(ge=1, le=MAX_SET_INDEX)]
+    # Counted across the session (an exercise can be in several blocks, each with sets done
+    # beyond the prescription, ADR 0012); `services.log_edit` refuses a number with no set.
+    set_number: Annotated[int, Field(ge=1, le=MAX_SESSION_SET_NUMBER)]
     reps: Annotated[int, Field(ge=1, le=100)]
     load_kg: float | None = None
 
