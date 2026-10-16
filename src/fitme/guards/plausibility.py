@@ -1,12 +1,12 @@
-"""Deterministic plausibility check over a *parsed* set result before it is shown for
-confirmation or stored (A§6.5 step 5, M7).
+"""Deterministic plausibility check over a *parsed* set result before it is stored (A§6.5
+step 5, M7).
 
-The `result_parse` agent turns free text into numbers. A typo ("425" for 42.5), a combined
-two-dumbbell total reported on a `per_implement` exercise, or a kg figure on an exercise that
-takes no kg load would, once stored in `set_logs`, raise the historical max — and with it the
-ceiling every later prescription is checked against (AGENTS.md §2 "ceiling on absolute
-load"). This guard is what keeps such a value out of the log: an implausible parse is treated
-as unclear and the user is asked again. Nothing is stored.
+The assistant turns free text into numbers (`services.training.log_items`, ADR 0005). A typo
+("425" for 42.5), a combined two-dumbbell total reported on a `per_implement` exercise, or a
+kg figure on an exercise that takes no kg load would, once stored in `set_logs`, raise the
+historical max — and with it the ceiling every later prescription is checked against
+(AGENTS.md §2 "ceiling on absolute load"). This guard is what keeps such a value out of the
+log: an implausible entry is refused and the user is asked to check it. Nothing is stored.
 
 Pure: domain objects in, verdicts out, no I/O (A§7).
 """

@@ -8,13 +8,12 @@ from pydantic_ai import Agent
 from pydantic_ai.models.test import TestModel
 
 from fitme.domain.models import Plan, PlanProposal, SessionAdjustProposal
-from fitme.domain.results import ParsedResults, Recap
+from fitme.domain.results import Recap
 from fitme.llm.agents import (
     AGENT_FACTORIES,
     plan_generate_agent,
     plan_revise_agent,
     recap_agent,
-    result_parse_agent,
     session_adjust_agent,
 )
 from fitme.llm.models import output_retries_for
@@ -26,7 +25,6 @@ def test_every_factory_is_registered_in_agent_factories() -> None:
         "plan_generate",
         "plan_revise",
         "session_adjust",
-        "result_parse",
         "recap",
         "plan_import",
         "assistant",
@@ -68,11 +66,6 @@ def test_plan_revise_agent_output_type_is_plan_proposal() -> None:
 def test_session_adjust_agent_output_type_is_session_adjust_proposal() -> None:
     built = session_adjust_agent(TestModel())
     assert built.agent.output_type is SessionAdjustProposal
-
-
-def test_result_parse_agent_output_type_is_parsed_results() -> None:
-    built = result_parse_agent(TestModel())
-    assert built.agent.output_type is ParsedResults
 
 
 def test_recap_agent_output_type_is_recap() -> None:

@@ -1,9 +1,11 @@
 """The `/train` workout loop (A§6.5, A§6.6, IMPLEMENTATION_PLAN M7) end to end through the
 real dispatcher: workout selection by timezone and rotation, the precheck, the review with
 engine loads, adjust (with the weekly cap and Save to plan), block-by-block delivery with
-`set_logs` rows, the four buttons, free-text results through the stop-word guard and
-`result_parse`, the plausibility guard, halts, holds, resume after a restart, abort and
-stale/double-tapped buttons. The LLM is a `FunctionModel`; Telegram is the `FakeSession`."""
+`set_logs` rows, the three block buttons (✅ / ⏭ / ⚠), the stop-word guard on text typed
+during a workout, the plausibility guard on logged results, halts, holds, resume after a
+restart, abort and stale/double-tapped buttons (including those of the removed ✏️ result
+entry, ADR 0013). Typed results are logged by the assistant, tested in
+`test_assistant_flow.py`. The LLM is a `FunctionModel`; Telegram is the `FakeSession`."""
 
 from __future__ import annotations
 
@@ -44,11 +46,12 @@ from fitme.db.selectors.training import (
 from fitme.db.selectors.users import get_telegram_account_by_telegram_user_id
 from fitme.domain.enums import AREA_FLAGS, RED_FLAGS
 from fitme.domain.models import Block, Load, Plan, Prescription, Refusal, ScheduledDay, Workout
-from fitme.domain.results import ParsedResults, Recap, SetResult
+from fitme.domain.results import Recap, SetResult
 from fitme.i18n import t
-from fitme.llm.agents import recap_agent, result_parse_agent, session_adjust_agent
+from fitme.llm.agents import recap_agent, session_adjust_agent
 from fitme.services import profile as profile_service
 from fitme.services import training
+from fitme.services.decisions import PromptMeta
 from fitme.services.identity import issue_activation_code
 from fitme.services.llm_runtime import LlmRuntime
 
@@ -65,11 +68,10 @@ _TUESDAY_NOON_UTC = datetime(2026, 9, 29, 12, 0, tzinfo=UTC)
 
 @dataclass
 class FakeLlm:
-    """Answers `session_adjust` and `result_parse` calls from their own queues, records
+    """Answers `session_adjust` and `recap` calls from their own queues, records
     every prompt it received, and counts calls."""
 
     adjust_responses: list[Workout | Refusal] = field(default_factory=list)
-    parse_responses: list[ParsedResults] = field(default_factory=list)
     # `recap` answers: a `Recap`, or an exception to raise (a provider failure). An empty
     # queue answers with an empty recap, so workouts can complete in any test.
     recap_responses: list[Recap | Exception] = field(default_factory=list)
@@ -83,14 +85,14 @@ class FakeLlm:
         for part in request.parts:
             if part.part_kind == "user-prompt":
                 self.prompts.append(str(part.content))
-        output: Workout | Refusal | ParsedResults | Recap
+        output: Workout | Refusal | Recap
         if agent == "recap":
             queued = self.recap_responses.pop(0) if self.recap_responses else Recap(text="")
             if isinstance(queued, Exception):
                 raise queued
             output = queued
             tool = info.output_tools[0].name  # `Recap` is the agent's one output type
-        elif agent == "session_adjust":
+        else:
             output = self.adjust_responses.pop(0)
             wanted = "Refusal" if isinstance(output, Refusal) else "Workout"
             tool = next(
@@ -98,9 +100,6 @@ class FakeLlm:
                 for tool in info.output_tools
                 if wanted in tool.name and (wanted == "Refusal" or "Refusal" not in tool.name)
             )
-        else:
-            output = self.parse_responses.pop(0)
-            tool = info.output_tools[0].name
         return ModelResponse(
             parts=[ToolCallPart(tool_name=tool, args=output.model_dump(mode="json"))]
         )
@@ -113,11 +112,6 @@ class FakeLlm:
                 "session_adjust": lambda model: session_adjust_agent(
                     FunctionModel(
                         lambda m, i: self._respond("session_adjust", m, i), model_name=str(model)
-                    )
-                ),
-                "result_parse": lambda model: result_parse_agent(
-                    FunctionModel(
-                        lambda m, i: self._respond("result_parse", m, i), model_name=str(model)
                     )
                 ),
                 "recap": lambda model: recap_agent(
@@ -397,21 +391,6 @@ async def _rows(
     return [(r.exercise_id, r.set_index, r.actual_load_kg, r.actual_reps, r.skipped) for r in rows]
 
 
-def _parsed(
-    *sets: tuple[int, int | None, float | None], safety: bool = False, unclear: bool = False
-) -> ParsedResults:
-    return ParsedResults(
-        sets=[
-            SetResult(set_index=index, skipped=True)
-            if reps is None
-            else SetResult(set_index=index, reps=reps, load_kg=kg)
-            for index, reps, kg in sets
-        ],
-        safety_signal=safety,
-        unclear=unclear,
-    )
-
-
 # --- Selection: plan, timezone, rotation ------------------------------------------------------
 
 
@@ -612,7 +591,7 @@ async def test_according_to_plan_logs_every_prescribed_set_and_completes(
     datas = _callback_datas(_sent(session)[-1])
     assert TrainAction(action="pain", session_id=session_id, block=0).pack() in datas
     assert TrainAction(action="skip", session_id=session_id, block=0).pack() in datas
-    assert TrainAction(action="enter", session_id=session_id, block=0).pack() in datas
+    assert not any(d.startswith("tr:enter:") for d in datas)  # ADR 0013: no ✏️ button
     # One row per prescribed set, actuals empty, created when the block was sent.
     assert await _rows(db, session_id) == [(_SQUAT, i, None, None, False) for i in (1, 2, 3)]
 
@@ -727,9 +706,6 @@ async def test_stop_word_in_results_text_halts_without_an_llm_call(
 ) -> None:
     user_id, _, _ = await _ready(dispatcher, bot, db)
     session_id = await _to_first_block(dispatcher, bot, session)
-    llm.parse_responses.append(_parsed((1, 8, 40.0), (2, 8, 40.0), (3, 8, 40.0)))
-    await _click(dispatcher, bot, _last_action(session, "enter"))
-    assert _last_text(session).startswith("Send the results for Barbell back squat")
 
     await _send(dispatcher, bot, "8, 8, 6 at 40 but a sharp pain in my knee on the last one")
 
@@ -741,9 +717,10 @@ async def test_stop_word_in_results_text_halts_without_an_llm_call(
         messages = await list_chat_messages_for_user(conn, user_id)
     assert messages[0].session_id == session_id  # tied to the session, purged with it
 
-    # Later text isn't sent to the model either: the pending prompt died with the halt.
+    # Later text isn't sent to the model either: the open hold refuses first.
     await _send(dispatcher, bot, "8, 8, 8")
     assert llm.calls == 0
+    assert _last_text(session) == t("refusal.open_health_hold", "en")
 
 
 async def test_stop_word_in_adjust_text_halts_without_an_llm_call(
@@ -761,163 +738,6 @@ async def test_stop_word_in_adjust_text_halts_without_an_llm_call(
     assert llm.calls == 0
     assert await _holds(db, user_id) == ["stop_word"]
     assert await _session_status(db, session_id) == "halted"
-
-
-async def test_llm_safety_signal_halts(
-    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
-) -> None:
-    user_id, _, _ = await _ready(dispatcher, bot, db)
-    session_id = await _to_first_block(dispatcher, bot, session)
-    llm.parse_responses.append(_parsed((1, 8, 40.0), (2, 8, 40.0), (3, 8, 40.0), safety=True))
-    await _click(dispatcher, bot, _last_action(session, "enter"))
-
-    await _send(dispatcher, bot, "8 8 8 at 40, my arm went weird")
-
-    assert llm.calls == 1
-    assert _last_text(session) == t("halt.message", "en")
-    assert await _holds(db, user_id) == ["llm_safety_signal"]
-    assert await _session_status(db, session_id) == "halted"
-    assert await _rows(db, session_id) == [(_SQUAT, i, None, None, False) for i in (1, 2, 3)]
-
-
-# --- Results: parse, plausibility, confirm --------------------------------------------------
-
-
-async def test_confirmed_parse_writes_actuals_and_the_llm_input_is_verbatim(
-    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
-) -> None:
-    user_id, _, version_id = await _ready(dispatcher, bot, db)
-    await _seed_completed_session(db, user_id, version_id, loads={_SQUAT: 40.0})
-    session_id = await _to_first_block(dispatcher, bot, session)
-    llm.parse_responses.append(_parsed((1, 10, 42.5), (2, 9, 42.5), (3, None, None)))
-    await _click(dispatcher, bot, _last_action(session, "enter"))
-
-    await _send(dispatcher, bot, "10, 9 at 42.5, skipped the third")
-
-    assert llm.calls == 1
-    table = _last_text(session)
-    assert table.startswith(t("train.parsed_title", "en", name="Barbell back squat"))
-    assert "Set 1: 10 reps @ 42.5 kg" in table and "Set 3: skipped" in table
-    # Nothing is stored until Correct.
-    assert await _rows(db, session_id) == [(_SQUAT, i, None, None, False) for i in (1, 2, 3)]
-    # The prompt held only the planned block, the text and the load units (A§8.2).
-    payload = json.loads(llm.prompts[0])
-    assert set(payload) == {"language", "planned_block", "result_text", "load_units"}
-    assert payload["load_units"] == {_SQUAT: "total"}
-    assert "user_id" not in llm.prompts[0]
-    async with db.read() as conn:
-        decisions = await list_decisions_for_user(conn, user_id)
-    parse_decision = next(d for d in decisions if d.kind == "result_parse")
-    assert parse_decision.llm_input == payload
-    assert parse_decision.model == "anthropic:claude-haiku-4-5"
-
-    await _click(dispatcher, bot, _last_action(session, "parse_ok"))
-
-    assert (await _rows(db, session_id))[:3] == [
-        (_SQUAT, 1, 42.5, 10, False),
-        (_SQUAT, 2, 42.5, 9, False),
-        (_SQUAT, 3, None, None, True),
-    ]
-    assert _last_text(session).startswith(t("train.block_title", "en", index=2, total=2))
-    async with db.read() as conn:
-        rows = await list_set_logs_for_session(conn, session_id)
-    assert {row.source for row in rows[:3]} == {"free_text"}
-
-
-async def test_superset_results_are_entered_one_exercise_at_a_time(
-    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
-) -> None:
-    user_id, _, version_id = await _ready(dispatcher, bot, db)
-    await _seed_completed_session(db, user_id, version_id, loads={_SQUAT: 40.0})
-    session_id = await _to_first_block(dispatcher, bot, session)
-    await _click(dispatcher, bot, _last_action(session, "done"))  # squat block
-    await _click(dispatcher, bot, _last_action(session, "enter"))
-    assert _last_text(session).startswith("Send the results for Dumbbell bench press")
-
-    llm.parse_responses.append(_parsed((1, 10, 8.0), (2, 10, 8.0), (3, 8, 8.0)))
-    await _send(dispatcher, bot, "10 10 8 with 8s")
-    await _click(dispatcher, bot, _last_action(session, "parse_ok"))
-    assert _last_text(session).startswith("Send the results for Push-up")
-
-    llm.parse_responses.append(_parsed((1, 12, None), (2, 12, None), (3, 12, None)))
-    await _send(dispatcher, bot, "12 12 12")
-    assert "Set 1: 12 reps" in _last_text(session)
-    await _click(dispatcher, bot, _last_action(session, "parse_ok"))
-
-    assert t("train.completed", "en", logged=9, planned=9) in _texts(session)  # then the recap (M8)
-    rows = await _rows(db, session_id)
-    assert rows[3:6] == [(_BENCH, i, 8.0, r, False) for i, r in ((1, 10), (2, 10), (3, 8))]
-    assert rows[6:] == [(_PUSHUP, i, None, 12, False) for i in (1, 2, 3)]
-
-
-async def test_an_implausible_parse_re_asks_and_stores_nothing(
-    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
-) -> None:
-    user_id, _, version_id = await _ready(dispatcher, bot, db)
-    await _seed_completed_session(db, user_id, version_id, loads={_SQUAT: 40.0, _BENCH: 10.0})
-    session_id = await _to_first_block(dispatcher, bot, session)
-
-    # "425" for 42.5 on the squat.
-    await _click(dispatcher, bot, _last_action(session, "enter"))
-    llm.parse_responses.append(_parsed((1, 10, 425.0), (2, 10, 42.5), (3, 10, 42.5)))
-    await _send(dispatcher, bot, "10 10 10 at 425")
-    assert _last_text(session) == t(
-        "train.results_implausible", "en", name="Barbell back squat", load="42.5 kg"
-    )
-    assert (await _rows(db, session_id))[:3] == [(_SQUAT, i, None, None, False) for i in (1, 2, 3)]
-    async with db.read() as conn:
-        decisions = await list_decisions_for_user(conn, user_id)
-    parse_decision = next(d for d in decisions if d.kind == "result_parse")
-    assert (
-        parse_decision.proposal is not None and parse_decision.proposal["verdict"] == "implausible"
-    )
-    assert any(
-        g["rule"] == "plausibility.parsed_load" and not g["ok"] for g in parse_decision.guards_fired
-    )
-
-    # The prompt is still pending: a plausible re-entry is shown for confirmation.
-    llm.parse_responses.append(_parsed((1, 10, 42.5), (2, 10, 42.5), (3, 10, 42.5)))
-    await _send(dispatcher, bot, "10 10 10 at 42.5")
-    assert _last_text(session).startswith(t("train.parsed_title", "en", name="Barbell back squat"))
-    await _click(dispatcher, bot, _last_action(session, "parse_ok"))
-
-    # A combined two-dumbbell total (22 for "11 each") on the bench press.
-    await _click(dispatcher, bot, _last_action(session, "enter"))
-    llm.parse_responses.append(_parsed((1, 10, 22.0), (2, 10, 22.0), (3, 10, 22.0)))
-    await _send(dispatcher, bot, "10 10 10 with 22")
-    assert _last_text(session) == t(
-        "train.results_implausible", "en", name="Dumbbell bench press", load="11 kg each"
-    )
-    assert (await _rows(db, session_id))[3:6] == [(_BENCH, i, None, None, False) for i in (1, 2, 3)]
-    # Confirming now finds no shown parse: nothing is written.
-    await _click(
-        dispatcher, bot, TrainAction(action="parse_ok", session_id=session_id, block=1, item=0)
-    )
-    assert _toasts(session)[-1] == t("train.stale", "en")
-    assert (await _rows(db, session_id))[3:6] == [(_BENCH, i, None, None, False) for i in (1, 2, 3)]
-
-
-async def test_an_unclear_parse_re_asks(
-    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
-) -> None:
-    _user_id, _, _ = await _ready(dispatcher, bot, db)
-    session_id = await _to_first_block(dispatcher, bot, session)
-    await _click(dispatcher, bot, _last_action(session, "enter"))
-    llm.parse_responses.append(_parsed((1, 8, None), unclear=True))
-
-    await _send(dispatcher, bot, "went ok I guess")
-
-    assert _last_text(session) == t("train.results_unclear", "en", name="Barbell back squat")
-    assert await _rows(db, session_id) == [(_SQUAT, i, None, None, False) for i in (1, 2, 3)]
-    # Still pending: the next text goes to the model again.
-    llm.parse_responses.append(_parsed((1, 8, 20.0), (2, 8, 20.0), (3, 8, 20.0)))
-    await _send(dispatcher, bot, "8 8 8 at 20")
-    assert llm.calls == 2
-    assert "Set 1: 8 reps @ 20 kg" in _last_text(session)
-    # "Fix" re-asks instead of storing.
-    await _click(dispatcher, bot, _last_action(session, "parse_fix"))
-    assert _last_text(session).startswith("Send the results for Barbell back squat")
-    assert await _rows(db, session_id) == [(_SQUAT, i, None, None, False) for i in (1, 2, 3)]
 
 
 # --- Adjust, the weekly cap, Save to plan -----------------------------------------------------
@@ -1287,34 +1107,38 @@ async def test_b1_a_model_refusal_keeps_the_accepted_draft_and_says_so(
     assert start_decision.user_report["draft_decision_id"] == d1
 
 
-async def test_b2_a_calibration_typo_is_re_asked_and_never_reaches_the_history_max(
-    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
+_ASSISTANT_PROMPT = PromptMeta(template_name="assistant", version=9, model="test")
+
+
+async def _log_results(
+    db: Database, user_id: int, session_id: int, block: int, exercise_id: str, kg: float
+) -> training.LogItemsResult:
+    """Three sets of 10 at `kg`, logged the way the assistant's `log_exercise_results` does."""
+    entry = training.ItemLog(
+        exercise_id=exercise_id,
+        kind=training.ItemLogKind.RESULTS,
+        sets=tuple(SetResult(set_index=i, reps=10, load_kg=kg) for i in (1, 2, 3)),
+    )
+    return await training.log_items(
+        db, user_id, session_id, block, [entry], prompt=_ASSISTANT_PROMPT, report_extra={}
+    )
+
+
+async def test_b2_a_calibration_typo_is_refused_and_never_reaches_the_history_max(
+    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database
 ) -> None:
     user_id, _, _ = await _ready(dispatcher, bot, db)
     session_id = await _to_first_block(dispatcher, bot, session)  # squat is calibration
-    await _click(dispatcher, bot, _last_action(session, "enter"))
-    llm.parse_responses.append(_parsed((1, 10, 425.0), (2, 10, 425.0), (3, 10, 425.0)))
 
-    await _send(dispatcher, bot, "10 10 10 at 42,5")
+    typo = await _log_results(db, user_id, session_id, 0, _SQUAT, 425.0)  # "42,5" misread
 
-    assert _last_text(session) == t(
-        "train.results_implausible",
-        "en",
-        name="Barbell back squat",
-        load="calibration: start light, log what you used",
-    )
+    assert typo.status == training.Status.STALE
+    assert typo.error is not None and "implausible" in typo.error
     assert (await _rows(db, session_id))[:3] == [(_SQUAT, i, None, None, False) for i in (1, 2, 3)]
-    # No shown parse exists: a Correct button can't write anything.
-    await _click(
-        dispatcher, bot, TrainAction(action="parse_ok", session_id=session_id, block=0, item=0)
-    )
-    assert _toasts(session)[-1] == t("train.stale", "en")
     # The plausible re-entry goes through; the session completes at 42.5.
-    await _click(dispatcher, bot, _last_action(session, "enter"))
-    llm.parse_responses.append(_parsed((1, 10, 42.5), (2, 10, 42.5), (3, 10, 42.5)))
-    await _send(dispatcher, bot, "10 10 10 at 42.5")
-    await _click(dispatcher, bot, _last_action(session, "parse_ok"))
-    await _click(dispatcher, bot, _last_action(session, "done"))
+    logged = await _log_results(db, user_id, session_id, 0, _SQUAT, 42.5)
+    assert logged.status == training.Status.OK and logged.advance is not None
+    await _click(dispatcher, bot, TrainAction(action="done", session_id=session_id, block=1))
     assert await _session_status(db, session_id) == "completed"
     async with db.read() as conn:
         assert await historical_max_kg(conn, user_id, _SQUAT) == 42.5
@@ -1322,8 +1146,8 @@ async def test_b2_a_calibration_typo_is_re_asked_and_never_reaches_the_history_m
     assert "Barbell back squat: 3 × 8–10 @ 42.5 kg" in _last_text(session)
 
 
-async def test_b2_a_calibration_parse_is_checked_against_the_historical_max(
-    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
+async def test_b2_a_calibration_entry_is_checked_against_the_historical_max(
+    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database
 ) -> None:
     """Calibration again after a session where nothing usable was logged, but a 40 kg
     historical max exists: 125 ("12,5") is inside the absolute bound and caught by the
@@ -1333,10 +1157,9 @@ async def test_b2_a_calibration_parse_is_checked_against_the_historical_max(
     await _seed_completed_session(db, user_id, version_id, loads={_SQUAT: None})
     session_id = await _to_first_block(dispatcher, bot, session)
     assert t("train.calibration_hint", "en") in _last_text(session)
-    await _click(dispatcher, bot, _last_action(session, "enter"))
-    llm.parse_responses.append(_parsed((1, 10, 125.0), (2, 10, 125.0), (3, 10, 125.0)))
-    await _send(dispatcher, bot, "10 10 10 at 12,5")
-    assert _last_text(session).startswith("One of those numbers doesn't look right")
+    refused = await _log_results(db, user_id, session_id, 0, _SQUAT, 125.0)
+    assert refused.status == training.Status.STALE
+    assert refused.error is not None and "implausible" in refused.error
     assert (await _rows(db, session_id))[:3] == [(_SQUAT, i, None, None, False) for i in (1, 2, 3)]
     await _click(dispatcher, bot, _last_action(session, "skip"))
     await _click(dispatcher, bot, _last_action(session, "done"))
@@ -1346,27 +1169,31 @@ async def test_b2_a_calibration_parse_is_checked_against_the_historical_max(
     assert "Barbell back squat: 3 × 8–10 @ calibration" in _last_text(session)
 
 
-async def test_correct_on_an_older_parse_table_is_stale(
+async def test_buttons_of_the_removed_result_entry_are_stale_and_change_nothing(
     dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
 ) -> None:
+    """ADR 0013: ✏️ Enter results, Correct and Fix on a message sent before the update still
+    send their callback data; each gets the stale toast, and the block stays as it was."""
     user_id, _, version_id = await _ready(dispatcher, bot, db)
     await _seed_completed_session(db, user_id, version_id, loads={_SQUAT: 40.0})
     session_id = await _to_first_block(dispatcher, bot, session)
-    await _click(dispatcher, bot, _last_action(session, "enter"))
-    llm.parse_responses.append(_parsed((1, 10, 42.5), (2, 10, 42.5), (3, 10, 42.5)))
-    await _send(dispatcher, bot, "10 10 10 at 42.5")
-    first_ok = _last_action(session, "parse_ok")
-    llm.parse_responses.append(_parsed((1, 8, 40.0), (2, 8, 40.0), (3, 8, 40.0)))
-    await _click(dispatcher, bot, _last_action(session, "enter"))
-    await _send(dispatcher, bot, "8 8 8 at 40")
-    second_ok = _last_action(session, "parse_ok")
-    assert first_ok.decision_id and first_ok.decision_id != second_ok.decision_id
+    sent_before = len(_sent(session))
 
-    await _click(dispatcher, bot, first_ok)
-    assert _toasts(session)[-1] == t("train.stale", "en")
-    assert (await _rows(db, session_id))[:3] == [(_SQUAT, i, None, None, False) for i in (1, 2, 3)]
-    await _click(dispatcher, bot, second_ok)
-    assert (await _rows(db, session_id))[:3] == [(_SQUAT, i, 40.0, 8, False) for i in (1, 2, 3)]
+    for action in ("enter", "parse_ok", "parse_fix"):
+        await _click(
+            dispatcher,
+            bot,
+            TrainAction(action=action, session_id=session_id, block=0, item=0, decision_id=1),
+        )
+        assert _toasts(session)[-1] == t("errors.stale_callback", "en")
+
+    assert len(_sent(session)) == sent_before  # no prompt, no table, no next block
+    assert await _rows(db, session_id) == [(_SQUAT, i, None, None, False) for i in (1, 2, 3)]
+    assert await _session_status(db, session_id) == "in_progress"
+    assert llm.calls == 0
+    # The block's own buttons still work.
+    await _click(dispatcher, bot, _last_action(session, "done"))
+    assert _last_text(session).startswith(t("train.block_title", "en", index=2, total=2))
 
 
 async def test_adjust_service_re_scans_for_stop_words_before_the_llm(
@@ -1464,10 +1291,10 @@ async def test_a_calibration_block_hides_the_all_sets_button(
     dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database
 ) -> None:
     user_id, _, version_id = await _ready(dispatcher, bot, db)
-    session_id = await _to_first_block(dispatcher, bot, session)  # squat: calibration
+    await _to_first_block(dispatcher, bot, session)  # squat: calibration
     datas = _callback_datas(_sent(session)[-1])
     assert not any(d.startswith("tr:done:") for d in datas)
-    assert TrainAction(action="enter", session_id=session_id, block=0).pack() in datas
+    assert not any(d.startswith("tr:enter:") for d in datas)  # ADR 0013: typed instead
     assert t("train.calibration_hint", "en") in _last_text(session)
     assert t("train.according_hint", "en") not in _last_text(session)
     # A forged ✅ still logs nothing usable... but the button isn't offered, so skip instead.
@@ -1495,39 +1322,6 @@ async def test_save_to_plan_after_start_says_already_started(
     await _click(dispatcher, bot, save)
     assert _toasts(session)[-1] == t("train.already_started", "en")
     assert await _session_status(db, session_id) == "in_progress"
-
-
-async def test_a_safety_signal_after_the_pain_button_opens_no_second_hold(
-    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, settings: Settings
-) -> None:
-    user_id, _, _ = await _ready(dispatcher, bot, db)
-    session_id = await _to_first_block(dispatcher, bot, session)
-
-    async def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
-        # ⚠ is pressed while the model is still running.
-        await training.pain_button(db, user_id, session_id, 0)
-        parsed = _parsed((1, 8, 20.0), (2, 8, 20.0), (3, 8, 20.0), safety=True)
-        return ModelResponse(
-            parts=[
-                ToolCallPart(
-                    tool_name=info.output_tools[0].name, args=parsed.model_dump(mode="json")
-                )
-            ]
-        )
-
-    runtime = LlmRuntime(
-        settings=settings,
-        prices={},
-        agent_factories={
-            "result_parse": lambda model: result_parse_agent(
-                FunctionModel(respond, model_name=str(model))
-            )
-        },
-    )
-    result = await training.parse_results(db, runtime, user_id, session_id, 0, 0, "8 8 8 at 20")
-    assert result.status == training.ParseStatus.HALTED and result.halt is None
-    assert await _holds(db, user_id) == ["pain_button"]
-    assert await _session_status(db, session_id) == "halted"
 
 
 async def test_adjust_cannot_set_or_change_a_declared_hint(

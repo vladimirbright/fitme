@@ -4,7 +4,7 @@ so every `Command(...)`-filtered handler gets first refusal; this only ever sees
 
 Order (A§6.3, A§6.6): save to `chat_messages` (tied to the active workout session, if
 any), then the stop-word guard *before anything else* — including a pending `/delete`
-confirmation, a pending `/train` prompt (an adjustment request or a block's results, M7), a
+confirmation, a pending `/train` adjustment request (M7), a
 pending `/plan` revision request or pasted program (M8b) — the paths where free text reaches
 the LLM — or an active setup step — **except** for the `screening_other` step (B2): that note
 must be persisted first, because it may set `other_unlisted = yes` (needing clearance)
@@ -16,8 +16,8 @@ too, since editing a message is just as much "the owner reporting a symptom" as 
 one.
 
 Last in line (ADR 0003): with nothing pending and no setup step active, the message goes to
-the free-text assistant (`bot/handlers/assistant.py`) — unless the operator turned it off
-(`FITME_ASSISTANT_ENABLED=false`), in which case the old "use the menu" hint is shown.
+the free-text assistant (`bot/handlers/assistant.py`); it is always on (ADR 0013), and only
+blank text or text during setup gets the "use the menu" hint.
 """
 
 from __future__ import annotations
@@ -112,7 +112,7 @@ async def on_free_text(
     if await handle_setup_free_text(message, db, user_id, text):
         return
 
-    if settings.assistant_enabled and step is None and text.strip():
+    if step is None and text.strip():
         await handle_assistant_text(
             message,
             db,

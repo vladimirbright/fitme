@@ -28,7 +28,7 @@ from test_train_flow import (
     _holds,
     _last_action,
     _last_text,
-    _parsed,
+    _log_results,
     _ready,
     _rows,
     _seed_completed_session,
@@ -858,12 +858,10 @@ async def test_q2_logging_lighter_than_the_applied_load_keeps_the_held_load(
     user_id, plan_id, version_id = await _ready(dispatcher, bot, db)
     await _seed_finished(db, user_id, version_id, loads={_SQUAT: 40.0}, reps=10)
     s1 = await _to_first_block(dispatcher, bot, session)  # applies 42.5
-    llm.parse_responses.append(_parsed((1, 10, 40.0), (2, 10, 40.0), (3, 10, 40.0)))
-    await _click(dispatcher, bot, _last_action(session, "enter"))
-    await _send(dispatcher, bot, "10 10 10 at 40")
-    await _click(dispatcher, bot, _last_action(session, "parse_ok"))
+    logged = await _log_results(db, user_id, s1, 0, _SQUAT, 40.0)  # "10 10 10 at 40"
+    assert logged.status == training.Status.OK and logged.advance is not None
     monkeypatch.setattr(clock, "now", lambda: _TUESDAY_NOON_UTC + timedelta(minutes=30))
-    await _click(dispatcher, bot, _last_action(session, "done"))
+    await _click(dispatcher, bot, TrainAction(action="done", session_id=s1, block=1))
     assert await _session_status(db, s1) == "completed"
 
     monkeypatch.setattr(clock, "now", lambda: _TUESDAY_NOON_UTC + timedelta(days=1))

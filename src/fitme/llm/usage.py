@@ -225,9 +225,9 @@ class PromptInfo:
 @dataclass(frozen=True, slots=True)
 class AgentRunOutcome[T]:
     """One `run_agent` call's full result: the parsed output (a `Refusal` on any failure,
-    even for an agent whose own output type has no `Refusal` member — `ParsedResults`,
-    `Recap`), the `llm_calls`-shaped `record`, and the `prompt` actually sent (B2), for a
-    caller to store verbatim as `decisions.llm_input`."""
+    even for an agent whose own output type has no `Refusal` member — `Recap`), the
+    `llm_calls`-shaped `record`, and the `prompt` actually sent (B2), for a caller to store
+    verbatim as `decisions.llm_input`."""
 
     output: T | Refusal
     record: AgentRunRecord

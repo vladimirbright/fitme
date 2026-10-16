@@ -61,7 +61,7 @@ async def get_latest_session_event_decision(
 ) -> DecisionRecord | None:
     """The newest decision of `kind` that `services.training` wrote for `session_id` with
     `user_report.event == event` (M7: `session_adjust`/`adjust` drafts, the applying
-    `session_adjust`/`start` record, `result_parse`/`parse` results). `user_report` is the
+    `session_adjust`/`start` record). `user_report` is the
     sanctioned free-form JSON column (A§4.3), so this needs no schema change — the same
     pattern as `get_session_halt_decision_for_hold`."""
     async with conn.execute(

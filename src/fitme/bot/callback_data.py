@@ -79,16 +79,16 @@ class TrainPick(CallbackData, prefix="tp"):
 
 
 class TrainAction(CallbackData, prefix="tr"):
-    """Every button of a workout session (A§6.3: tied to the session id, the block index and
-    — for per-prescription result entry — the item), so a stale block's button is rejected by
-    `services.training` against the session's current state, not trusted."""
+    """Every button of a workout session (A§6.3: tied to the session id and the block index),
+    so a stale block's button is rejected by `services.training` against the session's current
+    state, not trusted. Buttons of removed actions (the ✏️ result entry, ADR 0013) still unpack
+    and get the stale toast."""
 
     action: str
     session_id: int
     block: int = 0
+    # A recap suggestion's Apply button: the `progression` decision and the suggestion's index.
     item: int = 0
-    # The `result_parse` decision a Correct button confirms: an older table's Correct must not
-    # apply the newest parse.
     decision_id: int = 0
 
 

@@ -1,6 +1,6 @@
 """The halt path (A§6.6) and hold clearing, in one place so every trigger goes through the
 same code: a stop word in any free text (M5), and — M7 — the precheck "Yes", the pain button,
-a `result_parse` safety signal and a stop word typed during a workout.
+the assistant's safety signal and a stop word typed during a workout.
 
 Order matters (A§6.6): halt the session, create the hold, log the decision — all in one
 transaction — then the caller sends the fixed, non-LLM message. `halt()` always halts the

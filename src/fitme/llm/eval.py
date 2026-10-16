@@ -12,7 +12,7 @@ fixture — this only runs when `plan_generate` is also in the requested agent l
 succeeded. ADR 0009: a fixture may also carry a plan `request`, the user's other `sport`
 (`sport_sessions_per_week`) and hard `exclusions` (`[{"kind", "value"}]`); a plan that passes
 the guards is then also reviewed (`services.plan_quality`) and reported as `findings` when
-the review finds programming problems. `session_adjust`, `result_parse` and `recap` take a
+the review finds programming problems. `session_adjust` and `recap` take a
 specific in-progress workout or free-text report as input, which a bare profile fixture
 doesn't carry; requesting them is accepted (so `--agent` still recognizes every agent name)
 but reported as `skipped`, with a clear reason, rather than fed a fabricated input.

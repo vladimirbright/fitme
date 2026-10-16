@@ -180,7 +180,7 @@ async def update_set_log_actual(
     actual_meters: int | None = None,
 ) -> None:
     """Record what the user actually did for one prescribed set (A§6.5 step 5: "According
-    to plan" or a confirmed `result_parse`), in the set's measure (ADR 0009: reps, seconds
+    to plan" or results logged by the assistant), in the set's measure (ADR 0009: reps, seconds
     or meters). Clears `skipped`, since a logged set was performed (the schema forbids the
     two together)."""
     await conn.execute(

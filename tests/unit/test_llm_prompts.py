@@ -22,7 +22,6 @@ _REAL_PROMPT_VERSIONS = {
     # v2 (ADR 0009): structured measures — time in seconds, distance in meters
     "plan_revise": 4,  # v3: workout qualities and programming (ADR 0009); v4: roles, rir (0011)
     "session_adjust": 2,
-    "result_parse": 2,
     "recap": 2,  # v2: change_sets and the did-more signal (ADR 0015)
     "plan_import": 2,
     "assistant": 9,  # v4: sessions + tools (ADR 0004); v5: per-exercise logging (ADR 0005);

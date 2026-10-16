@@ -183,7 +183,6 @@ def test_the_allowed_prompt_disclaimer_sentence_actually_appears_in_every_real_p
         "plan_generate",
         "plan_revise",
         "session_adjust",
-        "result_parse",
         "recap",
         "plan_import",
     ):

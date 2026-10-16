@@ -36,7 +36,7 @@ from fitme.domain.assistant import (
     WorkoutOp,
 )
 from fitme.domain.models import PlanImportProposal, PlanProposal, SessionAdjustProposal
-from fitme.domain.results import ParsedResults, Recap, SetResult
+from fitme.domain.results import Recap, SetResult
 from fitme.llm.models import model_settings_for, output_retries_for
 from fitme.llm.prompts import render_prompt
 
@@ -114,12 +114,6 @@ def session_adjust_agent(model: AgentModel) -> BuiltAgent[SessionAdjustProposal]
     """A§8.1: context + today's workout + user request in, `SessionAdjustProposal`
     (`Workout | Refusal`) out. Default tier: medium."""
     return _built("session_adjust", model, SessionAdjustProposal)
-
-
-def result_parse_agent(model: AgentModel) -> BuiltAgent[ParsedResults]:
-    """A§8.1: planned block + user text in, `ParsedResults` out. Default tier: small. Never
-    escalates (A§8.5 rule 3) — callers don't route this one through `llm/escalation.py`."""
-    return _built("result_parse", model, ParsedResults)
 
 
 def recap_agent(model: AgentModel) -> BuiltAgent[Recap]:
@@ -436,7 +430,6 @@ AGENT_FACTORIES: dict[str, Callable[[AgentModel], BuiltAgent[Any]]] = {
     "plan_generate": plan_generate_agent,
     "plan_revise": plan_revise_agent,
     "session_adjust": session_adjust_agent,
-    "result_parse": result_parse_agent,
     "recap": recap_agent,
     "plan_import": plan_import_agent,
     "assistant": assistant_agent,

@@ -379,38 +379,6 @@ def test_render_user_prompt_with_full_context_includes_allowed_ids_and_history()
     assert "language" not in rendered.payload  # nested inside "context", not top-level
 
 
-def test_render_user_prompt_for_result_parse_omits_allowed_ids_and_history() -> None:
-    """A§8.2 per-agent minimization: `result_parse` gets only the planned block, the result
-    text and the language — never the allowed-ids list or history, because its caller never
-    passes a `context` at all."""
-    from fitme.domain.models import Block, Load, Prescription
-    from fitme.llm.context import render_user_prompt
-
-    block = Block(
-        kind="single",
-        items=[
-            Prescription(
-                exercise_id="barbell_back_squat",
-                sets=3,
-                reps_min=5,
-                reps_max=8,
-                load=Load(kind="kg", kg=60.0),
-                rest_seconds=120,
-            )
-        ],
-    )
-    rendered = render_user_prompt(language="en", planned_block=block, result_text="did 8,8,6")
-
-    assert rendered.payload == {
-        "language": "en",
-        "planned_block": block.model_dump(mode="json"),
-        "result_text": "did 8,8,6",
-    }
-    assert "context" not in rendered.payload
-    assert "allowed_exercise_ids" not in json.dumps(rendered.payload)
-    assert "history" not in json.dumps(rendered.payload)
-
-
 def test_render_user_prompt_requires_context_or_language() -> None:
     from fitme.llm.context import render_user_prompt
 
@@ -432,35 +400,6 @@ def test_render_user_prompt_carries_guard_feedback_only_when_given() -> None:
         "schedule has 1 day(s)",
     ]
     assert json.loads(retry.text) == retry.payload
-
-
-def test_render_user_prompt_carries_load_units_for_result_parse() -> None:
-    """A§4.4: `result_parse` is told what each planned exercise's kg means."""
-    from fitme.domain.models import Block, Load, Prescription
-    from fitme.llm.context import render_user_prompt
-
-    block = Block(
-        kind="single",
-        items=[
-            Prescription(
-                exercise_id="dumbbell_bench_press",
-                sets=3,
-                reps_min=8,
-                reps_max=12,
-                load=Load(kind="kg", kg=12.5),
-                rest_seconds=90,
-            )
-        ],
-    )
-    rendered = render_user_prompt(
-        language="en",
-        planned_block=block,
-        result_text="12,12,10",
-        load_units={"dumbbell_bench_press": "per_implement"},
-    )
-    assert rendered.payload["load_units"] == {"dumbbell_bench_press": "per_implement"}
-    assert json.loads(rendered.text) == rendered.payload
-    assert "load_units" not in render_user_prompt(language="en", planned_block=block).payload
 
 
 def test_render_user_prompt_carries_the_recap_input_with_only_language() -> None:
