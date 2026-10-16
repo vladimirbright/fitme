@@ -50,7 +50,9 @@ AGENT_DEFAULT_TIER: dict[str, str] = {
     "plan_revise": "medium",
     "session_adjust": "medium",
     "result_parse": "small",
-    "recap": "small",
+    # ADR 0015: the recap reads the workout's results for the next plan changes (sets, reps,
+    # swaps) — worth the large model; it runs once per finished workout.
+    "recap": "large",
     # M8b: transcribing a pasted program is a targeted edit-shaped job (map names to allowed
     # ids, keep numbers as written), not whole-program design — medium, like `plan_revise`.
     "plan_import": "medium",
@@ -76,7 +78,7 @@ AGENT_MODEL_SETTINGS: dict[str, ModelSettings] = {
     "plan_import": ModelSettings(max_tokens=16000, timeout=240),
     "session_adjust": ModelSettings(max_tokens=8000, timeout=120),
     "result_parse": ModelSettings(max_tokens=2048, timeout=60),
-    "recap": ModelSettings(max_tokens=2048, timeout=60),
+    "recap": ModelSettings(max_tokens=4096, timeout=120),
     "assistant": ModelSettings(max_tokens=8000, timeout=120),
 }
 

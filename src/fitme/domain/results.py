@@ -105,7 +105,18 @@ class ChangeReps(BaseModel):
         return self
 
 
-PlanChange = Annotated[SwapExercise | ChangeReps, Field(discriminator="kind")]
+class ChangeSets(BaseModel):
+    """A `PlanChange` (ADR 0015): change one exercise's number of sets — e.g. one more after
+    the user kept doing more than prescribed. Carries no load (see module docstring)."""
+
+    model_config = _STRICT_CONFIG
+
+    kind: Literal["change_sets"] = "change_sets"
+    exercise_id: str
+    sets: Annotated[int, Field(ge=1, le=10)]
+
+
+PlanChange = Annotated[SwapExercise | ChangeReps | ChangeSets, Field(discriminator="kind")]
 
 
 class Recap(BaseModel):

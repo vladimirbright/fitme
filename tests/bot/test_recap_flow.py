@@ -59,9 +59,10 @@ from fitme.db.selectors.decisions import (
 from fitme.db.selectors.plans import list_plan_versions
 from fitme.db.selectors.training import list_checkins_for_session, list_open_health_holds
 from fitme.domain.models import Load, Plan
-from fitme.domain.results import ChangeReps, Recap, SwapExercise
+from fitme.domain.results import ChangeReps, ChangeSets, Recap, SetResult, SwapExercise
 from fitme.i18n import t
 from fitme.services import planning, recap, training
+from fitme.services.decisions import PromptMeta
 from fitme.services.training import Status
 
 _EPOCH = "1970-01-01T00:00:00.000000Z"
@@ -177,6 +178,78 @@ async def test_all_reps_hit_gives_plus_increment_in_the_next_session(
     # The next session's review prescribes the increment (and its Start applies it).
     await _to_review(dispatcher, bot, session)
     assert "Barbell back squat: 3 × 8–10 @ 42.5 kg" in _last_text(session)
+
+
+async def test_an_extra_set_raises_the_load_and_the_recap_says_why(
+    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
+) -> None:
+    """ADR 0014/0015: four sets of a three-set squat at the prescribed 40 kg, reps inside the
+    range — the engine raises it one increment, and the recap names the reason."""
+    user_id, _, version_id = await _ready(dispatcher, bot, db)
+    await _seed_completed_session(db, user_id, version_id, loads={_SQUAT: 40.0}, reps=9)
+    session_id = await _to_first_block(dispatcher, bot, session)
+    four = tuple(SetResult(set_index=i, reps=9) for i in (1, 2, 3, 4))
+    logged = await training.log_items(
+        db,
+        user_id,
+        session_id,
+        0,
+        [training.ItemLog(_SQUAT, training.ItemLogKind.RESULTS, four)],
+        prompt=PromptMeta(template_name="assistant", version=9, model="test"),
+        report_extra={},
+    )
+    assert logged.status == Status.OK
+    await _send(dispatcher, bot, "/train")
+    await _click(dispatcher, bot, _last_action(session, "resume"))  # the next block
+    await _finish_block(dispatcher, bot, session)
+
+    text = _recap_message(session)
+    assert "Barbell back squat: 4/3 sets, 36 reps" in text
+    assert (
+        t(
+            "recap.next_increase_did_more",
+            "en",
+            name="Barbell back squat",
+            load="42.5 kg",
+            current="40 kg",
+        )
+        in text
+    )
+    _, proposal = await _progression(db, user_id, session_id)
+    squat = next(p for p in proposal.preview if p.exercise_id == _SQUAT)
+    assert squat.kind == recap.NextKind.INCREASE_DID_MORE and squat.next.kg == 42.5
+    model_input = json.loads(llm.prompts[-1])["recap"]["exercises"]
+    assert next(e for e in model_input if e["exercise_id"] == _SQUAT)["extra_sets"] == 1
+
+
+async def test_a_set_count_suggestion_is_applied_to_the_plan(
+    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
+) -> None:
+    user_id, plan_id, _ = await _ready(dispatcher, bot, db)
+    llm.recap_responses.append(
+        Recap(
+            text="",
+            suggestions=[
+                ChangeSets(exercise_id=_SQUAT, sets=4),
+                ChangeSets(exercise_id=_SQUAT, sets=3),  # no change: dropped
+                ChangeSets(exercise_id="not_in_the_plan", sets=4),  # dropped
+            ],
+        )
+    )
+    await _complete_a(dispatcher, bot, session)
+    suggestions = [m for m in _sent(session) if (m.text or "").startswith("Suggested change")]
+    assert [m.text for m in suggestions] == [
+        t("recap.suggestion_sets", "en", name="Barbell back squat", sets=4)
+    ]
+
+    await _click(dispatcher, bot, _last_action(session, "apply"))
+
+    assert _last_text(session) == t("recap.applied", "en", name="Home plan", version=2)
+    async with db.read() as conn:
+        versions = await list_plan_versions(conn, plan_id)
+    saved = Plan.model_validate(versions[-1].body)
+    assert saved.workouts[0].blocks[0].items[0].sets == 4
+    assert saved.workouts[0].blocks[1].items[1].sets == 3  # others untouched
 
 
 async def test_an_unanswered_checkin_blocks_the_increase_and_fine_unblocks_it(

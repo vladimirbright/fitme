@@ -927,7 +927,7 @@ One pydantic-ai `Agent` per purpose. Each has a typed output, and its prompt is 
 | `session_adjust` | context + today's workout + user request | `Workout \| Refusal` | medium |
 | `result_parse` | planned block + user text | `ParsedResults { sets: list[SetResult], safety_signal: bool, unclear: bool }` | small |
 | `plan_import` | context + `imported_text` (scrubbed) | `PlanImport{plan, unmatched} \| Refusal` | medium |
-| `recap` | planned vs actual + engine decisions | `Recap { text: str, suggestions: list[PlanChange] }` | small |
+| `recap` | planned vs actual (incl. `extra_sets`) + engine decisions | `Recap { text: str, suggestions: list[PlanChange] }` (swap, rep range, set count — ADR 0015) | large |
 | `assistant` | context + `state` + session `history` + user text (scrubbed); lookup and staging tools | `AssistantTurn \| Refusal` (ADR 0003, ADR 0004) | medium |
 
 - The prompt loader returns `(template_name, version, rendered_text)`. Template name and
@@ -990,9 +990,9 @@ largest model. Parsing "8,8,6 at 42.5" does not.
 
 | Tier | Default model | Used for | Why |
 |---|---|---|---|
-| `large` | `anthropic:claude-opus-5` | `plan_generate` | Whole-program design: exercise selection under constraints, balance, schedule. Rare (a few calls per month), so cost barely matters. |
+| `large` | `anthropic:claude-opus-5` | `plan_generate`, `recap` | Whole-program design: exercise selection under constraints, balance, schedule. Rare (a few calls per month), so cost barely matters. The recap (ADR 0015) reads each finished workout for the next plan changes; once per workout. |
 | `medium` | `anthropic:claude-sonnet-5` | `plan_revise`, `session_adjust` | Targeted edits to an existing structure. Frequent, interactive, latency-sensitive. |
-| `small` | `anthropic:claude-haiku-4-5` | `result_parse`, `recap` | Extraction and short text. Used every session, many times. |
+| `small` | `anthropic:claude-haiku-4-5` | `result_parse` | Extraction and short text. Used every session, many times. |
 
 Rules:
 
