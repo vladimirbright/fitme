@@ -24,7 +24,7 @@ def test_agent_default_tier_applies_when_nothing_is_overridden() -> None:
     spec = models.model_for("plan_revise", settings)
     assert spec.model == settings.llm_tier_medium
     spec = models.model_for("recap", settings)
-    assert spec.model == settings.llm_tier_small
+    assert spec.model == settings.llm_tier_large  # ADR 0015
 
 
 def test_per_agent_tier_override_works(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -199,7 +199,7 @@ def test_every_agent_has_an_output_retry_budget() -> None:
 
 def test_escalating_agents_get_the_largest_output_retry_budget() -> None:
     """`plan_generate`/`plan_revise`/`session_adjust` (large/medium-tier, structural output)
-    get 3; `recap` (small-tier, short output) gets 2."""
+    get 3; `recap` (short output, never escalates) gets 2."""
     for agent in ("plan_generate", "plan_revise", "session_adjust", "plan_import"):
         assert models.output_retries_for(agent) == 3
     assert models.output_retries_for("recap") == 2

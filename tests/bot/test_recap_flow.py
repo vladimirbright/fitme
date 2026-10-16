@@ -13,7 +13,6 @@ from datetime import timedelta
 
 import pytest
 from aiogram import Bot, Dispatcher
-from conftest import FakeSession
 from pydantic_ai.exceptions import UserError
 from test_train_flow import (
     _BENCH,
@@ -43,6 +42,7 @@ from test_train_flow import (
     make_plan,
 )
 
+from conftest import FakeSession
 from fitme import clock
 from fitme.bot.app import build_dispatcher
 from fitme.bot.callback_data import CheckinReply, TrainAction, TrainPick

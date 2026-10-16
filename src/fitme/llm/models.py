@@ -90,7 +90,7 @@ AGENT_MODEL_SETTINGS: dict[str, ModelSettings] = {
 # exhaust the budget before `domain/models.py`'s trim-instead-of-reject fields (this same bug
 # fix) even had a chance on a third attempt. `plan_generate`/`plan_revise`/`session_adjust`
 # get 3 (large/medium-tier, structural output, worth the extra attempts); `recap` gets 2
-# (small-tier, short output).
+# (short output, never escalates).
 AGENT_OUTPUT_RETRIES: dict[str, int] = {
     "plan_generate": 3,
     "plan_revise": 3,
