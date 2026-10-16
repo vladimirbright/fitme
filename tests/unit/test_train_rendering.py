@@ -63,7 +63,11 @@ def test_a_calibration_block_still_offers_the_link() -> None:
     block = Block(kind="single", items=[_item("dumbbell_bench_press", Load(kind="calibration"))])
     rows = block_markup(_view(block), catalog=load_catalog(), lang="en").inline_keyboard
     assert rows[0][0].url is not None
-    assert rows[1][0].text == t("workout.enter_results_button", "en")
+    # No ✅ (nothing to confirm) and no ✏️ (ADR 0013): the weight is written as a message.
+    assert [row[0].text for row in rows[1:]] == [
+        t("workout.skip_button", "en"),
+        t("workout.pain_button", "en"),
+    ]
 
 
 def test_the_catalog_search_term_replaces_a_descriptive_name() -> None:

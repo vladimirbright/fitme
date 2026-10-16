@@ -32,16 +32,18 @@ from fitme.db.selectors.decisions import list_decisions_for_user, list_llm_calls
 from fitme.db.selectors.plans import list_plan_versions, list_plans_for_user
 from fitme.db.selectors.training import list_open_health_holds
 from fitme.db.selectors.users import get_telegram_account_by_telegram_user_id
+from fitme.domain.assistant import AssistantTurn
 from fitme.domain.enums import AREA_FLAGS, RED_FLAGS
 from fitme.domain.models import Plan, PlanImport, Refusal
 from fitme.i18n import t
-from fitme.llm.agents import plan_import_agent, plan_revise_agent
+from fitme.llm.agents import assistant_agent, plan_import_agent, plan_revise_agent
 from fitme.services import profile as profile_service
 from fitme.services.identity import issue_activation_code
 from fitme.services.llm_runtime import LlmRuntime
 
 OWNER_CHAT_ID = 1
 _FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
+_ASSISTANT_REPLY = "assistant reply"
 
 
 def user_plan_text() -> str:
@@ -57,11 +59,20 @@ def user_plan_import() -> PlanImport:
 @dataclass
 class FakeLlm:
     """`plan_import` and `plan_revise` answer from one queue; an empty queue raises a
-    provider error (A§8.5 rule 4), which the bot must show as a retry message."""
+    provider error (A§8.5 rule 4), which the bot must show as a retry message. Unclaimed
+    free text goes to the assistant (always on, ADR 0013), which only counts its turns here
+    and answers `_ASSISTANT_REPLY`."""
 
     responses: list[PlanImport | Plan | Refusal] = field(default_factory=list)
     prompts: list[str] = field(default_factory=list)
     calls: int = 0
+    assistant_calls: int = 0
+
+    def _assistant(self, _messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        self.assistant_calls += 1
+        tool = next(tool.name for tool in info.output_tools if "AssistantTurn" in tool.name)
+        reply = AssistantTurn(message=_ASSISTANT_REPLY)
+        return ModelResponse(parts=[ToolCallPart(tool_name=tool, args=reply.model_dump())])
 
     def _respond(self, messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         self.calls += 1
@@ -94,6 +105,9 @@ class FakeLlm:
                 "plan_revise": lambda model: plan_revise_agent(
                     FunctionModel(self._respond, model_name=str(model))
                 ),
+                "assistant": lambda model: assistant_agent(
+                    FunctionModel(self._assistant, model_name=str(model))
+                ),
             },
         )
 
@@ -105,9 +119,6 @@ def llm() -> FakeLlm:
 
 @pytest.fixture
 def dispatcher(db: Database, settings: Settings, llm: FakeLlm) -> Dispatcher:
-    # These tests prove a dropped prompt no longer consumes the next text via the plain
-    # "use the menu" hint; the free-text assistant (ADR 0003) has its own tests.
-    settings = settings.model_copy(update={"assistant_enabled": False})
     return build_dispatcher(db, settings, llm.runtime(settings))
 
 
@@ -383,7 +394,8 @@ async def test_stop_word_in_the_pasted_text_halts_with_no_llm_call(
     # The pending paste was dropped: the next text is not treated as a program.
     await _send(dispatcher, bot, "Сессия 1 (Пн)\nПрисед — 80 × 5 × 3")
     assert llm.calls == 0
-    assert _texts(session)[-1] == t("unknown.free_text_hint", "ru")
+    assert llm.assistant_calls == 0  # the open hold refuses before any assistant call
+    assert _texts(session)[-1] == t("refusal.open_health_hold", "ru")
     # And while the hold is open, Paste my plan refuses without a model call.
     await _paste(dispatcher, bot, session, "Сессия 1 (Пн)\nПрисед — 80 × 5 × 3")
     assert _texts(session)[-1] == t("refusal.open_health_hold", "ru")
@@ -411,7 +423,8 @@ async def test_provider_failure_shows_the_retry_message_and_cancel_drops_the_pro
     assert _texts(session)[-1] == t("plan.paste_cancelled", "ru")
     await _send(dispatcher, bot, user_plan_text())
     assert llm.calls == 1
-    assert _texts(session)[-1] == t("unknown.free_text_hint", "ru")
+    assert llm.assistant_calls == 1
+    assert _ASSISTANT_REPLY in _texts(session)[-1]
 
 
 async def test_import_draft_buttons_go_stale_after_a_newer_round(
@@ -452,7 +465,8 @@ async def test_cancel_command_drops_a_pending_paste_or_revision(
     assert _texts(session)[-1] == t("plan.paste_cancelled", "ru")
     await _send(dispatcher, bot, user_plan_text())
     assert llm.calls == 0
-    assert _texts(session)[-1] == t("unknown.free_text_hint", "ru")
+    assert llm.assistant_calls == 1
+    assert _ASSISTANT_REPLY in _texts(session)[-1]
 
     llm.responses.append(user_plan_import())
     await _paste(dispatcher, bot, session, user_plan_text())
@@ -463,7 +477,8 @@ async def test_cancel_command_drops_a_pending_paste_or_revision(
     assert _texts(session)[-1] == t("plan.change_cancelled", "ru")
     await _send(dispatcher, bot, "убери планку")
     assert llm.calls == 1  # no revise call: the prompt was dropped
-    assert _texts(session)[-1] == t("unknown.free_text_hint", "ru")
+    assert llm.assistant_calls == 2
+    assert _ASSISTANT_REPLY in _texts(session)[-1]
     # /cancel with nothing pending is the ordinary message.
     await _send(dispatcher, bot, "/cancel")
     assert _texts(session)[-1] == t("cancel.nothing_active", "ru")

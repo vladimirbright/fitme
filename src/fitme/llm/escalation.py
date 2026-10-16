@@ -1,6 +1,5 @@
 """A§8.5 rule 3: "Escalate once, then refuse." Used by `plan_revise` and `session_adjust`
-only — `result_parse` never escalates (it sets `unclear=true` instead, A§8.5 rule 3's own last
-sentence).
+only.
 
 Up to three attempts: the agent's normally-resolved model (`llm/models.py::model_for`), the
 same model again with the guard failures fed back, and — only if that also fails — one more

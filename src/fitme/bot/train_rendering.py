@@ -1,6 +1,6 @@
 """Pure text/keyboard builders for `/train` (A§6.5): the workout suggestion, the precheck,
 the review with explicit engine loads, one block at a time with an explicit load on every
-set, the result prompts and the parsed table. Nothing here touches the database or the LLM.
+set, and what the assistant logged. Nothing here touches the database or the LLM.
 
 Every in-workout keyboard carries the persistent ⚠ Pain / feeling unwell button (A§6.3).
 """
@@ -24,19 +24,12 @@ from fitme.db.records import CheckinRecord, PlanRecord
 from fitme.domain.catalog import Catalog, Exercise
 from fitme.domain.enums import BlockRole, CheckinAnswer, Measure
 from fitme.domain.models import Block, Load, Prescription, Workout
-from fitme.domain.results import (
-    ChangeReps,
-    ChangeSets,
-    ParsedResults,
-    PlanChange,
-    SetResult,
-    SwapExercise,
-)
+from fitme.domain.results import ChangeReps, ChangeSets, PlanChange, SetResult, SwapExercise
 from fitme.i18n import t
 from fitme.services import prescribing
 from fitme.services.prescribing import load_label
 from fitme.services.recap import NextKind, RecapView
-from fitme.services.training import BlockView, LoggedItem, ResultPrompt, ReviewView
+from fitme.services.training import BlockView, LoggedItem, ReviewView
 
 
 def _rows(*buttons: InlineKeyboardButton) -> InlineKeyboardMarkup:
@@ -259,7 +252,7 @@ def to_plan_markup(session_id: int, lang: str) -> InlineKeyboardMarkup:
 
 def all_calibration(block: Block) -> bool:
     """A§6.5.1: on a block where every item is a calibration load there is no weight to
-    confirm, so ✅ is hidden and the weight has to be logged through ✏️."""
+    confirm, so ✅ is hidden and the weight used is written as a message (ADR 0013)."""
     return all(item.load.kind == "calibration" for item in block.items)
 
 
@@ -298,7 +291,6 @@ def block_markup(view: BlockView, *, catalog: Catalog, lang: str) -> InlineKeybo
         )
     buttons.extend(
         [
-            _action(t("workout.enter_results_button", lang), "enter", session_id, block=block),
             _action(t("workout.skip_button", lang), "skip", session_id, block=block),
             _action(t("workout.pain_button", lang), "pain", session_id, block=block),
         ]
@@ -306,29 +298,7 @@ def block_markup(view: BlockView, *, catalog: Catalog, lang: str) -> InlineKeybo
     return _rows(*buttons)
 
 
-# --- Results ----------------------------------------------------------------------------------
-
-
-def prompt_name(prompt: ResultPrompt, lang: str) -> str:
-    return exercise_name(prompt.exercise, prompt.prescription.exercise_id, lang)
-
-
-def results_prompt_text(prompt: ResultPrompt, lang: str) -> str:
-    return t("train.results_prompt", lang, name=prompt_name(prompt, lang))
-
-
-def results_unclear_text(prompt: ResultPrompt, lang: str) -> str:
-    return t("train.results_unclear", lang, name=prompt_name(prompt, lang))
-
-
-def results_implausible_text(prompt: ResultPrompt, lang: str) -> str:
-    load = load_label(prompt.prescription.load, prompt.exercise, lang)
-    return t("train.results_implausible", lang, name=prompt_name(prompt, lang), load=load)
-
-
-def parsed_text(prompt: ResultPrompt, parsed: ParsedResults, lang: str) -> str:
-    title = t("train.parsed_title", lang, name=prompt_name(prompt, lang))
-    return "\n".join([title, *_set_lines(parsed.sets, prompt.exercise, lang)])
+# --- Logged results ---------------------------------------------------------------------------
 
 
 def logged_item_text(item: LoggedItem, lang: str) -> str:
@@ -376,32 +346,6 @@ def _set_lines(sets: Sequence[SetResult], exercise: Exercise | None, lang: str) 
                     t("train.parsed_set_line", lang, index=index, reps=result.reps, load=load)
                 )
     return lines
-
-
-def parsed_markup(prompt: ResultPrompt, decision_id: int, lang: str) -> InlineKeyboardMarkup:
-    return _rows(
-        _action(
-            t("train.correct_button", lang),
-            "parse_ok",
-            prompt.session_id,
-            block=prompt.block,
-            item=prompt.item,
-            decision_id=decision_id,
-        ),
-        _action(
-            t("train.fix_button", lang),
-            "parse_fix",
-            prompt.session_id,
-            block=prompt.block,
-            item=prompt.item,
-        ),
-        _action(t("workout.pain_button", lang), "pain", prompt.session_id, block=prompt.block),
-    )
-
-
-def results_pending_markup(session_id: int, block: int, lang: str) -> InlineKeyboardMarkup:
-    """Under the "send your results" prompt: the ⚠ button stays reachable."""
-    return _rows(_action(t("workout.pain_button", lang), "pain", session_id, block=block))
 
 
 # --- Recap (M8) --------------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 """The pseudonymized context sent to the LLM (A§8.2) and the free-text scrubber it shares
 with every agent that handles user-typed text (`plan_revise`, `session_adjust`,
-`result_parse`).
+`plan_import`, `assistant`).
 
 `UserContext` and `build_user_context` are pure: no I/O, no DB access. `services/` (later
 milestones) reads `profiles`, `screening_flags` and history from the DB, resolves the allowed
@@ -41,7 +41,7 @@ from fitme.domain.enums import (
     Sport,
     WeightBucket,
 )
-from fitme.domain.models import Block, Plan, Workout
+from fitme.domain.models import Plan, Workout
 
 _STRICT_CONFIG = ConfigDict(extra="forbid", allow_inf_nan=False)
 
@@ -266,10 +266,7 @@ def render_user_prompt(
     imported_text: str | None = None,
     current_plan: Plan | None = None,
     workout: Workout | None = None,
-    planned_block: Block | None = None,
-    result_text: str | None = None,
     guard_feedback: Sequence[str] | None = None,
-    load_units: Mapping[str, str] | None = None,
     recap: Mapping[str, object] | None = None,
     state: Mapping[str, object] | None = None,
     existing_plans: Sequence[Mapping[str, object]] | None = None,
@@ -279,17 +276,16 @@ def render_user_prompt(
     programming_brief: Mapping[str, object] | None = None,
 ) -> RenderedInput:
     """Build the one `user_prompt` every agent factory's caller sends (B2: "one rendering
-    path"), so `plan_generate`/`plan_revise`/`session_adjust`/`result_parse` never each grow
+    path"), so `plan_generate`/`plan_revise`/`session_adjust`/`recap` never each grow
     their own ad hoc JSON-shaping. The rest are the per-agent extras (A§8.1's "Input" column)
     and are included only when given.
 
-    A§8.2 per-agent minimization: `context` is optional, not automatic — `result_parse`
-    doesn't need (and must not get) the allowed-ids list or history, so its caller passes
-    `language` directly instead of a full `context` (e.g.
-    `render_user_prompt(language=lang, planned_block=block, result_text=text)`). Every other
-    agent passes its full `context`, which already carries `language`.
+    A§8.2 per-agent minimization: `context` is optional, not automatic — `recap` doesn't
+    need (and must not get) the allowed-ids list or history, so its caller passes `language`
+    directly instead of a full `context`. Every other agent passes its full `context`, which
+    already carries `language`.
 
-    Every free-text field (`request`, `imported_text`, `result_text`) is passed through
+    Every free-text field (`request`, `imported_text`, `history`'s user turns) is passed through
     `scrub()` here, unconditionally — a caller can never forget to scrub, because there is no
     way to reach the model with this function without going through it.
 
@@ -297,13 +293,9 @@ def render_user_prompt(
     previous attempt's failing guard details, verbatim — they are machine-built strings
     (catalog ids, rule names, kg numbers), never user text, so they aren't scrubbed.
 
-    `load_units` (A§4.4 "loads are per implement") maps each exercise id in `planned_block`
-    to its catalog `load_unit`, so `result_parse` knows whether a reported kg is a total, per
-    implement (each dumbbell/kettlebell), or a single implement.
-
     `recap` (A§8.1 `recap` agent, M8) is the finished workout's planned-vs-actual numbers and
-    the load engine's decisions, already JSON-safe; like `result_parse`, its caller passes
-    `language` and no `context`.
+    the load engine's decisions, already JSON-safe; its caller passes `language` and no
+    `context`.
 
     `imported_text` (M8b `plan_import` agent) is the program the user pasted, in their own
     words — scrubbed like `request`, and sent with the full `context` (the allowed ids to map
@@ -336,18 +328,12 @@ def render_user_prompt(
         payload["current_plan"] = current_plan.model_dump(mode="json")
     if workout is not None:
         payload["workout"] = workout.model_dump(mode="json")
-    if planned_block is not None:
-        payload["planned_block"] = planned_block.model_dump(mode="json")
     if request is not None:
         payload["user_request"] = scrub(request)
     if imported_text is not None:
         payload["imported_text"] = scrub(imported_text)
-    if result_text is not None:
-        payload["result_text"] = scrub(result_text)
     if guard_feedback is not None:
         payload["guard_feedback"] = list(guard_feedback)
-    if load_units is not None:
-        payload["load_units"] = dict(load_units)
     if recap is not None:
         # A§8.1 `recap`: planned vs actual per exercise plus the engine's decisions (built by
         # `services.recap`); catalog ids and numbers only — no history, no user ids.

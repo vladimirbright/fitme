@@ -3,19 +3,21 @@
 Everything that decides anything lives in `services.training` (the state machine is in
 `workout_sessions`, so a restart resumes exactly). This module routes buttons and text,
 renders through `bot.train_rendering` and i18n, and keeps one piece of transient UI state:
-`pending_train` (per user, which free-text prompt — an adjustment request or a block's result
-entry — is waiting). It's in-memory dispatcher data like `pending_plan_revisions`: a restart
-forgets the prompt, and the user taps the button again.
+`pending_train` (per user, whether an adjustment request is waiting for its text). It's
+in-memory dispatcher data like `pending_plan_revisions`: a restart forgets the prompt, and the
+user taps the button again.
 
 Free text arrives through `bot/handlers/free_text.py`, which saves it and runs the stop-word
 guard first (A§6.3; a hit halts the active session through `services.safety.halt` and never
-reaches here). `handle_train_text` then routes it to `adjust` or `parse_results`, which run
-their own stop-word scan again before any LLM call (defense in depth).
+reaches here). `handle_train_text` then hands a pending adjustment to `adjust`, which runs
+its own stop-word scan again before any LLM call (defense in depth). Results typed during a
+workout are not claimed here: they go to the assistant (ADR 0005, ADR 0013).
 
 Stale buttons (A§6.3): every `TrainAction` carries the session id, the block and the item;
 `services.training` checks them against the session's current status and block and answers
-a mismatch with `STALE`, which becomes a toast here. The ⚠ button is the one exception: it
-always halts (A§6.3), stale or not.
+a mismatch with `STALE`, which becomes a toast here; an action this module no longer has
+(the removed ✏️ result entry, ADR 0013) gets the stale toast too. The ⚠ button is the one
+exception: it always halts (A§6.3), stale or not.
 """
 
 from __future__ import annotations
@@ -46,10 +48,9 @@ from fitme.services.safety import HaltResult
 
 @dataclass(frozen=True, slots=True)
 class PendingTrain:
-    kind: str  # "adjust" | "results"
+    """An adjustment request (review → ✏️ Adjust) waiting for its text."""
+
     session_id: int
-    block: int = 0
-    item: int = 0
 
 
 PendingTrains = dict[int, PendingTrain]
@@ -250,18 +251,6 @@ async def _show_active(
     )
 
 
-async def _ask_results(
-    message: Message, prompt: training.ResultPrompt, lang: str, pending: PendingTrains, user_id: int
-) -> None:
-    pending[user_id] = PendingTrain(
-        kind="results", session_id=prompt.session_id, block=prompt.block, item=prompt.item
-    )
-    await message.answer(
-        rendering.results_prompt_text(prompt, lang),
-        reply_markup=rendering.results_pending_markup(prompt.session_id, prompt.block, lang),
-    )
-
-
 # --- /train -----------------------------------------------------------------------------------
 
 
@@ -401,7 +390,7 @@ async def on_train_action(
             await query.answer(t("train.stale", lang), show_alert=True)
             return
         await query.answer()
-        pending_train[user_id] = PendingTrain(kind="adjust", session_id=session_id)
+        pending_train[user_id] = PendingTrain(session_id=session_id)
         await message.answer(
             t("train.adjust_prompt", lang), reply_markup=rendering.abort_markup(session_id, lang)
         )
@@ -484,47 +473,6 @@ async def on_train_action(
         )
         return
 
-    if action == "enter":
-        prompt = await training.next_result_prompt(db, user_id, session_id, block)
-        if prompt is None:
-            await query.answer(t("train.stale", lang), show_alert=True)
-            return
-        await query.answer()
-        await _ask_results(message, prompt, lang, pending_train, user_id)
-        return
-
-    if action == "parse_fix":
-        prompt = await training.next_result_prompt(db, user_id, session_id, block)
-        if prompt is None or prompt.item != callback_data.item:
-            await query.answer(t("train.stale", lang), show_alert=True)
-            return
-        await query.answer()
-        await _ask_results(message, prompt, lang, pending_train, user_id)
-        return
-
-    if action == "parse_ok":
-        pending_train.pop(user_id, None)
-        confirmed = await training.confirm_results(
-            db, user_id, session_id, block, callback_data.item, callback_data.decision_id
-        )
-        if confirmed.status != training.Status.OK:
-            await query.answer(t("train.stale", lang), show_alert=True)
-            return
-        await query.answer(t("train.block_logged", lang))
-        if confirmed.next_prompt is not None:
-            await _ask_results(message, confirmed.next_prompt, lang, pending_train, user_id)
-        elif confirmed.advance is not None:
-            await _show_advance(
-                message,
-                confirmed.advance,
-                lang,
-                db=db,
-                llm=llm,
-                user_id=user_id,
-                session_id=session_id,
-            )
-        return
-
     if action == "to_plan":
         await query.answer()
         await _workout_to_plan(message, db, settings, user_id, session_id, lang)
@@ -596,65 +544,27 @@ async def handle_train_text(
     pending_train: PendingTrains,
 ) -> bool:
     """Called by the free-text handler *after* the stop-word scan (A§6.3). Returns `True` if
-    a `/train` prompt was pending and the text was consumed by it."""
+    an adjustment request was pending and the text was consumed by it."""
     pending = pending_train.pop(user_id, None)
     if pending is None:
         return False
     lang = await _lang(db, user_id)
 
-    if pending.kind == "adjust":
-        await message.answer(t("train.adjusting", lang))
-        result = await training.adjust(db, llm, user_id, pending.session_id, text)
-        if result.halt is not None:
-            await _send_halt(message, result.halt, lang)
-            return True
-        if result.review is not None:
-            await _show_review(message, result.review, lang)
-            return True
-        if result.refusal is not None:
-            await _send_refusal(message, result.refusal, lang)
-            current = await training.review(db, llm.settings, user_id, pending.session_id)
-            if current.review is not None:
-                await _show_review(message, current.review, lang)
-            return True
-        await message.answer(t("train.stale", lang))
+    await message.answer(t("train.adjusting", lang))
+    result = await training.adjust(db, llm, user_id, pending.session_id, text)
+    if result.halt is not None:
+        await _send_halt(message, result.halt, lang)
         return True
-
-    parsed = await training.parse_results(
-        db, llm, user_id, pending.session_id, pending.block, pending.item, text
-    )
-    status = parsed.status
-    if status == training.ParseStatus.HALTED:
-        # `halt` is None when ⚠ got there first; the fixed message is still the right reply.
-        await message.answer(t("halt.message", lang))
+    if result.review is not None:
+        await _show_review(message, result.review, lang)
         return True
-    if status == training.ParseStatus.STALE or parsed.prompt is None:
-        await message.answer(t("train.stale", lang))
+    if result.refusal is not None:
+        await _send_refusal(message, result.refusal, lang)
+        current = await training.review(db, llm.settings, user_id, pending.session_id)
+        if current.review is not None:
+            await _show_review(message, current.review, lang)
         return True
-    if status == training.ParseStatus.UNAVAILABLE:
-        assert parsed.refusal is not None
-        await _send_refusal(message, parsed.refusal, lang)
-        pending_train[user_id] = pending
-        return True
-    if status == training.ParseStatus.UNCLEAR:
-        pending_train[user_id] = pending
-        await message.answer(
-            rendering.results_unclear_text(parsed.prompt, lang),
-            reply_markup=rendering.results_pending_markup(pending.session_id, pending.block, lang),
-        )
-        return True
-    if status == training.ParseStatus.IMPLAUSIBLE:
-        pending_train[user_id] = pending
-        await message.answer(
-            rendering.results_implausible_text(parsed.prompt, lang),
-            reply_markup=rendering.results_pending_markup(pending.session_id, pending.block, lang),
-        )
-        return True
-    assert parsed.parsed is not None and parsed.decision_id is not None
-    await message.answer(
-        rendering.parsed_text(parsed.prompt, parsed.parsed, lang),
-        reply_markup=rendering.parsed_markup(parsed.prompt, parsed.decision_id, lang),
-    )
+    await message.answer(t("train.stale", lang))
     return True
 
 

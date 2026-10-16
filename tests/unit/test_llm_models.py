@@ -23,7 +23,7 @@ def test_agent_default_tier_applies_when_nothing_is_overridden() -> None:
     assert spec.model == settings.llm_tier_large
     spec = models.model_for("plan_revise", settings)
     assert spec.model == settings.llm_tier_medium
-    spec = models.model_for("result_parse", settings)
+    spec = models.model_for("recap", settings)
     assert spec.model == settings.llm_tier_small
 
 
@@ -37,17 +37,17 @@ def test_per_agent_tier_override_works(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_per_agent_full_model_string_override_works(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("FITME_LLM_AGENT_RESULT_PARSE", "anthropic:claude-sonnet-4-5")
+    monkeypatch.setenv("FITME_LLM_AGENT_RECAP", "anthropic:claude-sonnet-4-5")
     settings = _settings()
 
-    spec = models.model_for("result_parse", settings)
+    spec = models.model_for("recap", settings)
     assert spec.model == "anthropic:claude-sonnet-4-5"
 
 
 def test_model_settings_are_agent_specific() -> None:
     settings = _settings()
     large_spec = models.model_for("plan_generate", settings)
-    small_spec = models.model_for("result_parse", settings)
+    small_spec = models.model_for("recap", settings)
     assert large_spec.settings != small_spec.settings
     assert large_spec.settings["max_tokens"] > small_spec.settings["max_tokens"]
 
@@ -199,11 +199,10 @@ def test_every_agent_has_an_output_retry_budget() -> None:
 
 def test_escalating_agents_get_the_largest_output_retry_budget() -> None:
     """`plan_generate`/`plan_revise`/`session_adjust` (large/medium-tier, structural output)
-    get 3; `result_parse`/`recap` (small-tier, frequent, short output) get 2."""
+    get 3; `recap` (small-tier, short output) gets 2."""
     for agent in ("plan_generate", "plan_revise", "session_adjust", "plan_import"):
         assert models.output_retries_for(agent) == 3
-    for agent in ("result_parse", "recap"):
-        assert models.output_retries_for(agent) == 2
+    assert models.output_retries_for("recap") == 2
 
 
 def test_output_retries_for_unknown_agent_fails_fast() -> None:

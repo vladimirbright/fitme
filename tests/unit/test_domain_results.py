@@ -1,4 +1,4 @@
-"""`domain/results.py`: `SetResult`/`ParsedResults` (`result_parse` output) and
+"""`domain/results.py`: `SetResult` (one logged set) and
 `Recap`/`PlanChange` (`recap` output). Strict validation: finite values, positive loads,
 reps >= 0, no extra fields, and `PlanChange` never carries a load."""
 
@@ -13,7 +13,6 @@ from fitme.domain.results import (
     MAX_EXTRA_SETS,
     MAX_SET_INDEX,
     ChangeReps,
-    ParsedResults,
     Recap,
     SetResult,
     SwapExercise,
@@ -83,23 +82,6 @@ class TestSetResult:
         # ADR 0012: `Prescription.sets` <= 10, then up to MAX_EXTRA_SETS beyond it.
         assert MAX_SET_INDEX == 10 + MAX_EXTRA_SETS
         assert SetResult(set_index=MAX_SET_INDEX, reps=8).set_index == MAX_SET_INDEX
-
-
-class TestParsedResults:
-    def test_valid_parsed_results(self) -> None:
-        parsed = ParsedResults(
-            sets=[SetResult(set_index=1, reps=8, load_kg=42.5)],
-            safety_signal=False,
-            unclear=False,
-        )
-        assert parsed.safety_signal is False
-        assert parsed.unclear is False
-
-    def test_extra_fields_are_rejected(self) -> None:
-        with pytest.raises(ValidationError):
-            ParsedResults.model_validate(
-                {"sets": [], "safety_signal": False, "unclear": False, "note": "hi"}
-            )
 
 
 class TestPlanChange:

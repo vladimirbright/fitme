@@ -1,5 +1,6 @@
 """LLM output domain models for the session-logging and recap agents (A§8.1, M4):
-`ParsedResults`/`SetResult` (`result_parse`), and `Recap`/`PlanChange` (`recap`).
+`SetResult` (one logged set, from the assistant's `log_exercise_results` tool), and
+`Recap`/`PlanChange` (`recap`).
 
 Pure pydantic v2, no I/O — same discipline as `domain/models.py`. Every model forbids extra
 fields, and every numeric field rejects NaN/infinity (`allow_inf_nan=False`): an LLM
@@ -26,8 +27,8 @@ MAX_SET_INDEX = 10 + MAX_EXTRA_SETS  # `Prescription.sets` is at most 10
 
 
 class SetResult(BaseModel):
-    """One prescribed set's actual outcome, as parsed from the user's free text (A§6.5 step
-    5, `result_parse` agent) or entered as "according to plan". `set_index` matches the
+    """One prescribed set's actual outcome, as read from the user's free text by the
+    assistant (A§6.5 step 5, ADR 0005) or entered as "according to plan". `set_index` matches the
     prescribed set it reports on; a set the user didn't do is `skipped=True` with no reps or
     load, mirroring `set_logs` (A§4.2: "a set not performed is skipped=1 with actual_* NULL,
     so missing sets are visible") rather than silently omitting it from the list.
@@ -57,22 +58,6 @@ class SetResult(BaseModel):
                 "a set that wasn't skipped reports exactly one of reps, seconds or meters"
             )
         return self
-
-
-class ParsedResults(BaseModel):
-    """`result_parse` agent output (A§8.1). `safety_signal` is set whenever the free text
-    reports pain, dizziness, numbness, chest discomfort, a popped/snapped event, trouble
-    breathing or fainting (prompts/result_parse.v1.md) — it can only *add* a halt on top of
-    the deterministic stop-word guard (A§7.2), never clear one. `unclear` means the model
-    couldn't confidently parse the text into `sets`; `result_parse` never escalates on this
-    (A§8.5 rule 3) — the caller re-asks the user instead.
-    """
-
-    model_config = _STRICT_CONFIG
-
-    sets: list[SetResult]
-    safety_signal: bool
-    unclear: bool
 
 
 class SwapExercise(BaseModel):

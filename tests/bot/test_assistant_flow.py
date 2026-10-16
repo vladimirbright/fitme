@@ -58,9 +58,9 @@ from fitme.db.selectors.users import get_telegram_account_by_telegram_user_id
 from fitme.domain.assistant import AssistantTurn
 from fitme.domain.enums import AREA_FLAGS, RED_FLAGS, Measure, RefusalCode
 from fitme.domain.models import Block, Load, Plan, Prescription, Refusal, ScheduledDay, Workout
-from fitme.domain.results import MAX_EXTRA_SETS, ParsedResults
+from fitme.domain.results import MAX_EXTRA_SETS
 from fitme.i18n import t
-from fitme.llm.agents import assistant_agent, plan_generate_agent, result_parse_agent
+from fitme.llm.agents import assistant_agent, plan_generate_agent
 from fitme.services import exclusions, planning, training
 from fitme.services import profile as profile_service
 from fitme.services.identity import issue_activation_code
@@ -81,7 +81,7 @@ def say(message: str) -> AssistantTurn:
     return AssistantTurn(message=message)
 
 
-Step = Call | AssistantTurn | Refusal | Plan | ParsedResults
+Step = Call | AssistantTurn | Refusal | Plan
 
 
 @dataclass
@@ -115,7 +115,6 @@ class ScriptedLlm:
             agent_factories={
                 "assistant": wrap(assistant_agent),
                 "plan_generate": wrap(plan_generate_agent),
-                "result_parse": wrap(result_parse_agent),
             },
         )
 
@@ -573,17 +572,6 @@ async def test_a_logged_set_can_be_corrected_and_undone(
     assert await third_set() == (5, 60.0)
 
 
-async def test_disabled_assistant_falls_back_to_the_menu_hint(
-    db: Database, settings: Settings, bot: Bot, session: FakeSession, llm: ScriptedLlm
-) -> None:
-    off = settings.model_copy(update={"assistant_enabled": False})
-    dispatcher = build_dispatcher(db, off, llm.runtime(off))
-    seeded = await _ready(dispatcher, bot, db)
-    await _send(dispatcher, bot, "squat 62.5")
-    assert llm.calls == 0
-    assert _last_text(session) == t("unknown.free_text_hint", await _lang(db, seeded.user_id))
-
-
 # --- Training sessions --------------------------------------------------------------------------
 
 
@@ -717,7 +705,7 @@ async def test_an_implausible_or_incomplete_report_is_refused_by_the_tool(
     llm: ScriptedLlm,
 ) -> None:
     """Nothing is written unless every set is named and every load passes
-    `guards.plausibility` (the same checks a confirmed parse needs)."""
+    `guards.plausibility` (there is no confirmation step)."""
     seeded = await _ready(dispatcher, bot, db)
     session_id = await _start_workout(db, settings, seeded)
     typo = [{"set_index": i, "reps": 5, "load_kg": 200} for i in (1, 2, 3)]

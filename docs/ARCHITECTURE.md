@@ -138,7 +138,6 @@ host cron. See M10.
 | `FITME_CHAT_RETENTION_DAYS` | no | default 365 |
 | `FITME_MAX_WEEKLY_INCREMENT_KG` | no | default 2.5, compound lifts (catalog can set lower) |
 | `FITME_PRICES_FILE` | no | TOML of per-model token prices for `/system` cost estimates |
-| `FITME_ASSISTANT_ENABLED` | no | default `true`: unprompted free text goes to the `assistant` agent (ADR 0003) |
 | `FITME_FORWARDED_ALLOW_IPS` | no | IPs trusted for X-Forwarded-* headers (uvicorn). Default `127.0.0.1`; in Compose, the Caddy container's address. Never `*`. |
 | `FITME_DOMAIN` | no | Public host name for the optional Caddy TLS profile. |
 | `FITME_DEV` | no | Allows a non-TLS base URL on localhost |
@@ -229,7 +228,8 @@ never accept free-form strings from callers.
 | `llm_calls` | `id`, `decision_id` nullable, `purpose`, `model`, `input_tokens`, `output_tokens`, `cost_estimate_usd` nullable, `latency_ms`, `ok`, `created_at` | Feeds `/system`. No prompt content here. |
 
 `decisions.kind` values: `plan_generate`, `plan_revise`, `session_adjust`,
-`result_parse`, `progression`, `session_halt`, `hold_clear`, `refusal`, `user_edit`,
+`result_parse` (results logged during a workout; since ADR 0013 written only by the
+assistant, `event=assistant_log`), `progression`, `session_halt`, `hold_clear`, `refusal`, `user_edit`,
 `session_delete`, `history_import`, `plan_confirm`, `plan_import`.
 
 **Load changes count once, when applied.** Draft decisions (`plan_generate`/`plan_revise`/`plan_import`)
@@ -583,8 +583,9 @@ Register the command list with `setMyCommands` for each supported language.
     editor's checkbox is still the only override.
   - **Training**: from Start to the end of the workout. Each exercise of the current block
     (one at a time in a superset) can be logged as planned ("по плану"), with the user's
-    numbers, or skipped. It is written at once, without Correct / Fix, but only after the
-    coverage and plausibility checks pass (ADR 0005). A safety concern that the stop words
+    numbers, or skipped. It is written at once, with no confirmation step, but only after
+    the coverage and plausibility checks pass (ADR 0005). This is the only way to log
+    results that differ from the plan (ADR 0013). A safety concern that the stop words
     missed halts the workout. Changes to the blocks not started yet apply for today
     only. At the end the bot offers to carry those changes into the plan, as a
     planning draft. Aborting stays a button only.
@@ -676,13 +677,12 @@ select_plan ─► select_workout ─► precheck ─► review ─► in_progre
 5. **In progress.** Send one block at a time (a single exercise or a superset):
    - exercise name, vetted catalog instructions, sets × reps, **explicit load for every
      set** ("3 × 8 @ 42.5 kg"), rest time;
-   - buttons: **✅ Done as planned**, **✏️ Enter results**, **⏭ Skip**, **⚠ Pain /
-     feeling unwell**.
+   - buttons: **✅ Done as planned**, **⏭ Skip**, **⚠ Pain / feeling unwell**.
    - **Done as planned** writes `set_logs` with actual = planned.
-   - **Enter results** takes free text ("8,8,6 at 42.5, last set hard"):
-     stop-word guard → `result_parse` agent (output: `list[SetResult]` +
-     `safety_signal: bool`) → show the parsed table → **Correct** / **Fix**. Only a
-     confirmed parse writes `set_logs`. If `safety_signal` is true → halt.
+   - Anything else is written as a message ("8,8,6 at 42.5, last set hard"): stop-word
+     guard → the free-text assistant (§6.3), which logs each exercise through
+     `services.training.log_items` after the coverage and plausibility checks, or halts on
+     a safety concern (ADR 0005, ADR 0013). There is no separate ✏️ result-entry button.
 6. **Recap** (end of workout):
    - Deterministic summary: completed vs planned, volume, any new historical max.
    - **Check-ins**: one question per flagged area loaded today ("How did your lower back
@@ -699,11 +699,11 @@ select_plan ─► select_workout ─► precheck ─► review ─► in_progre
 - **Starting the workout.** The decision written at Start is `kind=session_adjust`,
   `event=start`, even when nothing was adjusted. It carries the exact workout trained and
   the `load_changes` applied by starting it: engine or adjusted increases, counted once.
-- **Supersets.** Results are entered one exercise at a time, so `set_index` is unambiguous.
+- **Supersets.** Results are logged one exercise at a time, so `set_index` is unambiguous.
 - **`/cancel` during `in_progress`.** The workout is kept and can be resumed; an explicit
   **Abort workout** button aborts it. `/cancel` on an unstarted session aborts it.
-- **Plausibility guard (`guards/plausibility.py`).** A parsed load is re-asked, never
-  stored, when any of these holds:
+- **Plausibility guard (`guards/plausibility.py`).** A load the assistant reports is
+  refused (the assistant asks the user to check it), never stored, when any of these holds:
   - it is not finite, or it is ≤ 0;
   - it is kg on an exercise where `kg_loadable = false`;
   - it is more than 2× the prescription;
@@ -713,13 +713,15 @@ select_plan ─► select_workout ─► precheck ─► review ─► in_progre
     historical max as the reference, when there is one.
   - **Absolute bounds** apply always, including in calibration: > 300 kg for a `total` load,
     or > 60 kg for a `per_implement`/`single_implement` load.
-  - The `result_parse` prompt treats a comma between digits followed by one or two digits
-    ("42,5") as a decimal separator, and sets `unclear` when it is ambiguous.
+  - The `assistant` prompt treats a comma between digits followed by one or two digits
+    ("42,5") as a decimal separator, and asks when the numbers are ambiguous.
 - **Adjust drafts.** Only guard-accepted adjust attempts can become the current draft
   (`event=adjust`). Rejected attempts and refusals are logged as `event=adjust_rejected`,
   and the last accepted draft stays in effect.
 - **"✅ Done as planned"** logs every set at the top of the rep range. The hint under every
-  block says so; otherwise the user enters results (ADR 0005).
+  block says so; otherwise the user writes the results as a message (ADR 0005, ADR 0013).
+  On a block where every load is calibration ✅ is hidden, and the weight used is written
+  as a message.
 - **Start and Save judge today's workout**, not the whole plan: the gate plus
   per-prescription verdicts. They use train-specific refusal copy.
 
@@ -925,15 +927,14 @@ One pydantic-ai `Agent` per purpose. Each has a typed output, and its prompt is 
 | `plan_generate` | pseudonymized context | `PlanProposal` | large |
 | `plan_revise` | context + current plan + user request | `PlanProposal` | medium |
 | `session_adjust` | context + today's workout + user request | `Workout \| Refusal` | medium |
-| `result_parse` | planned block + user text | `ParsedResults { sets: list[SetResult], safety_signal: bool, unclear: bool }` | small |
 | `plan_import` | context + `imported_text` (scrubbed) | `PlanImport{plan, unmatched} \| Refusal` | medium |
 | `recap` | planned vs actual (incl. `extra_sets`) + engine decisions | `Recap { text: str, suggestions: list[PlanChange] }` (swap, rep range, set count — ADR 0015) | large |
 | `assistant` | context + `state` + session `history` + user text (scrubbed); lookup and staging tools | `AssistantTurn \| Refusal` (ADR 0003, ADR 0004) | medium |
 
 - The prompt loader returns `(template_name, version, rendered_text)`. Template name and
   version go into `decisions`. Current versions (ADR 0011): `plan_generate.v6`,
-  `plan_revise.v4`, `plan_import.v2`, `session_adjust.v2`, `result_parse.v2`, `recap.v1`,
-  `assistant.v8`.
+  `plan_revise.v4`, `plan_import.v2`, `session_adjust.v2`, `recap.v1`,
+  `assistant.v9`. (`result_parse` was removed with the ✏️ button, ADR 0013.)
 - Each agent's model comes from its tier or override (§8.5). Nothing in the code is tied to
   one provider.
 - `llm/usage.py` wraps every run: records `llm_calls` from `result.usage` (a property), latency, and
@@ -958,8 +959,8 @@ One pydantic-ai `Agent` per purpose. Each has a typed output, and its prompt is 
   - deliberately spaced obfuscation ("t . me / ivan", "ivan at mail dot ru");
   - personal names typed in free text.
 - **Per-agent minimization:** each agent receives only the context fields it needs. For
-  example, `result_parse` gets the planned block and the result text, not the allowed-ids
-  list or the history.
+  example, `recap` gets the planned-vs-actual numbers and the engine's decisions, not the
+  allowed-ids list or the history.
 - A unit test builds a context from a fixture and asserts that none of the forbidden values
   appear in the rendered prompt.
 
@@ -992,7 +993,7 @@ largest model. Parsing "8,8,6 at 42.5" does not.
 |---|---|---|---|
 | `large` | `anthropic:claude-opus-5` | `plan_generate`, `recap` | Whole-program design: exercise selection under constraints, balance, schedule. Rare (a few calls per month), so cost barely matters. The recap (ADR 0015) reads each finished workout for the next plan changes; once per workout. |
 | `medium` | `anthropic:claude-sonnet-5` | `plan_revise`, `session_adjust` | Targeted edits to an existing structure. Frequent, interactive, latency-sensitive. |
-| `small` | `anthropic:claude-haiku-4-5` | `result_parse` | Extraction and short text. Used every session, many times. |
+| `small` | `anthropic:claude-haiku-4-5` | none by default (ADR 0013, 0015) | Kept for `FITME_LLM_AGENT_<NAME>` overrides. |
 
 Rules:
 
@@ -1010,8 +1011,7 @@ Rules:
 3. **Escalate once, then refuse.** For `plan_revise` and `session_adjust`, if both attempts
    (the first and the guard-feedback retry) fail the guards, make **one** more attempt on
    the `large` tier before returning a `Refusal`. Log every attempt as its own `llm_calls`
-   row, with the model used. `result_parse` does not escalate: if it can't parse, it sets
-   `unclear=true` and the bot asks the user to re-enter the result or use buttons.
+   row, with the model used.
 4. **Provider errors are refusals, not fallbacks to guesses.** Timeouts, rate limits and
    provider-side refusals become `Refusal(code=LLM_UNAVAILABLE)` after pydantic-ai's normal
    retries. Never fall back to the previous plan with changed numbers, and never fall back
@@ -1021,7 +1021,7 @@ Rules:
    every configured model. If one is missing, `/system` shows "cost unknown" for that model,
    and startup logs a warning.
 6. **Per-agent model settings** (for example reasoning effort or max output tokens) go in
-   the same dict in `llm/models.py`, as pydantic-ai `ModelSettings`. Output-retry budgets live in a sibling dict, `AGENT_OUTPUT_RETRIES`, because `retries` is an `Agent(...)` argument, not a `ModelSettings` key: 3 for plan_generate, plan_revise and session_adjust; 2 for result_parse and recap. An **output-validation** failure on the normal tier counts as a failed attempt and gets the one large-tier attempt. Provider errors do not. Look up the exact
+   the same dict in `llm/models.py`, as pydantic-ai `ModelSettings`. Output-retry budgets live in a sibling dict, `AGENT_OUTPUT_RETRIES`, because `retries` is an `Agent(...)` argument, not a `ModelSettings` key: 3 for plan_generate, plan_revise, session_adjust and plan_import; 2 for recap and assistant. An **output-validation** failure on the normal tier counts as a failed attempt and gets the one large-tier attempt. Provider errors do not. Look up the exact
    provider-specific keys in the pydantic-ai docs when implementing. Don't guess them.
 7. **Pick tiers with data.** `fitme llm eval` (manual, spends real money, never in CI) runs
    each agent over the fixture profiles in `tests/fixtures/llm_eval/` on a given model and

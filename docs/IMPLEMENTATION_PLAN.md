@@ -148,7 +148,8 @@ settings test.
 - `services/training.py`: the state machine from A§6.5, persisted in `workout_sessions`.
 - Precheck, review/adjust loop, block-by-block delivery with explicit loads, the four
   buttons, and free-text results through the stop-word guard and `result_parse` with
-  confirmation.
+  confirmation (later replaced by the assistant's logging, ADR 0005; the ✏️ button and
+  `result_parse` were removed in ADR 0013).
 - The halt path (A§6.6), holds, and the clearing flow.
 - Resume after a restart.
 

@@ -35,12 +35,10 @@ select_plan ─► select_workout ─► precheck ─► review ⇄ adjust ─�
   one per prescribed set, planned load/reps filled, `actual_*` NULL — in the same
   transaction that advances `current_block`, so a resume finds the rows and never
   duplicates them (`assign_rows` maps existing rows back onto blocks in creation order).
-  "Done as planned" writes actual = planned; "Skip" marks the block's sets `skipped=1`;
-  "Enter results" goes stop-word scan → `result_parse` (per prescription, so `set_index`
-  is unambiguous even in a superset) → `safety_signal` halts → `unclear` re-asks →
-  `guards.plausibility` re-asks → shown for confirmation; only a confirmed parse writes
-  `actual_*`. The free-text assistant logs one exercise at a time instead (`log_items`, ADR
-  0005): no confirmation step, so the same coverage and plausibility checks must pass first.
+  "Done as planned" writes actual = planned; "Skip" marks the block's sets `skipped=1`.
+  Results typed as free text go through the assistant, one exercise at a time (`log_items`,
+  ADR 0005/0013): no confirmation step, so every prescribed set must be named and every
+  load must pass `guards.plausibility` first.
 - **Halts** (A§6.6) all go through `services.safety.halt`, which halts the active session
   and ties the hold to it. **Abort** keeps the sets as logged.
 
@@ -125,16 +123,14 @@ from fitme.domain.enums import (
 )
 from fitme.domain.guard_types import GuardVerdict
 from fitme.domain.models import Block, LoadChange, Plan, Prescription, Refusal, Workout
-from fitme.domain.results import MAX_EXTRA_SETS, ParsedResults, SetResult
+from fitme.domain.results import MAX_EXTRA_SETS, SetResult
 from fitme.domain.screening import ScreeningFlagState
 from fitme.guards import stop_words
 from fitme.guards.checkins import flagged_areas_from
-from fitme.guards.layering import combine_with_llm_signal
 from fitme.guards.plausibility import check_parsed_results
 from fitme.llm.context import render_user_prompt
 from fitme.llm.escalation import run_with_escalation
-from fitme.llm.models import model_for
-from fitme.llm.usage import AgentRunOutcome, record_llm_call, run_agent
+from fitme.llm.usage import AgentRunOutcome
 from fitme.services import catalog as catalog_service
 from fitme.services import planning
 from fitme.services.decisions import PromptMeta, prompt_columns
@@ -147,9 +143,7 @@ _SOURCE_FREE_TEXT = "free_text"
 _EVENT_ADJUST = "adjust"  # a guard-accepted adjustment: can be the current draft
 _EVENT_ADJUST_REJECTED = "adjust_rejected"  # a rejected attempt or a refusal: logged, never shown
 EVENT_START = "start"
-_EVENT_PARSE = "parse"
-_PARSE_SHOWN = "shown"
-_EVENT_ASSISTANT_LOG = "assistant_log"  # ADR 0005: logged by the assistant, no Correct step
+_EVENT_ASSISTANT_LOG = "assistant_log"  # ADR 0005: logged by the assistant, no confirmation step
 _ENGINE_RULE = "loads.engine"
 
 
@@ -275,46 +269,6 @@ class Advance:
     status: Status
     next_block: BlockView | None = None
     completion: Completion | None = None
-
-
-@dataclass(frozen=True, slots=True)
-class ResultPrompt:
-    """Which prescription to ask results for next (per item, so a superset is entered one
-    exercise at a time and `SetResult.set_index` is always per prescription)."""
-
-    session_id: int
-    block: int
-    item: int
-    prescription: Prescription
-    exercise: Exercise | None
-
-
-class ParseStatus(StrEnum):
-    SHOWN = "shown"  # a plausible parse; show it for Correct / Fix
-    UNCLEAR = "unclear"  # the model couldn't parse it: ask again
-    IMPLAUSIBLE = "implausible"  # `guards.plausibility` rejected it: ask again, store nothing
-    HALTED = "halted"  # a stop word or the model's safety signal: the halt path ran
-    UNAVAILABLE = "unavailable"  # provider failure (A§8.5 rule 4): a refusal, nothing stored
-    STALE = "stale"
-
-
-@dataclass(frozen=True, slots=True)
-class ParseResult:
-    status: ParseStatus
-    prompt: ResultPrompt | None = None
-    parsed: ParsedResults | None = None
-    # `None` with `HALTED` when the session had already been halted (e.g. by ⚠) before the
-    # model's safety signal came back: no second hold is opened.
-    halt: HaltResult | None = None
-    refusal: Refusal | None = None
-    decision_id: int | None = None
-
-
-@dataclass(frozen=True, slots=True)
-class ConfirmResults:
-    status: Status
-    next_prompt: ResultPrompt | None = None  # more items in this block to enter
-    advance: Advance | None = None  # the block is complete
 
 
 # --- Session context (one read) ---------------------------------------------------------------
@@ -1251,7 +1205,7 @@ async def complete_block_as_planned(
     reps logged are the top of the prescribed range (A§7.3 double progression: "according to
     plan" means every set reached `reps_max`); a timed or distance set logs its target
     seconds or meters (ADR 0009); a kg load is logged as the prescribed kg, a
-    bodyweight/calibration load as no kg (log the actual weight through "Enter results")."""
+    bodyweight/calibration load as no kg (the actual weight is written as a message)."""
     async with db.transaction() as conn:
         status, progress = await _load_progress(conn, user_id, session_id, block=block)
         if progress is None:
@@ -1323,276 +1277,6 @@ async def abort(db: Database, user_id: int, session_id: int | None = None) -> bo
     return True
 
 
-# --- Enter results ----------------------------------------------------------------------------
-
-
-def _next_item(progress: _Progress, block: int, catalog: Catalog) -> ResultPrompt | None:
-    """The first prescription of `block` with an unlogged set, or `None` when the block is
-    fully logged."""
-    for item_index, (item, rows) in enumerate(
-        zip(progress.workout.blocks[block].items, progress.assigned[block], strict=True)
-    ):
-        if any(not is_logged(row) for row in rows) or not rows:
-            return ResultPrompt(
-                session_id=progress.ctx.session.id,
-                block=block,
-                item=item_index,
-                prescription=item,
-                exercise=catalog.by_id(item.exercise_id),
-            )
-    return None
-
-
-async def next_result_prompt(
-    db: Database, user_id: int, session_id: int, block: int
-) -> ResultPrompt | None:
-    """✏️ Enter results: which prescription to ask for (the first with an unlogged set), or
-    `None` when the button is stale or the block is already fully logged."""
-    async with db.read() as conn:
-        status, progress = await _load_progress(conn, user_id, session_id, block=block)
-    if progress is None:
-        return None
-    return _next_item(progress, block, load_catalog())
-
-
-async def _log_parse(
-    db: Database,
-    *,
-    user_id: int,
-    prompt: ResultPrompt,
-    outcome: AgentRunOutcome[ParsedResults],
-    llm_input: dict[str, object],
-    verdict: str,
-    guards_fired: Sequence[GuardVerdict],
-) -> int:
-    output = outcome.output
-    proposal: dict[str, object] = {"verdict": verdict}
-    if isinstance(output, Refusal):
-        proposal["refusal"] = output.model_dump(mode="json")
-        if outcome.record.error_cause is not None:
-            proposal["cause"] = outcome.record.error_cause
-    else:
-        proposal["parsed"] = output.model_dump(mode="json")
-    info = outcome.prompt
-    async with db.transaction() as conn:
-        return await insert_decision(
-            conn,
-            user_id=user_id,
-            kind=DecisionKind.RESULT_PARSE.value,
-            prompt_template=None if info is None else info.template_name,
-            prompt_version=None if info is None else str(info.version),
-            model=outcome.record.model,
-            content_version=content_version(),
-            llm_input=llm_input,
-            user_report={
-                "session_id": prompt.session_id,
-                "event": _EVENT_PARSE,
-                "block": prompt.block,
-                "item": prompt.item,
-            },
-            proposal=proposal,
-            guards_fired=[item.model_dump() for item in guards_fired],
-        )
-
-
-async def parse_results(
-    db: Database, llm: LlmRuntime, user_id: int, session_id: int, block: int, item: int, text: str
-) -> ParseResult:
-    """A§6.5 step 5 "Enter results", for one prescription: the stop-word scan **before any
-    LLM call** (a hit halts and the model is never invoked) → `result_parse` with only the
-    planned block, the text and the load units (A§8.2 per-agent minimization; no history, no
-    ids) → `safety_signal` halts (A§7.2: the model can only add a halt) → `unclear` re-asks →
-    `guards.plausibility` re-asks → shown for Correct / Fix. Every model call is a
-    `result_parse` decision with `llm_input` verbatim."""
-    async with db.read() as conn:
-        status, progress = await _load_progress(conn, user_id, session_id, block=block)
-        snapshot = await planning.read_snapshot(conn, user_id)
-    lang = snapshot.language
-    if progress is None or item >= len(progress.workout.blocks[block].items):
-        return ParseResult(status=ParseStatus.STALE)
-    catalog = load_catalog()
-    prescription = progress.workout.blocks[block].items[item]
-    exercise = catalog.by_id(prescription.exercise_id)
-    prompt = ResultPrompt(
-        session_id=session_id, block=block, item=item, prescription=prescription, exercise=exercise
-    )
-
-    hit = stop_words.scan(text, lang)
-    stop_verdict = stop_words.to_verdict(hit)
-    if hit is not None:
-        halted = await halt(
-            db,
-            user_id=user_id,
-            reason=HealthHoldReason.STOP_WORD,
-            guards_fired=[stop_verdict],
-            user_report={"trigger": "stop_word", "event": "halt", "category": hit.category},
-        )
-        return ParseResult(status=ParseStatus.HALTED, prompt=prompt, halt=halted)
-
-    planned_block = Block(kind="single", items=[prescription])
-    load_units = {} if exercise is None else {exercise.id: exercise.load_unit}
-    rendered = render_user_prompt(
-        language=lang, planned_block=planned_block, result_text=text, load_units=load_units
-    )
-    spec = model_for("result_parse", llm.settings)
-    outcome = await run_agent(
-        llm.factory("result_parse"),
-        spec.model,
-        rendered.text,
-        purpose="result_parse",
-        model_name=spec.model,
-        prices=llm.prices,
-        language=lang,
-    )
-    output = outcome.output
-    if isinstance(output, Refusal):
-        decision_id = await _log_parse(
-            db,
-            user_id=user_id,
-            prompt=prompt,
-            outcome=outcome,
-            llm_input=rendered.payload,
-            verdict="unavailable",
-            guards_fired=[stop_verdict],
-        )
-        await record_llm_call(db, decision_id=decision_id, record=outcome.record)
-        return ParseResult(
-            status=ParseStatus.UNAVAILABLE, prompt=prompt, refusal=output, decision_id=decision_id
-        )
-
-    layered = combine_with_llm_signal(stop_verdict, output.safety_signal)
-    fired: list[GuardVerdict] = [stop_verdict, layered]
-    if output.safety_signal:
-        decision_id = await _log_parse(
-            db,
-            user_id=user_id,
-            prompt=prompt,
-            outcome=outcome,
-            llm_input=rendered.payload,
-            verdict="safety_signal",
-            guards_fired=fired,
-        )
-        await record_llm_call(db, decision_id=decision_id, record=outcome.record)
-        async with db.read() as conn:
-            still_active = await get_active_workout_session(conn, user_id)
-        if still_active is None or still_active.id != session_id:
-            # ⚠ (or a stop word elsewhere) already halted this session while the model was
-            # running: one hold is enough, and it is already open.
-            return ParseResult(status=ParseStatus.HALTED, prompt=prompt, decision_id=decision_id)
-        halted = await halt(
-            db,
-            user_id=user_id,
-            reason=HealthHoldReason.LLM_SAFETY_SIGNAL,
-            guards_fired=[layered],
-            user_report={
-                "trigger": "llm_safety_signal",
-                "event": "halt",
-                "parse_decision_id": decision_id,
-            },
-        )
-        return ParseResult(
-            status=ParseStatus.HALTED, prompt=prompt, halt=halted, decision_id=decision_id
-        )
-
-    verdict = _PARSE_SHOWN
-    if output.unclear:
-        verdict = "unclear"
-    elif exercise is not None:
-        plausibility = check_parsed_results(
-            exercise,
-            prescription.load,
-            output.sets,
-            history_max_kg=snapshot.history_max.get(exercise.id),
-        )
-        fired.extend(plausibility)
-        if any(not item_verdict.ok for item_verdict in plausibility):
-            verdict = "implausible"
-    if verdict == _PARSE_SHOWN and not _covers_every_set(output.sets, prescription.sets):
-        verdict = "unclear"
-    decision_id = await _log_parse(
-        db,
-        user_id=user_id,
-        prompt=prompt,
-        outcome=outcome,
-        llm_input=rendered.payload,
-        verdict=verdict,
-        guards_fired=fired,
-    )
-    await record_llm_call(db, decision_id=decision_id, record=outcome.record)
-    if verdict == "unclear":
-        return ParseResult(status=ParseStatus.UNCLEAR, prompt=prompt, decision_id=decision_id)
-    if verdict == "implausible":
-        return ParseResult(status=ParseStatus.IMPLAUSIBLE, prompt=prompt, decision_id=decision_id)
-    return ParseResult(
-        status=ParseStatus.SHOWN, prompt=prompt, parsed=output, decision_id=decision_id
-    )
-
-
-def _covers_every_set(sets: Sequence[SetResult], prescribed_sets: int) -> bool:
-    """A usable parse names each prescribed set exactly once (1..sets)."""
-    return sorted(item.set_index for item in sets) == list(range(1, prescribed_sets + 1))
-
-
-async def confirm_results(
-    db: Database, user_id: int, session_id: int, block: int, item: int, decision_id: int
-) -> ConfirmResults:
-    """ "Correct": write the shown parse `decision_id` — which must be the newest parse for
-    this prescription, so an older table's Correct is stale — into its rows (only a confirmed
-    parse writes `actual_*`), then either ask for the block's next prescription or advance
-    the block. A double tap finds the rows already logged and just moves on."""
-    catalog = load_catalog()
-    async with db.transaction() as conn:
-        status, progress = await _load_progress(conn, user_id, session_id, block=block)
-        if progress is None or item >= len(progress.workout.blocks[block].items):
-            return ConfirmResults(status=status if progress is None else Status.STALE)
-        await _ensure_block_rows(conn, session_id, progress.workout, block)
-        progress = (await _load_progress(conn, user_id, session_id, block=block))[1]
-        assert progress is not None
-        prescription = progress.workout.blocks[block].items[item]
-        rows = progress.assigned[block][item]
-        if not all(is_logged(row) for row in rows):
-            decision = await get_latest_session_event_decision(
-                conn,
-                session_id=session_id,
-                kind=DecisionKind.RESULT_PARSE.value,
-                event=_EVENT_PARSE,
-            )
-            parsed = _shown_parse(decision, block=block, item=item)
-            if decision is None or parsed is None:
-                return ConfirmResults(status=Status.NOT_FOUND)
-            if decision.id != decision_id:
-                return ConfirmResults(status=Status.STALE)
-            by_index = {row.set_index: row for row in rows}
-            for result in parsed.sets:
-                row = by_index.get(result.set_index)
-                if row is None:
-                    continue
-                if result.skipped:
-                    await mark_set_log_skipped(conn, row.id, source=_SOURCE_FREE_TEXT)
-                    continue
-                load_kg = result.load_kg if result.load_kg is not None else prescription.load.kg
-                await update_set_log_actual(
-                    conn,
-                    row.id,
-                    actual_load_kg=load_kg,
-                    actual_reps=result.reps,
-                    actual_seconds=result.seconds,
-                    actual_meters=result.meters,
-                    source=_SOURCE_FREE_TEXT,
-                )
-            await insert_decision_outcome(
-                conn,
-                decision_id=decision.id,
-                outcome={"confirmed": True, "set_log_ids": [row.id for row in rows]},
-            )
-        progress = (await _load_progress(conn, user_id, session_id, block=block))[1]
-        assert progress is not None
-        next_prompt = _next_item(progress, block, catalog)
-        if next_prompt is not None:
-            return ConfirmResults(status=Status.OK, next_prompt=next_prompt)
-        return ConfirmResults(status=Status.OK, advance=await _advance(conn, progress))
-
-
 # --- One exercise of the current block, from the assistant (ADR 0005) -----------------------
 
 
@@ -1605,9 +1289,9 @@ class ItemLogKind(StrEnum):
 @dataclass(frozen=True, slots=True)
 class ItemLog:
     """One exercise of the current block, as the assistant staged it. Logged without a
-    Correct/Fix step, so it must pass the same checks a confirmed parse does: the exercise is
-    in the current block and not logged yet, every prescribed set is named exactly once, and
-    every load passes `guards.plausibility`."""
+    confirmation step, so it must pass these checks first: the exercise is in the current
+    block and not logged yet, every prescribed set is named exactly once, and every load
+    passes `guards.plausibility`."""
 
     exercise_id: str
     kind: ItemLogKind
@@ -1889,7 +1573,7 @@ async def log_items(
             )
         progress = (await _load_progress(conn, user_id, session_id, block=block))[1]
         assert progress is not None
-        if _next_item(progress, block, catalog) is not None:
+        if any(_item_open(rows) for rows in progress.assigned[block]):
             return LogItemsResult(
                 status=Status.OK,
                 logged=tuple(logged),
@@ -2149,22 +1833,6 @@ async def get_session_detail(db: Database, user_id: int, session_id: int) -> Ses
     )
 
 
-def _shown_parse(decision: DecisionRecord | None, *, block: int, item: int) -> ParsedResults | None:
-    if decision is None or decision.proposal is None or decision.user_report is None:
-        return None
-    if decision.user_report.get("block") != block or decision.user_report.get("item") != item:
-        return None
-    if decision.proposal.get("verdict") != _PARSE_SHOWN:
-        return None
-    body = decision.proposal.get("parsed")
-    if body is None:
-        return None
-    try:
-        return ParsedResults.model_validate(body)
-    except ValueError:
-        return None
-
-
 # --- ADR 0004: changing the remaining blocks of a started workout -----------------------------
 
 
@@ -2292,7 +1960,6 @@ __all__ = [
     "BlockView",
     "ChoosePlan",
     "Completion",
-    "ConfirmResults",
     "DeleteSessionsResult",
     "DeleteSessionsStatus",
     "DeletedSessionSummary",
@@ -2301,11 +1968,8 @@ __all__ = [
     "SessionListItem",
     "SessionsPage",
     "NoPlan",
-    "ParseResult",
-    "ParseStatus",
     "PrecheckResult",
     "Refused",
-    "ResultPrompt",
     "ReviewView",
     "SaveResult",
     "SessionCreated",
@@ -2316,7 +1980,6 @@ __all__ = [
     "active_session",
     "adjust",
     "complete_block_as_planned",
-    "confirm_results",
     "create_session",
     "current_block",
     "delete_sessions",
@@ -2325,9 +1988,7 @@ __all__ = [
     "list_recent_sessions_for_plan",
     "list_sessions_page",
     "entry",
-    "next_result_prompt",
     "pain_button",
-    "parse_results",
     "precheck_no",
     "precheck_yes",
     "review",

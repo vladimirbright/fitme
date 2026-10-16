@@ -49,7 +49,6 @@ AGENT_DEFAULT_TIER: dict[str, str] = {
     "plan_generate": "large",
     "plan_revise": "medium",
     "session_adjust": "medium",
-    "result_parse": "small",
     # ADR 0015: the recap reads the workout's results for the next plan changes (sets, reps,
     # swaps) — worth the large model; it runs once per finished workout.
     "recap": "large",
@@ -66,7 +65,7 @@ AGENT_DEFAULT_TIER: dict[str, str] = {
 # reasoning-effort field) — ADR 0001/A§8.5 rule 6 says to look up exact provider-specific
 # keys when they're actually needed, not guess them; these three agents don't need one yet.
 # `plan_generate` gets the largest budget and longest timeout (rare, large-model, whole-plan
-# calls); `result_parse`/`recap` the smallest (frequent, small-model, short-output calls).
+# calls); `recap` (ADR 0015: large tier, short output) a smaller budget.
 # `max_tokens` is the whole output budget, and on models that think by default (e.g. Opus 5)
 # the thinking counts against it too. Every plan agent returns the WHOLE plan (all workouts,
 # every exercise, notes), so a real three-day program plus thinking easily exceeds 4k tokens;
@@ -77,7 +76,6 @@ AGENT_MODEL_SETTINGS: dict[str, ModelSettings] = {
     "plan_revise": ModelSettings(max_tokens=16000, timeout=240),
     "plan_import": ModelSettings(max_tokens=16000, timeout=240),
     "session_adjust": ModelSettings(max_tokens=8000, timeout=120),
-    "result_parse": ModelSettings(max_tokens=2048, timeout=60),
     "recap": ModelSettings(max_tokens=4096, timeout=120),
     "assistant": ModelSettings(max_tokens=8000, timeout=120),
 }
@@ -91,14 +89,12 @@ AGENT_MODEL_SETTINGS: dict[str, ModelSettings] = {
 # transliterated Russian names/titles) could fail pydantic validation twice in a row and
 # exhaust the budget before `domain/models.py`'s trim-instead-of-reject fields (this same bug
 # fix) even had a chance on a third attempt. `plan_generate`/`plan_revise`/`session_adjust`
-# get 3 (large/medium-tier, structural output, worth the extra attempts); `result_parse`/
-# `recap` get 2 (small-tier, frequent, short output — `result_parse` never escalates either,
-# A§8.5 rule 3, so its own retry budget is the only cushion it gets).
+# get 3 (large/medium-tier, structural output, worth the extra attempts); `recap` gets 2
+# (small-tier, short output).
 AGENT_OUTPUT_RETRIES: dict[str, int] = {
     "plan_generate": 3,
     "plan_revise": 3,
     "session_adjust": 3,
-    "result_parse": 2,
     "recap": 2,
     # M8b: the same budget as the other structural-output agents — a pasted program is exactly
     # the long, transliterated input that motivated the budget in the first place.
