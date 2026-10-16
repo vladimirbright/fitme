@@ -4,6 +4,8 @@ kind = "cardio"
 pattern = "conditioning"
 measures = ["time"]
 qualities = ["conditioning", "agility"]
+# A single-punch drill, not general shadow boxing (`bodyweight_shadow_boxing`).
+specific = true
 equipment = []
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
 loads_areas = ["shoulder", "lower_back", "hip"]

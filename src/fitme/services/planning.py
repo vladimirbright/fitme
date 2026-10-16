@@ -171,7 +171,14 @@ from fitme.llm.context import (
 from fitme.llm.escalation import run_with_escalation
 from fitme.llm.models import model_for
 from fitme.llm.usage import CAUSE_OUTPUT_VALIDATION, AgentRunOutcome, record_llm_call, run_agent
-from fitme.services import exclusions, exercise_search, measures, plan_quality
+from fitme.services import (
+    exclusions,
+    exercise_search,
+    measures,
+    plan_quality,
+    prescribing,
+    programming,
+)
 from fitme.services.catalog import available_exercises
 from fitme.services.decisions import PromptMeta, prompt_columns
 from fitme.services.llm_runtime import LlmRuntime
@@ -651,29 +658,10 @@ def judge(plan: Plan, inputs: Inputs) -> Judgement:
     measures existed still trains as it was saved."""
     repaired = measures.repair_measures(plan, inputs.catalog)
     judgement = _judge_with(plan, lambda: validate_plan(plan, inputs.ctx), inputs)
-    _default_calibration_rir(plan, inputs.catalog)
-    return Judgement(verdicts=judgement.verdicts, fired=[*repaired, *judgement.fired])
-
-
-# ADR 0009: a calibration load on a kg reps exercise says how hard the first sets should
-# feel ("leaves about 3 reps in reserve") rather than a generic catalog start weight.
-DEFAULT_CALIBRATION_RIR = 3
-
-
-def _default_calibration_rir(plan: Plan, catalog: Catalog) -> None:
-    """In place, after load substitution (so an engine-chosen calibration gets it too)."""
-    for workout in plan.workouts:
-        for block in workout.blocks:
-            for prescription in block.items:
-                exercise = catalog.by_id(prescription.exercise_id)
-                if (
-                    prescription.rir is None
-                    and prescription.load.kind == "calibration"
-                    and prescription.measure == Measure.REPS
-                    and exercise is not None
-                    and exercise.kg_loadable
-                ):
-                    prescription.rir = DEFAULT_CALIBRATION_RIR
+    # ADR 0011: after load substitution, so an engine-chosen calibration gets its default
+    # reps in reserve too; an rir on power, speed, carry or interval work is dropped.
+    intensity = prescribing.repair_intensity(plan, inputs.catalog)
+    return Judgement(verdicts=judgement.verdicts, fired=[*repaired, *judgement.fired, *intensity])
 
 
 def judge_workout(workout: Workout, inputs: Inputs) -> Judgement:
@@ -1096,17 +1084,11 @@ def review_quality(
     request: str | None = None,
 ) -> list[GuardVerdict]:
     """ADR 0009: `plan_quality.review` in this user's context (requested qualities, other
-    sport); the findings a repair round gets, logged with the plan if they remain."""
-    context = inputs.user_context
+    sport, session length, split wanted); the findings a repair round gets, logged with the
+    plan if they remain."""
     return plan_quality.review(
         plan,
-        plan_quality.ReviewContext(
-            catalog=inputs.catalog,
-            requested=requested,
-            sport=context.sport,
-            sport_sessions_per_week=context.sport_sessions_per_week,
-            require_declared=bool(exercise_search.requested_qualities(request)),
-        ),
+        plan_quality.context_for(inputs.catalog, inputs.user_context, requested, request=request),
     )
 
 
@@ -1209,6 +1191,13 @@ async def propose_new_plan(
         )
 
     qualities = request_qualities(inputs, guidance)
+    # ADR 0011: the weekly frame first (sessions, objectives, structure, fatigue), then the
+    # candidate pool; the model states objectives and block roles before it picks exercises.
+    brief = programming.brief(
+        inputs.user_context,
+        qualities,
+        split_wanted=programming.split_wanted(inputs.user_context, guidance),
+    )
     pool_context, facts = await _candidate_pool(db, inputs, guidance, qualities)
     spec = model_for("plan_generate", llm.settings)
     feedback: list[str] | None = None
@@ -1225,6 +1214,7 @@ async def propose_new_plan(
             guard_feedback=feedback,
             exercise_facts=facts,
             requested_qualities=qualities,
+            programming_brief=brief,
         )
         outcome = await run_agent(
             llm.factory("plan_generate"),

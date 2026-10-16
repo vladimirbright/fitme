@@ -1,0 +1,15 @@
+id = "stance_footwork_drill"
+names = { en = "Stance footwork drill", ru = "Передвижения в стойке" }
+search = { en = "boxing footwork drill step and slide pivots", ru = "работа ног в стойке передвижения челнок развороты" }
+kind = "cardio"
+pattern = "conditioning"
+measures = ["time"]
+qualities = ["agility", "conditioning"]
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["knee", "ankle", "hip"]
+contraindicated_by = ["knee_injury_current", "ankle_injury_current", "hip_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand in a staggered fighting stance, hands up, weight on the balls of the feet. Move in short steps without crossing the feet: the foot nearest the direction moves first and the other follows. Mix steps forward, back, left and right, in-and-out steps and pivots on the front foot, always returning to the same stance. Keep the steps short and quick and the stance balanced.", ru = "Встаньте в боевую стойку: одна нога впереди, руки у лица, вес на передней части стоп. Двигайтесь короткими шагами, не скрещивая ноги: первой шагает нога, ближняя к направлению движения, вторая подставляется. Чередуйте шаги вперёд, назад, влево и вправо, челнок вперёд-назад и развороты на передней ноге, каждый раз возвращаясь в ту же стойку. Шаги короткие и быстрые, стойка устойчивая." }

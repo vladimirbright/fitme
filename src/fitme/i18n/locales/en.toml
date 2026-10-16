@@ -146,6 +146,15 @@ bodyweight = "Bodyweight / calisthenics"
 conditioning = "Conditioning"
 mobility = "Mobility"
 
+[enum.block_role]
+warm_up = "Warm-up"
+power = "Power and speed"
+strength = "Main strength"
+accessory = "Accessories"
+core = "Core"
+conditioning = "Conditioning"
+mobility = "Mobility and cool-down"
+
 [enum.quality]
 strength = "strength"
 hypertrophy = "muscle growth"
@@ -364,9 +373,14 @@ to_plan_button = "📋 Carry into the plan"
 sets_line = "Sets: {sets} × {reps} reps"
 sets_line_target = "Sets: {sets} × {target}"
 load_line = "Load: {load}"
-load_calibration_from = "start with {start} or lighter"
 load_calibration = "a light weight you're sure about"
 load_calibration_rir = "a weight that leaves about {rir} reps in reserve"
+# ADR 0011: how to pick an unknown load for the exercise's stimulus; never a catalog weight.
+load_calibration_speed = "a load you can move fast with clean technique"
+load_calibration_carry = "a weight you can carry or hold for the whole set upright, with a firm grip and a little in reserve"
+load_calibration_pace = "a pace and resistance you can keep for every interval"
+transition_line = "Then {rest} to the next exercise"
+no_transition_line = "Then straight to the next exercise"
 load_calibration_declared = "your plan says {declared}; start there or lighter"
 # `/train` (the workout loop). Plan-first, buttons first; no persona, no streaks, no shame.
 no_plan = "You don't have a training plan yet. Create one with /plan first."
@@ -497,10 +511,21 @@ superset_rounds_label = "Superset, in this order, {rounds} rounds; rest {rest} a
 workout_qualities = "Trains: {qualities}"
 sets_reps = "{sets} × {reps}"
 prescription_line = "{name}: {sets_reps} @ {load}, rest {rest}"
+# ADR 0011: inside a superset the round's rest is said once, in its heading; each exercise
+# but the last says the transition to the next one.
+superset_item_line = "{name}: {sets_reps} @ {load}"
+superset_transition = "then {rest} to the next exercise"
+superset_no_transition = "then straight to the next exercise"
+block_role_heading = "{role}:"
 load_kg = "{kg} kg"
 load_bodyweight = "bodyweight"
 load_calibration = "calibration: start light, log what you used"
-load_calibration_from = "calibration: start with {start} or lighter, log what you used"
+load_calibration_speed = "calibration: a load you can move fast with clean technique, log what you used"
+load_calibration_carry = "calibration: a weight you can carry or hold for the whole set upright, with a firm grip and a little in reserve; log what you used"
+load_calibration_pace = "calibration: a pace and resistance you can keep for every interval, log what you used"
+# ADR 0011: power, speed and agility work is regulated by speed, not by reps in reserve.
+speed_cue = "every rep fast; end the set when speed or technique drops"
+speed_cue_time = "fast and sharp throughout; end the set when speed or technique drops"
 load_calibration_rir = "calibration: pick a weight that leaves about {rir} reps in reserve, log what you used"
 rir = "about {rir} reps in reserve"
 # The hint next to a calibration load from a pasted plan (M8b): `{declared}` is the kg text

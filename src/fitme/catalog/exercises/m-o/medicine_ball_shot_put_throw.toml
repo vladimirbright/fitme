@@ -1,0 +1,15 @@
+id = "medicine_ball_shot_put_throw"
+names = { en = "Medicine ball shot-put throw", ru = "Толчок медбола от плеча с разворотом" }
+search = { en = "medicine ball shot put throw rotational", ru = "толчок медбола одной рукой от плеча" }
+kind = "compound"
+pattern = "horizontal_push"
+measures = ["reps"]
+qualities = ["rotational_power", "power"]
+equipment = ["medicine_ball"]
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back", "hip"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hip_injury_current", "hernia"]
+increment_kg = 1.0
+start = { kind = "calibration" }
+instructions = { en = "Stand side-on to a solid wall with the ball held at the shoulder in the rear hand, the elbow behind it. Drive from the back foot, turn the hips and push the ball forward into the wall like a shot put, keeping the wrist behind the ball. Catch, reset and repeat; do both sides. Use a light ball and a wall that is clear of people and objects.", ru = "Встаньте боком к прочной стене, мяч у плеча в дальней руке, локоть за мячом. Оттолкнитесь задней ногой, разверните таз и вытолкните мяч вперёд в стену, как ядро, кисть остаётся за мячом. Поймайте, вернитесь в исходное положение и повторите; выполните в обе стороны. Берите лёгкий мяч, рядом со стеной не должно быть людей и предметов." }

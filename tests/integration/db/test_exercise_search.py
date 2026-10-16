@@ -348,8 +348,23 @@ def test_exercise_facts_describe_each_id_without_safety_fields() -> None:
             "kg_loadable": True,
             "qualities": ["strength", "hypertrophy"],
             "measures": ["reps"],
+            "intensity": "effort",
         }
     ]
+    # ADR 0011: a power exercise is regulated by speed, a carry as a carry; a narrow drill
+    # says so.
+    by_id = {
+        fact["id"]: fact
+        for fact in es.exercise_facts(
+            load_catalog(),
+            ["medicine_ball_chest_pass", "dumbbell_farmer_carry", "bodyweight_shadow_boxing_hook"],
+            "en",
+        )
+    }
+    assert by_id["medicine_ball_chest_pass"]["intensity"] == "speed"
+    assert by_id["dumbbell_farmer_carry"]["intensity"] == "carry"
+    assert by_id["bodyweight_shadow_boxing_hook"]["specific"] is True
+    assert "specific" not in by_id["medicine_ball_chest_pass"]
 
 
 def test_home_selectable_equipment_is_what_the_cli_assumes_for_home() -> None:

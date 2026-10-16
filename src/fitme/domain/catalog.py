@@ -18,6 +18,7 @@ from fitme.domain.enums import (
     ExerciseKind,
     ExerciseLevel,
     ExercisePattern,
+    IntensityMode,
     Location,
     Measure,
     Quality,
@@ -93,6 +94,11 @@ class Exercise(BaseModel):
     # the planner's pool and the goal/exercise check; never what the guards allow.
     # `fitme catalog check` requires every shipped exercise to have at least one.
     qualities: list[Quality] = Field(default_factory=list)
+    # ADR 0011: a narrow technique drill or one variation of a broader activity (left hooks
+    # only, one footwork pattern), as opposed to the general activity itself (shadow boxing).
+    # Retrieval ranks it after general exercises, and the review won't take it as a warm-up:
+    # related is not the same as a substitute.
+    specific: bool = False
     equipment: list[Equipment]
     # Required in the catalog for every dumbbell/kettlebell exercise (`fitme catalog check`
     # fails on a missing one via this model); everything else defaults to `total` — see
@@ -335,3 +341,29 @@ def missing_contraindication_coverage(catalog: Catalog) -> list[str]:
                     f"{exercise.id}: loads {area!r} but does not contraindicate {flag.value!r}"
                 )
     return problems
+
+
+_SPEED_QUALITIES = frozenset({Quality.POWER, Quality.ROTATIONAL_POWER, Quality.AGILITY})
+
+
+def intensity_mode(exercise: Exercise, measure: Measure) -> IntensityMode:
+    """ADR 0011: how effort is regulated for `exercise` prescribed in `measure`, from what it
+    mainly trains (its first quality) and how it is loaded:
+
+    - power, speed and agility work -> `SPEED` (quality and velocity, never reps in reserve);
+    - cardio and conditioning -> `PACE`;
+    - a kg-loadable exercise in time or distance (a carry, a loaded hold) -> `CARRY`;
+    - other time or distance work (a plank) and mobility -> `NONE`;
+    - everything else in reps (loaded or bodyweight strength, hypertrophy, endurance) ->
+      `EFFORT`, regulated by reps in reserve.
+    """
+    primary = exercise.qualities[0] if exercise.qualities else None
+    if primary in _SPEED_QUALITIES:
+        return IntensityMode.SPEED
+    if exercise.kind == ExerciseKind.CARDIO or primary == Quality.CONDITIONING:
+        return IntensityMode.PACE
+    if measure != Measure.REPS:
+        return IntensityMode.CARRY if exercise.kg_loadable else IntensityMode.NONE
+    if exercise.kind == ExerciseKind.MOBILITY or primary == Quality.MOBILITY:
+        return IntensityMode.NONE
+    return IntensityMode.EFFORT

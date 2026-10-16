@@ -7,9 +7,9 @@ from __future__ import annotations
 import html
 from datetime import timedelta
 
-from conftest import SentCode, get_csrf_token, login
 from httpx import AsyncClient
 
+from conftest import SentCode, get_csrf_token, login
 from fitme import clock
 from fitme.config.content import content_version
 from fitme.db.connection import Database
@@ -345,7 +345,7 @@ async def test_revise_page_shows_the_current_plan_below_the_form(
     body = page.text[form_end:]
     assert "Monday: A" in body and "Wednesday: A" in body
     assert "Workout A — Full body" in body and "Workout B — Push" in body
-    assert "Barbell back squat" in body and "3 × 5–8" in body and "60.0 kg" in body
+    assert "Barbell back squat" in body and "3 × 5–8" in body and "60 kg" in body
     assert "Push-up" in body and "bodyweight" in body
     assert "22.5 kg each" in body and "pause at the bottom" in body
     assert "calibration" in body

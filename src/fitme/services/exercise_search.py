@@ -52,7 +52,7 @@ from pydantic import BaseModel, ValidationError
 from fitme.config.embeddings import EmbeddingSettings
 from fitme.db.connection import Database
 from fitme.db.selectors.catalog_search import FtsQueryError, all_embeddings, fts_match
-from fitme.domain.catalog import Catalog, Exercise
+from fitme.domain.catalog import Catalog, Exercise, intensity_mode
 from fitme.domain.enums import ExerciseKind, ExercisePattern, Focus, Preference, Quality, Sport
 from fitme.llm.embeddings import Embedder, EmbeddingError, OpenAICompatibleEmbedder, embed_query
 from fitme.services.catalog_index import documents
@@ -66,8 +66,11 @@ _SEMANTIC_LIMIT = 50
 _MAX_QUERY_LENGTH = 200
 _TOKEN_RE = re.compile(r"\w+", re.UNICODE)
 _CYRILLIC_RE = re.compile(r"[а-яё]")
+# Contractions ("don't", "won't", with either apostrophe, or without one) negate too.
 _NEGATION_RE = re.compile(
-    r"\b(no|not|without|except|avoid|skip|instead|без|не|кроме|никаких|вместо)\b", re.UNICODE
+    r"\b(no|not|never|without|except|avoid|skip|instead|\w+n['’]t|dont|doesnt|didnt|wont|"
+    r"без|не|кроме|никаких|вместо)\b",
+    re.UNICODE,
 )
 # Words that say nothing about which exercise is meant; matching them only adds noise.
 _STOP_WORDS = frozenset(
@@ -298,7 +301,8 @@ def requested_qualities(
     sport: Sport | None = None,
 ) -> list[Quality]:
     """The qualities a plan request asks for, most specific first: what the request text
-    names (its negated parts left out), then the other sport, then focus and preferences.
+    names (its negated parts left out, in the order it names them), then the other sport,
+    then focus and preferences.
     Empty for a request that names none and no sport: the planner's default balance."""
     found: list[Quality] = []
 
@@ -307,13 +311,19 @@ def requested_qualities(
             found.append(quality)
 
     if text:
-        positive = positive_request(text)
-        words = _TOKEN_RE.findall(positive)
-        for quality, stems in _QUALITY_WORDS.items():
-            for stem in stems:
-                if (" " in stem and stem in positive) or any(w.startswith(stem) for w in words):
-                    add(quality)
-                    break
+        # ADR 0011: in the order the request first mentions them, so the planner's main
+        # objectives are what the user named first.
+        positive = positive_request(text).lower()
+        words = [(m.start(), m.group()) for m in _TOKEN_RE.finditer(positive)]
+        mentioned: list[tuple[int, int, Quality]] = []
+        for order, (quality, stems) in enumerate(_QUALITY_WORDS.items()):
+            positions = [
+                positive.find(stem) for stem in stems if " " in stem and stem in positive
+            ] + [start for start, word in words for stem in stems if word.startswith(stem)]
+            if positions:
+                mentioned.append((min(positions), order, quality))
+        for _, _, quality in sorted(mentioned):
+            add(quality)
     if sport is not None:
         for quality in _SPORT_QUALITIES.get(sport, ()):
             add(quality)
@@ -561,8 +571,14 @@ def find_substitutes(
 # below (40 in total; up to about 50 when the request names patterns, plus exercises with
 # history).
 POOL_SIZE = 40
-# ADR 0009: exercises guaranteed per requested quality (beyond the pattern quotas).
+# ADR 0009: exercises guaranteed per requested quality (beyond the pattern quotas). ADR 0011:
+# the plan's two main qualities get more, so a footwork session has several kinds of drill to
+# choose from rather than one; general exercises rank before narrow technique drills.
 _QUALITY_QUOTA = 4
+_MAIN_QUALITY_QUOTA = 6
+# ADR 0011: general warm-up activities (easy cardio that isn't power work, not a drill),
+# guaranteed in the pool so the planner never has to warm up with a technique drill.
+_WARM_UP_QUOTA = 3
 _BASE_QUOTA: dict[ExercisePattern, int] = {
     ExercisePattern.SQUAT: 4,
     ExercisePattern.HINGE: 4,
@@ -673,10 +689,11 @@ async def plan_candidates(
     # ADR 0009: every requested quality gets exercises that *directly* train it (catalog
     # `qualities`), request matches and history first, on top of the pattern quotas — a
     # "foot speed" day must have footwork drills to choose from, not only squats.
-    for quality in qualities:
+    for position, quality in enumerate(qualities):
         members = sorted(
             (exercise for exercise in allowed if quality in exercise.qualities),
             key=lambda exercise: (
+                1 if exercise.specific else 0,
                 0 if exercise.id in relevance else 1,
                 0 if exercise.id in chosen else 1,
                 exercise.qualities.index(quality),
@@ -684,9 +701,22 @@ async def plan_candidates(
                 exercise.id,
             ),
         )
-        for exercise in _diverse(members)[:_QUALITY_QUOTA]:
+        quota = _MAIN_QUALITY_QUOTA if position < 2 else _QUALITY_QUOTA
+        for exercise in _diverse(members)[:quota]:
             if exercise.id not in chosen:
                 chosen.append(exercise.id)
+    warm_ups = sorted(
+        (exercise for exercise in allowed if is_general_warm_up(exercise)),
+        key=lambda exercise: (
+            0 if exercise.id in chosen else 1,
+            0 if exercise.id in relevance else 1,
+            len(exercise.equipment),
+            exercise.id,
+        ),
+    )
+    for exercise in _diverse(warm_ups)[:_WARM_UP_QUOTA]:
+        if exercise.id not in chosen:
+            chosen.append(exercise.id)
     for exercise_id in sorted(relevance, key=relevance.__getitem__):
         if len(chosen) >= size:
             break
@@ -694,6 +724,18 @@ async def plan_candidates(
             chosen.append(exercise_id)
     order = {exercise.id: index for index, exercise in enumerate(allowed)}
     return sorted(chosen, key=order.__getitem__)
+
+
+def is_general_warm_up(exercise: Exercise) -> bool:
+    """ADR 0011: easy, general movement preparation — cardio that isn't mainly power work and
+    isn't a narrow technique drill (jump rope, an easy jog, jumping jacks, shadow boxing)."""
+    primary = exercise.qualities[0] if exercise.qualities else None
+    return (
+        exercise.kind == ExerciseKind.CARDIO
+        and not exercise.specific
+        and not exercise.kg_loadable
+        and primary not in (Quality.POWER, Quality.ROTATIONAL_POWER)
+    )
 
 
 def exercise_facts(
@@ -718,6 +760,12 @@ def exercise_facts(
                 # ADR 0009: what it directly trains, and how a set is measured.
                 "qualities": [quality.value for quality in exercise.qualities],
                 "measures": [measure.value for measure in exercise.measures],
+                # ADR 0011: how its effort is regulated in its default measure (effort = reps
+                # in reserve; speed; carry; pace; none).
+                "intensity": intensity_mode(exercise, exercise.measures[0]).value,
             }
         )
+        if exercise.specific:
+            # A narrow technique drill, not the general activity: not a warm-up.
+            facts[-1]["specific"] = True
     return facts

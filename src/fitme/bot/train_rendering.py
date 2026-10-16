@@ -15,18 +15,19 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from fitme.bot.callback_data import CheckinReply, TrainAction, TrainPick
 from fitme.bot.plan_rendering import (
     exercise_name,
-    load_label,
-    prescription_line,
     reps_text,
     rest_text,
     target_text,
+    workout_block_lines,
 )
 from fitme.db.records import CheckinRecord, PlanRecord
 from fitme.domain.catalog import Catalog, Exercise
-from fitme.domain.enums import CheckinAnswer, Measure
+from fitme.domain.enums import BlockRole, CheckinAnswer, Measure
 from fitme.domain.models import Block, Load, Prescription, Workout
 from fitme.domain.results import ChangeReps, ParsedResults, PlanChange, SetResult, SwapExercise
 from fitme.i18n import t
+from fitme.services import prescribing
+from fitme.services.prescribing import load_label
 from fitme.services.recap import NextKind, RecapView
 from fitme.services.training import BlockView, LoggedItem, ResultPrompt, ReviewView
 
@@ -155,12 +156,7 @@ def review_text(view: ReviewView, *, catalog: Catalog, lang: str) -> str:
     if view.adjusted:
         lines.append(t("train.review_adjusted", lang))
     lines.append("")
-    for block in workout.blocks:
-        if block.kind == "superset":
-            lines.append(t("plan.superset_label", lang))
-            lines.extend(f"    • {prescription_line(item, catalog, lang)}" for item in block.items)
-        else:
-            lines.append(f"• {prescription_line(block.items[0], catalog, lang)}")
+    lines.extend(workout_block_lines(workout.blocks, catalog, lang))
     lines.extend(["", t("disclosure.ai", lang)])
     return "\n".join(lines)
 
@@ -184,9 +180,20 @@ def block_text(view: BlockView, *, catalog: Catalog, lang: str) -> str:
     """A§6.5 step 5: name, sets × reps with an **explicit load on every set**, rest, and the
     vetted catalog instructions in the user's language."""
     lines = [t("train.block_title", lang, index=view.index + 1, total=view.total)]
-    if view.block.kind == "superset":
-        lines.append(t("plan.superset_label", lang))
-    for item in view.block.items:
+    superset = view.block.kind == "superset"
+    if superset:
+        # ADR 0011: rounds and the one rest after each round up front; each exercise but the
+        # last then says only its transition to the next.
+        lines.append(
+            t(
+                "plan.superset_rounds_label",
+                lang,
+                rounds=max(item.sets for item in view.block.items),
+                rest=rest_text(view.block.items[-1].rest_seconds, lang),
+            )
+        )
+    last = len(view.block.items) - 1
+    for index, item in enumerate(view.block.items):
         exercise = catalog.by_id(item.exercise_id)
         lines.append("")
         lines.append(exercise_name(exercise, item.exercise_id, lang))
@@ -205,8 +212,16 @@ def block_text(view: BlockView, *, catalog: Catalog, lang: str) -> str:
                 "train.sets_line_target", lang, sets=item.sets, target=target_text(item, lang)
             )
         lines.append(sets_line)
-        lines.append(t("train.load_line", lang, load=_block_load_label(item, exercise, lang)))
-        lines.append(t("train.rest_line", lang, rest=rest_text(item.rest_seconds, lang)))
+        load = _block_load_label(item, exercise, lang, view.block.role)
+        lines.append(t("train.load_line", lang, load=load))
+        if not superset:
+            lines.append(t("train.rest_line", lang, rest=rest_text(item.rest_seconds, lang)))
+        elif index < last:
+            if item.rest_seconds > 0:
+                rest = rest_text(item.rest_seconds, lang)
+                lines.append(t("train.transition_line", lang, rest=rest))
+            else:
+                lines.append(t("train.no_transition_line", lang))
         if item.note:
             lines.append(item.note)
         if exercise is not None:
@@ -220,25 +235,13 @@ def block_text(view: BlockView, *, catalog: Catalog, lang: str) -> str:
     return "\n".join(lines)
 
 
-def _block_load_label(item: Prescription, exercise: Exercise | None, lang: str) -> str:
-    """The load as one short phrase for a workout block. A calibration load says only where
-    to start ("start with 2 kg each or lighter"); how to log it is the calibration hint line
-    below, said once instead of on every set."""
-    load = item.load
-    if load.kind != "calibration":
-        label = load_label(load, exercise, lang)
-        if item.rir is not None:
-            label = f"{label}, {t('plan.rir', lang, rir=item.rir)}"
-        return label
-    if item.declared_kg is not None:
-        declared = load_label(Load(kind="kg", kg=item.declared_kg), exercise, lang)
-        return t("train.load_calibration_declared", lang, declared=declared)
-    if item.rir is not None:
-        return t("train.load_calibration_rir", lang, rir=item.rir)
-    if exercise is not None and exercise.start.kind == "kg":
-        start = load_label(exercise.start, exercise, lang)
-        return t("train.load_calibration_from", lang, start=start)
-    return t("train.load_calibration", lang)
+def _block_load_label(
+    item: Prescription, exercise: Exercise | None, lang: str, role: BlockRole | None = None
+) -> str:
+    """The load as one short phrase for a workout block (ADR 0011, `services.prescribing`):
+    how to pick a calibration load for this stimulus; how to log it is the calibration hint
+    line below, said once instead of on every set."""
+    return prescribing.prescription_load_label(item, exercise, lang, section="train", role=role)
 
 
 def to_plan_markup(session_id: int, lang: str) -> InlineKeyboardMarkup:

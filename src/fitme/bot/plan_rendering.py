@@ -4,7 +4,7 @@ rest, and an **explicit load** on every prescription — plus the plan-list and 
 keyboards, and the Telegram message-length split.
 
 Nothing here touches the database or the LLM: callers pass the loaded `Plan`, the catalog
-(for localized exercise names and the calibration start hint) and the language.
+(for localized exercise names and each exercise's stimulus) and the language.
 """
 
 from __future__ import annotations
@@ -17,16 +17,14 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from fitme.bot.callback_data import PlanDraft, PlanMenu, TrainPick
 from fitme.db.records import PlanRecord
 from fitme.domain.catalog import Catalog, Exercise
-from fitme.domain.enums import Measure
-from fitme.domain.models import Load, Plan, Prescription
+from fitme.domain.enums import BlockRole, Measure
+from fitme.domain.models import Block, Plan, Prescription
 from fitme.i18n import t, wording
+from fitme.services import prescribing
+from fitme.services.prescribing import load_label
 
 TELEGRAM_MESSAGE_LIMIT = 4096
 _DEFAULT_MARK = "★"
-
-
-def _kg_text(kg: float) -> str:
-    return f"{kg:g}"
 
 
 def exercise_name(exercise: Exercise | None, exercise_id: str, lang: str) -> str:
@@ -63,46 +61,30 @@ def target_text(prescription: Prescription, lang: str) -> str:
     return reps_text(prescription.reps_min, prescription.reps_max)
 
 
-def load_label(load: Load, exercise: Exercise | None, lang: str) -> str:
-    """The explicit load text (A§6.4 step 5): a kg number ("each" when the catalog
-    `load_unit` is `per_implement`, A§4.4 "loads are per implement"; a single implement or a
-    total is a plain kg figure), "bodyweight", or the calibration wording with the catalog
-    start as the "start with X or lighter" hint (A§7.3: the engine never prescribes that
-    start itself)."""
-    if load.kind == "kg":
-        assert load.kg is not None  # Load's own validator guarantees this
-        if exercise is not None and exercise.load_unit == "per_implement":
-            return t("load.per_implement", lang, kg=_kg_text(load.kg))
-        return t("plan.load_kg", lang, kg=_kg_text(load.kg))
-    if load.kind == "bodyweight":
-        return t("plan.load_bodyweight", lang)
-    if exercise is not None and exercise.start.kind == "kg":
-        # A§7.3: the catalog kg start is a display hint only ("start with X or lighter").
-        start = load_label(exercise.start, exercise, lang)
-        return t("plan.load_calibration_from", lang, start=start)
-    return t("plan.load_calibration", lang)
-
-
 def prescription_load_label(
-    prescription: Prescription, exercise: Exercise | None, lang: str
+    prescription: Prescription,
+    exercise: Exercise | None,
+    lang: str,
+    *,
+    role: BlockRole | None = None,
 ) -> str:
-    """`load_label` for a prescription, with the M8b declared hint when the shown load is
-    `calibration` and the user's pasted plan declared a kg for it ("calibration — your plan
-    says 80 kg; start at or below it and log what you used"; "each" per `load_unit`). The
-    hint is display only: the prescribed load is still calibration."""
-    load = prescription.load
-    if load.kind == "calibration" and prescription.declared_kg is not None:
-        declared = load_label(Load(kind="kg", kg=prescription.declared_kg), exercise, lang)
-        return t("plan.load_calibration_declared", lang, declared=declared)
-    if prescription.rir is not None:
-        # ADR 0009: a structured intensity target replaces the generic "start with X" hint.
-        if load.kind == "calibration":
-            return t("plan.load_calibration_rir", lang, rir=prescription.rir)
-        return f"{load_label(load, exercise, lang)}, {t('plan.rir', lang, rir=prescription.rir)}"
-    return load_label(load, exercise, lang)
+    """The plan view's load text (ADR 0011, `services.prescribing`): the number, or how to
+    pick an unknown load for this exercise's stimulus, never a catalog start weight."""
+    return prescribing.prescription_load_label(prescription, exercise, lang, role=role)
 
 
-def prescription_line(prescription: Prescription, catalog: Catalog, lang: str) -> str:
+def prescription_line(
+    prescription: Prescription,
+    catalog: Catalog,
+    lang: str,
+    *,
+    in_superset: str | None = None,
+    role: BlockRole | None = None,
+) -> str:
+    """One exercise as a line. A single block says its rest. ADR 0011: inside a superset
+    (`in_superset="transition"`) the line says the transition to the next exercise instead,
+    and the last exercise (`"last"`) says no rest at all — the round's rest is said once, in
+    the superset's heading."""
     exercise = catalog.by_id(prescription.exercise_id)
     sets_reps = t(
         "plan.sets_reps",
@@ -110,17 +92,61 @@ def prescription_line(prescription: Prescription, catalog: Catalog, lang: str) -
         sets=prescription.sets,
         reps=target_text(prescription, lang),
     )
-    line = t(
-        "plan.prescription_line",
-        lang,
-        name=exercise_name(exercise, prescription.exercise_id, lang),
-        sets_reps=sets_reps,
-        load=prescription_load_label(prescription, exercise, lang),
-        rest=rest_text(prescription.rest_seconds, lang),
-    )
+    name = exercise_name(exercise, prescription.exercise_id, lang)
+    load = prescription_load_label(prescription, exercise, lang, role=role)
+    if in_superset is None:
+        rest = rest_text(prescription.rest_seconds, lang)
+        line = t(
+            "plan.prescription_line", lang, name=name, sets_reps=sets_reps, load=load, rest=rest
+        )
+    else:
+        line = t("plan.superset_item_line", lang, name=name, sets_reps=sets_reps, load=load)
+        if in_superset == "transition":
+            line = f"{line}, {transition_text(prescription.rest_seconds, lang)}"
     if prescription.note:
         line = f"{line} — {prescription.note}"
     return line
+
+
+def transition_text(seconds: int, lang: str) -> str:
+    """ "then 20 s to the next exercise" / "then straight to the next exercise"."""
+    if seconds <= 0:
+        return t("plan.superset_no_transition", lang)
+    return t("plan.superset_transition", lang, rest=rest_text(seconds, lang))
+
+
+def block_lines(block: Block, catalog: Catalog, lang: str) -> list[str]:
+    """A block's lines: a single exercise, or a superset's heading (rounds, the one rest
+    after each round) and its exercises in order (ADR 0009, ADR 0011)."""
+    if block.kind != "superset":
+        return [f"• {prescription_line(block.items[0], catalog, lang, role=block.role)}"]
+    lines = [
+        t(
+            "plan.superset_rounds_label",
+            lang,
+            rounds=max(item.sets for item in block.items),
+            rest=rest_text(block.items[-1].rest_seconds, lang),
+        )
+    ]
+    last = len(block.items) - 1
+    for index, item in enumerate(block.items):
+        position = "last" if index == last else "transition"
+        line = prescription_line(item, catalog, lang, in_superset=position, role=block.role)
+        lines.append(f"    • {line}")
+    return lines
+
+
+def workout_block_lines(blocks: Sequence[Block], catalog: Catalog, lang: str) -> list[str]:
+    """Every block of a workout, with a role heading (ADR 0011) whenever the role changes."""
+    lines: list[str] = []
+    previous: BlockRole | None = None
+    for block in blocks:
+        if block.role is not None and block.role != previous:
+            role = t(f"enum.block_role.{block.role.value}", lang)
+            lines.append(t("plan.block_role_heading", lang, role=role))
+        previous = block.role
+        lines.extend(block_lines(block, catalog, lang))
+    return lines
 
 
 def _keyed(plan: Plan) -> dict[tuple[str, str, int], Prescription]:
@@ -186,7 +212,7 @@ def load_change_notes(requested: Plan, judged: Plan, catalog: Catalog, lang: str
                     lang,
                     name=exercise_name(exercise, asked.exercise_id, lang),
                     asked=load_label(asked.load, exercise, lang),
-                    got=load_label(got.load, exercise, lang),
+                    got=prescription_load_label(got, exercise, lang),
                 )
             )
     return notes
@@ -235,22 +261,7 @@ def render_plan_text(
         if workout.qualities:
             names = ", ".join(t(f"enum.quality.{q.value}", lang) for q in workout.qualities)
             lines.append(t("plan.workout_qualities", lang, qualities=names))
-        for block in workout.blocks:
-            if block.kind == "superset":
-                # ADR 0009: in the listed order, in rounds; the last rest closes the round.
-                lines.append(
-                    t(
-                        "plan.superset_rounds_label",
-                        lang,
-                        rounds=max(item.sets for item in block.items),
-                        rest=rest_text(block.items[-1].rest_seconds, lang),
-                    )
-                )
-                lines.extend(
-                    f"    • {prescription_line(item, catalog, lang)}" for item in block.items
-                )
-            else:
-                lines.append(f"• {prescription_line(block.items[0], catalog, lang)}")
+        lines.extend(workout_block_lines(workout.blocks, catalog, lang))
     if unmatched:
         lines.extend(["", t("plan.unmatched_title", lang)])
         lines.extend(f"• {name}" for name in unmatched)

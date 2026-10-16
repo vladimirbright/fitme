@@ -12,7 +12,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, model_validator
 
-from fitme.domain.enums import Measure, Quality, RefusalCode
+from fitme.domain.enums import BlockRole, Measure, Quality, RefusalCode
 
 _STRICT_CONFIG = ConfigDict(extra="forbid", allow_inf_nan=False)
 
@@ -187,11 +187,17 @@ class Prescription(BaseModel):
 class Block(BaseModel):
     """One exercise (`single`) or a superset of 2-4 exercises (A§4.5). ADR 0009: a superset
     is done in rounds, its exercises in the listed order; each exercise's `rest_seconds` is
-    the transition to the next one, and the last exercise's is the rest after the round."""
+    the transition to the next one, and the last exercise's is the rest after the round
+    (and before the next block) — the one authoritative round rest, shown once.
+
+    ADR 0011: `role` is what the block does in its session (warm-up, power, main strength,
+    ...). It comes before `items` so a model fills it before choosing the exercises; it is
+    optional, and plans made before it have none."""
 
     model_config = _STRICT_CONFIG
 
     kind: Literal["single", "superset"]
+    role: BlockRole | None = None
     items: list[Prescription]
 
     @model_validator(mode="after")
@@ -208,11 +214,13 @@ class Workout(BaseModel):
     model_config = _STRICT_CONFIG
 
     key: str  # "A", "B", ...
+    # ADR 0009: what this session is for, as the planner states it, main objective first;
+    # checked against the exercises' own qualities (`services.plan_quality`). Empty for plans
+    # made before it. ADR 0011: declared before `title` and `blocks`, so a model states the
+    # session's objectives before it picks exercises (structured output follows field order).
+    qualities: list[Quality] = Field(default_factory=list, max_length=4)
     title: Annotated[str, BeforeValidator(_trim_title)]
     blocks: list[Block]
-    # ADR 0009: what this session is for, as the planner states it; checked against the
-    # exercises' own qualities (`services.plan_quality`). Empty for plans made before it.
-    qualities: list[Quality] = Field(default_factory=list, max_length=4)
 
 
 class ScheduledDay(BaseModel):

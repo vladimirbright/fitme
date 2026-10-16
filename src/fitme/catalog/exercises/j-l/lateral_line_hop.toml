@@ -1,0 +1,15 @@
+id = "lateral_line_hop"
+names = { en = "Lateral line hops", ru = "Прыжки через линию в стороны" }
+search = { en = "lateral line hops quick feet", ru = "прыжки через линию в стороны быстрые ноги" }
+kind = "cardio"
+pattern = "conditioning"
+measures = ["time", "reps"]
+qualities = ["agility", "power"]
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+loads_areas = ["knee", "ankle"]
+contraindicated_by = ["knee_injury_current", "ankle_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Stand next to a line on the floor with feet together and knees soft. Hop sideways over the line and back with small, quick, quiet contacts on the balls of the feet. Keep the hips level and the chest up, and stop the set when the hops get heavy or uneven.", ru = "Встаньте рядом с линией на полу, стопы вместе, колени слегка согнуты. Перепрыгивайте через линию вбок и обратно небольшими быстрыми мягкими прыжками на передней части стопы. Таз ровно, грудь раскрыта; заканчивайте подход, когда прыжки становятся тяжёлыми или неровными." }
