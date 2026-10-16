@@ -126,12 +126,15 @@ def blocking_errors(plan: Plan, ctx: GuardContext) -> list[str]:
 structural_errors = blocking_errors
 
 
-async def allowed_exercises_for_edit(db: Database, user_id: int) -> list[Exercise] | None:
+async def allowed_exercises_for_edit(
+    db: Database, user_id: int, plan_id: int
+) -> list[Exercise] | None:
     """The catalog exercises the edit form's swap dropdown may offer (A§9.1: "swap exercise
     from the allowed catalog list") — the same `location`/`equipment`/screening filter
-    `/plan` uses. `None` if the profile isn't complete (nothing to filter by)."""
+    `/plan` uses, without the plan's exclusions. `None` if the profile isn't complete
+    (nothing to filter by)."""
     async with db.read() as conn:
-        snapshot = await planning.read_snapshot(conn, user_id)
+        snapshot = await planning.read_snapshot(conn, user_id, plan_id=plan_id)
     if snapshot.profile is None:
         return None
     catalog = load_catalog()
@@ -178,7 +181,7 @@ async def save_edit(
     """
     catalog = load_catalog()
     async with db.read() as conn:
-        snapshot = await planning.read_snapshot(conn, user_id)
+        snapshot = await planning.read_snapshot(conn, user_id, plan_id=plan_id)
     if snapshot.profile is None:
         return SaveEditResult(ok=False, errors=["profile is incomplete"])
 

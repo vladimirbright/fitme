@@ -53,3 +53,36 @@ def test_excluded_exercises_are_never_offered() -> None:
 def test_an_exclusion_must_name_something_real(kind: str, value: str) -> None:
     with pytest.raises(exclusions.InvalidExclusionError):
         exclusions.preview(kind, value, load_catalog())
+
+
+def test_applicable_picks_every_plan_rows_plus_the_plan_worked_on() -> None:
+    """ADR 0010: a plan-scoped exclusion applies to its plan only, a new-plan one to the new
+    plan being drafted only; an `all` one everywhere."""
+    rows = [
+        ExclusionRecord(id=1, user_id=1, kind="name", value="squat", created_at=""),
+        ExclusionRecord(
+            id=2, user_id=1, kind="name", value="lunge", created_at="", scope="plan", plan_id=7
+        ),
+        ExclusionRecord(
+            id=3, user_id=1, kind="name", value="kettlebell", created_at="", scope="new_plan"
+        ),
+    ]
+
+    def ids(**kwargs: object) -> list[int]:
+        return [row.id for row in exclusions.applicable(rows, **kwargs)]  # type: ignore[arg-type]
+
+    assert ids(plan_id=7) == [1, 2]
+    assert ids(plan_id=8) == [1]
+    assert ids(plan_id=None, new_plan=True) == [1, 3]
+    assert ids(plan_id=None) == [1]
+
+
+def test_the_word_squat_is_far_narrower_than_the_squat_pattern() -> None:
+    """The observed failure: "убери приседания" stored `pattern:squat`, 92 exercises with
+    every lunge, step-up and leg press. The word keeps to squats."""
+    catalog = load_catalog()
+    word = set(exclusions.preview("name", "squat", catalog).exercise_ids)
+    pattern = set(exclusions.preview("pattern", "squat", catalog).exercise_ids)
+    assert "barbell_back_squat" in word
+    assert not {"dumbbell_reverse_lunge", "dumbbell_step_up", "machine_leg_press"} & word
+    assert len(word) < len(pattern)

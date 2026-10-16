@@ -21,7 +21,7 @@ from dataclasses import dataclass
 from datetime import timedelta
 
 from fitme import clock
-from fitme.db.connection import Database
+from fitme.db.connection import Connection, Database
 from fitme.db.controllers.chat import insert_chat_message
 from fitme.db.controllers.conversations import (
     close_conversation,
@@ -30,6 +30,7 @@ from fitme.db.controllers.conversations import (
     set_conversation_draft,
     touch_conversation,
 )
+from fitme.db.controllers.profile import delete_new_plan_exclusions
 from fitme.db.records import ConversationRecord
 from fitme.db.selectors.conversations import (
     get_conversation,
@@ -51,6 +52,14 @@ HISTORY_LIMIT = 20
 class Turn:
     role: str  # "user" | "assistant"
     text: str
+
+
+async def _close(conn: Connection, record: ConversationRecord, *, status: str) -> None:
+    """Close one session. ADR 0010: a new-plan session that ends unsaved takes the
+    exclusions made for its draft with it."""
+    await close_conversation(conn, record.id, status=status)
+    if record.kind == PLANNING and record.plan_id is None and status != "saved":
+        await delete_new_plan_exclusions(conn, user_id=record.user_id)
 
 
 def _idle(record: ConversationRecord) -> bool:
@@ -76,11 +85,11 @@ async def active(db: Database, user_id: int) -> ConversationRecord | None:
                 if in_progress is not None and record.workout_session_id == in_progress.id:
                     training = training or record
                 else:
-                    await close_conversation(conn, record.id, status="closed")
+                    await _close(conn, record, status="closed")
             elif planning is None and not _idle(record):
                 planning = record
             else:
-                await close_conversation(conn, record.id, status="closed")
+                await _close(conn, record, status="closed")
         if in_progress is not None and training is None:
             conversation_id = await insert_conversation(
                 conn,
@@ -105,7 +114,7 @@ async def open_planning(db: Database, user_id: int, plan_id: int | None) -> Conv
                 refreshed = await get_conversation(conn, record.id)
                 assert refreshed is not None
                 return refreshed
-            await close_conversation(conn, record.id, status="closed")
+            await _close(conn, record, status="closed")
         conversation_id = await insert_conversation(
             conn, user_id=user_id, kind=PLANNING, plan_id=plan_id, workout_session_id=None
         )
@@ -132,7 +141,7 @@ async def close_planning(db: Database, user_id: int, *, status: str) -> Conversa
     async with db.transaction() as conn:
         for record in await list_open_conversations(conn, user_id):
             if record.kind == PLANNING:
-                await close_conversation(conn, record.id, status=status)
+                await _close(conn, record, status=status)
                 return record
     return None
 

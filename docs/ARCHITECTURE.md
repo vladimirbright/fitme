@@ -597,7 +597,9 @@ a plan that passes the guards is reviewed by `services/plan_quality` (session go
 exercises, warm-up and order, supersets, weekly shoulder/leg load), and findings spend the
 feedback retry as a targeted repair — the passing attempt with the fewest findings becomes
 the draft, remaining findings are logged, never a refusal. Hard exclusions
-(`exercise_exclusions`) are removed from the allowed set and rejected by `plan.excluded`.
+(`exercise_exclusions`) are removed from the allowed set and rejected by `plan.excluded`;
+ADR 0010: only those that apply to the plan being worked on (scope `all`, that plan's
+`plan`, or the new draft's `new_plan`).
 
 1. **Gates** (guards, before any LLM call): the profile is complete; there is no open
    `health_hold`; red-flag clearance is present. Any failure returns a `Refusal`, which is

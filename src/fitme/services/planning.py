@@ -87,6 +87,7 @@ from fitme.db.controllers.plans import (
     insert_plan_version,
     set_default_plan,
 )
+from fitme.db.controllers.profile import attach_new_plan_exclusions
 from fitme.db.controllers.training import abort_sessions_for_plan, detach_sessions_for_plan
 from fitme.db.records import (
     DecisionRecord,
@@ -307,7 +308,8 @@ class Snapshot:
     increases_7d: dict[str, list[float]]
     applied_to_kg_7d: dict[str, float]  # A§7: applied this week, not counted twice
     active_plan: Plan | None  # the default plan's latest version, if any
-    # ADR 0009: the user's hard exclusions (stored rows; `exclusions.resolve` gives the ids).
+    # ADR 0009/0010: the exclusions that apply to the plan this snapshot was read for
+    # (stored rows; `exclusions.resolve` gives the ids).
     exclusions: list[ExclusionRecord] = field(default_factory=list)
 
 
@@ -315,9 +317,14 @@ def _since_7d() -> str:
     return clock.format_timestamp(clock.now() - timedelta(days=7))
 
 
-async def read_snapshot(conn: Connection, user_id: int) -> Snapshot:
+async def read_snapshot(
+    conn: Connection, user_id: int, *, plan_id: int | None = None, new_plan: bool = False
+) -> Snapshot:
     """Everything the gates, the guards and the LLM context need, off one connection (so it
-    can run inside `db.read()` for a proposal and inside `db.transaction()` for a confirm)."""
+    can run inside `db.read()` for a proposal and inside `db.transaction()` for a confirm).
+
+    ADR 0010: the exclusions are those of the plan being worked on: `plan_id`, or the new
+    plan's draft (`new_plan`), or else the default plan (training and recaps)."""
     user = await get_user(conn, user_id)
     if user is None:
         raise PlanNotFoundError(f"no user {user_id}")
@@ -341,6 +348,9 @@ async def read_snapshot(conn: Connection, user_id: int) -> Snapshot:
 
     active_plan: Plan | None = None
     default_plan = await get_default_plan(conn, user_id)
+    if plan_id is None and not new_plan and default_plan is not None:
+        plan_id = default_plan.id
+    exclusion_rows = exclusions.applicable(exclusion_rows, plan_id=plan_id, new_plan=new_plan)
     if default_plan is not None:
         latest = await get_latest_plan_version(conn, default_plan.id)
         if latest is not None:
@@ -1025,10 +1035,10 @@ async def _log_attempt(
 
 
 async def _gated_snapshot(
-    db: Database, user_id: int
+    db: Database, user_id: int, *, new_plan: bool = False
 ) -> tuple[Snapshot, tuple[RefusalCode, GuardVerdict] | None]:
     async with db.read() as conn:
-        snapshot = await read_snapshot(conn, user_id)
+        snapshot = await read_snapshot(conn, user_id, new_plan=new_plan)
     return snapshot, gate(snapshot)
 
 
@@ -1164,7 +1174,7 @@ async def propose_new_plan(
     scrubbed `user_request` together with `existing_plans_summary`. With no guidance (no
     plans yet, or the user chose to generate anyway) the request is left out; the summary is
     still sent whenever plans exist, so the new plan isn't a copy of one."""
-    snapshot, gate_failure = await _gated_snapshot(db, user_id)
+    snapshot, gate_failure = await _gated_snapshot(db, user_id, new_plan=True)
     lang = snapshot.language
     guidance = (guidance or "").strip() or None
     existing = await existing_plans_summary(db, user_id)
@@ -1376,8 +1386,10 @@ async def revise_plan(
     halts and never gets here. Raises `PlanNotFoundError`/`StaleDraftError` for a bad `base`.
     """
     async with db.read() as conn:
-        snapshot = await read_snapshot(conn, user_id)
         resolved = await _resolve_base(conn, user_id, base)
+        snapshot = await read_snapshot(
+            conn, user_id, plan_id=resolved.plan_id, new_plan=resolved.plan_id is None
+        )
     lang = snapshot.language
     gate_failure = gate(snapshot)
     if gate_failure is not None:
@@ -1526,7 +1538,7 @@ async def import_plan(db: Database, llm: LlmRuntime, user_id: int, text: str) ->
     stop-word scan of it is the caller's job *before* this is called (A§6.3) — a hit halts and
     never gets here. Every attempt is a `decision(kind=plan_import)` with `llm_input` verbatim
     and `load_changes = []` (A§4.3)."""
-    snapshot, gate_failure = await _gated_snapshot(db, user_id)
+    snapshot, gate_failure = await _gated_snapshot(db, user_id, new_plan=True)
     lang = snapshot.language
     report: dict[str, object] = {"base": "import"}
     if gate_failure is not None:
@@ -1663,7 +1675,10 @@ async def confirm_plan(
         if latest is None or latest.id != decision_id:
             return ConfirmResult(status=ConfirmStatus.STALE)
 
-        snapshot = await read_snapshot(conn, user_id)
+        draft_plan_id = _plan_id_of(decision)
+        snapshot = await read_snapshot(
+            conn, user_id, plan_id=draft_plan_id, new_plan=draft_plan_id is None
+        )
         lang = snapshot.language
         gate_failure = gate(snapshot)
         if gate_failure is not None:
@@ -1717,6 +1732,8 @@ async def confirm_plan(
                 status=_PLAN_STATUS_ACTIVE,
             )
             version = 1
+            # ADR 0010: what the user excluded while drafting it now belongs to this plan.
+            await attach_new_plan_exclusions(conn, user_id=user_id, plan_id=plan_id)
         # A§4.3 "load changes count once, when applied": the confirm decision carries them,
         # computed against the confirm-time reference; the draft carried none.
         load_changes = load_changes_for(plan, inputs.ctx)
@@ -1996,7 +2013,7 @@ async def record_edit_draft(
     requested = plan.model_copy(deep=True)
     judged = plan.model_copy(deep=True)
     async with db.read() as conn:
-        snapshot = await read_snapshot(conn, user_id)
+        snapshot = await read_snapshot(conn, user_id, plan_id=plan_id, new_plan=plan_id is None)
     failure = gate(snapshot)
     if failure is not None:
         return EditDraftResult(requested=requested, errors=(failure[1].detail,))

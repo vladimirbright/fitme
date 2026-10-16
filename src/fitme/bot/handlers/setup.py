@@ -345,7 +345,7 @@ async def _exclusions_view(
     db: Database, user_id: int, lang: str
 ) -> tuple[str, InlineKeyboardMarkup]:
     """ADR 0009: the hard exclusions under the profile, one remove button each."""
-    rows = await exclusions.list_for_user(db, user_id)
+    rows = await exclusions.list_for_all_plans(db, user_id)
     catalog = load_catalog()
     labels = [(row.id, exclusions.label(row.kind, row.value, catalog, lang)) for row in rows]
     lines = [t("profile.exclusions_title", lang), *(f"• {label}" for _, label in labels)]
@@ -366,7 +366,7 @@ async def on_exclusion_remove(
     query: CallbackQuery, callback_data: ExclusionRemove, db: Database, user_id: int
 ) -> None:
     lang = (await profile_service.get_snapshot(db, user_id)).language
-    rows = {row.id: row for row in await exclusions.list_for_user(db, user_id)}
+    rows = {row.id: row for row in await exclusions.list_for_all_plans(db, user_id)}
     row = rows.get(callback_data.exclusion_id)
     if row is None or not await exclusions.remove(db, user_id, row.id):
         await _toast_stale(query, lang)

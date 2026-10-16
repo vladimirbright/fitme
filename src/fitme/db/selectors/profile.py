@@ -120,14 +120,22 @@ async def get_setup_progress(
 
 
 async def list_exclusions(conn: aiosqlite.Connection, user_id: int) -> list[ExclusionRecord]:
-    """ADR 0009: the user's hard exercise exclusions, oldest first."""
+    """ADR 0009/0010: every exclusion of the user, in any scope, oldest first."""
     async with conn.execute(
-        "SELECT id, user_id, kind, value, created_at FROM exercise_exclusions "
+        "SELECT id, user_id, kind, value, created_at, scope, plan_id FROM exercise_exclusions "
         "WHERE user_id = ? ORDER BY id",
         (user_id,),
     ) as cursor:
         rows = await cursor.fetchall()
     return [
-        ExclusionRecord(id=row[0], user_id=row[1], kind=row[2], value=row[3], created_at=row[4])
+        ExclusionRecord(
+            id=row[0],
+            user_id=row[1],
+            kind=row[2],
+            value=row[3],
+            created_at=row[4],
+            scope=row[5],
+            plan_id=row[6],
+        )
         for row in rows
     ]

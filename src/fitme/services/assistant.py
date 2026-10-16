@@ -375,6 +375,15 @@ class TurnResult:
 _EXAMPLES = 5
 
 
+@dataclass(frozen=True, slots=True)
+class StagedExclusion:
+    """ADR 0010: an exclusion and where it applies (`plan_id` for a `plan` scope)."""
+
+    found: exclusions.ExclusionPreview
+    scope: exclusions.Scope
+    plan_id: int | None = None
+
+
 @dataclass
 class _Staged:
     """What a run staged, applied in `_apply` after it."""
@@ -388,7 +397,7 @@ class _Staged:
     fixes: tuple[int, list[FixLoggedSet]] | None = None
     renames: list[tuple[int, str]] = field(default_factory=list)
     default_plan_id: int | None = None
-    exclusions_added: list[exclusions.ExclusionPreview] = field(default_factory=list)
+    exclusions_added: list[StagedExclusion] = field(default_factory=list)
     exclusions_removed: list[int] = field(default_factory=list)
     rewrite: RunRewrite | None = None
     new_plan: RunNewPlan | None = None
@@ -738,17 +747,48 @@ class _Turn:
 
     # --- exclusions (ADR 0009)
 
-    async def add_exclusion(self, kind: str, value: str) -> dict[str, object]:
+    def _exclusion_target(self) -> tuple[exclusions.Scope, int | None] | None:
+        """ADR 0010: the plan this turn works on — a new plan or redesign staged this turn,
+        an edited plan, else the open planning session's — or `None`."""
+        staged = self.staged
+        if staged.new_plan is not None:
+            return exclusions.Scope.NEW_PLAN, None
+        if staged.rewrite is not None and isinstance(staged.rewrite.base, planning.PlanBase):
+            return exclusions.Scope.PLAN, staged.rewrite.base.plan_id
+        if staged.draft_plan is not None and staged.draft_plan_id is not None:
+            return exclusions.Scope.PLAN, staged.draft_plan_id
+        session = self._planning
+        if session is None:
+            return None
+        if session.plan_id is None:
+            return exclusions.Scope.NEW_PLAN, None
+        return exclusions.Scope.PLAN, session.plan_id
+
+    async def add_exclusion(
+        self, kind: str, value: str, for_all_plans: bool = False
+    ) -> dict[str, object]:
         try:
             found = exclusions.preview(kind, value, self._catalog)
         except exclusions.InvalidExclusionError as exc:
             return _error(str(exc))
         if not found.exercise_ids:
             return _error("that matches no catalog exercise; nothing to exclude")
-        self.staged.exclusions_added.append(found)
+        if for_all_plans:
+            target: tuple[exclusions.Scope, int | None] | None = (exclusions.Scope.ALL, None)
+        else:
+            target = self._exclusion_target()
+        if target is None:
+            return _error(
+                "no plan is being worked on: start it first (new_plan, rewrite_plan or "
+                "edit_plan), then exclude for it; for_all_plans only if the user said it is "
+                "about every plan"
+            )
+        scope, plan_id = target
+        self.staged.exclusions_added.append(StagedExclusion(found, scope, plan_id))
         names = [self._catalog_name(exercise_id) for exercise_id in found.exercise_ids[:_EXAMPLES]]
         return _ok(
             staged=f"{found.kind.value}:{found.value}",
+            applies_to="every plan" if scope == exclusions.Scope.ALL else "this plan only",
             excludes=len(found.exercise_ids),
             examples=names,
         )
@@ -930,10 +970,17 @@ async def _state(
         "today_weekday": clock.now().astimezone(tz).weekday(),
         "workout_in_progress": active is not None,
         "session": None if conversation is None else conversation.kind,
-        # ADR 0009: the user's hard exclusions, for `remove_exclusion` and for explaining
-        # why an exercise is never offered.
+        # ADR 0009/0010: the user's exclusions, for `remove_exclusion` and for explaining
+        # why an exercise is never offered: `scope` "all" (every plan), "plan" (`plan_id`
+        # only) or "new_plan" (the new plan being drafted).
         "exclusions": [
-            {"exclusion_id": row.id, "kind": row.kind, "value": row.value}
+            {
+                "exclusion_id": row.id,
+                "kind": row.kind,
+                "value": row.value,
+                "scope": row.scope,
+                **({"plan_id": row.plan_id} if row.plan_id is not None else {}),
+            }
             for row in await exclusions.list_for_user(db, user_id)
         ],
     }
@@ -966,8 +1013,16 @@ async def handle_message(
     """One message no button or pending prompt claimed (already stop-word-scanned by the
     caller, A§6.3)."""
     catalog = load_catalog()
+    conversation = await conversations.active(db, user_id)
+    planning_session = await conversations.current_planning(db, user_id)
     async with db.read() as conn:
-        snapshot = await planning.read_snapshot(conn, user_id)
+        # ADR 0010: the exclusions of the plan the session works on (else the default's).
+        snapshot = await planning.read_snapshot(
+            conn,
+            user_id,
+            plan_id=None if planning_session is None else planning_session.plan_id,
+            new_plan=planning_session is not None and planning_session.plan_id is None,
+        )
     lang = snapshot.language
     if snapshot.profile is None:
         return TurnResult(refusal=planning.refusal_for(RefusalCode.PROFILE_INCOMPLETE, lang))
@@ -975,8 +1030,6 @@ async def handle_message(
     if gate_failure is not None:
         return TurnResult(refusal=planning.refusal_for(gate_failure[0], lang))
 
-    conversation = await conversations.active(db, user_id)
-    planning_session = await conversations.current_planning(db, user_id)
     turns = (
         []
         if conversation is None
@@ -1095,9 +1148,18 @@ async def _apply_exclusions(
         if row is not None and await exclusions.remove(db, user_id, exclusion_id):
             label = exclusions.label(row.kind, row.value, catalog, lang)
             items.append(Notice("assistant.exclusion_removed", name=label))
-    for found in staged.exclusions_added:
+    for entry in staged.exclusions_added:
+        found = entry.found
         label = exclusions.label(found.kind, found.value, catalog, lang)
-        added = await exclusions.add(db, user_id, found.kind.value, found.value, catalog)
+        added = await exclusions.add(
+            db,
+            user_id,
+            found.kind.value,
+            found.value,
+            catalog,
+            scope=entry.scope,
+            plan_id=entry.plan_id,
+        )
         if not added:
             items.append(Notice("assistant.exclusion_exists", name=label))
             continue
@@ -1110,7 +1172,12 @@ async def _apply_exclusions(
         if len(found.exercise_ids) > _EXAMPLES:
             more = len(found.exercise_ids) - _EXAMPLES
             names.append(i18n.t("assistant.exclusion_more", lang, count=more))
-        items.append(Notice("assistant.exclusion_added", name=label, details=tuple(names)))
+        key = (
+            "assistant.exclusion_added"
+            if entry.scope == exclusions.Scope.ALL
+            else "assistant.exclusion_added_plan"
+        )
+        items.append(Notice(key, name=label, details=tuple(names)))
     return items
 
 

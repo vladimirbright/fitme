@@ -78,13 +78,16 @@ class ProfileRecord:
 
 @dataclass(frozen=True, slots=True)
 class ExclusionRecord:
-    """ADR 0009: one hard exclusion (`kind` pattern | exercise | name)."""
+    """ADR 0009: one hard exclusion (`kind` pattern | exercise | name). ADR 0010: `scope`
+    "all" (every plan), "plan" (`plan_id` only) or "new_plan" (the new plan being drafted)."""
 
     id: int
     user_id: int
     kind: str
     value: str
     created_at: str
+    scope: str = "all"
+    plan_id: int | None = None
 
 
 @dataclass(frozen=True, slots=True)

@@ -239,6 +239,7 @@ async def test_upgrade_from_0005_preserves_every_row_and_id(tmp_path: Path) -> N
             "0009_catalog_search.sql",
             "0010_set_measures.sql",
             "0011_exclusions_and_sport.sql",
+            "0012_exclusion_scope.sql",
         ]
         assert await _snapshot(db) == before  # every row, every id, every source preserved
         assert await _rows(db, "SELECT import_hash FROM workout_sessions") == [(None,)] * 3

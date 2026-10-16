@@ -1003,36 +1003,141 @@ async def test_a_timed_and_a_distance_set_are_shown_and_logged_in_their_measure(
     assert all(row.performed for row in rows)
 
 
-async def test_no_squats_is_stored_as_an_exclusion_and_shown_with_what_it_covers(
+async def test_never_squats_is_stored_for_every_plan_and_shown_with_what_it_covers(
     dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
 ) -> None:
-    """ADR 0009: the assistant stages the exclusion; it is stored after the turn, reported
-    with examples, listed in the next turn's state, and removable from /profile."""
+    """ADR 0009/0010: an explicit "never" is an exclusion for every plan: stored after the
+    turn, reported with examples, listed in the next turn's state, removable from /profile."""
     seeded = await _ready(dispatcher, bot, db)
     llm.steps = [
-        Call("add_exclusion", {"kind": "pattern", "value": "squat"}),
-        Call("add_exclusion", {"kind": "pattern", "value": "legs"}),
-        say("Исключил приседания и выпады."),
+        Call("add_exclusion", {"kind": "name", "value": "squat", "for_all_plans": True}),
+        Call("add_exclusion", {"kind": "pattern", "value": "legs", "for_all_plans": True}),
+        say("Больше никаких приседаний."),
     ]
-    await _send(dispatcher, bot, "без приседаний и выпадов")
+    await _send(dispatcher, bot, "никогда не предлагай приседания")
 
     added, invalid = llm.returns("add_exclusion")
     assert added["ok"] is True and added["excludes"] > 10
+    assert added["applies_to"] == "every plan"
     assert invalid["ok"] is False
     stored = await exclusions.list_for_user(db, seeded.user_id)
-    assert [(row.kind, row.value) for row in stored] == [("pattern", "squat")]
+    assert [(row.kind, row.value, row.scope) for row in stored] == [("name", "squat", "all")]
     lang = await _lang(db, seeded.user_id)
-    label = t("enum.pattern.squat", lang)
+    label = exclusions.label("name", "squat", load_catalog(), lang)
     assert t("assistant.exclusion_added", lang, name=label) in "\n".join(_texts(session))
 
     llm.steps = [say("ok")]
     await _send(dispatcher, bot, "что исключено?")
     state = llm.prompts()[-1]["state"]
     assert state["exclusions"] == [
-        {"exclusion_id": stored[0].id, "kind": "pattern", "value": "squat"}
+        {"exclusion_id": stored[0].id, "kind": "name", "value": "squat", "scope": "all"}
     ]
 
     await _send(dispatcher, bot, "/profile")
     remove = _last_data(session, "xr:")
     await _click(dispatcher, bot, remove)
+    assert await exclusions.list_for_user(db, seeded.user_id) == []
+
+
+async def test_no_squats_while_working_on_a_plan_applies_to_that_plan_only(
+    dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
+) -> None:
+    """ADR 0010, the observed failure: "убери приседания" in a planning session became a
+    profile-wide exclusion. Now it belongs to the session's plan: /profile doesn't list it,
+    the plan's next draft can't keep a squat, and another plan is untouched."""
+    seeded = await _ready(dispatcher, bot, db)
+    llm.steps = [_edit(seeded.plan_id, _squat_kg(62.5)), say("Ок.")]
+    await _send(dispatcher, bot, "присед 62,5")  # opens a planning session for the plan
+
+    llm.steps = [Call("add_exclusion", {"kind": "name", "value": "squat"}), say("Убрал.")]
+    await _send(dispatcher, bot, "убери приседания")
+    added = llm.returns("add_exclusion")[0]
+    assert added["ok"] is True and added["applies_to"] == "this plan only"
+    stored = await exclusions.list_for_user(db, seeded.user_id)
+    assert [(row.scope, row.plan_id) for row in stored] == [("plan", seeded.plan_id)]
+    lang = await _lang(db, seeded.user_id)
+    label = exclusions.label("name", "squat", load_catalog(), lang)
+    assert t("assistant.exclusion_added_plan", lang, name=label) in "\n".join(_texts(session))
+    assert await exclusions.list_for_all_plans(db, seeded.user_id) == []
+
+    # The plan still has its squat: a draft that keeps it fails `plan.excluded` and isn't
+    # written; the session's draft stays the previous one.
+    before = (await _open_conversations(db, seeded.user_id))[0].draft_decision_id
+    llm.steps = [_edit(seeded.plan_id, _squat_kg(65)), say("Ок.")]
+    await _send(dispatcher, bot, "присед 65")
+    refused = llm.returns("edit_plan")[-1]
+    assert refused["ok"] is False and "excluded" in refused["error"]
+    assert (await _open_conversations(db, seeded.user_id))[0].draft_decision_id == before
+    async with db.read() as conn:
+        scoped = await planning.read_snapshot(conn, seeded.user_id, plan_id=seeded.plan_id)
+    assert [row.value for row in scoped.exclusions] == ["squat"]
+
+    # Another plan (a new one) is not affected.
+    async with db.read() as conn:
+        new_plan = await planning.read_snapshot(conn, seeded.user_id, new_plan=True)
+    assert new_plan.exclusions == []
+
+
+async def test_an_exclusion_with_no_plan_in_work_and_no_never_is_not_stored(
+    dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
+) -> None:
+    seeded = await _ready(dispatcher, bot, db)
+    llm.steps = [
+        Call("add_exclusion", {"kind": "name", "value": "squat"}),
+        say("Для какого плана?"),
+    ]
+    await _send(dispatcher, bot, "без приседаний")
+    answer = llm.returns("add_exclusion")[0]
+    assert answer["ok"] is False and "for_all_plans" in answer["error"]
+    assert await exclusions.list_for_user(db, seeded.user_id) == []
+
+
+def _boxing_plan() -> Plan:
+    plan = _plan().model_copy(update={"name": "Boxing"}, deep=True)
+    # ADR 0009: a generated plan warms up before its heavy squat (else a repair round runs).
+    warm_up = _item("mobility_cat_cow", Load(kind="bodyweight"))
+    plan.workouts[0].blocks.insert(0, Block(kind="single", items=[warm_up]))
+    return plan
+
+
+async def test_a_new_plans_exclusion_reaches_its_generation_and_moves_to_it_when_saved(
+    dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
+) -> None:
+    """ADR 0010: "new plan, no lunges" excludes for the new plan's draft (the generation
+    sees it), and saving the draft makes it that plan's exclusion; nothing for all plans."""
+    seeded = await _ready(dispatcher, bot, db)
+    llm.steps = [
+        Call("new_plan", {"guidance": "бокс"}),
+        Call("add_exclusion", {"kind": "name", "value": "lunge"}),
+        say("Составляю без выпадов."),
+        _boxing_plan(),
+    ]
+    await _send(dispatcher, bot, "новый план для бокса, без выпадов")
+    assert llm.returns("add_exclusion")[0]["applies_to"] == "this plan only"
+    [row] = await exclusions.list_for_user(db, seeded.user_id)
+    assert (row.scope, row.plan_id) == ("new_plan", None)
+    assert "name:lunge" in llm.prompts()[-1]["context"]["exclusions"]
+
+    llm.steps = [Call("save_draft"), say("Сохранил.")]
+    await _send(dispatcher, bot, "сохрани")
+    [row] = await exclusions.list_for_user(db, seeded.user_id)
+    assert row.scope == "plan" and row.plan_id not in (None, seeded.plan_id)
+    assert await exclusions.list_for_all_plans(db, seeded.user_id) == []
+
+
+async def test_a_new_plans_exclusion_goes_with_its_draft_when_closed_unsaved(
+    dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
+) -> None:
+    seeded = await _ready(dispatcher, bot, db)
+    llm.steps = [
+        Call("new_plan", {"guidance": "бокс"}),
+        Call("add_exclusion", {"kind": "name", "value": "lunge"}),
+        say("Составляю."),
+        _boxing_plan(),
+    ]
+    await _send(dispatcher, bot, "новый план для бокса, без выпадов")
+    assert len(await exclusions.list_for_user(db, seeded.user_id)) == 1
+
+    llm.steps = [Call("discard_draft"), say("Закрыл.")]
+    await _send(dispatcher, bot, "не надо")
     assert await exclusions.list_for_user(db, seeded.user_id) == []

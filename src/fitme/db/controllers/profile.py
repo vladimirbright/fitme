@@ -129,13 +129,20 @@ async def delete_setup_progress(conn: aiosqlite.Connection, user_id: int) -> Non
 
 
 async def insert_exclusion(
-    conn: aiosqlite.Connection, *, user_id: int, kind: str, value: str
+    conn: aiosqlite.Connection,
+    *,
+    user_id: int,
+    kind: str,
+    value: str,
+    scope: str = "all",
+    plan_id: int | None = None,
 ) -> int | None:
-    """ADR 0009: add one hard exclusion; `None` when the same one already exists."""
+    """ADR 0009/0010: add one exclusion in `scope` ("all" | "plan" with `plan_id` |
+    "new_plan"); `None` when the same one already exists there."""
     cursor = await conn.execute(
-        "INSERT OR IGNORE INTO exercise_exclusions (user_id, kind, value, created_at) "
-        "VALUES (?, ?, ?, ?)",
-        (user_id, kind, value, clock.utc_now()),
+        "INSERT OR IGNORE INTO exercise_exclusions "
+        "(user_id, kind, value, scope, plan_id, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+        (user_id, kind, value, scope, plan_id, clock.utc_now()),
     )
     return cursor.lastrowid if cursor.rowcount else None
 
@@ -146,3 +153,23 @@ async def delete_exclusion(conn: aiosqlite.Connection, *, user_id: int, exclusio
         "DELETE FROM exercise_exclusions WHERE id = ? AND user_id = ?", (exclusion_id, user_id)
     )
     return cursor.rowcount > 0
+
+
+async def attach_new_plan_exclusions(
+    conn: aiosqlite.Connection, *, user_id: int, plan_id: int
+) -> None:
+    """ADR 0010: the new plan was saved as `plan_id`; its draft's exclusions now belong to
+    it. One that the plan already has is dropped instead of duplicated."""
+    await conn.execute(
+        "UPDATE OR IGNORE exercise_exclusions SET scope = 'plan', plan_id = ? "
+        "WHERE user_id = ? AND scope = 'new_plan'",
+        (plan_id, user_id),
+    )
+    await delete_new_plan_exclusions(conn, user_id=user_id)
+
+
+async def delete_new_plan_exclusions(conn: aiosqlite.Connection, *, user_id: int) -> None:
+    """ADR 0010: the new-plan draft was closed without saving; its exclusions go with it."""
+    await conn.execute(
+        "DELETE FROM exercise_exclusions WHERE user_id = ? AND scope = 'new_plan'", (user_id,)
+    )

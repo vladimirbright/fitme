@@ -27,7 +27,7 @@ async def _exclusion_rows(request: Request, user_id: int, lang: str) -> list[dic
     catalog = load_catalog()
     return [
         {"id": row.id, "label": exclusions.label(row.kind, row.value, catalog, lang)}
-        for row in await exclusions.list_for_user(get_db(request), user_id)
+        for row in await exclusions.list_for_all_plans(get_db(request), user_id)
     ]
 
 

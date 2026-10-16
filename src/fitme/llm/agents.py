@@ -173,7 +173,9 @@ class AssistantTools(Protocol):
 
     async def set_default_plan(self, plan_id: int) -> dict[str, object]: ...
 
-    async def add_exclusion(self, kind: str, value: str) -> dict[str, object]: ...
+    async def add_exclusion(
+        self, kind: str, value: str, for_all_plans: bool = False
+    ) -> dict[str, object]: ...
 
     async def remove_exclusion(self, exclusion_id: int) -> dict[str, object]: ...
 
@@ -298,15 +300,21 @@ async def _set_default_plan(ctx: Deps, plan_id: int) -> object:
     return _NO_DATA if ctx.deps is None else await ctx.deps.set_default_plan(plan_id)
 
 
-async def _add_exclusion(ctx: Deps, kind: str, value: str) -> object:
-    """Never prescribe something again (a hard exclusion, kept until removed): `kind`
-    `pattern` with a movement pattern (`squat` covers squats, lunges and step-ups; `hinge`,
-    `horizontal_push`, `horizontal_pull`, `vertical_push`, `vertical_pull`, `core`,
-    `conditioning`, `mobility`, `accessory`), `exercise` with one catalog id, or `name` with a
-    word every matching exercise's id or name contains ("lunge", "jump"). The answer lists
-    how many exercises it removes and examples: say them to the user. Only for what the user
-    asked to exclude; a preference, not a health judgement."""
-    return _NO_DATA if ctx.deps is None else await ctx.deps.add_exclusion(kind, value)
+async def _add_exclusion(ctx: Deps, kind: str, value: str, for_all_plans: bool = False) -> object:
+    """Leave exercises out (a hard exclusion, kept until removed). Pick the NARROWEST kind
+    that matches the user's words: `name` with a word every matching exercise's id or name
+    contains ("squat" for squats, "lunge", "kettlebell"), `exercise` with one catalog id, and
+    `pattern` (`squat` = squats AND lunges, step-ups, leg presses; `hinge`, `horizontal_push`,
+    `horizontal_pull`, `vertical_push`, `vertical_pull`, `core`, `conditioning`, `mobility`,
+    `accessory`) only when the user names that whole movement category.
+    `for_all_plans`: false (default) = only the plan being worked on (the open planning
+    session's, or the one new_plan / rewrite_plan / edit_plan staged this turn); true ONLY
+    when the user explicitly says it is about every plan or workout ("never", "in all
+    workouts", "from every plan"). The answer says where it applies, how many exercises it
+    removes and examples: tell the user. A preference, not a health judgement."""
+    if ctx.deps is None:
+        return _NO_DATA
+    return await ctx.deps.add_exclusion(kind, value, for_all_plans)
 
 
 async def _remove_exclusion(ctx: Deps, exclusion_id: int) -> object:
