@@ -675,6 +675,11 @@ def test_fast_work_after_a_heavy_lift_in_the_same_superset_is_reported() -> None
     late = order(squat, throw)
     assert len(late) == 1
     assert "medicine_ball_chest_pass (power/speed) comes after heavy barbell_back_squat" in late[0]
-    # The throw listed first is done fresh in the listed order: no order finding.
+    # Listed first, the throw still follows the squat from the second round on.
     first = rx("medicine_ball_chest_pass", 3, reps=(5, 5), rest=20)
-    assert order(first, rx("barbell_back_squat", 3, reps=(4, 6), rest=90)) == []
+    later = order(first, rx("barbell_back_squat", 3, reps=(4, 6), rest=90))
+    assert len(later) == 1
+    assert "medicine_ball_chest_pass (power/speed) comes after heavy barbell_back_squat" in later[0]
+    # A single round (one set each) is done in the listed order: the throw is fresh.
+    once = rx("medicine_ball_chest_pass", 1, reps=(5, 5), rest=20)
+    assert order(once, rx("barbell_back_squat", 1, reps=(4, 6), rest=90)) == []

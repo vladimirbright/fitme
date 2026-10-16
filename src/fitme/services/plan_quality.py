@@ -388,18 +388,22 @@ def _role_findings(workout: Workout, ctx: ReviewContext) -> list[GuardVerdict]:
                             f"{', '.join(q.value for q in exercise.qualities)})",
                         )
                     )
-        # Exercise by exercise, in the listed order (a superset's too): fast work after
+        # Exercise by exercise, in the order done (a superset's rounds too): fast work after
         # tiring work — earlier in this block or before it — is reported. Tiring work is known
         # by its role or, whatever the block is called, by what it is: a heavy lift, or
         # conditioning-paced work outside the warm-up and cool-down.
+        # A superset of more than one round repeats its list, so a fast exercise listed
+        # before a heavy one still follows it from the second round on: scan it twice.
         late: list[str] = []
         late_after = tiring
-        for item, exercise in exercises:
+        rounds = 2 if block.kind == "superset" and max(i.sets for i in block.items) > 1 else 1
+        for item, exercise in exercises * rounds:
             fast = _is_speed(item, exercise)
             if fast and tiring is not None and role not in _NOT_SPEED_ROLES:
                 if not late:
                     late_after = tiring
-                late.append(exercise.id)
+                if exercise.id not in late:
+                    late.append(exercise.id)
             if tiring is not None:
                 continue
             if is_heavy(item, exercise):
