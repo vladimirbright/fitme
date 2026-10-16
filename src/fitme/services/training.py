@@ -150,6 +150,7 @@ EVENT_START = "start"
 _EVENT_PARSE = "parse"
 _PARSE_SHOWN = "shown"
 _EVENT_ASSISTANT_LOG = "assistant_log"  # ADR 0005: logged by the assistant, no Correct step
+MAX_EXTRA_SETS = 5  # ADR 0012: sets the assistant may log beyond one prescription
 _ENGINE_RULE = "loads.engine"
 
 
@@ -945,18 +946,24 @@ def assign_rows(rows: Sequence[SetLogRecord], workout: Workout) -> list[list[lis
     items: `[block][item] -> rows`. Rows are handed out per exercise in order, so an exercise
     that appears in two blocks gets its first rows on the earlier block. A block whose items
     don't all have `sets` rows hasn't been sent yet (rows are created per block, atomically).
+    A set done beyond the prescription (ADR 0012) names its block and item and follows that
+    item's prescribed rows; it takes no part in the matching by position.
     """
     queues: dict[str, list[SetLogRecord]] = {}
+    extras: dict[tuple[int, int], list[SetLogRecord]] = {}
     for row in rows:
-        queues.setdefault(row.exercise_id, []).append(row)
+        if row.extra_for_block is not None and row.extra_for_item is not None:
+            extras.setdefault((row.extra_for_block, row.extra_for_item), []).append(row)
+        else:
+            queues.setdefault(row.exercise_id, []).append(row)
     assigned: list[list[list[SetLogRecord]]] = []
-    for block in workout.blocks:
+    for block_index, block in enumerate(workout.blocks):
         per_item: list[list[SetLogRecord]] = []
-        for item in block.items:
+        for item_index, item in enumerate(block.items):
             queue = queues.get(item.exercise_id, [])
             taken = queue[: item.sets]
             del queue[: item.sets]
-            per_item.append(taken)
+            per_item.append([*taken, *extras.get((block_index, item_index), [])])
         assigned.append(per_item)
     return assigned
 
@@ -965,7 +972,7 @@ def _block_rows_exist(
     assigned: list[list[list[SetLogRecord]]], workout: Workout, index: int
 ) -> bool:
     return all(
-        len(rows) == item.sets
+        sum(1 for row in rows if not row.extra) == item.sets
         for item, rows in zip(workout.blocks[index].items, assigned[index], strict=True)
     )
 
@@ -1146,7 +1153,7 @@ async def current_block(db: Database, user_id: int, session_id: int) -> StartRes
 def _completion(rows: Sequence[SetLogRecord]) -> Completion:
     return Completion(
         sets_logged=sum(1 for row in rows if row.performed),
-        sets_planned=len(rows),
+        sets_planned=sum(1 for row in rows if not row.extra),
     )
 
 
@@ -1612,7 +1619,7 @@ class ItemLog:
 class LoggedItem:
     exercise_id: str
     exercise: Exercise | None
-    sets: tuple[SetResult, ...]  # what was written, one per prescribed set
+    sets: tuple[SetResult, ...]  # what was written: each prescribed set, then any extra (ADR 0012)
 
 
 @dataclass(frozen=True, slots=True)
@@ -1634,6 +1641,27 @@ class _ResolvedLog:
 
 def _item_open(rows: Sequence[SetLogRecord]) -> bool:
     return not rows or any(not is_logged(row) for row in rows)
+
+
+def _sets_problem(sets: Sequence[SetResult], prescribed_sets: int) -> str | None:
+    """Why the assistant's `sets` can't be logged against `prescribed_sets`, or `None`: each
+    prescribed set exactly once (1..sets, a set not done is skipped), then any sets done
+    beyond it numbered on (ADR 0012), at most `MAX_EXTRA_SETS` of them, none skipped."""
+    indexes = sorted(result.set_index for result in sets)
+    total = max(len(indexes), prescribed_sets)
+    if indexes != list(range(1, total + 1)):
+        return (
+            f"name every prescribed set exactly once, set_index 1..{prescribed_sets} (a set "
+            f"not done is skipped); sets done beyond them continue at {prescribed_sets + 1}"
+        )
+    if total - prescribed_sets > MAX_EXTRA_SETS:
+        return (
+            f"at most {MAX_EXTRA_SETS} sets beyond the {prescribed_sets} prescribed; ask the "
+            "user to check the count"
+        )
+    if any(result.skipped for result in sets if result.set_index > prescribed_sets):
+        return f"a set beyond the {prescribed_sets} prescribed is one that was done, not skipped"
+    return None
 
 
 def _sets_to_write(prescription: Prescription, entry: ItemLog) -> tuple[SetResult, ...]:
@@ -1694,11 +1722,9 @@ def _resolve_logs(
                 "with log_exercise_results"
             )
         if entry.kind == ItemLogKind.RESULTS:
-            if not _covers_every_set(entry.sets, prescription.sets):
-                return [], (
-                    f"{entry.exercise_id}: name every prescribed set exactly once, set_index "
-                    f"1..{prescription.sets} (a set not done is skipped)"
-                )
+            problem = _sets_problem(entry.sets, prescription.sets)
+            if problem is not None:
+                return [], f"{entry.exercise_id}: {problem}"
             if prescription.load.kind == "calibration" and any(
                 not result.skipped and result.load_kg is None for result in entry.sets
             ):
@@ -1729,6 +1755,34 @@ def _resolve_logs(
             )
         )
     return resolved, None
+
+
+async def _insert_extra_set(
+    conn: Connection,
+    session_id: int,
+    block: int,
+    item: int,
+    prescription: Prescription,
+    result: SetResult,
+) -> int:
+    """A set done beyond the prescription (ADR 0012): its own row, with no planned target,
+    tied to its block and item."""
+    return await insert_set_log(
+        conn,
+        session_id=session_id,
+        exercise_id=prescription.exercise_id,
+        set_index=result.set_index,
+        planned_load_kg=None,
+        planned_reps_min=None,
+        planned_reps_max=None,
+        actual_load_kg=result.load_kg if result.load_kg is not None else prescription.load.kg,
+        actual_reps=result.reps,
+        actual_seconds=result.seconds,
+        actual_meters=result.meters,
+        rpe=None,
+        source=_SOURCE_FREE_TEXT,
+        extra_for=(block, item),
+    )
 
 
 async def check_item_logs(
@@ -1774,9 +1828,16 @@ async def log_items(
         for log in resolved:
             prescription = progress.workout.blocks[block].items[log.item]
             rows = progress.assigned[block][log.item]
-            by_index = {row.set_index: row for row in rows}
+            by_index = {row.set_index: row for row in rows if not row.extra}
             written: list[int] = []
             for result in log.sets:
+                if result.set_index > prescription.sets:
+                    written.append(
+                        await _insert_extra_set(
+                            conn, session_id, block, log.item, prescription, result
+                        )
+                    )
+                    continue
                 row = by_index.get(result.set_index)
                 if row is None or is_logged(row):
                     continue
@@ -1991,7 +2052,10 @@ async def _session_list_item(conn: Connection, session: WorkoutSessionRecord) ->
     rows = await list_set_logs_for_session(conn, session.id)
     done = sum(1 for row in rows if row.performed)
     return SessionListItem(
-        session=session, sets_planned=len(rows), sets_done=done, volume_kg=volume_kg(rows)
+        session=session,
+        sets_planned=sum(1 for row in rows if not row.extra),
+        sets_done=done,
+        volume_kg=volume_kg(rows),
     )
 
 

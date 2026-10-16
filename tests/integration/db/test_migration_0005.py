@@ -171,6 +171,7 @@ async def test_upgrade_from_old_migrations_preserves_ids_and_never_reuses_a_dele
             "0010_set_measures.sql",
             "0011_exclusions_and_sport.sql",
             "0012_exclusion_scope.sql",
+            "0013_extra_sets.sql",
         ]
         assert await _snapshot(db) == before  # every row, every id, preserved verbatim
         assert await _rows(db, "PRAGMA foreign_key_check") == []

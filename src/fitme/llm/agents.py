@@ -339,7 +339,8 @@ async def _fix_logged_sets(ctx: Deps, session_id: int, fixes: list[FixLoggedSet]
 async def _log_exercise_as_planned(ctx: Deps, exercise_id: str) -> object:
     """One exercise of the block on screen done as planned ("по плану", "done", "+"): every
     set is logged at the top of the rep range with the prescribed load, like the ✅ Done as
-    planned button. Not for a calibration load (the weight used is needed). In a superset,
+    planned button. Not for a calibration load (the weight used is needed), and not when the
+    user did a different number of sets (use `log_exercise_results`). In a superset,
     call it once per exercise the user confirmed."""
     return _NO_DATA if ctx.deps is None else await ctx.deps.log_exercise_as_planned(exercise_id)
 
@@ -352,6 +353,7 @@ async def _skip_exercise(ctx: Deps, exercise_id: str) -> object:
 async def _log_exercise_results(ctx: Deps, exercise_id: str, sets: list[SetResult]) -> object:
     """One exercise of the block on screen with the numbers the user reported: one entry per
     prescribed set (`set_index` 1..sets), exactly as reported; a set not done is `skipped`.
+    Sets done beyond the prescription continue at sets + 1 (up to 5 more).
     `load_kg` null means the prescribed load. Logged at once if it passes the checks; an
     implausible number is refused, so ask the user instead of guessing."""
     if ctx.deps is None:

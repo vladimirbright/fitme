@@ -188,6 +188,15 @@ class SetLogRecord:
     planned_meters: int | None = None
     actual_seconds: int | None = None
     actual_meters: int | None = None
+    # ADR 0012: a set done beyond the prescription names its (block, item); `None` on a
+    # prescribed set.
+    extra_for_block: int | None = None
+    extra_for_item: int | None = None
+
+    @property
+    def extra(self) -> bool:
+        """A set done beyond the prescription (ADR 0012)."""
+        return self.extra_for_block is not None
 
     @property
     def performed(self) -> bool:

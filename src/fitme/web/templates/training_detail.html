@@ -30,7 +30,8 @@
       <td>{{ exercise_names.get(row.exercise_id, row.exercise_id) }}</td>
       <td>{{ row.set_index }}</td>
       <td>
-        {% if row.planned_reps_min is not none %}{{ row.planned_reps_min }}&ndash;{{ row.planned_reps_max }}
+        {% if row.extra %}{{ t('web.trainings.extra_set') }}
+        {% elif row.planned_reps_min is not none %}{{ row.planned_reps_min }}&ndash;{{ row.planned_reps_max }}
         {% elif row.planned_seconds is not none %}{{ t('duration.seconds', s=row.planned_seconds) }}
         {% elif row.planned_meters is not none %}{{ t('duration.meters', m=row.planned_meters) }}{% endif %}
         {% if row.planned_load_kg is not none %}@ {{ t('web.kg_value', value=row.planned_load_kg) }}{% endif %}

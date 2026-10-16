@@ -174,7 +174,8 @@ async def list_set_logs_for_session(
     async with conn.execute(
         "SELECT id, session_id, exercise_id, set_index, planned_load_kg, planned_reps_min, "
         "planned_reps_max, actual_load_kg, actual_reps, skipped, rpe, source, created_at, "
-        "planned_seconds, planned_meters, actual_seconds, actual_meters "
+        "planned_seconds, planned_meters, actual_seconds, actual_meters, "
+        "extra_for_block, extra_for_item "
         "FROM set_logs WHERE session_id = ? ORDER BY id",
         (session_id,),
     ) as cursor:
@@ -198,6 +199,8 @@ async def list_set_logs_for_session(
             planned_meters=row[14],
             actual_seconds=row[15],
             actual_meters=row[16],
+            extra_for_block=row[17],
+            extra_for_item=row[18],
         )
         for row in rows
     ]
@@ -259,7 +262,9 @@ async def recent_session_outcomes(
 
     Only `workout_sessions.status = 'completed'` sessions count at all (B3/A§7.3): a halted,
     aborted or still-`in_progress` session's rows are excluded outright, as if that session
-    hadn't happened for progression purposes. Within a completed session:
+    hadn't happened for progression purposes. Only prescribed sets are judged: a set done
+    beyond the prescription (ADR 0012) neither makes nor breaks a success. Within a
+    completed session:
 
     - `hit_reps_max` (success) requires every prescribed set to have been *performed* (not
       `skipped`, with a logged `actual_reps`) at or above the prescribed load, with
@@ -282,6 +287,7 @@ async def recent_session_outcomes(
         "s.planned_reps_min, s.planned_reps_max, s.skipped, s.source "
         "FROM set_logs s JOIN workout_sessions w ON w.id = s.session_id "
         "WHERE w.user_id = ? AND s.exercise_id = ? AND w.status = 'completed' "
+        "AND s.extra_for_block IS NULL "
         "ORDER BY w.finished_at DESC, w.id DESC, s.set_index ASC",
         (user_id, exercise_id),
     ) as cursor:
@@ -322,7 +328,7 @@ async def recent_session_outcomes_by_exercise(
         "SELECT w.id, s.actual_load_kg, s.actual_reps, s.planned_load_kg, "
         "s.planned_reps_min, s.planned_reps_max, s.skipped, s.source, s.exercise_id "
         "FROM set_logs s JOIN workout_sessions w ON w.id = s.session_id "
-        "WHERE w.user_id = ? AND w.status = 'completed' "
+        "WHERE w.user_id = ? AND w.status = 'completed' AND s.extra_for_block IS NULL "
         "ORDER BY w.finished_at DESC, w.id DESC, s.set_index ASC",
         (user_id,),
     ) as cursor:

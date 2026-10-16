@@ -125,10 +125,12 @@ async def insert_set_log(
     planned_meters: int | None = None,
     actual_seconds: int | None = None,
     actual_meters: int | None = None,
+    extra_for: tuple[int, int] | None = None,
 ) -> int:
     """One row per *prescribed* set (A§4.2), created when the block is sent. A set the user
     didn't perform is logged with `skipped=True` and `actual_load_kg`/`actual_reps` left
-    `None`, so a partial or halted session stays visible in the data (A§7.3).
+    `None`, so a partial or halted session stays visible in the data (A§7.3). A set done
+    beyond the prescription is a row of its own, `extra_for = (block, item)` (ADR 0012).
 
     `set_index` is 1-based (matches `domain.results.SetResult.set_index`, A§4.2's own
     convention): the first set of a block is `1`, never `0`. Enforced here rather than in
@@ -139,8 +141,9 @@ async def insert_set_log(
     cursor = await conn.execute(
         "INSERT INTO set_logs (session_id, exercise_id, set_index, planned_load_kg, "
         "planned_reps_min, planned_reps_max, actual_load_kg, actual_reps, skipped, rpe, "
-        "source, created_at, planned_seconds, planned_meters, actual_seconds, actual_meters) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "source, created_at, planned_seconds, planned_meters, actual_seconds, actual_meters, "
+        "extra_for_block, extra_for_item) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (
             session_id,
             exercise_id,
@@ -158,6 +161,8 @@ async def insert_set_log(
             planned_meters,
             actual_seconds,
             actual_meters,
+            None if extra_for is None else extra_for[0],
+            None if extra_for is None else extra_for[1],
         ),
     )
     assert cursor.lastrowid is not None
