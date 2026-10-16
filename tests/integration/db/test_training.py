@@ -25,6 +25,7 @@ from fitme.db.controllers.training import (
     update_set_log_actual,
     update_workout_session_progress,
 )
+from fitme.db.records import SessionOutcome
 from fitme.db.selectors.training import (
     get_active_workout_session,
     get_checkin,
@@ -250,30 +251,71 @@ async def test_recent_session_outcomes_hit_reps_max(db: Database, user_id: int) 
     assert outcomes[0].below_reps_min is False
 
 
-async def test_a_set_beyond_the_prescription_neither_makes_nor_breaks_a_success(
-    db: Database, user_id: int
-) -> None:
-    """ADR 0012: progression judges the prescribed sets; an extra set at 3 reps (below the
-    minimum) or at 8 doesn't change the outcome."""
+async def _latest_outcome(
+    db: Database, user_id: int, sets: list[dict[str, object]]
+) -> SessionOutcome:
     plan_version_id = await _insert_plan_version(db, user_id)
-    extra = {
-        "planned_load_kg": 40.0,
-        "planned_reps_min": None,
-        "planned_reps_max": None,
-        "actual_load_kg": 40.0,
-        "extra_for": (0, 0),
-    }
-    top = {"actual_load_kg": 40.0, "actual_reps": 8}
-    low = {"actual_load_kg": 40.0, "actual_reps": 6}
-    await _log_session(db, user_id, plan_version_id, sets=[top, top, {**extra, "actual_reps": 3}])
+    await _log_session(db, user_id, plan_version_id, sets=sets)
     async with db.read() as conn:
-        success = await recent_session_outcomes(conn, user_id, "barbell_back_squat", limit=1)
-    await _log_session(db, user_id, plan_version_id, sets=[low, low, {**extra, "actual_reps": 8}])
-    async with db.read() as conn:
-        latest = await recent_session_outcomes(conn, user_id, "barbell_back_squat", limit=1)
+        outcomes = await recent_session_outcomes(conn, user_id, "barbell_back_squat", limit=1)
+        by_exercise = await recent_session_outcomes_by_exercise(conn, user_id, limit=1)
+    assert by_exercise["barbell_back_squat"] == outcomes
+    return outcomes[0]
 
-    assert success[0].hit_reps_max is True and success[0].below_reps_min is False
-    assert latest[0].hit_reps_max is False and latest[0].below_reps_min is False
+
+_EXTRA: dict[str, object] = {
+    "planned_load_kg": 40.0,
+    "planned_reps_min": None,
+    "planned_reps_max": None,
+    "actual_load_kg": 40.0,
+    "extra_for": (0, 0),
+}
+_TOP = {"actual_load_kg": 40.0, "actual_reps": 8}
+_MID = {"actual_load_kg": 40.0, "actual_reps": 6}  # in the 5-8 range, not topped
+
+
+async def test_an_extra_set_does_not_break_a_success(db: Database, user_id: int) -> None:
+    """ADR 0012: the prescribed sets decide `hit_reps_max`; a weak extra set doesn't undo it."""
+    outcome = await _latest_outcome(db, user_id, [_TOP, _TOP, {**_EXTRA, "actual_reps": 3}])
+    assert outcome.hit_reps_max is True and outcome.below_reps_min is False
+    assert outcome.load_kg == 40.0
+
+
+async def test_an_extra_set_at_the_prescription_is_doing_more(db: Database, user_id: int) -> None:
+    """ADR 0014: the reported case — two sets prescribed, three done."""
+    outcome = await _latest_outcome(db, user_id, [_MID, _MID, {**_EXTRA, "actual_reps": 5}])
+    assert outcome.hit_reps_max is False and outcome.exceeded_prescription is True
+
+
+async def test_a_heavier_load_on_every_set_is_doing_more(db: Database, user_id: int) -> None:
+    heavier = {"actual_load_kg": 42.5, "actual_reps": 6}
+    outcome = await _latest_outcome(db, user_id, [heavier, heavier])
+    assert outcome.hit_reps_max is False and outcome.exceeded_prescription is True
+
+
+@pytest.mark.parametrize(
+    "sets",
+    [
+        # an extra set below the rep minimum or below the load
+        [_MID, _MID, {**_EXTRA, "actual_reps": 3}],
+        [_MID, _MID, {**_EXTRA, "actual_reps": 6, "actual_load_kg": 30.0}],
+        # a prescribed set below its minimum, or skipped, whatever the extra set was
+        [_MID, {"actual_load_kg": 40.0, "actual_reps": 4}, {**_EXTRA, "actual_reps": 8}],
+        [_MID, {"skipped": True}, {**_EXTRA, "actual_reps": 8}],
+        # heavier on one set only
+        [{"actual_load_kg": 42.5, "actual_reps": 6}, _MID],
+        # a calibration session: no prescribed kg to have exceeded
+        [
+            {"planned_load_kg": None, "actual_load_kg": 40.0, "actual_reps": 6},
+            {**_EXTRA, "planned_load_kg": None, "actual_reps": 6},
+        ],
+        # imported history is never a success
+        [{**_MID, "source": "import"}, {**_EXTRA, "actual_reps": 6, "source": "import"}],
+    ],
+)
+async def test_not_doing_more(db: Database, user_id: int, sets: list[dict[str, object]]) -> None:
+    outcome = await _latest_outcome(db, user_id, sets)
+    assert outcome.exceeded_prescription is False
 
 
 async def test_a_correction_to_a_set_beyond_the_prescription_is_checked_like_a_prescribed_one(

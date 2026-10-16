@@ -797,3 +797,54 @@ def test_decision_kind_is_structured() -> None:
     )
     decrease = next_load(exercise, failed_twice, _FINE_CHECKINS, [], 2.5, flagged_areas=_ALL_AREAS)
     assert decrease.kind == LoadKind.DECREASE
+
+
+def test_doing_more_than_prescribed_earns_one_increment_from_the_prescribed_load() -> None:
+    """ADR 0014: an extra set, or a heavier load on every set, with the rep range not topped,
+    is an increase — one increment from the prescribed 60 (62.5), never a jump to the 70
+    the user lifted (B3)."""
+    exercise = _squat()
+    history = ExerciseHistory(
+        history_max_kg=70.0,
+        sessions=[
+            SessionOutcome(
+                load_kg=70.0,
+                planned_load_kg=60.0,
+                hit_reps_max=False,
+                below_reps_min=False,
+                exceeded_prescription=True,
+            )
+        ],
+    )
+    decision = next_load(
+        exercise, history, _FINE_CHECKINS, increases_7d=[], cap_kg=2.5, flagged_areas=_ALL_AREAS
+    )
+    assert decision.load.kg == 62.5
+    assert decision.reason == "did more than prescribed; increment applied"
+
+
+def test_doing_more_than_prescribed_still_answers_to_the_weekly_cap_and_check_ins() -> None:
+    exercise = _squat()
+    history = ExerciseHistory(
+        history_max_kg=60.0,
+        sessions=[
+            SessionOutcome(
+                load_kg=60.0,
+                planned_load_kg=60.0,
+                hit_reps_max=False,
+                below_reps_min=False,
+                exceeded_prescription=True,
+            )
+        ],
+    )
+    capped = next_load(
+        exercise,
+        history,
+        _FINE_CHECKINS,
+        increases_7d=[2.5],
+        cap_kg=2.5,
+        flagged_areas=_ALL_AREAS,
+    )
+    silent = next_load(exercise, history, {}, increases_7d=[], cap_kg=2.5, flagged_areas=_ALL_AREAS)
+    assert capped.load.kg == 60.0 and capped.reason.startswith("did more than prescribed, but held")
+    assert silent.load.kg == 60.0  # silence is not consent
