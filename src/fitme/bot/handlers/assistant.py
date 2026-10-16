@@ -124,7 +124,6 @@ async def _show_item(
     user_id: int,
     lang: str,
     pending_plan_revisions: plan_handlers.PendingRevisions,
-    replied: bool,
 ) -> None:
     if isinstance(item, assistant.DraftUpdated):
         await plan_handlers.show_edit_draft(message, item.result, item.before, lang)
@@ -149,9 +148,7 @@ async def _show_item(
             message, db, llm, user_id, lang, pending_plan_revisions, guidance=item.guidance
         )
     elif isinstance(item, assistant.ExercisesLogged):
-        await train_handlers.show_logged(
-            message, db, llm, user_id, item.session_id, item.result, announce=not replied
-        )
+        await train_handlers.show_logged(message, db, llm, user_id, item.session_id, item.result)
     elif isinstance(item, assistant.Halted):
         await message.answer(t("halt.message", lang))
     elif isinstance(item, assistant.RunShow):
@@ -214,7 +211,6 @@ async def handle_assistant_text(
             user_id=user_id,
             lang=lang,
             pending_plan_revisions=pending_plan_revisions,
-            replied=bool(result.message),
         )
     if not result.message and not result.items:
         await message.answer(t("assistant.not_understood", lang))
