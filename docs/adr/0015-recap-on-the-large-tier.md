@@ -21,7 +21,9 @@ three-set prescription, not only to a heavier one.
   that exercise in one prescription today; fewer only where sets were left undone today,
   not below what was done; at most 2 either way) and every changed prescription passes
   `guards.plan.prescription_verdicts`. It changes today's workout only (every prescription
-  of the exercise in it), never the same exercise in the plan's other workouts; on **Apply** the whole plan is judged by
+  of the exercise in it), never the same exercise in the plan's other workouts, and never
+  an exercise in a superset (its exercises share their rounds). Apply re-checks it against
+  the latest plan version; on **Apply** the whole plan is judged by
   `planning.judge` as before and saved as an `origin=progression` version.
 - The recap input gains `extra_sets` per exercise (sets done beyond the prescription).
   Prompt `recap.v2`: doing more than asked (extra sets, reps above the range on a non-kg

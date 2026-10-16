@@ -470,7 +470,19 @@ def _set_change_problems(
         for item in targets
         if (problem := _set_change_problem(change, item.sets, summaries)) is not None
     ]
+    if _in_a_superset(plan, workout_key, change.exercise_id):
+        # A superset's exercises share their rounds (plan_quality checks equal set counts);
+        # one exercise's count can't change on its own.
+        problems.append("it is in a superset, whose exercises share their rounds")
     return targets, problems
+
+
+def _in_a_superset(plan: Plan, workout_key: str, exercise_id: str) -> bool:
+    workout = next((item for item in plan.workouts if item.key == workout_key), None)
+    return workout is not None and any(
+        len(block.items) > 1 and any(item.exercise_id == exercise_id for item in block.items)
+        for block in workout.blocks
+    )
 
 
 def _set_change_problem(
