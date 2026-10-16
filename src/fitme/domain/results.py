@@ -21,6 +21,9 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 _STRICT_CONFIG = ConfigDict(extra="forbid", allow_inf_nan=False)
 
+MAX_EXTRA_SETS = 5  # ADR 0012: sets the assistant may log beyond one prescription
+MAX_SET_INDEX = 10 + MAX_EXTRA_SETS  # `Prescription.sets` is at most 10
+
 
 class SetResult(BaseModel):
     """One prescribed set's actual outcome, as parsed from the user's free text (A§6.5 step
@@ -32,7 +35,7 @@ class SetResult(BaseModel):
 
     model_config = _STRICT_CONFIG
 
-    set_index: Annotated[int, Field(ge=1, le=10)]
+    set_index: Annotated[int, Field(ge=1, le=MAX_SET_INDEX)]
     reps: Annotated[int, Field(ge=0, le=100)] | None = None
     # ADR 0009: a timed set's result in seconds, a distance set's in meters (instead of
     # `reps`; exactly one of the three for a performed set).
