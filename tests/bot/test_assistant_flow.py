@@ -695,6 +695,30 @@ async def test_the_sets_written_are_listed_when_the_reply_is_dropped(
     assert "✓ Barbell back squat: 3 × 5 @ 62.5 kg" in texts
 
 
+async def test_a_turn_that_only_logged_shows_just_what_was_written(
+    dispatcher: Dispatcher,
+    bot: Bot,
+    db: Database,
+    settings: Settings,
+    session: FakeSession,
+    llm: ScriptedLlm,
+) -> None:
+    """assistant.v10: the model leaves its message empty after a plain log, so the stored
+    sets are said once, by the app — no "Записал …" repeating them, no AI footer."""
+    seeded = await _ready(dispatcher, bot, db)
+    lang = await _lang(db, seeded.user_id)
+    await _start_workout(db, settings, seeded)
+    before = len(_texts(session))
+    llm.steps = [Call("log_exercise_as_planned", {"exercise_id": "barbell_back_squat"}), say("")]
+    await _send(dispatcher, bot, "по плану")
+
+    new = _texts(session)[before:]
+    assert new[0] == "✓ Barbell back squat: 3 × 5 @ 62.5 kg"
+    assert not any(t("assistant.reply_footer", lang) in text for text in new)
+    assert t("assistant.not_understood", lang) not in new
+    assert "Push-up" in new[-1]  # the next block
+
+
 async def test_an_implausible_or_incomplete_report_is_refused_by_the_tool(
     dispatcher: Dispatcher,
     bot: Bot,

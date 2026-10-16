@@ -24,9 +24,9 @@ _REAL_PROMPT_VERSIONS = {
     "session_adjust": 2,
     "recap": 2,  # v2: change_sets and the did-more signal (ADR 0015)
     "plan_import": 2,
-    "assistant": 9,  # v4: sessions + tools (ADR 0004); v5: per-exercise logging (ADR 0005);
+    "assistant": 10,  # v4: sessions + tools (ADR 0004); v5: per-exercise logging (ADR 0005);
     # v6: find_substitutes and hybrid find_exercises (ADR 0007); v7: exclusions, measures (0009)
-    # v9: sets beyond the prescription (ADR 0012)
+    # v9: sets beyond the prescription (ADR 0012); v10: logged sets are not repeated
 }
 _REAL_PROMPT_NAMES = tuple(_REAL_PROMPT_VERSIONS)
 

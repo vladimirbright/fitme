@@ -162,7 +162,9 @@ class AssistantTurn(BaseModel):
 
     model_config = _STRICT_CONFIG
 
-    message: Annotated[str, Field(min_length=1, max_length=MESSAGE_MAX_LENGTH)]
+    # Empty when the tools' effects say it all (assistant.v10: a turn that only logged sets;
+    # the app shows what was written).
+    message: Annotated[str, Field(max_length=MESSAGE_MAX_LENGTH)]
 
 
 AssistantOutput = AssistantTurn | Refusal
