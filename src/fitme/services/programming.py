@@ -20,6 +20,7 @@ from collections.abc import Sequence
 
 from fitme.domain.enums import BlockRole, Preference, Quality
 from fitme.llm.context import UserContext
+from fitme.services import exercise_search
 
 # A session's usual block order (A§6.4): warm-up, fast work while fresh, the main lifts,
 # accessories, trunk, conditioning, mobility. A session uses only the parts it needs.
@@ -79,8 +80,10 @@ _SPLIT_WORDS = ("split", "upper/lower", "upper lower", "сплит", "верх/�
 
 
 def split_wanted(context: UserContext, request: str | None) -> bool:
-    """A split is what the user asked for: the `split` preference, or the request's words."""
-    text = (request or "").lower()
+    """A split is what the user asked for: the `split` preference, or the request's words —
+    only what it asks *for* (`exercise_search.positive_request`): "no split", "без сплита"
+    or "не сплит, а фулбоди" is not a request for one."""
+    text = exercise_search.positive_request(request).lower() if request else ""
     return Preference.SPLIT in context.preferences or any(word in text for word in _SPLIT_WORDS)
 
 

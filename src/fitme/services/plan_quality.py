@@ -44,7 +44,7 @@ from fitme.domain.guard_types import GuardVerdict
 from fitme.domain.models import Block, Plan, Prescription, Workout
 from fitme.llm.context import UserContext
 from fitme.services import programming
-from fitme.services.exercise_search import requested_qualities
+from fitme.services.exercise_search import is_general_warm_up, requested_qualities
 
 # Exercises that train the shoulder girdle as work rather than as a support (a plank or a
 # carry loads it too, but isn't counted).
@@ -208,6 +208,25 @@ def _is_warm_up(exercise: Exercise) -> bool:
     )
 
 
+def _suits_warm_up(exercise: Exercise) -> bool:
+    """General preparation: warm-up-like (`_is_warm_up`) or a general warm-up activity
+    (`exercise_search.is_general_warm_up`: shadow boxing, jump rope). A lateral raise or a
+    narrow drill is not, whatever its block is called."""
+    return not exercise.specific and (_is_warm_up(exercise) or is_general_warm_up(exercise))
+
+
+def _is_speed(item: Prescription, exercise: Exercise) -> bool:
+    """Fast work by its stimulus (`intensity_mode`), whatever its block is labelled; a heavy
+    lift (a power clean for triples) counts as strength."""
+    return intensity_mode(exercise, item.measure) == IntensityMode.SPEED and not is_heavy(
+        item, exercise
+    )
+
+
+# Blocks whose fast exercises are not done for speed (easy preparation, capacity, cool-down).
+_NOT_SPEED_ROLES = frozenset({BlockRole.WARM_UP, BlockRole.CONDITIONING, BlockRole.MOBILITY})
+
+
 def _inferred_role(block: Block, catalog: Catalog, *, opening: bool) -> BlockRole | None:
     """A block's role when the planner stated none (plans made before ADR 0011): the leading
     blocks of warm-up-like exercises are the warm-up; then heavy lifts are strength, and the
@@ -338,6 +357,14 @@ def _role_findings(workout: Workout, ctx: ReviewContext) -> list[GuardVerdict]:
                     findings.append(
                         _finding("role", f"workout {key}: heavy {exercise.id} in the warm-up block")
                     )
+                elif not _suits_warm_up(exercise):
+                    findings.append(
+                        _finding(
+                            "role",
+                            f"workout {key}: {exercise.id} in the warm-up block is not general "
+                            "preparation; warm up with easy cardio or mobility for what follows",
+                        )
+                    )
             if seen_main:
                 findings.append(
                     _finding("order", f"workout {key}: a warm-up ({ids}) after the main work")
@@ -361,12 +388,13 @@ def _role_findings(workout: Workout, ctx: ReviewContext) -> list[GuardVerdict]:
                             f"{', '.join(q.value for q in exercise.qualities)})",
                         )
                     )
-        if role == BlockRole.POWER and tiring is not None:
+        fast = [exercise.id for item, exercise in exercises if _is_speed(item, exercise)]
+        if fast and tiring is not None and role not in _NOT_SPEED_ROLES:
             findings.append(
                 _finding(
                     "order",
-                    f"workout {key}: {ids} (power/speed) comes after {tiring}; put fast work "
-                    "before strength and conditioning work, while fresh",
+                    f"workout {key}: {', '.join(fast)} (power/speed) comes after {tiring}; put "
+                    "fast work before strength and conditioning work, while fresh",
                 )
             )
         if role in (BlockRole.STRENGTH, BlockRole.CONDITIONING) and tiring is None and exercises:
@@ -404,12 +432,21 @@ def _prescription_findings(workout: Workout, ctx: ReviewContext) -> list[GuardVe
                         "per set",
                     )
                 )
-            if block.kind == "single" and item.rest_seconds < limits.power_rest_min_seconds:
+            # Recovery before the next fast set: its rest in a single block; in a superset,
+            # the whole round besides itself — the other exercises, every transition and the
+            # round's rest.
+            recovery = float(item.rest_seconds)
+            if block.kind == "superset":
+                recovery = sum(other.rest_seconds for other in block.items) + sum(
+                    _work_seconds(other, limits) for other in block.items if other is not item
+                )
+            if recovery < limits.power_rest_min_seconds:
+                where = "rest" if block.kind == "single" else "recovery per superset round"
                 findings.append(
                     _finding(
                         "prescription",
                         f"workout {workout.key}: {exercise.id} is power/speed work with "
-                        f"{item.rest_seconds} s rest; give it at least "
+                        f"{recovery:.0f} s {where}; give it at least "
                         f"{limits.power_rest_min_seconds} s so each set stays fast",
                     )
                 )
@@ -461,7 +498,17 @@ def _workout_findings(workout: Workout, ctx: ReviewContext) -> list[GuardVerdict
     heavy = [(index, item) for index, item, exercise in resolved if is_heavy(item, exercise)]
     if heavy:
         roles = block_roles(workout, catalog)
-        if not roles or roles[0] != BlockRole.WARM_UP:
+        # A first block called a warm-up must hold warm-up work: a lateral raise isn't one.
+        warmed = (
+            bool(roles)
+            and roles[0] == BlockRole.WARM_UP
+            and any(
+                (exercise := catalog.by_id(item.exercise_id)) is not None
+                and _suits_warm_up(exercise)
+                for item in workout.blocks[0].items
+            )
+        )
+        if not warmed:
             findings.append(
                 _finding(
                     "warm_up",

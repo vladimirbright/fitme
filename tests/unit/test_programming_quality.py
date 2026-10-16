@@ -147,8 +147,9 @@ def test_scenario_c_a_technique_drill_is_not_a_warm_up_and_retrieval_knows_it() 
         )
 
     drill = review(plan([(0, "A")], session(hook.id)), ReviewContext(_CATALOG))
-    assert [f.rule for f in drill] == ["quality.role"]
-    assert "narrow technique drill" in drill[0].detail
+    # The drill isn't a warm-up, so the heavy bench press has none either.
+    assert sorted(f.rule for f in drill) == ["quality.role", "quality.warm_up"]
+    assert any("narrow technique drill" in f.detail for f in drill)
     assert review(plan([(0, "A")], session(shadow.id)), ReviewContext(_CATALOG)) == []
     # Plans saved before roles: the leading warm-up-like blocks are inferred as the warm-up.
     old = workout(
@@ -519,3 +520,90 @@ def test_the_speed_cue_fits_the_block_and_the_measure() -> None:
     )
     week = plan([(0, "A")], workout("A", "Boxing", [role(BlockRole.WARM_UP, rounds)]))
     assert "speed" not in render_plan_text(week, catalog=_CATALOG, lang="en", title="Draft:")
+
+
+# --- Review follow-ups -----------------------------------------------------------------------
+
+
+def test_a_negated_split_request_is_not_a_split_request() -> None:
+    for request in ("no split, full body please", "без сплита", "не сплит, а фулбоди"):
+        assert not programming.split_wanted(_context(), request), request
+    for request in ("upper/lower split", "сплит верх/низ"):
+        assert programming.split_wanted(_context(), request), request
+
+
+def test_a_block_called_warm_up_must_hold_warm_up_work() -> None:
+    week = plan(
+        [(0, "A")],
+        workout(
+            "A",
+            "Lower",
+            [
+                role(BlockRole.WARM_UP, rx("dumbbell_lateral_raise", 2, reps=(12, 15))),
+                role(BlockRole.STRENGTH, rx("barbell_back_squat", 4, reps=(4, 6))),
+            ],
+        ),
+    )
+    details = {f.rule: f.detail for f in review(week, ReviewContext(_CATALOG))}
+    assert "quality.warm_up" in details  # the heavy squat still has no warm-up
+    assert "not general preparation" in details["quality.role"]
+
+
+def test_fast_work_after_strength_is_reported_whatever_its_block_is_called() -> None:
+    week = plan(
+        [(0, "A")],
+        workout(
+            "A",
+            "Lower",
+            [
+                role(BlockRole.WARM_UP, rx("jump_rope_skipping", 2, seconds=120, rest=30)),
+                role(BlockRole.STRENGTH, rx("barbell_back_squat", 4, reps=(4, 6))),
+                role(BlockRole.ACCESSORY, rx("medicine_ball_chest_pass", 4, reps=(5, 5))),
+            ],
+        ),
+    )
+    order = [f.detail for f in review(week, ReviewContext(_CATALOG)) if f.rule == "quality.order"]
+    assert order == [
+        "workout A: medicine_ball_chest_pass (power/speed) comes after heavy barbell_back_squat; "
+        "put fast work before strength and conditioning work, while fresh"
+    ]
+    # Fast exercises done for capacity at the end are fine.
+    finisher = plan(
+        [(0, "A")],
+        workout(
+            "A",
+            "Lower",
+            [
+                role(BlockRole.WARM_UP, rx("jump_rope_skipping", 2, seconds=120, rest=30)),
+                role(BlockRole.STRENGTH, rx("barbell_back_squat", 4, reps=(4, 6))),
+                role(BlockRole.CONDITIONING, rx("kettlebell_swing", 4, reps=(12, 15), rest=60)),
+            ],
+        ),
+    )
+    assert "quality.order" not in rules(review(finisher, ReviewContext(_CATALOG)))
+
+
+def test_speed_work_in_a_superset_needs_recovery_across_the_round() -> None:
+    def findings(*items: Prescription) -> list[str]:
+        week = plan(
+            [(0, "A")],
+            workout(
+                "A",
+                "Power",
+                [
+                    role(BlockRole.WARM_UP, rx("jump_rope_skipping", 2, seconds=120, rest=30)),
+                    role(BlockRole.POWER, *items),
+                ],
+            ),
+        )
+        ctx = ReviewContext(_CATALOG)
+        return [f.detail for f in review(week, ctx) if f.rule == "quality.prescription"]
+
+    throw = rx("medicine_ball_chest_pass", 3, reps=(5, 5), rest=0)
+    no_rest = findings(throw, rx("side_plank", 3, seconds=20, rest=0, load={"kind": "bodyweight"}))
+    assert len(no_rest) == 1 and "20 s recovery per superset round" in no_rest[0]
+    rested = findings(
+        rx("medicine_ball_chest_pass", 3, reps=(5, 5), rest=15),
+        rx("side_plank", 3, seconds=20, rest=60, load={"kind": "bodyweight"}),
+    )
+    assert rested == []
