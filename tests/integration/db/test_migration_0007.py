@@ -323,6 +323,7 @@ async def test_upgrade_from_0006_detaches_imports_drops_the_holder_and_unarchive
             "0010_set_measures.sql",
             "0011_exclusions_and_sport.sql",
             "0012_exclusion_scope.sql",
+            "0013_extra_sets.sql",
         ]
         after = await _snapshot(db)
         assert after == _expected_after(before)

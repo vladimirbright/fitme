@@ -139,7 +139,12 @@ async def fix_logged_sets(
                     session_id=session_id,
                     details=(f"{fix.exercise_id} set {fix.set_number}",),
                 )
-            if row.planned_seconds is not None or row.planned_meters is not None:
+            if (
+                row.planned_seconds is not None
+                or row.planned_meters is not None
+                or row.actual_seconds is not None
+                or row.actual_meters is not None
+            ):
                 # ADR 0009: a correction is reps (+ kg); writing reps onto a timed or distance
                 # set would replace its seconds/meters with a number in the wrong unit.
                 problems.append(

@@ -738,6 +738,52 @@ async def test_an_implausible_or_incomplete_report_is_refused_by_the_tool(
     assert _last_text(session).startswith("Проверьте, пожалуйста, вес")
 
 
+async def test_sets_done_beyond_the_prescription_are_logged_as_reported(
+    dispatcher: Dispatcher,
+    bot: Bot,
+    db: Database,
+    settings: Settings,
+    session: FakeSession,
+    llm: ScriptedLlm,
+) -> None:
+    """ADR 0012: "сделал пять подходов" of three planned is five sets in the log, not "as
+    planned"; the extra rows don't shift which rows belong to the next block."""
+    seeded = await _ready(dispatcher, bot, db)
+    session_id = await _start_workout(db, settings, seeded)
+    five = [{"set_index": i, "reps": 5} for i in range(1, 6)]
+    skipped_extra = [*five[:3], {"set_index": 4, "skipped": True}]
+    too_many = [{"set_index": i, "reps": 5} for i in range(1, 3 + training.MAX_EXTRA_SETS + 2)]
+    gap = [*five[:3], {"set_index": 5, "reps": 5}]
+    squat = {"exercise_id": "barbell_back_squat"}
+    llm.steps = [
+        Call("log_exercise_results", {**squat, "sets": skipped_extra}),
+        Call("log_exercise_results", {**squat, "sets": too_many}),
+        Call("log_exercise_results", {**squat, "sets": gap}),
+        Call("log_exercise_results", {**squat, "sets": five}),
+        say("Записал пять подходов."),
+    ]
+    await _send(dispatcher, bot, "сделал пять подходов")
+
+    assert [a["ok"] for a in llm.returns("log_exercise_results")] == [False, False, False, True]
+    async with db.read() as conn:
+        rows = await list_set_logs_for_session(conn, session_id)
+    squats = [row for row in rows if row.exercise_id == "barbell_back_squat"]
+    assert [(row.set_index, row.actual_reps, row.extra) for row in squats] == [
+        (1, 5, False), (2, 5, False), (3, 5, False), (4, 5, True), (5, 5, True),
+    ]  # fmt: skip
+    extra = squats[3]
+    assert (extra.extra_for_block, extra.extra_for_item) == (0, 0)
+    assert extra.planned_reps_max is None and extra.actual_load_kg == squats[0].planned_load_kg
+    assert "Push-up" in _last_text(session)  # the block advanced
+    assert any(row.exercise_id == "pushup" for row in rows)  # the next block's rows exist
+
+    active = await training.active_session(db, seeded.user_id)
+    assert active is not None
+    assigned = training.assign_rows(rows, active.workout)
+    assert [row.set_index for row in assigned[0][0]] == [1, 2, 3, 4, 5]
+    assert all(len(item_rows) == 3 for item_rows in assigned[1])  # push-ups: as prescribed
+
+
 async def test_a_calibration_load_needs_the_weight_used(
     dispatcher: Dispatcher,
     bot: Bot,

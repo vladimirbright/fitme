@@ -249,6 +249,32 @@ async def test_recent_session_outcomes_hit_reps_max(db: Database, user_id: int) 
     assert outcomes[0].below_reps_min is False
 
 
+async def test_a_set_beyond_the_prescription_neither_makes_nor_breaks_a_success(
+    db: Database, user_id: int
+) -> None:
+    """ADR 0012: progression judges the prescribed sets; an extra set at 3 reps (below the
+    minimum) or at 8 doesn't change the outcome."""
+    plan_version_id = await _insert_plan_version(db, user_id)
+    extra = {
+        "planned_load_kg": None,
+        "planned_reps_min": None,
+        "planned_reps_max": None,
+        "actual_load_kg": 40.0,
+        "extra_for": (0, 0),
+    }
+    top = {"actual_load_kg": 40.0, "actual_reps": 8}
+    low = {"actual_load_kg": 40.0, "actual_reps": 6}
+    await _log_session(db, user_id, plan_version_id, sets=[top, top, {**extra, "actual_reps": 3}])
+    async with db.read() as conn:
+        success = await recent_session_outcomes(conn, user_id, "barbell_back_squat", limit=1)
+    await _log_session(db, user_id, plan_version_id, sets=[low, low, {**extra, "actual_reps": 8}])
+    async with db.read() as conn:
+        latest = await recent_session_outcomes(conn, user_id, "barbell_back_squat", limit=1)
+
+    assert success[0].hit_reps_max is True and success[0].below_reps_min is False
+    assert latest[0].hit_reps_max is False and latest[0].below_reps_min is False
+
+
 async def test_recent_session_outcomes_below_reps_min(db: Database, user_id: int) -> None:
     plan_version_id = await _insert_plan_version(db, user_id)
     await _log_session(db, user_id, plan_version_id, actual_reps=3)
