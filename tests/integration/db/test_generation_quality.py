@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 
-from test_planning_service import FakeLlm
+from test_planning_service import FakeLlm, _settings
 
 from fitme import clock
 from fitme.bot.plan_rendering import render_plan_text
@@ -194,3 +194,21 @@ async def test_no_invented_carry_weight_and_no_rir_on_power_or_carry_work(
     assert "a load you can move fast with clean technique" in pass_line
     assert "reps in reserve" not in pass_line
     assert "Power and speed:" in text and "Warm-up:" in text  # block role headings
+
+
+async def test_a_draft_chosen_from_an_earlier_attempt_is_still_the_one_confirm_saves(
+    db: Database, user_id: int
+) -> None:
+    """Bug: the repair attempt had as many findings as the first, so best-of showed the first
+    attempt's draft, while the newer repair decision made that draft stale on its own Confirm."""
+    await _seed_boxer(db, user_id)
+    llm = FakeLlm([_model_plan(), _model_plan()])
+
+    result = await planning.propose_new_plan(
+        db, llm.runtime(), user_id, guidance="Поддержка бокса: взрывная мощность и работа ног"
+    )
+
+    assert result.plan is not None and len(llm.prompts) == 2  # findings -> one repair round
+    assert await planning.current_draft_id(db, user_id) == result.decision_id
+    confirmed = await planning.confirm_plan(db, _settings(), user_id, result.decision_id)
+    assert confirmed.status == planning.ConfirmStatus.SAVED

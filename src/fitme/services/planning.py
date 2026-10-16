@@ -1145,6 +1145,22 @@ async def _candidate_pool(
     return narrowed, exercise_search.exercise_facts(inputs.catalog, pool, context.language)
 
 
+async def _set_aside_later_attempts(
+    db: Database, chosen: _Attempt, logged: Sequence[_Attempt]
+) -> None:
+    """ADR 0009's best-of can pick an earlier attempt as the draft. The current draft is the
+    newest plan-round decision (A§6.3), so every attempt logged after the chosen one gets a
+    `decision_outcome` saying it was not chosen, which takes it out of that lookup; otherwise
+    the draft just shown is stale on its own Confirm."""
+    later = [attempt for attempt in logged if attempt.decision_id > chosen.decision_id]
+    if not later:
+        return
+    outcome: dict[str, object] = {"chosen": False, "chosen_decision_id": chosen.decision_id}
+    async with db.transaction() as conn:
+        for attempt in later:
+            await insert_decision_outcome(conn, decision_id=attempt.decision_id, outcome=outcome)
+
+
 async def propose_new_plan(
     db: Database, llm: LlmRuntime, user_id: int, *, guidance: str | None = None
 ) -> PlanRoundResult:
@@ -1206,6 +1222,7 @@ async def propose_new_plan(
     # a targeted repair; whichever passing attempt has fewer findings is the draft, so a
     # repair that fails the guards never loses the valid plan.
     best: tuple[_Attempt, list[GuardVerdict]] | None = None
+    logged: list[_Attempt] = []
     for round_index in range(_GENERATE_ATTEMPTS):
         rendered = render_user_prompt(
             pool_context,
@@ -1247,6 +1264,7 @@ async def propose_new_plan(
             ctx=inputs.ctx,
         )
         await record_llm_call(db, decision_id=last.decision_id, record=outcome.record)
+        logged.append(last)
         if last.output_validation_failed:
             # Bug fix: the model's output never parsed. Like a guard failure, this spends the
             # retry (there is no feedback to add: nothing was parsed) rather than ending the
@@ -1262,6 +1280,7 @@ async def propose_new_plan(
             # A clean attempt wins; otherwise the passing attempt with the fewest findings.
             chosen = best[0] if findings and best is not None else last
             assert chosen.judgement is not None or judgement is None
+            await _set_aside_later_attempts(db, chosen, logged)
             return PlanRoundResult(
                 decision_id=chosen.decision_id,
                 output=chosen.output,
@@ -1276,6 +1295,7 @@ async def propose_new_plan(
     if best is not None:
         chosen = best[0]
         assert chosen.judgement is not None
+        await _set_aside_later_attempts(db, chosen, logged)
         return PlanRoundResult(
             decision_id=chosen.decision_id,
             output=chosen.output,
