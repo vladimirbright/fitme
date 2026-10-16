@@ -445,15 +445,32 @@ def _check_text(text: str, known_kg: set[float]) -> tuple[str | None, list[Guard
 
 def _set_change_targets(plan: Plan, workout_key: str, exercise_id: str) -> list[Prescription]:
     """ADR 0015: a set-count change applies to today's workout only (the one its evidence
-    comes from), to every prescription of the exercise in it."""
+    comes from: the first with that key, as a session picks it), to every prescription of
+    the exercise in it whose count it changes."""
+    workout = next((item for item in plan.workouts if item.key == workout_key), None)
+    if workout is None:
+        return []
     return [
-        item
-        for workout in plan.workouts
-        if workout.key == workout_key
-        for block in workout.blocks
-        for item in block.items
-        if item.exercise_id == exercise_id
+        item for block in workout.blocks for item in block.items if item.exercise_id == exercise_id
     ]
+
+
+def _set_change_problems(
+    change: ChangeSets, plan: Plan, workout_key: str, summaries: Sequence[ExerciseSummary]
+) -> tuple[list[Prescription], list[str]]:
+    """The prescriptions `change` would change in `plan`, and why it can't (empty: it can,
+    as far as today's results go; the guards still judge it)."""
+    targets = [
+        item
+        for item in _set_change_targets(plan, workout_key, change.exercise_id)
+        if item.sets != change.sets
+    ]
+    problems = [
+        problem
+        for item in targets
+        if (problem := _set_change_problem(change, item.sets, summaries)) is not None
+    ]
+    return targets, problems
 
 
 def _set_change_problem(
@@ -525,25 +542,14 @@ def _filter_suggestions(
             if candidate.measure not in target.measures:
                 measures.set_default_target(candidate, target)  # ADR 0009
         elif isinstance(change, ChangeSets):
-            targets = [
-                item
-                for item in _set_change_targets(plan, workout_key, change.exercise_id)
-                if item.sets != change.sets
-            ]
-            problems = [
-                problem
+            targets, problems = _set_change_problems(change, plan, workout_key, summaries)
+            problems += [
+                verdict.detail
                 for item in targets
-                for problem in [
-                    _set_change_problem(change, item.sets, summaries),
-                    *(
-                        v.detail
-                        for v in prescription_verdicts(
-                            item.model_copy(update={"sets": change.sets}), inputs.ctx
-                        )
-                        if not v.ok
-                    ),
-                ]
-                if problem is not None
+                for verdict in prescription_verdicts(
+                    item.model_copy(update={"sets": change.sets}), inputs.ctx
+                )
+                if not verdict.ok
             ]
             if not targets or problems:
                 fired.append(
@@ -798,8 +804,9 @@ def _apply_change(
     plan: Plan, change: PlanChange, inputs: planning.Inputs, workout_key: str
 ) -> bool:
     """Apply `change` to `plan` in place (every prescription of the exercise, in every
-    workout). A swapped-in exercise gets the load engine's value (A§7.3: calibration with
-    no history). Returns whether anything changed."""
+    workout; a set-count change, in today's workout `workout_key` only). A swapped-in
+    exercise gets the load engine's value (A§7.3: calibration with no history). Returns
+    whether anything changed."""
     changed = False
     for workout in plan.workouts:
         for block in workout.blocks:
@@ -826,15 +833,12 @@ def _apply_change(
                     prescription.reps_min = change.reps_min
                     prescription.reps_max = change.reps_max
                     changed = True
-                elif isinstance(change, ChangeSets):
-                    if (
-                        workout.key != workout_key  # ADR 0015: today's workout only
-                        or prescription.exercise_id != change.exercise_id
-                        or prescription.sets == change.sets
-                    ):
-                        continue
-                    prescription.sets = change.sets
-                    changed = True
+    if isinstance(change, ChangeSets):
+        # ADR 0015: today's workout only.
+        for prescription in _set_change_targets(plan, workout_key, change.exercise_id):
+            if prescription.sets != change.sets:
+                prescription.sets = change.sets
+                changed = True
     return changed
 
 
@@ -888,6 +892,15 @@ async def apply_suggestion(
         inputs = planning.build_inputs(catalog, snapshot, settings, user_id)
         latest_version = await get_latest_plan_version(conn, ctx.plan_record.id)
         base = ctx.plan if latest_version is None else Plan.model_validate(latest_version.body)
+        change = proposal.suggestions[index]
+        if isinstance(change, ChangeSets):
+            # ADR 0015: re-checked on the plan it is applied to — it may have been edited
+            # since the recap.
+            _targets, problems = _set_change_problems(
+                change, base, ctx.session.workout_key, proposal.summary
+            )
+            if problems:
+                return ApplyResult(status=Status.STALE)
         modified = base.model_copy(deep=True)
         if not _apply_change(
             modified, proposal.suggestions[index], inputs, ctx.session.workout_key
