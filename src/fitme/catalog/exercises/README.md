@@ -16,6 +16,14 @@ After editing, run `make catalog` (`fitme catalog check`). Every file here is pa
 - `start`: a conservative calibration start: an empty barbell (20 kg), the lightest
   dumbbell/kettlebell (2-4 kg), or bodyweight/calibration. Never a load someone might already
   have to work up to.
+  ADR 0011: only its kind (bodyweight vs. a load) reaches the user; the kg is never shown as
+  a starting weight — an unknown load is calibrated by the exercise's stimulus.
+- `qualities`: what the exercise directly trains, the main one first (ADR 0009). The first
+  one also decides how its effort is regulated (ADR 0011): power, rotational power or
+  agility first means speed, not reps in reserve.
+- `specific` (optional, default false): a narrow technique drill or one variation of a
+  broader activity (one punch, one footwork pattern). Retrieval ranks it after general
+  exercises, and it is never accepted as a warm-up. Say why in a `#` comment.
 - `load_unit`: what a prescribed `kg` means (`fitme.domain.catalog.LoadUnit`): `total` (a
   barbell, a machine stack; unused for bodyweight/band/cardio), `per_implement` (two
   dumbbells or kettlebells, kg each) or `single_implement` (one dumbbell/kettlebell). Required

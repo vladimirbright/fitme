@@ -43,11 +43,12 @@ from fitme.llm.context import (
     render_user_prompt,
 )
 from fitme.llm.usage import AgentRunRecord, PriceTable, run_agent
-from fitme.services import exclusions
+from fitme.services import exclusions, programming
 from fitme.services.catalog import available_exercises
 from fitme.services.exercise_search import exercise_facts, requested_qualities
 from fitme.services.measures import repair_measures
-from fitme.services.plan_quality import ReviewContext, review
+from fitme.services.plan_quality import context_for, review
+from fitme.services.prescribing import repair_intensity
 
 # Agents this eval tool can actually exercise against a bare profile fixture (see module
 # docstring). The other two names in `AGENT_FACTORIES` are still valid `--agent` values; they
@@ -171,6 +172,7 @@ def _classify_plan_output(
     if isinstance(output, Refusal):
         return EvalResult(fixture_name, agent_name, "refusal", record, output.code.value)
     repair_measures(output, catalog)  # what the service does before judging (ADR 0009)
+    repair_intensity(output, catalog)  # ADR 0011: no rir on power, carry or interval work
     verdicts = validate_plan(output, _guard_context(fixture, catalog))
     failed = [verdict for verdict in verdicts if not verdict.ok]
     if failed:
@@ -179,13 +181,7 @@ def _classify_plan_output(
     context = _build_context(fixture, catalog)
     findings = review(
         output,
-        ReviewContext(
-            catalog=catalog,
-            requested=_requested(fixture, context),
-            sport=context.sport,
-            sport_sessions_per_week=context.sport_sessions_per_week,
-            require_declared=bool(requested_qualities(fixture.get("request"))),
-        ),
+        context_for(catalog, context, _requested(fixture, context), request=fixture.get("request")),
     )
     if findings:
         detail = "; ".join(f"{finding.rule}: {finding.detail}" for finding in findings[:3])
@@ -223,6 +219,11 @@ async def run_eval(
                 request=fixture.get("request"),
                 exercise_facts=facts,
                 requested_qualities=_requested(fixture, context),
+                programming_brief=programming.brief(
+                    context,
+                    _requested(fixture, context),
+                    split_wanted=programming.split_wanted(context, fixture.get("request")),
+                ),
             )
             outcome = await run_agent(
                 AGENT_FACTORIES["plan_generate"],

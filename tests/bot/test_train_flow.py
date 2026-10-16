@@ -577,8 +577,10 @@ async def test_review_shows_engine_loads_calibration_without_history_and_each_fo
     await _to_review(dispatcher, bot, session)
     review = _last_text(session)
     assert review.startswith(t("train.review_title", "en", workout_key="A", title="Full body"))
-    assert "Barbell back squat: 3 × 8–10 @ calibration: start with 20 kg" in review
-    assert "Dumbbell bench press: 3 × 8–10 @ calibration: start with 2 kg each" in review
+    # ADR 0011: no catalog start weight; how to pick an unknown load instead.
+    assert "Barbell back squat: 3 × 8–10 @ calibration: start light, log what you used" in review
+    assert "Dumbbell bench press: 3 × 8–10 @ calibration: start light" in review
+    assert "start with" not in review
     assert "Push-up: 3 × 8–10 @ bodyweight" in review
     assert t("disclosure.ai", "en") in review
     await _click(dispatcher, bot, _last_action(session, "abort"))
@@ -617,7 +619,7 @@ async def test_according_to_plan_logs_every_prescribed_set_and_completes(
     await _click(dispatcher, bot, _last_action(session, "done"))
     block2 = _last_text(session)
     assert block2.startswith(t("train.block_title", "en", index=2, total=2))
-    assert "Load: start with 2 kg each or lighter" in block2
+    assert "Load: a light weight you're sure about" in block2
     assert "Load: bodyweight" in block2
     assert t("train.calibration_hint", "en") in block2
 
@@ -1299,7 +1301,7 @@ async def test_b2_a_calibration_typo_is_re_asked_and_never_reaches_the_history_m
         "train.results_implausible",
         "en",
         name="Barbell back squat",
-        load="calibration: start with 20 kg or lighter, log what you used",
+        load="calibration: start light, log what you used",
     )
     assert (await _rows(db, session_id))[:3] == [(_SQUAT, i, None, None, False) for i in (1, 2, 3)]
     # No shown parse exists: a Correct button can't write anything.
@@ -1542,7 +1544,7 @@ async def test_adjust_cannot_set_or_change_a_declared_hint(
     await _to_review(dispatcher, bot, session)
     review = _last_text(session)
     assert "Barbell back squat: 3 × 8–10 @ calibration — your plan says 80 kg" in review
-    assert "Dumbbell bench press: 3 × 8–10 @ calibration: start with 2 kg each" in review
+    assert "Dumbbell bench press: 3 × 8–10 @ calibration: start light" in review
 
     adjusted = make_plan().workouts[0]
     adjusted.blocks[0].items[0].declared_kg = 250.0
@@ -1556,7 +1558,7 @@ async def test_adjust_cannot_set_or_change_a_declared_hint(
     assert t("train.review_adjusted", "en") in review
     assert "Barbell back squat: 3 × 8–10 @ calibration — your plan says 80 kg" in review
     assert "250" not in review and "your plan says 30" not in review
-    assert "Dumbbell bench press: 3 × 8–10 @ calibration: start with 2 kg each" in review
+    assert "Dumbbell bench press: 3 × 8–10 @ calibration: start light" in review
     async with db.read() as conn:
         decisions = await list_decisions_for_user(conn, user_id)
     adjust_decision = next(d for d in decisions if d.kind == "session_adjust")

@@ -66,7 +66,9 @@ def test_every_prescription_line_shows_an_explicit_load_in_english() -> None:
     assert "Barbell back squat: 3 × 8–10 @ 42.5 kg, rest 1 min 30 s" in text
     assert "Dumbbell bench press: 3 × 8–10 @ 12.5 kg each" in text
     assert "Push-up: 3 × 8–10 @ bodyweight" in text
-    assert "@ calibration: start with 20 kg or lighter, log what you used" in text
+    # ADR 0011: no catalog start weight as a hint; how to pick the load instead.
+    assert "@ calibration: start light, log what you used" in text
+    assert "start with" not in text
     assert "Monday: A — Lower" in text and "Thursday: B — Calibration day" in text
     # ADR 0009: a superset says it's done in order, in rounds, with the rest after a round.
     assert "Superset, in this order, 3 rounds; rest 1 min 30 s after each round:" in text
@@ -78,7 +80,8 @@ def test_rendering_uses_the_users_language_for_names_weekdays_and_loads() -> Non
     assert "Приседания со штангой на спине: 3 × 8–10 @ 42.5 кг" in text
     assert "12.5 кг каждая" in text
     assert "Понедельник: A — Lower" in text
-    assert "калибровка: начните с 20 кг" in text
+    assert "калибровка: начните с лёгкого веса" in text
+    assert "20 кг или легче" not in text
     assert "собственный вес" in text
 
 
@@ -107,9 +110,10 @@ def test_load_label_follows_the_catalog_load_unit() -> None:
     assert load_label(Load(kind="kg", kg=12.5), per_dumbbell, "en") == "12.5 kg each"
     assert load_label(Load(kind="kg", kg=16), single, "en") == "16 kg"  # one implement: plain kg
     assert load_label(Load(kind="kg", kg=60), total, "en") == "60 kg"
+    # ADR 0011: the catalog `start` (the lightest implement) is never shown as a weight.
     assert single.start.kind == "kg" and single.start.kg is not None
     assert load_label(Load(kind="calibration"), single, "en") == (
-        f"calibration: start with {single.start.kg:g} kg or lighter, log what you used"
+        "calibration: start light, log what you used"
     )
 
 
@@ -223,7 +227,8 @@ def test_unmatched_names_with_forbidden_wording_are_dropped() -> None:
 
 def test_timed_distance_and_rir_prescriptions_render_in_their_own_units() -> None:
     """ADR 0009: "3 × 40 s", "3 × 2 min", "3 × 30 m", and a structured RIR target instead
-    of a generic "start with 2 kg" hint."""
+    of a generic "start with 2 kg" hint; ADR 0011: a carry is calibrated for the carry, and an
+    `rir` on it (a plan saved before) is not shown."""
     catalog = load_catalog()
 
     def line(**fields: object) -> str:
@@ -243,7 +248,10 @@ def test_timed_distance_and_rir_prescriptions_render_in_their_own_units() -> Non
         load={"kind": "calibration"},
         rir=3,
     )
-    assert "3 × 30 m @ calibration: pick a weight that leaves about 3 reps in reserve" in carry
+    assert (
+        "3 × 30 m @ calibration: a weight you can carry or hold for the whole set upright" in carry
+    )
+    assert "reps in reserve" not in carry
     assert "start with" not in carry
     bench = line(
         exercise_id="barbell_bench_press",

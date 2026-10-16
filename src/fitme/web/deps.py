@@ -18,8 +18,9 @@ from fitme import i18n
 from fitme.catalog import load_catalog
 from fitme.config.settings import Settings
 from fitme.db.connection import Database
-from fitme.domain.models import NAME_MAX_LENGTH
-from fitme.services import webauth
+from fitme.domain.enums import BlockRole
+from fitme.domain.models import NAME_MAX_LENGTH, Prescription
+from fitme.services import prescribing, webauth
 from fitme.services.llm_runtime import LlmRuntime
 from fitme.services.webauth import SendCode, SessionState
 from fitme.web.ratelimit import SlidingWindowLimiter
@@ -150,6 +151,8 @@ def render(
         # Read by the shared `_plan_body.html` partial (plan detail, draft and revise pages)
         # and the plan rename form; a route may still pass its own values.
         "exercise_names": exercise_display_names(lang),
+        # ADR 0011: the same load text as the bot (`services.prescribing`).
+        "load_phrase": lambda item, role=None: prescription_load_phrase(item, lang, role),
         "load_units": exercise_load_units(),
         "name_max_length": NAME_MAX_LENGTH,
         **context,
@@ -165,6 +168,13 @@ def exercise_display_names(lang: str) -> dict[str, str]:
         exercise.id: exercise.names.get(lang, exercise.names.get("en", exercise.id))
         for exercise in catalog.exercise
     }
+
+
+def prescription_load_phrase(item: Prescription, lang: str, role: BlockRole | None = None) -> str:
+    """One prescription's load as the plan view says it: the kg number, bodyweight, or how
+    to pick an unknown load for the exercise's stimulus (ADR 0011)."""
+    exercise = load_catalog().by_id(item.exercise_id)
+    return prescribing.prescription_load_label(item, exercise, lang, role=role)
 
 
 def exercise_load_units() -> dict[str, str]:

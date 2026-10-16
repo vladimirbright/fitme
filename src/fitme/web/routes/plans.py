@@ -470,13 +470,20 @@ def parse_edit_form(base: Plan, form: FormData) -> tuple[Plan | None, list[str]]
             if errors:
                 continue
             try:
-                blocks.append(Block(kind=block.kind, items=items))
+                blocks.append(Block(kind=block.kind, role=block.role, items=items))
             except ValidationError as exc:
                 errors.extend(_field_error(f"w{wi}_b{bi}: ", exc))
         if errors:
             continue
         try:
-            workouts.append(Workout(key=workout.key, title=workout.title, blocks=blocks))
+            workouts.append(
+                Workout(
+                    key=workout.key,
+                    qualities=workout.qualities,
+                    title=workout.title,
+                    blocks=blocks,
+                )
+            )
         except ValidationError as exc:
             errors.extend(_field_error(f"w{wi}: ", exc))
     if errors:

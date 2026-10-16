@@ -44,7 +44,7 @@ from fitme.domain.models import (
     Workout,
 )
 from fitme.llm.agents import plan_generate_agent, plan_revise_agent
-from fitme.services import exercise_search, planning
+from fitme.services import exercise_search, planning, prescribing
 from fitme.services.llm_runtime import LlmRuntime
 
 _EPOCH = "1970-01-01T00:00:00.000000Z"
@@ -286,7 +286,7 @@ async def test_valid_plan_is_a_draft_then_version_1_on_confirm(db: Database, use
     decision = rounds[0]
     assert decision.id == result.decision_id
     assert decision.model == _settings().llm_tier_large
-    assert decision.prompt_template == "plan_generate" and decision.prompt_version == "5"
+    assert decision.prompt_template == "plan_generate" and decision.prompt_version == "6"
     assert decision.guards_fired  # the gate verdict at least
     assert decision.proposal is not None
     assert Plan.model_validate(decision.proposal["plan"]) == result.plan
@@ -857,7 +857,7 @@ async def test_revise_then_confirm_creates_version_2_on_the_same_plan(
     for block in expected.workouts[0].blocks:
         for item in block.items:
             if item.load.kind == "calibration":
-                item.rir = planning.DEFAULT_CALIBRATION_RIR
+                item.rir = prescribing.DEFAULT_CALIBRATION_RIR
     assert result.plan == expected and result.plan_id == saved.plan_id
     assert llm.calls == 1
     assert json.loads(llm.prompts[0])["user_request"] == "rename it"

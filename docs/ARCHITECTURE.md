@@ -295,7 +295,11 @@ rollers, plates, dip bars, a plyo box, ropes, a sled, a tire and a sledgehammer;
 prescribed (`reps`, `time`, `distance`; the first is the default) and `qualities` what it
 directly trains (`strength`, `hypertrophy`, `power`, `rotational_power`, `core_stability`,
 `agility`, `muscular_endurance`, `conditioning`, `mobility`). `fitme catalog check` requires
-`qualities` on every exercise.
+`qualities` on every exercise. ADR 0011: the first quality is what the exercise *mainly*
+trains, and with its measure decides how its effort is regulated
+(`domain.catalog.intensity_mode`: reps in reserve, speed, carry, pace or none). `specific =
+true` marks a narrow technique drill or one variation of a broader activity (left hooks only):
+retrieval ranks it after general exercises and the review won't take it as a warm-up.
 
 **Search (ADR 0007).** Derived, rebuildable indexes sit next to the catalog: the shipped
 embedding file `catalog/search_index.sqlite` (built by `fitme catalog index`) and, in the app
@@ -305,7 +309,8 @@ substitutes and `plan_generate`'s candidate pool; it never adds an exercise.
 
 The catalog holds about 1,100 exercises covering every location in §5.1: the hand-written core plus reviewed entries imported from the local reference library (ADRs 0007, 0008). Pick
 calibration start loads conservatively: an empty bar, the lightest dumbbell/machine stack, or
-bodyweight.
+bodyweight. ADR 0011: `start` decides only bodyweight vs. calibration; its kg is never shown
+as a starting weight.
 
 ### 4.5 Domain models (`src/fitme/domain/`)
 
@@ -315,6 +320,11 @@ target (`reps_min`/`reps_max`, `seconds` or `meters`) and an optional `rir`; a `
 has optional `qualities` (what the session is for); a superset is done in rounds in listed
 order, each exercise's rest being the transition to the next and the last one's the rest
 after the round. Bodies stored before ADR 0009 parse unchanged (reps, no qualities).
+ADR 0011: a `Block` has an optional `role` (`warm_up`, `power`, `strength`, `accessory`,
+`core`, `conditioning`, `mobility`), declared before its `items`, and a `Workout` declares
+`qualities` (main objective first) before `title` and `blocks`, so a model states objectives
+before choosing exercises. The last superset exercise's rest is the one round rest, shown
+once. Bodies stored before parse unchanged (no roles; the review infers them).
 
 ```python
 class Load(BaseModel):
@@ -601,6 +611,16 @@ the draft, remaining findings are logged, never a refusal. Hard exclusions
 ADR 0010: only those that apply to the plan being worked on (scope `all`, that plan's
 `plan`, or the new draft's `new_plan`).
 
+**ADR 0011.** Before any exercise is chosen, `services/programming` builds a deterministic
+`programming_brief` (sessions and length, a working-block budget, main and secondary
+qualities, full-body-with-different-emphases vs split, the other sport's fatigue budget, the
+session order). The pool adds general warm-up activities and ranks narrow drills last;
+`exercise_facts` carry each exercise's `intensity`. `services/prescribing` drops an `rir` on
+power, speed, carry or interval work and words every unknown load by its stimulus, never
+with the catalog `start` weight. The review adds block roles and order, direct vs supporting
+coverage (warm-ups don't count), power-set prescriptions, splits nobody asked for and session
+length.
+
 1. **Gates** (guards, before any LLM call): the profile is complete; there is no open
    `health_hold`; red-flag clearance is present. Any failure returns a `Refusal`, which is
    logged as a `decision(kind=refusal)`. The bot shows a refusal by its per-code copy, except
@@ -622,8 +642,8 @@ ADR 0010: only those that apply to the plan being worked on (scope `all`, that p
    violations. If the second attempt also fails, return a `Refusal(NO_SAFE_PLAN)`. Every
    attempt is logged.
 5. **Show** the plan as structured text: schedule, then each workout with exercises, sets ×
-   reps, and explicit load (`kg`, `bodyweight`, or `calibration: start with X, log what you
-   used`). Buttons: **Confirm**, **Change something**, **Cancel**.
+   reps, and explicit load (`kg`, `bodyweight`, or a calibration that says how to choose the
+   load for the exercise's stimulus, ADR 0011). Buttons: **Confirm**, **Change something**, **Cancel**.
 6. **Revise**: free text ("no lunges, 3 days not 4") goes to the `plan_revise` agent with the
    current draft. The result goes through steps 4–5 again. Each round is a decision.
 7. **Confirm** stores `plans` + `plan_versions(version=1, origin=llm)`. If this is the only
@@ -906,9 +926,9 @@ One pydantic-ai `Agent` per purpose. Each has a typed output, and its prompt is 
 | `assistant` | context + `state` + session `history` + user text (scrubbed); lookup and staging tools | `AssistantTurn \| Refusal` (ADR 0003, ADR 0004) | medium |
 
 - The prompt loader returns `(template_name, version, rendered_text)`. Template name and
-  version go into `decisions`. Current versions (ADR 0009): `plan_generate.v5`,
-  `plan_revise.v3`, `plan_import.v2`, `session_adjust.v2`, `result_parse.v2`, `recap.v1`,
-  `assistant.v7`.
+  version go into `decisions`. Current versions (ADR 0011): `plan_generate.v6`,
+  `plan_revise.v4`, `plan_import.v2`, `session_adjust.v2`, `result_parse.v2`, `recap.v1`,
+  `assistant.v8`.
 - Each agent's model comes from its tier or override (§8.5). Nothing in the code is tied to
   one provider.
 - `llm/usage.py` wraps every run: records `llm_calls` from `result.usage` (a property), latency, and

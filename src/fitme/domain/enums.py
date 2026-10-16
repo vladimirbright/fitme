@@ -357,3 +357,30 @@ class Quality(StrEnum):
     MUSCULAR_ENDURANCE = "muscular_endurance"
     CONDITIONING = "conditioning"
     MOBILITY = "mobility"
+
+
+class IntensityMode(StrEnum):
+    """How effort is regulated for one exercise as prescribed (ADR 0011), derived from the
+    catalog (`domain.catalog.intensity_mode`), never stored: reps in reserve suit loaded
+    strength, hypertrophy and endurance sets, not throws, jumps, sprints, carries or
+    intervals."""
+
+    EFFORT = "effort"  # loaded reps: reps in reserve
+    SPEED = "speed"  # power, speed, agility: every rep fast, stop when speed drops
+    CARRY = "carry"  # a loaded carry or hold: posture and grip for the whole distance/time
+    PACE = "pace"  # conditioning and cardio: a pace that holds for every interval
+    NONE = "none"  # bodyweight holds, mobility: no load to choose
+
+
+class BlockRole(StrEnum):
+    """ADR 0011: what a block does in its session, stated by the planner before it picks the
+    block's exercises (`Block.role`, optional; plans made before it have none and the review
+    infers one). The members' order is the usual session order."""
+
+    WARM_UP = "warm_up"  # general preparation for what follows
+    POWER = "power"  # power, speed and agility work, done fresh
+    STRENGTH = "strength"  # the main lifts
+    ACCESSORY = "accessory"  # secondary strength and hypertrophy work
+    CORE = "core"  # trunk stability
+    CONDITIONING = "conditioning"  # intervals, circuits, carries for capacity
+    MOBILITY = "mobility"  # mobility or cool-down at the end

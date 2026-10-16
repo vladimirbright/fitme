@@ -1,0 +1,15 @@
+id = "carioca"
+names = { en = "Carioca", ru = "Скрёстный шаг (кариока)" }
+search = { en = "carioca grapevine drill", ru = "кариока скрестный шаг в сторону" }
+kind = "cardio"
+pattern = "conditioning"
+measures = ["distance", "time"]
+qualities = ["agility", "mobility"]
+equipment = []
+load_unit = "total"
+locations = ["public_gym", "studio_gym", "outdoor"]
+loads_areas = ["knee", "ankle", "hip"]
+contraindicated_by = ["knee_injury_current", "ankle_injury_current", "hip_injury_current"]
+increment_kg = 1.0
+start = { kind = "bodyweight" }
+instructions = { en = "Move sideways while the trailing leg crosses alternately in front of and behind the lead leg, letting the hips turn and the shoulders stay square. Start slowly, then speed up while staying light on the feet. Go the same distance in both directions.", ru = "Двигайтесь боком, попеременно заводя дальнюю ногу то перед ведущей, то за неё; таз поворачивается, плечи остаются ровно. Начните медленно, затем ускоряйтесь, оставаясь лёгким на ногах. Пройдите одинаковое расстояние в обе стороны." }

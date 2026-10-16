@@ -1,0 +1,107 @@
+"""ADR 0011: the weekly strategy, decided deterministically *before* any exercise is chosen,
+and sent to `plan_generate` / `plan_revise` as `programming_brief`.
+
+A model asked for "boxing conditioning" tends to collect boxing-flavoured exercises and then
+name sessions after them. The brief fixes the frame first, from the profile alone: how many
+sessions of how long, which qualities are the plan's main objectives and which secondary,
+whether the week should be full-body sessions with different emphases or a split, how much
+fatigue the user's other sport leaves room for, and the usual order of a session's blocks.
+The model then states each workout's objectives (`Workout.qualities`) and each block's role
+(`Block.role`) before it picks exercises, and `services.plan_quality` checks the result
+against the same frame.
+
+These are heuristics, not sports science: the numbers are rough budgets with their reasons
+next to them, and nothing here is a guard.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Sequence
+
+from fitme.domain.enums import BlockRole, Preference, Quality
+from fitme.llm.context import UserContext
+
+# A session's usual block order (A§6.4): warm-up, fast work while fresh, the main lifts,
+# accessories, trunk, conditioning, mobility. A session uses only the parts it needs.
+SESSION_ORDER: tuple[BlockRole, ...] = (
+    BlockRole.WARM_UP,
+    BlockRole.POWER,
+    BlockRole.STRENGTH,
+    BlockRole.ACCESSORY,
+    BlockRole.CORE,
+    BlockRole.CONDITIONING,
+    BlockRole.MOBILITY,
+)
+# Main objectives: the first qualities the request (then the sport, focus, preferences)
+# names. Two is enough to give each a real share of the week; the rest are secondary.
+MAIN_QUALITIES = 2
+# Rough minutes per working block (sets, rests and setup) for the block budget: about 10 for
+# the upper bound and 15 for the lower one, after a few minutes of warm-up.
+_MINUTES_PER_BLOCK_LOW = 15
+_MINUTES_PER_BLOCK_HIGH = 10
+# Weekly sessions of another sport from which this plan is supporting work with a lower
+# fatigue budget (`moderate`), and from which it should stay clearly below a standalone plan
+# (`low`).
+_SPORT_MODERATE = 2
+_SPORT_LOW = 4
+
+
+def working_blocks(session_minutes: int) -> tuple[int, int]:
+    """A rough range of working blocks (singles or supersets) after the warm-up that fits
+    `session_minutes`: 60 min -> 4-6, 45 -> 3-4, 30 -> 2-3."""
+    low = max(2, round(session_minutes / _MINUTES_PER_BLOCK_LOW))
+    high = max(low + 1, round(session_minutes / _MINUTES_PER_BLOCK_HIGH))
+    return low, high
+
+
+def structure(sessions_per_week: int, *, split_wanted: bool) -> str:
+    """`split` when the user asked for one; otherwise, with up to three sessions a week,
+    full-body sessions that each cover the main regions with a different emphasis (a region
+    trained once a week is a split nobody asked for); with more, full-body or upper/lower."""
+    if split_wanted:
+        return "split_as_requested"
+    if sessions_per_week <= 3:
+        return "full_body_varied_emphasis"
+    return "full_body_or_upper_lower"
+
+
+def fatigue_budget(sport_sessions_per_week: int | None) -> str:
+    """How much room the user's other sport leaves: `normal`, `moderate` or `low`."""
+    sessions = sport_sessions_per_week or 0
+    if sessions >= _SPORT_LOW:
+        return "low"
+    if sessions >= _SPORT_MODERATE:
+        return "moderate"
+    return "normal"
+
+
+_SPLIT_WORDS = ("split", "upper/lower", "upper lower", "сплит", "верх/низ", "верх-низ")
+
+
+def split_wanted(context: UserContext, request: str | None) -> bool:
+    """A split is what the user asked for: the `split` preference, or the request's words."""
+    text = (request or "").lower()
+    return Preference.SPLIT in context.preferences or any(word in text for word in _SPLIT_WORDS)
+
+
+def brief(
+    context: UserContext, qualities: Sequence[Quality], *, split_wanted: bool
+) -> dict[str, object]:
+    """The `programming_brief` for one plan request. Machine data, no user text."""
+    low, high = working_blocks(context.session_minutes)
+    result: dict[str, object] = {
+        "sessions_per_week": context.sessions_per_week,
+        "session_minutes": context.session_minutes,
+        "working_blocks_per_session": [low, high],
+        "main_qualities": [quality.value for quality in qualities[:MAIN_QUALITIES]],
+        "secondary_qualities": [quality.value for quality in qualities[MAIN_QUALITIES:]],
+        "structure": structure(context.sessions_per_week, split_wanted=split_wanted),
+        "session_order": [role.value for role in SESSION_ORDER],
+        "fatigue_budget": fatigue_budget(context.sport_sessions_per_week),
+    }
+    if context.sport is not None:
+        result["supporting_sport"] = {
+            "sport": context.sport.value,
+            "sessions_per_week": context.sport_sessions_per_week,
+        }
+    return result
