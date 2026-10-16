@@ -49,6 +49,8 @@ from fitme.bot.callback_data import CheckinReply, TrainAction, TrainPick
 from fitme.catalog import load_catalog
 from fitme.config.settings import Settings
 from fitme.db.connection import Database
+from fitme.db.controllers.decisions import insert_decision
+from fitme.db.controllers.plans import insert_plan_version
 from fitme.db.controllers.profile import upsert_screening_flag
 from fitme.db.controllers.training import finish_workout_session
 from fitme.db.selectors.decisions import (
@@ -285,6 +287,46 @@ async def test_a_set_count_suggestion_follows_what_was_done_and_is_applied(
         saved = Plan.model_validate((await list_plan_versions(conn, plan_id))[-1].body)
     assert saved.workouts[0].blocks[1].items[1].sets == 2
     assert saved.workouts[1].blocks[0].items[0].sets == 3  # workout B's push-ups untouched
+
+
+async def test_a_set_count_suggestion_is_rechecked_on_a_plan_edited_since(
+    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
+) -> None:
+    """ADR 0015: the squat was 3 → 4 at recap time; the plan now says 8. Applying 4 there
+    would be four fewer, with no shortfall today: refused as stale, the plan untouched."""
+    user_id, plan_id, _ = await _ready(dispatcher, bot, db)
+    llm.recap_responses.append(Recap(text="", suggestions=[ChangeSets(exercise_id=_SQUAT, sets=4)]))
+    await _four_squat_sets_then_finish(dispatcher, bot, session, db, user_id)
+    edited = make_plan()
+    edited.workouts[0].blocks[0].items[0].sets = 8
+    async with db.transaction() as conn:
+        decision_id = await insert_decision(
+            conn,
+            user_id=user_id,
+            kind="plan_confirm",
+            prompt_template=None,
+            prompt_version=None,
+            model=None,
+            content_version="abc123def456",
+            llm_input=None,
+            user_report=None,
+            proposal=None,
+            guards_fired=[],
+        )
+        await insert_plan_version(
+            conn,
+            plan_id=plan_id,
+            version=2,
+            body=edited.model_dump(mode="json"),
+            origin="user_edit",
+            decision_id=decision_id,
+        )
+
+    await _click(dispatcher, bot, _last_action(session, "apply"))
+
+    assert _toasts(session)[-1] == t("recap.apply_stale", "en")
+    async with db.read() as conn:
+        assert len(await list_plan_versions(conn, plan_id)) == 2
 
 
 async def test_an_unanswered_checkin_blocks_the_increase_and_fine_unblocks_it(
