@@ -209,9 +209,16 @@ async def test_an_extra_set_raises_the_load_and_the_recap_says_why(
 
 
 async def _four_squat_sets_then_finish(
-    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, user_id: int
+    dispatcher: Dispatcher,
+    bot: Bot,
+    session: FakeSession,
+    db: Database,
+    user_id: int,
+    *,
+    skip_second_block: bool = False,
 ) -> int:
-    """Workout A with four sets of the three-set squat (the assistant's path, ADR 0012)."""
+    """Workout A with four sets of the three-set squat (the assistant's path, ADR 0012),
+    then the second block done as planned (or skipped)."""
     session_id = await _to_first_block(dispatcher, bot, session)
     four = tuple(SetResult(set_index=i, reps=9, load_kg=40.0) for i in (1, 2, 3, 4))
     logged = await training.log_items(
@@ -226,14 +233,18 @@ async def _four_squat_sets_then_finish(
     assert logged.status == Status.OK
     await _send(dispatcher, bot, "/train")
     await _click(dispatcher, bot, _last_action(session, "resume"))  # the next block
-    await _finish_block(dispatcher, bot, session)
+    if skip_second_block:
+        await _click(dispatcher, bot, _last_action(session, "skip"))
+    else:
+        await _finish_block(dispatcher, bot, session)
     return session_id
 
 
 async def test_a_set_count_suggestion_follows_what_was_done_and_is_applied(
     dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
 ) -> None:
-    """ADR 0015: more sets only up to what was done today (4 of 3 here) and at most two
+    """ADR 0015: more sets only up to what was done today (4 of 3 here); fewer only where
+    sets were left undone (the skipped push-ups), down to what was done and at most two
     fewer; no-op and unknown-exercise changes are dropped."""
     user_id, plan_id, _ = await _ready(dispatcher, bot, db)
     llm.recap_responses.append(
@@ -243,17 +254,19 @@ async def test_a_set_count_suggestion_follows_what_was_done_and_is_applied(
                 ChangeSets(exercise_id=_SQUAT, sets=5),  # only 4 done: dropped
                 ChangeSets(exercise_id=_SQUAT, sets=4),
                 ChangeSets(exercise_id=_SQUAT, sets=3),  # no change: dropped
-                ChangeSets(exercise_id=_PUSHUP, sets=4),  # 3 done: dropped
-                ChangeSets(exercise_id=_PUSHUP, sets=1),  # two fewer: kept
+                ChangeSets(exercise_id=_PUSHUP, sets=4),  # none done: dropped
+                ChangeSets(exercise_id=_PUSHUP, sets=2),  # skipped today: kept
                 ChangeSets(exercise_id="not_in_the_plan", sets=4),  # dropped
             ],
         )
     )
-    await _four_squat_sets_then_finish(dispatcher, bot, session, db, user_id)
+    await _four_squat_sets_then_finish(
+        dispatcher, bot, session, db, user_id, skip_second_block=True
+    )
     suggestions = [m for m in _sent(session) if (m.text or "").startswith("Suggested change")]
     assert [m.text for m in suggestions] == [
         t("recap.suggestion_sets", "en", name="Barbell back squat", sets=4),
-        t("recap.suggestion_sets", "en", name="Push-up", sets=1),
+        t("recap.suggestion_sets", "en", name="Push-up", sets=2),
     ]
 
     second = _last_action(session, "apply")
@@ -266,6 +279,12 @@ async def test_a_set_count_suggestion_follows_what_was_done_and_is_applied(
     saved = Plan.model_validate(versions[-1].body)
     assert saved.workouts[0].blocks[0].items[0].sets == 4
     assert saved.workouts[0].blocks[1].items[1].sets == 3  # the other suggestion not applied
+
+    await _click(dispatcher, bot, second)  # the push-ups': today's workout A only
+    async with db.read() as conn:
+        saved = Plan.model_validate((await list_plan_versions(conn, plan_id))[-1].body)
+    assert saved.workouts[0].blocks[1].items[1].sets == 2
+    assert saved.workouts[1].blocks[0].items[0].sets == 3  # workout B's push-ups untouched
 
 
 async def test_an_unanswered_checkin_blocks_the_increase_and_fine_unblocks_it(

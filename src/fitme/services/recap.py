@@ -88,7 +88,7 @@ from fitme.domain.enums import (
     WorkoutSessionStatus,
 )
 from fitme.domain.guard_types import GuardVerdict
-from fitme.domain.models import Load, Plan, Refusal, Workout
+from fitme.domain.models import Load, Plan, Prescription, Refusal, Workout
 from fitme.domain.results import ChangeReps, ChangeSets, PlanChange, SwapExercise
 from fitme.guards.plan import prescription_verdicts
 from fitme.i18n import wording
@@ -443,24 +443,41 @@ def _check_text(text: str, known_kg: set[float]) -> tuple[str | None, list[Guard
     return text, []
 
 
+def _set_change_targets(plan: Plan, workout_key: str, exercise_id: str) -> list[Prescription]:
+    """ADR 0015: a set-count change applies to today's workout only (the one its evidence
+    comes from), to every prescription of the exercise in it."""
+    return [
+        item
+        for workout in plan.workouts
+        if workout.key == workout_key
+        for block in workout.blocks
+        for item in block.items
+        if item.exercise_id == exercise_id
+    ]
+
+
 def _set_change_problem(
     change: ChangeSets, planned: int, summaries: Sequence[ExerciseSummary]
 ) -> str | None:
-    """ADR 0015: a set count follows what was done today. More sets only up to the most the
-    user did of this exercise in one prescription today, and at most
-    `_MAX_SET_CHANGE` more than planned; fewer at most `_MAX_SET_CHANGE` fewer."""
-    if change.sets < planned:
-        if planned - change.sets > _MAX_SET_CHANGE:
-            return f"more than {_MAX_SET_CHANGE} sets fewer than the {planned} planned"
+    """ADR 0015: a set count follows what was done today, at most `_MAX_SET_CHANGE` sets
+    either way. More sets only up to the most the user did of this exercise in one
+    prescription today; fewer only when a prescription of it was not done in full today,
+    and not below the fewest sets done."""
+    today = [item for item in summaries if item.exercise_id == change.exercise_id]
+    if not today:
+        return "the exercise was not in today's workout"
+    if abs(change.sets - planned) > _MAX_SET_CHANGE:
+        return f"more than {_MAX_SET_CHANGE} sets away from the {planned} planned"
+    if change.sets > planned:
+        done = max(item.done_sets for item in today)
+        if change.sets > done:
+            return f"{change.sets} sets, but at most {done} were done today"
         return None
-    done = max(
-        (item.done_sets for item in summaries if item.exercise_id == change.exercise_id),
-        default=0,
-    )
-    if change.sets > done:
-        return f"{change.sets} sets, but {done} were done today"
-    if change.sets - planned > _MAX_SET_CHANGE:
-        return f"more than {_MAX_SET_CHANGE} sets above the {planned} planned"
+    short = [item.done_sets for item in today if item.done_sets < item.planned_sets]
+    if not short:
+        return "fewer sets, but every set was done today"
+    if change.sets < max(1, min(short)):
+        return f"{change.sets} sets, but {min(short)} were done today"
     return None
 
 
@@ -469,6 +486,7 @@ def _filter_suggestions(
     plan: Plan,
     inputs: planning.Inputs,
     summaries: Sequence[ExerciseSummary],
+    workout_key: str,
 ) -> tuple[list[PlanChange], list[GuardVerdict]]:
     """Keep only suggestions that can pass the guards: a swap's target must be an allowed
     prescription (`guards.plan.prescription_verdicts` at the engine's load), a rep change
@@ -507,30 +525,40 @@ def _filter_suggestions(
             if candidate.measure not in target.measures:
                 measures.set_default_target(candidate, target)  # ADR 0009
         elif isinstance(change, ChangeSets):
-            source = next((p for p in prescriptions if p.exercise_id == change.exercise_id), None)
-            if source is None or source.sets == change.sets:
+            targets = [
+                item
+                for item in _set_change_targets(plan, workout_key, change.exercise_id)
+                if item.sets != change.sets
+            ]
+            problems = [
+                problem
+                for item in targets
+                for problem in [
+                    _set_change_problem(change, item.sets, summaries),
+                    *(
+                        v.detail
+                        for v in prescription_verdicts(
+                            item.model_copy(update={"sets": change.sets}), inputs.ctx
+                        )
+                        if not v.ok
+                    ),
+                ]
+                if problem is not None
+            ]
+            if not targets or problems:
                 fired.append(
                     GuardVerdict(
                         rule=_SUGGESTION_RULE,
                         ok=False,
                         detail=(
-                            f"set change for {change.exercise_id} dropped: not in the plan or "
-                            "no change"
+                            f"set change for {change.exercise_id} dropped: "
+                            + ("; ".join(problems) or "not in today's workout or no change")
                         ),
                     )
                 )
                 continue
-            problem = _set_change_problem(change, source.sets, summaries)
-            if problem is not None:
-                fired.append(
-                    GuardVerdict(
-                        rule=_SUGGESTION_RULE,
-                        ok=False,
-                        detail=f"set change for {change.exercise_id} dropped: {problem}",
-                    )
-                )
-                continue
-            candidate = source.model_copy(update={"sets": change.sets})
+            kept.append(change)
+            continue
         else:
             source = next((p for p in prescriptions if p.exercise_id == change.exercise_id), None)
             if source is None:
@@ -640,7 +668,7 @@ async def build_recap(
     else:
         text, text_verdicts = _check_text(output.text, _known_kg(summaries, preview))
         suggestions, suggestion_verdicts = _filter_suggestions(
-            output.suggestions, ctx.plan, inputs, summaries
+            output.suggestions, ctx.plan, inputs, summaries, ctx.session.workout_key
         )
         fired.extend([*text_verdicts, *suggestion_verdicts])
         proposal = RecapProposal(
@@ -766,7 +794,9 @@ async def answer_checkin(
 # --- Apply a suggestion --------------------------------------------------------------------------
 
 
-def _apply_change(plan: Plan, change: PlanChange, inputs: planning.Inputs) -> bool:
+def _apply_change(
+    plan: Plan, change: PlanChange, inputs: planning.Inputs, workout_key: str
+) -> bool:
     """Apply `change` to `plan` in place (every prescription of the exercise, in every
     workout). A swapped-in exercise gets the load engine's value (A§7.3: calibration with
     no history). Returns whether anything changed."""
@@ -798,7 +828,8 @@ def _apply_change(plan: Plan, change: PlanChange, inputs: planning.Inputs) -> bo
                     changed = True
                 elif isinstance(change, ChangeSets):
                     if (
-                        prescription.exercise_id != change.exercise_id
+                        workout.key != workout_key  # ADR 0015: today's workout only
+                        or prescription.exercise_id != change.exercise_id
                         or prescription.sets == change.sets
                     ):
                         continue
@@ -858,7 +889,9 @@ async def apply_suggestion(
         latest_version = await get_latest_plan_version(conn, ctx.plan_record.id)
         base = ctx.plan if latest_version is None else Plan.model_validate(latest_version.body)
         modified = base.model_copy(deep=True)
-        if not _apply_change(modified, proposal.suggestions[index], inputs):
+        if not _apply_change(
+            modified, proposal.suggestions[index], inputs, ctx.session.workout_key
+        ):
             return ApplyResult(status=Status.NOT_FOUND)  # the exercise isn't in the plan any more
         # The same judging as a `/plan` confirm: a stored load that no longer passes (e.g.
         # after an engine decrease) gets the engine's current value; structural failures refuse.
