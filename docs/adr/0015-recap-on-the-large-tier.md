@@ -29,7 +29,8 @@ three-set prescription, not only to a heavier one.
 - The recap input gains `extra_sets` per exercise (sets done beyond the prescription).
   Prompt `recap.v2`: doing more than asked (extra sets, reps above the range on a non-kg
   exercise) is a basis for `change_sets` / a higher rep range; doing clearly less, for
-  fewer; no basis, no suggestion; never a load.
+  fewer; no basis, no suggestion; never a load. A kg exercise whose load the engine raises
+  for the same result gets no set-count increase on top: one progression at a time.
 - The deterministic recap says why a load goes up: "every set reached the top of the
   range" or, for ADR 0014's increase, "you did more than the plan asked"
   (`NextKind.INCREASE_DID_MORE`).
