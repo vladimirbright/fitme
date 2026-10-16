@@ -652,3 +652,29 @@ def test_a_mislabeled_heavy_lift_still_counts_as_tiring_work() -> None:
         ),
     )
     assert "quality.order" in rules(review(ropes, ReviewContext(_CATALOG)))
+
+
+def test_fast_work_after_a_heavy_lift_in_the_same_superset_is_reported() -> None:
+    def order(*items: Prescription) -> list[str]:
+        week = plan(
+            [(0, "A")],
+            workout(
+                "A",
+                "Lower",
+                [
+                    role(BlockRole.WARM_UP, rx("jump_rope_skipping", 2, seconds=120, rest=30)),
+                    role(BlockRole.ACCESSORY, *items),
+                ],
+            ),
+        )
+        ctx = ReviewContext(_CATALOG)
+        return [f.detail for f in review(week, ctx) if f.rule == "quality.order"]
+
+    squat = rx("barbell_back_squat", 3, reps=(4, 6), rest=20)
+    throw = rx("medicine_ball_chest_pass", 3, reps=(5, 5), rest=90)
+    late = order(squat, throw)
+    assert len(late) == 1
+    assert "medicine_ball_chest_pass (power/speed) comes after heavy barbell_back_squat" in late[0]
+    # The throw listed first is done fresh in the listed order: no order finding.
+    first = rx("medicine_ball_chest_pass", 3, reps=(5, 5), rest=20)
+    assert order(first, rx("barbell_back_squat", 3, reps=(4, 6), rest=90)) == []

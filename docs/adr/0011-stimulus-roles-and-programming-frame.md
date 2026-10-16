@@ -95,7 +95,9 @@ refusals; the guards stay the errors):
   any fast (`speed`, not heavy) exercise after strength or conditioning work, whatever its
   block is called, except in warm-up, conditioning and mobility blocks (`order`). Tiring work
   is known by its role or by what it is — a heavy lift, or `pace` work outside the warm-up and
-  cool-down — so a mislabeled block doesn't hide it. Without stated roles they are inferred (the leading warm-up-like blocks, heavy
+  cool-down — so a mislabeled block doesn't hide it. Exercises are checked in their listed
+order, within a block too: a throw after a heavy squat in the same superset is reported; a
+throw listed before the squat is not (the listed order is the order done). Without stated roles they are inferred (the leading warm-up-like blocks, heavy
   lifts, then the first exercise's main quality);
 - *prescription*: `speed` work in sets above 10 reps (unless also conditioning or agility) or
   with less than 45 s rest before its next set — its rest in a single block; in a superset

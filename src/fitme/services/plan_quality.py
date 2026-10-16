@@ -388,29 +388,35 @@ def _role_findings(workout: Workout, ctx: ReviewContext) -> list[GuardVerdict]:
                             f"{', '.join(q.value for q in exercise.qualities)})",
                         )
                     )
-        fast = [exercise.id for item, exercise in exercises if _is_speed(item, exercise)]
-        if fast and tiring is not None and role not in _NOT_SPEED_ROLES:
+        # Exercise by exercise, in the listed order (a superset's too): fast work after
+        # tiring work — earlier in this block or before it — is reported. Tiring work is known
+        # by its role or, whatever the block is called, by what it is: a heavy lift, or
+        # conditioning-paced work outside the warm-up and cool-down.
+        late: list[str] = []
+        late_after = tiring
+        for item, exercise in exercises:
+            fast = _is_speed(item, exercise)
+            if fast and tiring is not None and role not in _NOT_SPEED_ROLES:
+                if not late:
+                    late_after = tiring
+                late.append(exercise.id)
+            if tiring is not None:
+                continue
+            if is_heavy(item, exercise):
+                tiring = f"heavy {exercise.id}"
+            elif (
+                intensity_mode(exercise, item.measure) == IntensityMode.PACE
+                and role not in (BlockRole.WARM_UP, BlockRole.MOBILITY)
+            ) or (role in (BlockRole.STRENGTH, BlockRole.CONDITIONING) and not fast):
+                tiring = exercise.id
+        if late:
             findings.append(
                 _finding(
                     "order",
-                    f"workout {key}: {', '.join(fast)} (power/speed) comes after {tiring}; put "
-                    "fast work before strength and conditioning work, while fresh",
+                    f"workout {key}: {', '.join(late)} (power/speed) comes after {late_after}; "
+                    "put fast work before strength and conditioning work, while fresh",
                 )
             )
-        # Tiring work by its role or, whatever the block is called, by what it is: a heavy
-        # lift, or conditioning-paced work outside the warm-up and cool-down.
-        if tiring is None:
-            heavy = [e for i, e in exercises if is_heavy(i, e)]
-            paced = [
-                e
-                for i, e in exercises
-                if intensity_mode(e, i.measure) == IntensityMode.PACE
-                and role not in (BlockRole.WARM_UP, BlockRole.MOBILITY)
-            ]
-            if heavy:
-                tiring = f"heavy {heavy[0].id}"
-            elif paced or (role in (BlockRole.STRENGTH, BlockRole.CONDITIONING) and exercises):
-                tiring = (paced or [exercises[0][1]])[0].id
     return findings
 
 
