@@ -89,7 +89,7 @@ from fitme.domain.enums import (
 )
 from fitme.domain.guard_types import GuardVerdict
 from fitme.domain.models import Load, Plan, Refusal, Workout
-from fitme.domain.results import ChangeReps, PlanChange, SwapExercise
+from fitme.domain.results import ChangeReps, ChangeSets, PlanChange, SwapExercise
 from fitme.guards.plan import prescription_verdicts
 from fitme.i18n import wording
 from fitme.llm.context import render_user_prompt
@@ -126,6 +126,7 @@ _STRICT = ConfigDict(extra="forbid", allow_inf_nan=False)
 
 class NextKind(StrEnum):
     INCREASE = "increase"
+    INCREASE_DID_MORE = "increase_did_more"  # ADR 0014: earned by doing more than prescribed
     HOLD = "hold"
     HOLD_BLOCKED = "hold_blocked"  # a guard (cap, ceiling) held an earned increase
     HOLD_CHECKIN = "hold_checkin"  # only a check-in holds it: `if_fine` says what it would be
@@ -142,6 +143,7 @@ class ExerciseSummary(BaseModel):
     planned_sets: int
     done_sets: int
     skipped_sets: int
+    extra_sets: int = 0  # ADR 0012: sets done beyond the prescription (part of `done_sets`)
     # `None` for a timed or distance prescription (ADR 0009), whose target and results are
     # the seconds/meters fields; summaries stored before ADR 0009 are all reps.
     planned_reps_min: int | None
@@ -265,6 +267,7 @@ def _summaries(
                     planned_sets=item.sets,
                     done_sets=len(done),
                     skipped_sets=sum(1 for row in item_rows if row.skipped),
+                    extra_sets=sum(1 for row in done if row.extra),
                     planned_reps_min=item.reps_min,
                     planned_reps_max=item.reps_max,
                     planned_load=item.load,
@@ -316,6 +319,8 @@ def _next_kind(decision: LoadDecision) -> tuple[NextKind, Load | None]:
         )
     ):
         return NextKind.HOLD_CHECKIN, None  # `if_fine` is filled by the caller (needs the step)
+    if kind == NextKind.INCREASE and decision.did_more:
+        return NextKind.INCREASE_DID_MORE, None
     return kind, None
 
 
@@ -367,6 +372,7 @@ def _recap_input(
                 **_recap_target(item),
                 "planned_load": item.planned_load.model_dump(mode="json"),
                 "done_sets": item.done_sets,
+                "extra_sets": item.extra_sets,
                 "skipped_sets": item.skipped_sets,
                 "actual_kg": item.actual_kg,
                 "new_max_kg": item.new_max_kg,
@@ -475,6 +481,21 @@ def _filter_suggestions(
             )
             if candidate.measure not in target.measures:
                 measures.set_default_target(candidate, target)  # ADR 0009
+        elif isinstance(change, ChangeSets):
+            source = next((p for p in prescriptions if p.exercise_id == change.exercise_id), None)
+            if source is None or source.sets == change.sets:
+                fired.append(
+                    GuardVerdict(
+                        rule=_SUGGESTION_RULE,
+                        ok=False,
+                        detail=(
+                            f"set change for {change.exercise_id} dropped: not in the plan or "
+                            "no change"
+                        ),
+                    )
+                )
+                continue
+            candidate = source.model_copy(update={"sets": change.sets})
         else:
             source = next((p for p in prescriptions if p.exercise_id == change.exercise_id), None)
             if source is None:
@@ -737,6 +758,14 @@ def _apply_change(plan: Plan, change: PlanChange, inputs: planning.Inputs) -> bo
                         continue
                     prescription.reps_min = change.reps_min
                     prescription.reps_max = change.reps_max
+                    changed = True
+                elif isinstance(change, ChangeSets):
+                    if (
+                        prescription.exercise_id != change.exercise_id
+                        or prescription.sets == change.sets
+                    ):
+                        continue
+                    prescription.sets = change.sets
                     changed = True
     return changed
 

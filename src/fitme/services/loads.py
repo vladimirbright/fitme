@@ -87,6 +87,9 @@ class LoadDecision:
     guards_fired: list[GuardVerdict] = field(default_factory=list)
     kind: LoadKind = LoadKind.HOLD
     blocked_by: BlockedBy | None = None
+    # ADR 0014: the increase (or the increase a guard held) was earned by doing more than
+    # prescribed, not by topping the rep range.
+    did_more: bool = False
 
 
 def _is_valid_kg(value: float) -> bool:
@@ -284,6 +287,7 @@ def next_load(
                 reason=f"{earned}; increment applied",
                 guards_fired=fired,
                 kind=LoadKind.INCREASE,
+                did_more=not last.hit_reps_max,
             )
         first_failure = next(verdict for verdict in fired if not verdict.ok)
         return _within_ceiling(

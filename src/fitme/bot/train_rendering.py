@@ -24,7 +24,14 @@ from fitme.db.records import CheckinRecord, PlanRecord
 from fitme.domain.catalog import Catalog, Exercise
 from fitme.domain.enums import BlockRole, CheckinAnswer, Measure
 from fitme.domain.models import Block, Load, Prescription, Workout
-from fitme.domain.results import ChangeReps, ParsedResults, PlanChange, SetResult, SwapExercise
+from fitme.domain.results import (
+    ChangeReps,
+    ChangeSets,
+    ParsedResults,
+    PlanChange,
+    SetResult,
+    SwapExercise,
+)
 from fitme.i18n import t
 from fitme.services import prescribing
 from fitme.services.prescribing import load_label
@@ -461,6 +468,7 @@ def recap_text(view: RecapView, *, catalog: Catalog, lang: str) -> str:
         nxt = _load(catalog, step.exercise_id, step.next, lang)
         key = {
             NextKind.INCREASE: "recap.next_increase",
+            NextKind.INCREASE_DID_MORE: "recap.next_increase_did_more",
             NextKind.HOLD: "recap.next_hold",
             NextKind.HOLD_BLOCKED: "recap.next_hold_blocked",
             NextKind.HOLD_CHECKIN: "recap.next_hold_checkin",
@@ -505,6 +513,13 @@ def plan_change_text(change: PlanChange, *, catalog: Catalog, lang: str) -> str:
             lang,
             from_name=_name(catalog, change.from_exercise_id, lang),
             to_name=_name(catalog, change.to_exercise_id, lang),
+        )
+    if isinstance(change, ChangeSets):
+        return t(
+            "recap.suggestion_sets",
+            lang,
+            name=_name(catalog, change.exercise_id, lang),
+            sets=change.sets,
         )
     assert isinstance(change, ChangeReps)
     return t(
