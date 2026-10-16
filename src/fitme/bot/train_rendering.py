@@ -302,50 +302,48 @@ def block_markup(view: BlockView, *, catalog: Catalog, lang: str) -> InlineKeybo
 
 
 def logged_item_text(item: LoggedItem, lang: str) -> str:
-    """One exercise the assistant logged (ADR 0005): the sets as written."""
+    """One exercise the assistant logged (ADR 0005), as written, on one line: "✓ Squat:
+    4 × 9 @ 40 kg", "✓ Squat: 9, 9, 8, — @ 40 kg", "✓ Plank: 3 × 1 min"."""
     name = exercise_name(item.exercise, item.exercise_id, lang)
-    title = t("train.parsed_title", lang, name=name)
-    return "\n".join([title, *_set_lines(item.sets, item.exercise, lang)])
+    return t("train.logged_line", lang, name=name, sets=_sets_text(item.sets, item.exercise, lang))
 
 
-def _set_lines(sets: Sequence[SetResult], exercise: Exercise | None, lang: str) -> list[str]:
-    lines: list[str] = []
-    for result in sorted(sets, key=lambda item: item.set_index):
+def _sets_text(sets: Sequence[SetResult], exercise: Exercise | None, lang: str) -> str:
+    ordered = sorted(sets, key=lambda result: result.set_index)
+    if all(result.skipped for result in ordered):
+        return t("train.logged_all_skipped", lang)
+    loads = {result.load_kg for result in ordered if not result.skipped}
+    shared_load = next(iter(loads)) if len(loads) == 1 else None
+
+    def amount(result: SetResult) -> str:
         if result.skipped:
-            lines.append(t("train.parsed_set_skipped", lang, index=result.set_index))
+            return t("train.logged_skipped", lang)
+        # ADR 0009: a timed or distance set reports seconds or meters, not reps.
+        if result.seconds is not None:
+            text = rest_text(result.seconds, lang)
+        elif result.meters is not None:
+            text = t("duration.meters", lang, m=result.meters)
         else:
-            # ADR 0009: a timed or distance set reports seconds or meters, not reps.
-            target = (
-                rest_text(result.seconds, lang)
-                if result.seconds is not None
-                else t("duration.meters", lang, m=result.meters)
-                if result.meters is not None
-                else None
-            )
-            load = None
-            if result.load_kg is not None:
-                kg = f"{result.load_kg:g}"
-                load = (
-                    t("load.per_implement", lang, kg=kg)
-                    if exercise is not None and exercise.load_unit == "per_implement"
-                    else t("plan.load_kg", lang, kg=kg)
-                )
-            index = result.set_index
-            if target is not None:
-                lines.append(
-                    t("train.parsed_set_target", lang, index=index, target=target)
-                    if load is None
-                    else t(
-                        "train.parsed_set_target_line", lang, index=index, target=target, load=load
-                    )
-                )
-            elif load is None:
-                lines.append(t("train.parsed_set_no_load", lang, index=index, reps=result.reps))
-            else:
-                lines.append(
-                    t("train.parsed_set_line", lang, index=index, reps=result.reps, load=load)
-                )
-    return lines
+            text = str(result.reps)
+        if shared_load is None and result.load_kg is not None:
+            text = f"{text} @ {_kg_text(result.load_kg, exercise, lang)}"
+        return text
+
+    amounts = [amount(result) for result in ordered]
+    text = (
+        f"{len(amounts)} × {amounts[0]}"
+        if len(amounts) > 1 and len(set(amounts)) == 1 and not ordered[0].skipped
+        else ", ".join(amounts)
+    )
+    if shared_load is not None:
+        text = f"{text} @ {_kg_text(shared_load, exercise, lang)}"
+    return text
+
+
+def _kg_text(kg: float, exercise: Exercise | None, lang: str) -> str:
+    if exercise is not None and exercise.load_unit == "per_implement":
+        return t("load.per_implement", lang, kg=f"{kg:g}")
+    return t("plan.load_kg", lang, kg=f"{kg:g}")
 
 
 # --- Recap (M8) --------------------------------------------------------------------------------

@@ -622,19 +622,17 @@ async def show_logged(
     user_id: int,
     session_id: int,
     result: training.LogItemsResult,
-    *,
-    announce: bool,
 ) -> None:
-    """`announce`: also list the sets written. Off when the assistant's own reply already
-    said what it logged."""
+    """The sets written, one compact line per exercise — always, even after the assistant's
+    own reply: it is the only place the user sees exactly what was stored (ADR 0013)."""
     lang = await _lang(db, user_id)
     if result.status != training.Status.OK:
         await message.answer(t("train.stale", lang))
         return
-    if announce:
-        lines = [rendering.logged_item_text(item, lang) for item in result.logged]
-        lines.append(t("train.block_logged", lang))
-        await message.answer("\n\n".join(lines))
+    if result.logged:
+        await message.answer(
+            "\n".join(rendering.logged_item_text(item, lang) for item in result.logged)
+        )
     if result.advance is not None:
         await _show_advance(
             message, result.advance, lang, db=db, llm=llm, user_id=user_id, session_id=session_id

@@ -617,10 +617,11 @@ async def test_during_a_workout_as_planned_logs_the_exercise_and_the_session_rem
     state = llm.prompts()[-1]["state"]
     assert state["session"] == "training" and state["current_block"]["block"] == 1
     assert (await _logged(db, session_id))[:3] == [("barbell_back_squat", 5, False)] * 3
-    # The assistant's reply said what it logged: no second "Results for ..." message.
-    texts = "\n".join(_texts(session))
-    assert t("train.block_logged", lang) not in texts
-    assert t("train.parsed_title", lang, name="§").split("§")[0] not in texts
+    # ADR 0013: the sets written are always listed, one compact line, after the reply.
+    texts = _texts(session)
+    reply = next(i for i, text in enumerate(texts) if text.startswith("Записал."))
+    assert texts[reply + 1] == "✓ Barbell back squat: 3 × 5 @ 62.5 kg"
+    assert t("train.block_logged", lang) not in "\n".join(texts)
     assert "Push-up" in _last_text(session)  # the next block
 
     llm.steps = [Call("skip_exercise", {"exercise_id": "pushup"}), say("Пропустил.")]
@@ -683,7 +684,6 @@ async def test_the_sets_written_are_listed_when_the_reply_is_dropped(
     """With no reply of the assistant's own (here: removed by the wording check), the bot
     still says what was written."""
     seeded = await _ready(dispatcher, bot, db)
-    lang = await _lang(db, seeded.user_id)
     await _start_workout(db, settings, seeded)
     llm.steps = [
         Call("log_exercise_as_planned", {"exercise_id": "barbell_back_squat"}),
@@ -692,8 +692,7 @@ async def test_the_sets_written_are_listed_when_the_reply_is_dropped(
     await _send(dispatcher, bot, "по плану")
     texts = "\n".join(_texts(session))
     assert "coach" not in texts
-    assert t("train.parsed_title", lang, name="§").split("§")[0] in texts
-    assert t("train.block_logged", lang) in texts
+    assert "✓ Barbell back squat: 3 × 5 @ 62.5 kg" in texts
 
 
 async def test_an_implausible_or_incomplete_report_is_refused_by_the_tool(

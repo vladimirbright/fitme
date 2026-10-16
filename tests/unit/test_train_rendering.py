@@ -5,11 +5,12 @@ from __future__ import annotations
 
 from urllib.parse import parse_qs, urlparse
 
-from fitme.bot.train_rendering import block_markup
+from fitme.bot.train_rendering import block_markup, logged_item_text
 from fitme.catalog import load_catalog
 from fitme.domain.models import Block, Load, Prescription
+from fitme.domain.results import SetResult
 from fitme.i18n import t
-from fitme.services.training import BlockView
+from fitme.services.training import BlockView, LoggedItem
 
 
 def _item(exercise_id: str, load: Load) -> Prescription:
@@ -79,3 +80,28 @@ def test_the_catalog_search_term_replaces_a_descriptive_name() -> None:
 def test_every_search_term_is_non_blank() -> None:
     for exercise in load_catalog().exercise:
         assert all(term.strip() for term in exercise.search.values()), exercise.id
+
+
+def test_logged_sets_are_one_compact_line_per_exercise() -> None:
+    """ADR 0013: what the assistant stored, always shown, one line each."""
+    catalog = load_catalog()
+
+    def line(exercise_id: str, *sets: SetResult, lang: str = "ru") -> str:
+        return logged_item_text(
+            LoggedItem(exercise_id, catalog.by_id(exercise_id), tuple(sets)), lang
+        )
+
+    squat = "barbell_back_squat"
+    same = [SetResult(set_index=i, reps=9, load_kg=40.0) for i in (1, 2, 3, 4)]
+    assert line(squat, *same, lang="en") == "✓ Barbell back squat: 4 × 9 @ 40 kg"
+    mixed = [*same[:2], SetResult(set_index=3, reps=8, load_kg=40.0)]
+    skipped = SetResult(set_index=4, skipped=True)
+    assert line(squat, *mixed, skipped, lang="en") == "✓ Barbell back squat: 9, 9, 8, — @ 40 kg"
+    heavier = [same[0], SetResult(set_index=2, reps=8, load_kg=42.5)]
+    assert line(squat, *heavier, lang="en") == "✓ Barbell back squat: 9 @ 40 kg, 8 @ 42.5 kg"
+    none = [SetResult(set_index=i, skipped=True) for i in (1, 2)]
+    assert line(squat, *none).endswith(": пропущено")
+    plank = [SetResult(set_index=i, seconds=120) for i in (1, 2, 3)]
+    assert line("plank", *plank, lang="en") == "✓ Plank: 3 × 2 min"
+    pair = [SetResult(set_index=1, reps=10, load_kg=12.5)]
+    assert "12.5" in line("dumbbell_bench_press", *pair, lang="en")
