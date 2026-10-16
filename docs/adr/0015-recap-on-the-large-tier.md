@@ -17,8 +17,9 @@ three-set prescription, not only to a heavier one.
   without escalation; a provider failure still shows the deterministic recap alone.
 - New `PlanChange`: **`change_sets`** (`exercise_id`, `sets` 1..10). Like the others it
   carries no load. At recap time it is dropped unless the exercise is in the plan, the
-  count actually changes and the changed prescription passes
-  `guards.plan.prescription_verdicts`; on **Apply** the whole plan is judged by
+  count actually changes, it follows today's results (more sets only up to the most done of
+  that exercise in one prescription today and at most 2 above the plan; at most 2 fewer)
+  and the changed prescription passes `guards.plan.prescription_verdicts`; on **Apply** the whole plan is judged by
   `planning.judge` as before and saved as an `origin=progression` version.
 - The recap input gains `extra_sets` per exercise (sets done beyond the prescription).
   Prompt `recap.v2`: doing more than asked (extra sets, reps above the range on a non-kg

@@ -114,6 +114,7 @@ _WORDING_RULE = "wording.forbidden_term"
 _LENGTH_RULE = "recap.text_length"
 _FIGURE_RULE = "recap.unknown_figure"
 _SUGGESTION_RULE = "recap.suggestion_dropped"
+_MAX_SET_CHANGE = 2  # ADR 0015: a set-count suggestion moves at most this many sets
 # A kg figure in the model's text: "42.5 kg", "42,5kg", "40 кг".
 _KG_FIGURE_RE = re.compile(r"(\d+(?:[.,]\d+)?)\s*(?:kg|кг)\b", re.IGNORECASE)
 _RECAP_TEXT_MAX_CHARS = 700  # display cap: a few sentences, never a wall of text
@@ -442,8 +443,32 @@ def _check_text(text: str, known_kg: set[float]) -> tuple[str | None, list[Guard
     return text, []
 
 
+def _set_change_problem(
+    change: ChangeSets, planned: int, summaries: Sequence[ExerciseSummary]
+) -> str | None:
+    """ADR 0015: a set count follows what was done today. More sets only up to the most the
+    user did of this exercise in one prescription today, and at most
+    `_MAX_SET_CHANGE` more than planned; fewer at most `_MAX_SET_CHANGE` fewer."""
+    if change.sets < planned:
+        if planned - change.sets > _MAX_SET_CHANGE:
+            return f"more than {_MAX_SET_CHANGE} sets fewer than the {planned} planned"
+        return None
+    done = max(
+        (item.done_sets for item in summaries if item.exercise_id == change.exercise_id),
+        default=0,
+    )
+    if change.sets > done:
+        return f"{change.sets} sets, but {done} were done today"
+    if change.sets - planned > _MAX_SET_CHANGE:
+        return f"more than {_MAX_SET_CHANGE} sets above the {planned} planned"
+    return None
+
+
 def _filter_suggestions(
-    suggestions: Sequence[PlanChange], plan: Plan, inputs: planning.Inputs
+    suggestions: Sequence[PlanChange],
+    plan: Plan,
+    inputs: planning.Inputs,
+    summaries: Sequence[ExerciseSummary],
 ) -> tuple[list[PlanChange], list[GuardVerdict]]:
     """Keep only suggestions that can pass the guards: a swap's target must be an allowed
     prescription (`guards.plan.prescription_verdicts` at the engine's load), a rep change
@@ -492,6 +517,16 @@ def _filter_suggestions(
                             f"set change for {change.exercise_id} dropped: not in the plan or "
                             "no change"
                         ),
+                    )
+                )
+                continue
+            problem = _set_change_problem(change, source.sets, summaries)
+            if problem is not None:
+                fired.append(
+                    GuardVerdict(
+                        rule=_SUGGESTION_RULE,
+                        ok=False,
+                        detail=f"set change for {change.exercise_id} dropped: {problem}",
                     )
                 )
                 continue
@@ -604,7 +639,9 @@ async def build_recap(
         )
     else:
         text, text_verdicts = _check_text(output.text, _known_kg(summaries, preview))
-        suggestions, suggestion_verdicts = _filter_suggestions(output.suggestions, ctx.plan, inputs)
+        suggestions, suggestion_verdicts = _filter_suggestions(
+            output.suggestions, ctx.plan, inputs, summaries
+        )
         fired.extend([*text_verdicts, *suggestion_verdicts])
         proposal = RecapProposal(
             summary=summaries, preview=preview, recap_text=text, suggestions=suggestions
