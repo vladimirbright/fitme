@@ -455,8 +455,17 @@ def _set_change_targets(plan: Plan, workout_key: str, exercise_id: str) -> list[
     ]
 
 
+_LOAD_GOES_UP = frozenset(
+    {NextKind.INCREASE, NextKind.INCREASE_DID_MORE, NextKind.HOLD_CHECKIN}
+)  # `HOLD_CHECKIN`: an increase waiting only on a check-in
+
+
 def _set_change_problems(
-    change: ChangeSets, plan: Plan, workout_key: str, summaries: Sequence[ExerciseSummary]
+    change: ChangeSets,
+    plan: Plan,
+    workout_key: str,
+    summaries: Sequence[ExerciseSummary],
+    preview: Sequence[NextLoad],
 ) -> tuple[list[Prescription], list[str]]:
     """The prescriptions `change` would change in `plan`, and why it can't (empty: it can,
     as far as today's results go; the guards still judge it)."""
@@ -475,6 +484,11 @@ def _set_change_problems(
         # Each changed prescription must rest on its own results; with the exercise twice in
         # the workout that pairing is ambiguous.
         problems.append("it appears more than once in the workout")
+    if any(item.sets < change.sets for item in targets) and any(
+        step.exercise_id == change.exercise_id and step.kind in _LOAD_GOES_UP for step in preview
+    ):
+        # ADR 0015: one progression at a time — the engine already raises this load.
+        problems.append("the engine already raises its load; not more sets on top")
     if _in_a_superset(plan, workout_key, change.exercise_id):
         # A superset's exercises share their rounds (plan_quality checks equal set counts);
         # one exercise's count can't change on its own.
@@ -521,6 +535,7 @@ def _filter_suggestions(
     inputs: planning.Inputs,
     summaries: Sequence[ExerciseSummary],
     workout_key: str,
+    preview: Sequence[NextLoad],
 ) -> tuple[list[PlanChange], list[GuardVerdict]]:
     """Keep only suggestions that can pass the guards: a swap's target must be an allowed
     prescription (`guards.plan.prescription_verdicts` at the engine's load), a rep change
@@ -559,7 +574,7 @@ def _filter_suggestions(
             if candidate.measure not in target.measures:
                 measures.set_default_target(candidate, target)  # ADR 0009
         elif isinstance(change, ChangeSets):
-            targets, problems = _set_change_problems(change, plan, workout_key, summaries)
+            targets, problems = _set_change_problems(change, plan, workout_key, summaries, preview)
             problems += [
                 verdict.detail
                 for item in targets
@@ -691,7 +706,7 @@ async def build_recap(
     else:
         text, text_verdicts = _check_text(output.text, _known_kg(summaries, preview))
         suggestions, suggestion_verdicts = _filter_suggestions(
-            output.suggestions, ctx.plan, inputs, summaries, ctx.session.workout_key
+            output.suggestions, ctx.plan, inputs, summaries, ctx.session.workout_key, preview
         )
         fired.extend([*text_verdicts, *suggestion_verdicts])
         proposal = RecapProposal(
@@ -914,7 +929,7 @@ async def apply_suggestion(
             # ADR 0015: re-checked on the plan it is applied to — it may have been edited
             # since the recap.
             _targets, problems = _set_change_problems(
-                change, base, ctx.session.workout_key, proposal.summary
+                change, base, ctx.session.workout_key, proposal.summary, proposal.preview
             )
             if problems:
                 return ApplyResult(status=Status.STALE)

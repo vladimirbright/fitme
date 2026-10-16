@@ -321,8 +321,22 @@ def test_a_set_count_change_is_refused_for_an_exercise_done_twice() -> None:
     squat = plan.workouts[0].blocks[0]
     plan.workouts[0].blocks.append(squat.model_copy(deep=True))
     change = ChangeSets(exercise_id=_SQUAT, sets=4)
-    _targets, problems = recap._set_change_problems(change, plan, "A", [])
+    _targets, problems = recap._set_change_problems(change, plan, "A", [], [])
     assert any("more than once" in problem for problem in problems)
+
+
+async def test_no_more_sets_when_the_engine_already_raises_the_load(
+    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
+) -> None:
+    """ADR 0015: one progression at a time — four sets of three at 40 kg earn 42.5 kg, so a
+    model's "4 sets" on top is dropped."""
+    user_id, _, version_id = await _ready(dispatcher, bot, db)
+    await _seed_completed_session(db, user_id, version_id, loads={_SQUAT: 40.0}, reps=9)
+    llm.recap_responses.append(Recap(text="", suggestions=[ChangeSets(exercise_id=_SQUAT, sets=4)]))
+    session_id = await _four_squat_sets_then_finish(dispatcher, bot, session, db, user_id)
+    assert not [m for m in _sent(session) if (m.text or "").startswith("Suggested change")]
+    _, proposal = await _progression(db, user_id, session_id)
+    assert proposal.suggestions == []
 
 
 async def test_a_set_count_suggestion_is_rechecked_on_a_plan_edited_since(
