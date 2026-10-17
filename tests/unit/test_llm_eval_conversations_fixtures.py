@@ -75,6 +75,11 @@ def test_the_schema_rejects_bad_fixtures(tmp_path: Path) -> None:
         ConversationFixture.model_validate(raw)
 
     raw = _raw()
+    raw["turns"] = [{"user": "x", "expect": {"cardio_minutes": [70, 50]}}]
+    with pytest.raises(ValidationError, match="low bound is above the high bound"):
+        ConversationFixture.model_validate(raw)
+
+    raw = _raw()
     raw["legacy"] = {"request": {"user": "x", "expect_as": 3}}
     with pytest.raises(ValidationError, match="expect_as 3"):
         ConversationFixture.model_validate(raw)

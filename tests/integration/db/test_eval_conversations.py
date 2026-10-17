@@ -19,21 +19,30 @@ from pydantic_ai.models.function import AgentInfo, FunctionModel
 from fitme.catalog import load_catalog
 from fitme.cli import llm_eval_conversations
 from fitme.config.settings import Settings
+from fitme.db.connection import open_database
+from fitme.db.migrate import migrate
 from fitme.domain.assistant import AssistantTurn
 from fitme.domain.enums import Location, Measure
+from fitme.domain.guard_types import GuardVerdict
 from fitme.domain.models import Block, Load, Plan, Prescription, ScheduledDay, Workout
 from fitme.llm.agents import plan_generate_agent, plan_revise_agent, planner_agent
 from fitme.llm.eval_conversations import (
     CLOSING_PARAGRAPH,
+    LEGACY_NO_LOCATION,
+    LEGEND,
+    ConversationFixture,
     ConversationResult,
     Expect,
     Observed,
     evaluate,
     load_conversation_fixtures,
     render_report,
+    run_conversation,
     run_conversations,
+    with_model_override,
     write_report,
 )
+from fitme.llm.models import AGENT_DEFAULT_TIER, TIERS, model_for, resolve_tier
 from fitme.services.llm_runtime import LlmRuntime
 
 _FIXTURES = Path(__file__).parents[2] / "fixtures" / "llm_eval" / "conversations"
@@ -213,6 +222,7 @@ def _script() -> Script:
                 script.plans[text] = _run(location=None)
         elif fixture.name == "d_hour_run":
             script.planner[texts[0]] = [_say("Steady, or with walking breaks?")]
+            script.planner[texts[1]] = [_stage(_run(location=None, jog=2700)), _say("Staged.")]
             script.plans[texts[0]] = _run(location=None, jog=2700)
         elif fixture.name.startswith("e_"):
             script.planner.update(
@@ -286,43 +296,74 @@ async def test_every_fixture_runs_in_both_modes_and_is_judged(
         assert _failed(planner) == [], (name, _failed(planner))
         assert all(turn.error is None for turn in planner.turns)
 
-    # A question is a pass in the planner and n/a in the legacy pipeline, which cannot ask.
+    # A question passes in the planner but is only reported: the any_of it can satisfy is
+    # soft, so the scenario's weight is on the next turn's plan checks.
     first = by_key[("e_bjj_twice", "planner")].turns[0].checks
-    assert [(c.name, c.outcome) for c in first] == [("any_of", "pass")]
+    assert [(c.name, c.outcome, c.soft) for c in first] == [("any_of", "pass", True)]
     assert "alternative 1 (question)" in first[0].detail
+    asked = by_key[("d_hour_run", "planner")].turns
+    assert [(c.name, c.soft) for c in asked[0].checks] == [("any_of", True)]
+    assert {c.name for c in asked[1].checks if not c.soft} == {
+        "draft",
+        "exclude_kinds",
+        "include_ids_any",
+    }
     hour = by_key[("d_hour_run", "legacy")].turns[0]
     assert hour.plan is not None and hour.staged
     assert any(c.name == "cardio_minutes" and c.soft for c in hour.checks)
 
-    # The legacy pipeline: a run has no plan location; F/G passes; an activity item is
-    # refused, so the revision has no draft (recorded, not raised) and nothing is saved.
+    # The legacy pipeline: a plan location is n/a (it cannot carry one) and the outdoor
+    # check passes; F/G passes; an activity item is refused, so the revision has no draft
+    # (recorded, not raised) and nothing is saved.
     legacy_run = by_key[("a_easy_run_saturdays", "legacy")]
-    assert {f.split(":")[0].split(" ", 2)[2] for f in _failed(legacy_run)} == {"location"}
+    assert _failed(legacy_run) == []
+    location = [c for t in legacy_run.turns for c in t.checks if c.name == "location"]
+    assert location and {(c.outcome, c.detail) for c in location} == {("n/a", LEGACY_NO_LOCATION)}
+    outdoors = [c for t in legacy_run.turns for c in t.checks if c.name == "outdoor_allowed"]
+    assert outdoors and {c.outcome for c in outdoors} == {"pass"}
     assert _failed(by_key[("f_g_strength", "legacy")]) == []
     bjj = by_key[("e_bjj_twice_en", "legacy")]
     assert "refusal: no_safe_plan" in bjj.turns[0].events
     assert bjj.turns[1].error is not None and "no current draft" in bjj.turns[1].error
     assert bjj.turns[2].reply == "(no draft to save)"
     assert any("saved" in failure for failure in _failed(bjj))
+    activity = [c for t in bjj.turns for c in t.checks if c.name == "activity_items_min"]
+    assert activity and {c.outcome for c in activity} == {"n/a"}
+
+    # Each mode runs only its own agents.
+    for result in results:
+        purposes = {p for turn in result.turns for p in turn.purposes}
+        if result.mode == "planner":
+            assert purposes == {"planner"}, result.scenario
+        else:
+            assert purposes <= {"plan_generate", "plan_revise"} and purposes, result.scenario
+    assert {p for t in by_key[("f_g_strength", "legacy")].turns for p in t.purposes} == {
+        "plan_generate",
+        "plan_revise",
+    }
 
     # Saved plans are what was staged; the swap kept every other item.
     strength = by_key[("f_g_strength", "planner")]
     swap = {c.name: c for c in strength.turns[2].checks}
-    assert (
-        swap["single_change"].outcome == "pass"
-        and "1 item(s) differ" in swap["single_change"].detail
+    assert swap["single_change"].outcome == "pass"
+    assert swap["single_change"].detail == "out: barbell_bench_press; in: dumbbell_bench_press"
+    assert swap["swap_load"].detail == (
+        "dumbbell_bench_press: calibration (as staged, before the guards)"
     )
-    assert swap["swap_load"].detail == "dumbbell_bench_press: calibration"
+    assert swap["history_loads"].outcome == "pass"
     assert strength.turns[3].plan is not None
 
 
 async def test_the_report_has_the_tables_the_transcripts_and_the_closing_words(
     results: list[ConversationResult], tmp_path: Path
 ) -> None:
-    path = write_report(results, tmp_path / "reports", now=datetime(2026, 10, 17, 9, 5))
-    assert path == tmp_path / "reports" / "llm_first_eval_2026-10-17_0905.md"
+    when = datetime(2026, 10, 17, 9, 5, 7)
+    path = write_report(results, tmp_path / "reports", now=when)
+    assert path == tmp_path / "reports" / "llm_first_eval_2026-10-17_090507.md"
     report = path.read_text(encoding="utf-8")
-    assert report == render_report(results, title_time=datetime(2026, 10, 17, 9, 5))
+    assert report == render_report(results, title_time=when)
+    assert LEGEND in report and "a planner run with N tool round-trips counts once" in report
+    assert "| failed calls |" in report
     assert "| scenario | mode | checks |" in report
     assert "## f_g_strength" in report and "| | planner | legacy |" in report
     assert "### planner" in report and "### legacy" in report
@@ -330,7 +371,7 @@ async def test_the_report_has_the_tables_the_transcripts_and_the_closing_words(
     assert "Sat A: Easy jog (easy_jog), 1×25 min, bodyweight" in report
     assert "Mon A: BJJ class (activity:bjj_class), 1×90 min, bodyweight" in report
     assert "Mon A: Barbell back squat" in report
-    assert "pass: any_of" in report and "fail: location" in report
+    assert "pass: any_of" in report and f"n/a: location — {LEGACY_NO_LOCATION}" in report
     assert report.rstrip().endswith(CLOSING_PARAGRAPH)
 
 
@@ -372,6 +413,58 @@ def test_a_barbell_item_fails_the_equipment_and_kind_checks() -> None:
     }
 
 
+def test_load_checks_read_the_plan_as_staged_or_fail_on_a_legacy_load_guard() -> None:
+    staged = _strength(_reps("dumbbell_bench_press", Load(kind="kg", kg=60)))
+    judged = _strength(_DUMBBELL_BENCH)  # the guards replaced the 60 kg with calibration
+    swap = {"swap_load": {"from": "barbell_bench_press", "to": "dumbbell_bench_press"}}
+    before = _strength(_BARBELL_BENCH)
+    assert _outcomes(swap, _seen(judged, previous=before)) == {"swap_load": "pass"}
+    assert _outcomes(swap, _seen(judged, previous=before, requested=staged)) == {
+        "swap_load": "fail"
+    }
+    assert _outcomes({"no_kg_loads": True}, _seen(_bjj(), requested=staged)) == {
+        "no_kg_loads": "fail"
+    }
+    no_history = _strength(_reps("barbell_bench_press", Load(kind="calibration")))
+    assert _outcomes({"history_loads": True}, _seen(before)) == {"history_loads": "pass"}
+    assert _outcomes({"history_loads": True}, _seen(before, requested=no_history)) == {
+        "history_loads": "fail"
+    }
+    # Legacy: only the judged plan exists, so a load guard on the exercise fails the check.
+    substituted = GuardVerdict(
+        rule="loads.substituted",
+        ok=True,
+        detail="barbell_back_squat: proposed 200 kg rejected; load engine value 80 kg used",
+    )
+    legacy = _seen(before, mode="legacy", guards=[substituted])
+    checks = evaluate(
+        Expect.model_validate({"compound_loads": ["kg", "calibration"], "history_loads": True}),
+        legacy,
+        load_catalog(),
+    )
+    assert [(c.name, c.outcome) for c in checks] == [
+        ("compound_loads", "fail"),
+        ("history_loads", "pass"),  # the bench (the only history id here) had no guard
+    ]
+    assert "loads.substituted on barbell_back_squat" in checks[0].detail
+    other = GuardVerdict(rule="plan.time_budget", ok=False, detail="barbell_back_squat: long")
+    assert _outcomes(
+        {"compound_loads": ["kg", "calibration"]}, _seen(before, mode="legacy", guards=[other])
+    ) == {"compound_loads": "pass"}
+
+
+def test_legacy_cannot_represent_a_location_or_an_activity() -> None:
+    legacy = _seen(_run(location=None), mode="legacy")
+    outcomes = _outcomes(
+        {"location": "outdoor", "activity_items_min": 2, "outdoor_allowed": True}, legacy
+    )
+    assert outcomes == {"location": "n/a", "activity_items_min": "n/a", "outdoor_allowed": "pass"}
+    # The profile's own location is representable, so it is still judged.
+    assert _outcomes({"location": "public_gym"}, legacy) == {"location": "pass"}
+    gym = _strength(_BARBELL_BENCH)
+    assert _outcomes({"outdoor_allowed": True}, _seen(gym)) == {"outdoor_allowed": "fail"}
+
+
 def test_single_change_counts_items_not_positions() -> None:
     before = _strength(_BARBELL_BENCH)
     one = _strength(_DUMBBELL_BENCH)
@@ -397,6 +490,26 @@ def test_single_change_counts_items_not_positions() -> None:
     assert _outcomes(expect, _seen(one)) == {"single_change": "n/a", "unchanged_except": "n/a"}
 
 
+def test_a_swap_in_every_workout_is_one_change_and_leaves_no_barbell() -> None:
+    def twice(bench: Prescription) -> Plan:
+        plan = _strength(bench)
+        plan.workouts[1].blocks.append(_single(bench.model_copy()))
+        return plan
+
+    before = twice(_BARBELL_BENCH)
+    after = twice(_DUMBBELL_BENCH)
+    expect = {
+        "single_change": True,
+        "exclude_ids": ["barbell_bench_press"],
+        "unchanged_except": ["barbell_bench_press", "dumbbell_bench_press"],
+    }
+    assert set(_outcomes(expect, _seen(after, previous=before)).values()) == {"pass"}
+    half = twice(_BARBELL_BENCH)
+    half.workouts[0].blocks[1].items[0] = _DUMBBELL_BENCH
+    outcomes = _outcomes(expect, _seen(half, previous=before))
+    assert outcomes["exclude_ids"] == "fail"  # one barbell bench is left
+
+
 def test_a_swap_may_not_carry_more_than_the_barbell_kg() -> None:
     before = _strength(_BARBELL_BENCH)
     expect = {"swap_load": {"from": "barbell_bench_press", "to": "dumbbell_bench_press"}}
@@ -404,6 +517,8 @@ def test_a_swap_may_not_carry_more_than_the_barbell_kg() -> None:
     light = _strength(_reps("dumbbell_bench_press", Load(kind="kg", kg=22)))
     assert _outcomes(expect, _seen(heavy, previous=before)) == {"swap_load": "fail"}
     assert _outcomes(expect, _seen(light, previous=before)) == {"swap_load": "pass"}
+    same = _strength(_reps("dumbbell_bench_press", Load(kind="kg", kg=60)))
+    assert _outcomes(expect, _seen(same, previous=before)) == {"swap_load": "fail"}
     # With no barbell kg in the previous plan, the seeded history is the reference.
     assert _outcomes(expect, _seen(heavy)) == {"swap_load": "fail"}
     assert _outcomes(expect, _seen(before)) == {"swap_load": "fail"}  # no dumbbell item
@@ -439,6 +554,13 @@ def test_questions_drafts_saves_and_alternatives() -> None:
         "draft": "pass",
     }
     assert _outcomes({"question": True}, _seen(None, reply="Done.")) == {"question": "fail"}
+    # A "?" anywhere in the last non-empty line counts; one only on an earlier line does not.
+    mid = _seen(None, reply="Walk, jog, walk.\nShall I put this into a plan? Or change it.\n\n")
+    assert _outcomes({"question": True}, mid) == {"question": "pass"}
+    early = _seen(None, reply="Shall I put this into a plan?\nThe jog is 25 min.")
+    assert _outcomes({"question": True}, early) == {"question": "fail"}
+    soft = evaluate(Expect.model_validate({"question": True}), asked, load_catalog())
+    assert [c.soft for c in soft] == [True]
     staged = _seen(_bjj(), reply="Staged. Save it?")
     assert _outcomes({"question": True}, staged) == {"question": "fail"}
     assert _outcomes({"question": True}, _seen(None, mode="legacy")) == {"question": "n/a"}
@@ -448,10 +570,102 @@ def test_questions_drafts_saves_and_alternatives() -> None:
 
     either = {"any_of": [{"question": True}, {"draft": True, "activity_items_min": 2}]}
     checks = evaluate(Expect.model_validate(either), staged, load_catalog())
-    assert [(c.name, c.outcome) for c in checks] == [("any_of", "pass")]
+    assert [(c.name, c.outcome, c.soft) for c in checks] == [("any_of", "pass", True)]
     assert "alternative 2" in checks[0].detail
     neither = evaluate(Expect.model_validate(either), _seen(None, reply="Ok."), load_catalog())
     assert neither[0].outcome == "fail" and "no alternative passed" in neither[0].detail
+    hard = {"any_of": [{"days": [0, 3]}, {"days": [1, 4]}]}
+    checks = evaluate(Expect.model_validate(hard), staged, load_catalog())
+    assert [(c.name, c.outcome, c.soft) for c in checks] == [("any_of", "pass", False)]
+
+
+async def test_saved_counts_only_versions_written_in_that_turn(
+    settings: Settings, tmp_path: Path
+) -> None:
+    """A seeded plan identical to the staged one does not make `saved` pass."""
+    plan = _strength(_BARBELL_BENCH)
+    fixture = ConversationFixture.model_validate(
+        {
+            "name": "seeded",
+            "profile": "experienced_public_gym",
+            "history": [{"exercise_id": "barbell_bench_press", "kg": 60, "reps": 6}],
+            "plans": [plan.model_dump(mode="json")],
+            "turns": [
+                {"user": "the same again", "expect": {"draft": True, "saved": False}},
+                {"user": "save it", "expect": {"saved": True}},
+            ],
+            "legacy": {"request": {"user": "the same again"}},
+        }
+    )
+    script = Script(
+        planner={
+            "the same again": [_stage(plan), _say("Staged.")],
+            "save it": [Call("save_draft"), _say("Saved.")],
+        }
+    )
+    result = await run_conversation(
+        fixture,
+        mode="planner",
+        llm=script.runtime(settings),
+        profiles_dir=_FIXTURES.parent,
+        work_dir=tmp_path,
+    )
+    assert result.error is None
+    outcomes = [{c.name: c.outcome for c in turn.checks} for turn in result.turns]
+    assert outcomes == [{"draft": "pass", "saved": "pass"}, {"saved": "pass"}]
+    assert result.turns[1].plan is not None
+
+
+async def test_failed_calls_are_counted_apart_and_keep_the_cost_known(tmp_path: Path) -> None:
+    from fitme.db.controllers.decisions import insert_llm_call
+    from fitme.db.controllers.users import insert_user
+    from fitme.llm.eval_conversations import TurnRecord, _new_calls, _Run
+
+    db = await open_database(tmp_path / "calls.db")
+    try:
+        await migrate(db)
+        async with db.transaction() as conn:
+            user_id = await insert_user(conn, language="en", timezone="UTC")
+            for ok, tokens, cost in ((True, 100, 0.01), (False, 0, None)):
+                await insert_llm_call(
+                    conn,
+                    decision_id=None,
+                    purpose="planner",
+                    model="m",
+                    input_tokens=tokens,
+                    output_tokens=tokens,
+                    cost_estimate_usd=cost,
+                    latency_ms=1,
+                    ok=ok,
+                )
+        run = _Run(
+            db=db,
+            llm=None,  # type: ignore[arg-type]  # not used for accounting
+            user_id=user_id,
+            lang="en",
+            mode="planner",
+            profile_location=Location.PUBLIC_GYM,
+            history_kg={},
+            catalog=load_catalog(),
+        )
+        turn = TurnRecord(index=0, action="message", user="x")
+        await _new_calls(run, turn)
+    finally:
+        await db.close()
+    assert (turn.model_calls, turn.failed_calls, turn.input_tokens) == (1, 1, 100)
+    assert turn.cost_known and turn.cost_usd == pytest.approx(0.01)
+    assert turn.purposes == ("planner", "planner")
+
+
+def test_a_model_override_resolves_every_agent_and_tier(settings: Settings) -> None:
+    overridden = with_model_override(settings, "anthropic:claude-haiku-4-5")
+    for tier in TIERS:
+        assert resolve_tier(tier, overridden) == "anthropic:claude-haiku-4-5"
+    for agent in AGENT_DEFAULT_TIER:
+        assert model_for(agent, overridden).model == "anthropic:claude-haiku-4-5"
+    assert (
+        model_for("planner", settings).model != model_for("planner", overridden).model
+    )  # the original is kept
 
 
 # --- The CLI ------------------------------------------------------------------------------------
