@@ -18,7 +18,7 @@ from fitme.db.connection import Database
 from fitme.db.controllers.profile import upsert_profile, upsert_screening_flag
 from fitme.domain.enums import AREA_FLAGS, RED_FLAGS, BlockRole, Measure, Quality
 from fitme.domain.models import Block, Load, Plan, Prescription, ScheduledDay, Workout
-from fitme.services import planning
+from fitme.services import planning, session_time
 
 _GYM = [
     "dumbbells", "barbell", "rack", "bench", "pull_up_bar", "kettlebell", "resistance_bands",
@@ -212,3 +212,83 @@ async def test_a_draft_chosen_from_an_earlier_attempt_is_still_the_one_confirm_s
     assert await planning.current_draft_id(db, user_id) == result.decision_id
     confirmed = await planning.confirm_plan(db, _settings(), user_id, result.decision_id)
     assert confirmed.status == planning.ConfirmStatus.SAVED
+
+
+def _long_plan() -> Plan:
+    """What a model might return for a 60 min session: about 75 min of work, with two
+    accessories that serve neither of the session's objectives."""
+
+    def single(role: BlockRole, item: Prescription) -> Block:
+        return Block(kind="single", role=role, items=[item])
+
+    return Plan(
+        name="Boxing support",
+        schedule=[ScheduledDay(weekday=1, workout_key="A")],
+        workouts=[
+            Workout(
+                key="A",
+                qualities=[Quality.AGILITY, Quality.CONDITIONING],
+                title="Footwork",
+                blocks=[
+                    single(
+                        BlockRole.WARM_UP,
+                        _rx("jump_rope_skipping", 2, measure="time", seconds=120, rest_seconds=30),
+                    ),
+                    single(
+                        BlockRole.POWER,
+                        _rx("stance_footwork_drill", 6, measure="time", seconds=30),
+                    ),
+                    single(BlockRole.POWER, _rx("shuttle_run", 6, measure="distance", meters=40)),
+                    single(
+                        BlockRole.STRENGTH,
+                        _rx("barbell_deadlift", 5, rir=2, rest_seconds=180),
+                    ),
+                    single(
+                        BlockRole.ACCESSORY,
+                        _rx(
+                            "dumbbell_seated_shoulder_press",
+                            4,
+                            reps_min=8,
+                            reps_max=10,
+                            rest_seconds=120,
+                        ),
+                    ),
+                    single(
+                        BlockRole.ACCESSORY,
+                        _rx("machine_lat_pulldown", 4, reps_min=8, reps_max=10, rest_seconds=120),
+                    ),
+                    single(
+                        BlockRole.CONDITIONING,
+                        _rx("battle_rope_alternating_waves", 8, measure="time", seconds=30),
+                    ),
+                ],
+            )
+        ],
+    )
+
+
+async def test_a_generated_workout_over_the_session_length_is_shortened_by_priority(
+    db: Database, user_id: int
+) -> None:
+    """ADR 0016: the app estimates the generated workout and shortens it before the review
+    and the draft; the draft the user sees is the shortened one, the change is logged, and
+    the estimate is shown as an estimate."""
+    await _seed_boxer(db, user_id)
+    llm = FakeLlm([_long_plan(), _long_plan()])
+
+    result = await planning.propose_new_plan(db, llm.runtime(), user_id)
+
+    assert result.plan is not None
+    catalog = load_catalog()
+    workout = result.plan.workouts[0]
+    assert session_time.estimate(workout, catalog).minutes <= 60 * 1.15
+    kept = [item.exercise_id for block in workout.blocks for item in block.items]
+    assert kept[:3] == ["jump_rope_skipping", "stance_footwork_drill", "shuttle_run"]
+    assert "machine_lat_pulldown" not in kept
+    budget = [v for v in result.guards_fired if v.rule == "plan.time_budget"]
+    assert budget and budget[0].ok and "removed machine_lat_pulldown" in budget[0].detail
+    payload = json.loads(llm.prompts[0])
+    assert payload["programming_brief"]["time_budget"]["session_minutes"] == 60
+    assert len(payload["programming_brief"]["session_objectives"]) == 2  # one per session
+    text = render_plan_text(result.plan, catalog=catalog, lang="en", title="Draft:")
+    assert "(estimated from the sets and rests, not measured)" in text

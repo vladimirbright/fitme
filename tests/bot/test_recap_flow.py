@@ -54,6 +54,7 @@ from fitme.db.controllers.plans import insert_plan_version
 from fitme.db.controllers.profile import upsert_screening_flag
 from fitme.db.controllers.training import finish_workout_session
 from fitme.db.selectors.decisions import (
+    get_decision,
     list_decision_outcomes,
     list_decisions_for_user,
     list_llm_calls_since,
@@ -65,6 +66,7 @@ from fitme.domain.results import ChangeReps, ChangeSets, Recap, SetResult, SwapE
 from fitme.i18n import t
 from fitme.services import planning, recap, training
 from fitme.services.decisions import PromptMeta
+from fitme.services.progression import TargetKind
 from fitme.services.training import Status
 
 _EPOCH = "1970-01-01T00:00:00.000000Z"
@@ -1028,3 +1030,67 @@ async def test_apply_swap_drops_the_old_exercises_declared_hint(
     assert swapped.load == Load(kind="calibration")
     assert swapped.declared_kg is None
     assert Plan.model_validate(versions[0].body).workouts[0].blocks[0].items[0].declared_kg == 80.0
+
+
+# --- ADR 0016: progression of work the load engine doesn't progress --------------------------
+
+
+async def test_reps_at_the_top_twice_suggest_a_higher_range_and_the_plan_keeps_its_exercises(
+    dispatcher: Dispatcher, bot: Bot, db: Database, llm: FakeLlm, settings: Settings
+) -> None:
+    """Two completed B sessions with every push-up set at the top of 8-10: the recap offers
+    10-12 itself (not the model), drops the model's set-count change for the same exercise
+    (one progression at a time), and Apply saves a progression version that changes the
+    prescription only — the same exercises, workouts and schedule."""
+    user_id, plan_id, version_id = await _ready(dispatcher, bot, db)
+    await _seed_completed_session(db, user_id, version_id, workout_key="B", loads={_PUSHUP: None})
+    session_id = await _seed_completed_session(
+        db, user_id, version_id, workout_key="B", loads={_PUSHUP: None}
+    )
+    llm.recap_responses.append(
+        Recap(text="", suggestions=[ChangeSets(exercise_id=_PUSHUP, sets=4)])
+    )
+
+    view = await recap.build_recap(db, llm.runtime(settings), user_id, session_id)
+
+    assert view is not None
+    assert view.proposal.suggestions == [ChangeReps(exercise_id=_PUSHUP, reps_min=10, reps_max=12)]
+    target = next(t for t in view.proposal.targets if t.exercise_id == _PUSHUP)
+    assert target.kind == TargetKind.MORE
+    model_input = json.loads(llm.prompts[-1])["recap"]
+    assert model_input["next_targets"][0]["kind"] == "more"
+    async with db.read() as conn:
+        decision = await get_decision(conn, view.decision_id)
+    assert decision is not None
+    assert any(
+        "change_sets for pushup dropped: its target already progresses" in v["detail"]
+        for v in decision.guards_fired
+    )
+
+    applied = await recap.apply_suggestion(db, settings, user_id, session_id, view.decision_id, 0)
+    assert applied.status == Status.OK
+    async with db.read() as conn:
+        versions = await list_plan_versions(conn, plan_id)
+    before, after = Plan.model_validate(versions[0].body), Plan.model_validate(versions[-1].body)
+    assert versions[-1].origin == "progression"
+    assert after.schedule == before.schedule
+    ids = [[i.exercise_id for b in w.blocks for i in b.items] for w in after.workouts]
+    assert ids == [[i.exercise_id for b in w.blocks for i in b.items] for w in before.workouts]
+    pushups = [
+        i for w in after.workouts for b in w.blocks for i in b.items if i.exercise_id == _PUSHUP
+    ]
+    assert all((i.reps_min, i.reps_max) == (10, 12) for i in pushups)
+
+
+async def test_one_session_at_the_top_is_not_yet_a_reason_to_change(
+    dispatcher: Dispatcher, bot: Bot, db: Database, llm: FakeLlm, settings: Settings
+) -> None:
+    user_id, _, version_id = await _ready(dispatcher, bot, db)
+    session_id = await _seed_completed_session(
+        db, user_id, version_id, workout_key="B", loads={_PUSHUP: None}
+    )
+    view = await recap.build_recap(db, llm.runtime(settings), user_id, session_id)
+    assert view is not None and view.proposal.suggestions == []
+    assert next(t for t in view.proposal.targets if t.exercise_id == _PUSHUP).kind == (
+        TargetKind.HOLD
+    )

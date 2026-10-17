@@ -39,6 +39,7 @@
   {% for workout in plan.workouts %}
   <h3>{{ t('plan.workout_title', workout_key=workout.key, title=workout.title) }}</h3>
   {% if workout.qualities %}<p class="qualities">{{ t('plan.workout_qualities', qualities=quality_names(workout.qualities)) }}</p>{% endif %}
+  {% if workout.blocks %}<p class="estimate">{{ t('plan.workout_estimate', minutes=workout_minutes(workout)) }}</p>{% endif %}
   {% for block in workout.blocks %}
   {# ADR 0011: a role heading whenever the block's role changes. #}
   {% if block.role and (loop.first or workout.blocks[loop.index0 - 1].role != block.role) %}<h4 class="block-role">{{ t('plan.block_role_heading', role=t('enum.block_role.' ~ block.role)) }}</h4>{% endif %}
@@ -47,7 +48,7 @@
     {% for item in block.items %}
     <li>
       {{ exercise_names.get(item.exercise_id, item.exercise_id) }}:
-      {{ t('plan.sets_reps', sets=item.sets, reps=target_text(item)) }}
+      {% if item.exercise_id in unilateral_ids %}{{ t('plan.sets_reps', sets=item.sets, reps=t('plan.per_side', target=target_text(item))) }}{% else %}{{ t('plan.sets_reps', sets=item.sets, reps=target_text(item)) }}{% endif %}
       @ {{ load_text(item, block.role) }}
       {%- if block.kind == 'superset' and not loop.last -%}
         , {% if item.rest_seconds > 0 %}{{ t('plan.superset_transition', rest=seconds_text(item.rest_seconds)) }}{% else %}{{ t('plan.superset_no_transition') }}{% endif %}

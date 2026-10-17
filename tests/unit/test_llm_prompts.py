@@ -16,13 +16,14 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 # The highest shipped version of each real agent prompt (older versions stay on disk: a
 # decision records which one it used).
 _REAL_PROMPT_VERSIONS = {
-    "plan_generate": 6,  # v2: guidance + existing plans; v3: profile frequency is a default;
+    "plan_generate": 7,  # v2: guidance + existing plans; v3: profile frequency is a default;
     # v4: a retrieved candidate pool with exercise_facts (ADR 0007); v5: programming (0009);
-    # v6: programming brief, block roles, intensity by stimulus (ADR 0011)
+    # v6: programming brief, block roles, intensity by stimulus (ADR 0011); v7: main
+    # objective first, time budget, weighted overlap, unilateral (ADR 0016)
     # v2 (ADR 0009): structured measures — time in seconds, distance in meters
     "plan_revise": 4,  # v3: workout qualities and programming (ADR 0009); v4: roles, rir (0011)
     "session_adjust": 2,
-    "recap": 2,  # v2: change_sets and the did-more signal (ADR 0015)
+    "recap": 3,  # v2: change_sets and the did-more signal (ADR 0015); v3: next_targets (0016)
     "plan_import": 2,
     "assistant": 10,  # v4: sessions + tools (ADR 0004); v5: per-exercise logging (ADR 0005);
     # v6: find_substitutes and hybrid find_exercises (ADR 0007); v7: exclusions, measures (0009)

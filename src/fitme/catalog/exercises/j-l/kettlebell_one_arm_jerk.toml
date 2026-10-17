@@ -4,6 +4,7 @@ kind = "compound"
 pattern = "vertical_push"
 measures = ["reps"]
 qualities = ["power", "strength"]
+unilateral = true
 equipment = ["kettlebell"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

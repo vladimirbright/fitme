@@ -20,7 +20,7 @@ from fitme.config.settings import Settings
 from fitme.db.connection import Database
 from fitme.domain.enums import BlockRole
 from fitme.domain.models import NAME_MAX_LENGTH, Prescription
-from fitme.services import prescribing, webauth
+from fitme.services import prescribing, session_time, webauth
 from fitme.services.llm_runtime import LlmRuntime
 from fitme.services.webauth import SendCode, SessionState
 from fitme.web.ratelimit import SlidingWindowLimiter
@@ -154,6 +154,9 @@ def render(
         # ADR 0011: the same load text as the bot (`services.prescribing`).
         "load_phrase": lambda item, role=None: prescription_load_phrase(item, lang, role),
         "load_units": exercise_load_units(),
+        # ADR 0016: "per side" on a unilateral exercise, and each workout's estimated length.
+        "unilateral_ids": unilateral_exercise_ids(),
+        "workout_minutes": lambda workout: session_time.display_minutes(workout, load_catalog()),
         "name_max_length": NAME_MAX_LENGTH,
         **context,
     }
@@ -175,6 +178,11 @@ def prescription_load_phrase(item: Prescription, lang: str, role: BlockRole | No
     to pick an unknown load for the exercise's stimulus (ADR 0011)."""
     exercise = load_catalog().by_id(item.exercise_id)
     return prescribing.prescription_load_label(item, exercise, lang, role=role)
+
+
+def unilateral_exercise_ids() -> frozenset[str]:
+    """Catalog ids done one side at a time (ADR 0016): their target is per side."""
+    return frozenset(exercise.id for exercise in load_catalog().exercise if exercise.unilateral)
 
 
 def exercise_load_units() -> dict[str, str]:

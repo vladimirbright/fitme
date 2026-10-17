@@ -4,6 +4,7 @@ kind = "compound"
 pattern = "core"
 measures = ["reps"]
 qualities = ["core_stability", "strength"]
+unilateral = true
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]

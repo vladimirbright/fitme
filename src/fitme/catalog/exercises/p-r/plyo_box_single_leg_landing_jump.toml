@@ -4,6 +4,7 @@ kind = "bodyweight"
 pattern = "conditioning"
 measures = ["reps"]
 qualities = ["power"]
+unilateral = true
 equipment = ["plyo_box"]
 level = "advanced"
 load_unit = "total"

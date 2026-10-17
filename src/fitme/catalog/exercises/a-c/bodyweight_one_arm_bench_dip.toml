@@ -5,6 +5,7 @@ level = "advanced"
 pattern = "vertical_push"
 measures = ["reps"]
 qualities = ["strength", "hypertrophy"]
+unilateral = true
 equipment = ["bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

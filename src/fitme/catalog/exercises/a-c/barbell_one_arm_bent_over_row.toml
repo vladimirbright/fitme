@@ -4,6 +4,7 @@ kind = "compound"
 pattern = "horizontal_pull"
 measures = ["reps"]
 qualities = ["strength", "hypertrophy"]
+unilateral = true
 level = "advanced"
 equipment = ["barbell"]
 load_unit = "total"

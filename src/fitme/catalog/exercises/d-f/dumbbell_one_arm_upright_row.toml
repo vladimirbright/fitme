@@ -4,6 +4,7 @@ kind = "compound"
 pattern = "accessory"
 measures = ["reps"]
 qualities = ["strength", "hypertrophy"]
+unilateral = true
 equipment = ["dumbbells"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]

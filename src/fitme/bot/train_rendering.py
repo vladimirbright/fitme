@@ -24,7 +24,14 @@ from fitme.db.records import CheckinRecord, PlanRecord
 from fitme.domain.catalog import Catalog, Exercise
 from fitme.domain.enums import BlockRole, CheckinAnswer, Measure
 from fitme.domain.models import Block, Load, Prescription, Workout
-from fitme.domain.results import ChangeReps, ChangeSets, PlanChange, SetResult, SwapExercise
+from fitme.domain.results import (
+    ChangeReps,
+    ChangeSets,
+    ChangeTarget,
+    PlanChange,
+    SetResult,
+    SwapExercise,
+)
 from fitme.i18n import t
 from fitme.services import prescribing
 from fitme.services.prescribing import load_label
@@ -418,6 +425,7 @@ def recap_text(view: RecapView, *, catalog: Catalog, lang: str) -> str:
             NextKind.CLAMPED: "recap.next_clamped",
             NextKind.CALIBRATION: "recap.next_calibration",
             NextKind.BODYWEIGHT: "recap.next_bodyweight",
+            NextKind.HOLD_SPEED: "recap.next_hold_speed",
         }[step.kind]
         if_fine = (
             "" if step.if_fine is None else _load(catalog, step.exercise_id, step.if_fine, lang)
@@ -462,6 +470,18 @@ def plan_change_text(change: PlanChange, *, catalog: Catalog, lang: str) -> str:
             lang,
             name=_name(catalog, change.exercise_id, lang),
             sets=change.sets,
+        )
+    if isinstance(change, ChangeTarget):
+        target = (
+            rest_text(change.seconds, lang)
+            if change.seconds is not None
+            else t("duration.meters", lang, m=change.meters)
+        )
+        return t(
+            "recap.suggestion_target",
+            lang,
+            name=_name(catalog, change.exercise_id, lang),
+            target=target,
         )
     assert isinstance(change, ChangeReps)
     return t(

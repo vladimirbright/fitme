@@ -178,6 +178,7 @@ from fitme.services import (
     plan_quality,
     prescribing,
     programming,
+    time_budget,
 )
 from fitme.services.catalog import available_exercises
 from fitme.services.decisions import PromptMeta, prompt_columns
@@ -1249,9 +1250,14 @@ async def propose_new_plan(
             restore_declared(output, {})  # nothing was pasted: no hints (M8b)
             judgement = judge(output, inputs)
             if judgement.ok:
+                # ADR 0016: a workout longer than the session is shortened by priority in
+                # code (logged), before the review sees it.
+                budget = time_budget.fit_plan(
+                    output, inputs.catalog, inputs.user_context.session_minutes
+                )
                 findings = review_quality(output, inputs, qualities, request=guidance)
                 judgement = Judgement(
-                    verdicts=judgement.verdicts, fired=[*judgement.fired, *findings]
+                    verdicts=judgement.verdicts, fired=[*judgement.fired, *budget, *findings]
                 )
         last = await _log_attempt(
             db,
