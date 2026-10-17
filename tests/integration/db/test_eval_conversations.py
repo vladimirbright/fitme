@@ -322,6 +322,9 @@ async def test_every_fixture_runs_in_both_modes_and_is_judged(
     outdoors = [c for t in legacy_run.turns for c in t.checks if c.name == "outdoor_allowed"]
     assert outdoors and {c.outcome for c in outdoors} == {"pass"}
     assert _failed(by_key[("f_g_strength", "legacy")]) == []
+    assert _failed(by_key[("a_easy_run_saturdays_en", "legacy")]) == []
+    # The Russian E fails in legacy like the English one: nothing is saved.
+    assert any("saved" in failure for failure in _failed(by_key[("e_bjj_twice", "legacy")]))
     bjj = by_key[("e_bjj_twice_en", "legacy")]
     assert "refusal: no_safe_plan" in bjj.turns[0].events
     assert bjj.turns[1].error is not None and "no current draft" in bjj.turns[1].error

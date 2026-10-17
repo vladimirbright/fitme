@@ -10,10 +10,11 @@ A§8.1 (`planner` row, `planner.v1`) and A§11 (`llm eval-conversations`).
 
 ## Context
 
-ADR 0017 fixed the owner's two requests ("легкую беговую по субботам" with a gym profile,
-"bjj два раза в неделю") inside the generation pipeline. It did this with word lists, a
-request reader, an objective filter in the review and one clarifying question in the
-assistant. Each layer works, and the plans it produces are formally valid. The owner's
+ADR 0017 addressed the owner's two requests ("легкую беговую по субботам" with a gym
+profile, "bjj два раза в неделю") inside the generation pipeline. It did this with word
+lists, a request reader, an objective filter in the review and one clarifying question in
+the assistant. The plans it produces are formally valid; nothing in this ADR verifies
+whether they are what was asked for. The owner's
 assignment for this experiment says that this direction makes FitMe better at valid plans
 and no better at what the user asked for. It asks for **LLM-first, structure-second**: the
 model reads the request and talks it through, the structure records what was agreed, and
@@ -180,11 +181,14 @@ can do that from the conversation alone.
 - **No migration**: plan bodies are JSON, decision kinds are reused (`plan_revise` draft
   rounds, `plan_confirm`), and `llm_calls.purpose` / `decisions.prompt_template` say
   `planner`. No re-index.
-- **Going back works for plans that use neither new feature.** `main`'s domain models use
-  `extra="forbid"`. Every stored body (`plan_versions.body`, the plans and workouts in
-  `decisions.proposal`) is written through `domain.models.storage_body`, which leaves
-  `location` and `activity_name` out while they are unset. So a body written on the branch
-  parses on `main` unless the plan actually has an activity item or a plan location; such
-  plans have to be deleted (`/plan` → delete) before switching back. Checked by
-  `tests/integration/db/test_storage_body.py` against a copy of `main`'s models. Testing
-  against a copy of the database (`FITME_DB_PATH`, `fitme backup`) is still the safe default.
+- **Going back works for plans that use none of the new features.** `main`'s domain models
+  use `extra="forbid"` and cap a timed set at 3600 s. Every stored body (`plan_versions.body`,
+  the plans and workouts in `decisions.proposal`) is written through
+  `domain.models.storage_body`, which leaves `location` and `activity_name` out while they
+  are unset. So a body written on the branch parses on `main` unless the plan has an
+  activity item, a plan location, or a timed set longer than 60 minutes; such plans have to
+  be deleted (`/plan` → delete) before switching back. Logged sets with `activity:` ids stay
+  in `set_logs` after the plan is deleted, and `main` shows them by their raw id. Checked by
+  `tests/integration/db/test_storage_body.py` against a copy of `main`'s models and bounds.
+  Testing against a copy of the database (`FITME_DB_PATH`, `fitme backup`) is still the safe
+  default.
