@@ -708,49 +708,109 @@ def _sanitize_wording(plan: Plan, lang: str) -> list[GuardVerdict]:
 
 
 @dataclass(frozen=True, slots=True)
+class ActivityAllowance:
+    """What an agent may keep of one activity id from the plan or workout it starts from:
+    the same display name, at most as many items, and at most as much total time."""
+
+    name: str
+    count: int
+    total_seconds: int
+
+
+def _activity_items(workouts: Sequence[Workout]) -> list[Prescription]:
+    return [
+        item
+        for workout in workouts
+        for block in workout.blocks
+        for item in block.items
+        if is_activity_id(item.exercise_id)
+    ]
+
+
+def _item_seconds(item: Prescription) -> int:
+    return item.sets * (item.seconds or 0)
+
+
+def _allowances(workouts: Sequence[Workout]) -> dict[str, ActivityAllowance]:
+    allowances: dict[str, ActivityAllowance] = {}
+    for item in _activity_items(workouts):
+        known = allowances.get(item.exercise_id)
+        allowances[item.exercise_id] = ActivityAllowance(
+            name=known.name if known is not None else (item.activity_name or ""),
+            count=(0 if known is None else known.count) + 1,
+            total_seconds=(0 if known is None else known.total_seconds) + _item_seconds(item),
+        )
+    return allowances
+
+
+def _same_name(a: str | None, b: str) -> bool:
+    return (a or "").strip().casefold() == b.strip().casefold()
+
+
+@dataclass(frozen=True, slots=True)
 class AgentScope:
     """What a model-written plan or workout may contain beyond catalog exercises, for the
     agents that predate activity items and plan locations (`plan_generate`, `plan_revise`,
-    `plan_import`, `session_adjust`): only the `activity:` ids and the location of the plan
-    or workout they start from (none for a new or pasted plan). Anything else is a
-    structural failure, so their output stays what it was before activity items existed.
-    Paths that judge a plan the user staged or edited pass no scope."""
+    `plan_import`, `session_adjust`): only the activity items of the plan or workout they
+    start from — each `activity:` id with its own name, no more often and for no more total
+    time (`sets × seconds`) than there — and that plan's location (none for a new or pasted
+    plan). Anything else is a structural failure, so their output stays what it was before
+    activity items existed. Paths that judge a plan the user staged or edited pass no
+    scope."""
 
-    activity_ids: frozenset[str] = frozenset()
+    activities: Mapping[str, ActivityAllowance] = field(default_factory=dict)
     location: Location | None = None
+
+    @property
+    def activity_ids(self) -> frozenset[str]:
+        return frozenset(self.activities)
 
     @classmethod
     def of(cls, plan: Plan) -> AgentScope:
-        return cls(
-            activity_ids=frozenset(
-                item.exercise_id
-                for workout in plan.workouts
-                for block in workout.blocks
-                for item in block.items
-                if is_activity_id(item.exercise_id)
-            ),
-            location=plan.location,
-        )
+        return cls(activities=_allowances(plan.workouts), location=plan.location)
+
+    @classmethod
+    def of_workout(cls, workout: Workout, *, location: Location | None) -> AgentScope:
+        return cls(activities=_allowances([workout]), location=location)
 
 
 def scope_verdicts(plan: Plan, scope: AgentScope | None) -> list[GuardVerdict]:
     """The failing verdicts for what `plan` holds outside `scope` (none without a scope)."""
     if scope is None:
         return []
-    verdicts = [
-        GuardVerdict(
+
+    def refused(exercise_id: str, why: str) -> GuardVerdict:
+        return GuardVerdict(
             rule=_ACTIVITY_NOT_ALLOWED_RULE,
             ok=False,
-            detail=(
-                f"{item.exercise_id}: a non-catalog activity is not allowed here; use catalog "
-                "exercises only"
-            ),
+            detail=f"{exercise_id}: {why}; use catalog exercises only",
         )
-        for workout in plan.workouts
-        for block in workout.blocks
-        for item in block.items
-        if is_activity_id(item.exercise_id) and item.exercise_id not in scope.activity_ids
-    ]
+
+    verdicts: list[GuardVerdict] = []
+    used = _allowances(plan.workouts)
+    for item in _activity_items(plan.workouts):
+        allowed = scope.activities.get(item.exercise_id)
+        if allowed is None:
+            verdicts.append(refused(item.exercise_id, "a non-catalog activity is not allowed here"))
+        elif not _same_name(item.activity_name, allowed.name):
+            verdicts.append(
+                refused(item.exercise_id, f"the activity keeps its name {allowed.name!r}")
+            )
+    for exercise_id, got in used.items():
+        allowed = scope.activities.get(exercise_id)
+        if allowed is None:
+            continue
+        if got.count > allowed.count:
+            verdicts.append(
+                refused(exercise_id, f"the activity appears at most {allowed.count} time(s) here")
+            )
+        if got.total_seconds > allowed.total_seconds:
+            verdicts.append(
+                refused(
+                    exercise_id,
+                    f"the activity takes at most {allowed.total_seconds} s in total here",
+                )
+            )
     if plan.location is not None and plan.location != scope.location:
         verdicts.append(
             GuardVerdict(
@@ -1203,8 +1263,13 @@ async def existing_plans_summary(db: Database, user_id: int) -> list[dict[str, o
                     {
                         "key": workout.key,
                         "title": scrub(workout.title),
+                        # A non-catalog activity (`activity:` id) is not something the
+                        # generator may prescribe, so it never sees one.
                         "exercise_ids": [
-                            item.exercise_id for block in workout.blocks for item in block.items
+                            item.exercise_id
+                            for block in workout.blocks
+                            for item in block.items
+                            if not is_activity_id(item.exercise_id)
                         ],
                     }
                     for workout in detail.plan.workouts
