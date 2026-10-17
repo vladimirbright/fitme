@@ -116,11 +116,22 @@ def prescription_line(
         exercise, prescription.exercise_id, lang, activity_name=prescription.activity_name
     )
     load = prescription_load_label(prescription, exercise, lang, role=role)
+    activity = is_activity_id(prescription.exercise_id)  # no load to state for an activity
     if in_superset is None:
         rest = rest_text(prescription.rest_seconds, lang)
-        line = t(
-            "plan.prescription_line", lang, name=name, sets_reps=sets_reps, load=load, rest=rest
-        )
+        if activity:
+            line = t("plan.activity_line", lang, name=name, sets_reps=sets_reps, rest=rest)
+        else:
+            line = t(
+                "plan.prescription_line",
+                lang,
+                name=name,
+                sets_reps=sets_reps,
+                load=load,
+                rest=rest,
+            )
+    elif activity:
+        line = t("plan.superset_activity_line", lang, name=name, sets_reps=sets_reps)
     else:
         line = t("plan.superset_item_line", lang, name=name, sets_reps=sets_reps, load=load)
         if in_superset == "transition":

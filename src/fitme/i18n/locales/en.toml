@@ -521,6 +521,8 @@ prescription_line = "{name}: {sets_reps} @ {load}, rest {rest}"
 # ADR 0011: inside a superset the round's rest is said once, in its heading; each exercise
 # but the last says the transition to the next one.
 superset_item_line = "{name}: {sets_reps} @ {load}"
+activity_line = "{name}: {sets_reps}, rest {rest}"
+superset_activity_line = "{name}: {sets_reps}"
 superset_transition = "then {rest} to the next exercise"
 superset_no_transition = "then straight to the next exercise"
 block_role_heading = "{role}:"
@@ -563,6 +565,7 @@ rename_forbidden = "The name can't contain “{term}”. Choose a plain name."
 # Neutral replacements for model-authored text that fails the wording check.
 default_name = "Plan"
 default_workout_title = "Workout {workout_key}"
+activity_fallback = "Activity"
 # Delete (any plan, A§4.3): a Yes/No confirm step before anything is removed.
 delete_button = "Delete"
 delete_confirm_prompt = "Delete “{name}”? Trainings are kept; they will no longer belong to a plan. This cannot be undone."

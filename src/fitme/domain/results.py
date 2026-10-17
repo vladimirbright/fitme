@@ -43,7 +43,7 @@ class SetResult(BaseModel):
     reps: Annotated[int, Field(ge=0, le=100)] | None = None
     # ADR 0009: a timed set's result in seconds, a distance set's in meters (instead of
     # `reps`; exactly one of the three for a performed set).
-    seconds: Annotated[int, Field(ge=0, le=3600)] | None = None
+    seconds: Annotated[int, Field(ge=0, le=MAX_SET_SECONDS)] | None = None
     meters: Annotated[int, Field(ge=0, le=5000)] | None = None
     # gt=0: a real load is always positive. le=500: a coordinator-set plausibility ceiling —
     # no catalog exercise or realistic implement combination reaches this, so a model

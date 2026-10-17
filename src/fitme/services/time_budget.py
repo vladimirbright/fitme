@@ -20,12 +20,13 @@ every change:
 3. **whole blocks**: only when every trimmable block is down to two sets, the
    lowest-priority one is removed.
 
-Never touched: the warm-up, any block that directly trains the main objective (without
-stated objectives, the power and strength blocks), the last working block, and every rest
-period — rest on heavy or fast work is what keeps it heavy or fast, so a workout is made
-shorter, never denser. A stated secondary objective nothing trains any more is dropped from
-`Workout.qualities`. When the target can't be reached without that protected work, the
-verdict says so (`ok=False`) and the workout is left with its protected work intact.
+Never touched: the warm-up, a block holding a non-catalog activity item, any block that
+directly trains the main objective (without stated objectives, the power and strength
+blocks), the last working block, and every rest period — rest on heavy or fast work is what
+keeps it heavy or fast, so a workout is made shorter, never denser. A stated secondary
+objective nothing trains any more is dropped from `Workout.qualities`. When the target can't
+be reached without that protected work, the verdict says so (`ok=False`) and the workout is
+left with its protected work intact.
 
 The loop terminates: each step removes a set or a block, and both are finite.
 
@@ -41,7 +42,7 @@ from dataclasses import dataclass
 from fitme.domain.catalog import Catalog
 from fitme.domain.enums import BlockRole, Quality
 from fitme.domain.guard_types import GuardVerdict
-from fitme.domain.models import Block, Plan, Workout
+from fitme.domain.models import Block, Plan, Workout, is_activity_id
 from fitme.services import session_time
 from fitme.services.plan_quality import Relevance, block_relevance, block_roles
 
@@ -103,6 +104,11 @@ class _Fitter:
     def _protected(self, block: Block, role: BlockRole | None) -> bool:
         if role == BlockRole.WARM_UP:
             return True
+        if any(is_activity_id(item.exercise_id) for item in block.items):
+            return True  # a class or run the user named is kept whole, never trimmed
+        return self._protected_work(block, role)
+
+    def _protected_work(self, block: Block, role: BlockRole | None) -> bool:
         working = self._working()
         if len(working) <= 1 and any(block is other for other in working):
             return True  # never the last working block: a workout is never emptied
