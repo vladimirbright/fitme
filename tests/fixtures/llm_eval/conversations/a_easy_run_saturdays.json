@@ -33,10 +33,9 @@
         "no_kg_loads": true,
         "no_equipment": true,
         "exclude_kinds": [
-          "compound",
-          "isolation"
+          "compound"
         ],
-        "items_max": 6,
+        "outdoor_allowed": true,
         "location": "outdoor"
       }
     },
@@ -50,10 +49,9 @@
         "no_kg_loads": true,
         "no_equipment": true,
         "exclude_kinds": [
-          "compound",
-          "isolation"
+          "compound"
         ],
-        "items_max": 6,
+        "outdoor_allowed": true,
         "location": "outdoor",
         "exclude_ids": [
           "jump_rope_skipping"
@@ -76,10 +74,9 @@
         "no_kg_loads": true,
         "no_equipment": true,
         "exclude_kinds": [
-          "compound",
-          "isolation"
+          "compound"
         ],
-        "items_max": 6,
+        "outdoor_allowed": true,
         "location": "outdoor",
         "exclude_ids": [
           "jump_rope_skipping"
@@ -102,9 +99,9 @@
         "no_kg_loads": true,
         "no_equipment": true,
         "exclude_kinds": [
-          "compound",
-          "isolation"
+          "compound"
         ],
+        "outdoor_allowed": true,
         "exclude_ids": [
           "jump_rope_skipping"
         ]

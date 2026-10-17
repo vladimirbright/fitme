@@ -31,7 +31,8 @@
         "compound_loads": [
           "kg",
           "calibration"
-        ]
+        ],
+        "history_loads": true
       }
     },
     {
@@ -51,6 +52,7 @@
         "exclude_ids": [
           "barbell_bench_press"
         ],
+        "history_loads": true,
         "swap_load": {
           "from": "barbell_bench_press",
           "to": "dumbbell_bench_press"

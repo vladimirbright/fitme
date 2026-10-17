@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import difflib
 import json
+import re
 import tempfile
 import time
 from collections.abc import Mapping, Sequence
@@ -59,6 +60,7 @@ from fitme.domain.enums import (
     Measure,
     ScreeningFlag,
 )
+from fitme.domain.guard_types import GuardVerdict
 from fitme.domain.models import Load, Plan, Prescription, is_activity_id
 from fitme.services import (
     assistant,
@@ -79,9 +81,28 @@ CheckOutcome = Literal["pass", "fail", "n/a"]
 # Keys a single-turn profile fixture (`tests/fixtures/llm_eval/*.json`) carries that are not
 # profile fields; they are dropped when a conversation references that fixture.
 _NON_PROFILE_KEYS = frozenset({"name", "user_id", "history", "request", "exclusions"})
-# Reported, never counted toward checks passed (the brief's "report the number").
-_SOFT_CHECKS = frozenset({"cardio_minutes"})
+# Reported, never counted toward checks passed: the running minutes are a number to read,
+# and a question is what the planner is told to end every proposal with, so asking says
+# nothing about whether it understood (the next turn's plan checks carry that weight).
+_SOFT_CHECKS = frozenset({"cardio_minutes", "question"})
+# Load checks read what the model asked for: in planner mode the plan before the guards'
+# load substitution; in legacy mode (only the judged plan exists) a load guard that fired on
+# the exercise in that turn fails the check.
+_LOAD_RULES = frozenset({"progression.weekly_cap", "plan.kg_loadable", "loads.substituted"})
+_LOAD_RULE_PREFIXES = ("ceiling.", "checkins.")
+LEGACY_NO_LOCATION = "legacy cannot represent a plan location"
+LEGACY_NO_ACTIVITY = "legacy cannot represent an activity item"
 _WEEKDAYS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+
+LEGEND = (
+    "Model calls = agent runs; a planner run with N tool round-trips counts once; legacy "
+    "best-of and escalation attempts count separately. Failed calls are listed apart and "
+    "their tokens are not recorded. Questions and the running minutes are reported, not "
+    "counted in checks passed. Load checks read the plan as the model staged it (planner) or "
+    "fail when a load guard fired on the exercise in that turn (legacy). In legacy mode, "
+    f"checks that need a plan location or an activity item are n/a: {LEGACY_NO_LOCATION}, "
+    f"and {LEGACY_NO_ACTIVITY}."
+)
 
 CLOSING_PARAGRAPH = (
     "The checks above are deterministic proxies for intent: they read ids, kinds and "
@@ -155,14 +176,14 @@ class Expect(BaseModel):
 
     model_config = _FORBID
 
-    question: bool | None = None  # nothing staged and the reply ends with "?"
+    question: bool | None = None  # soft: nothing staged, "?" in the reply's last line
     draft: bool | None = None  # an unsaved draft is current after the turn
     saved: bool | None = None  # a saved plan version equals the last staged draft
     days: list[int] | None = None  # the exact set of scheduled weekdays (0 = Monday)
     days_count: int | None = Field(default=None, ge=0, le=7)
     workouts: int | None = Field(default=None, ge=0)
     items_max: int | None = Field(default=None, ge=0)  # items in any one workout
-    no_kg_loads: bool | None = None
+    no_kg_loads: bool | None = None  # load check
     no_equipment: bool | None = None  # every catalog item's equipment is []
     exclude_equipment: list[Equipment] | None = None
     exclude_ids: list[str] | None = None
@@ -171,11 +192,13 @@ class Expect(BaseModel):
     activity_items_min: int | None = Field(default=None, ge=0)  # over the scheduled days
     reps_items_max: int | None = Field(default=None, ge=0)  # items prescribed in reps
     location: Location | None = None  # the plan's location, else the profile's
+    outdoor_allowed: bool | None = None  # every catalog item lists `outdoor` in `locations`
     catalog_only: bool | None = None  # every item is a catalog exercise
-    compound_loads: list[Literal["kg", "bodyweight", "calibration"]] | None = None
-    single_change: bool | None = None  # exactly one item differs from the previous plan
-    unchanged_except: list[str] | None = None  # only these ids may differ from it
-    swap_load: SwapLoad | None = None
+    compound_loads: list[Literal["kg", "bodyweight", "calibration"]] | None = None  # load
+    history_loads: bool | None = None  # load check: every seeded-history exercise is in kg
+    single_change: bool | None = None  # one exercise id out and/or one in, vs the previous plan
+    unchanged_except: list[str] | None = None  # only these ids' items may differ from it
+    swap_load: SwapLoad | None = None  # load check
     cardio_minutes: tuple[int, int] | None = None  # soft: longest workout's timed cardio
     any_of: list[Expect] | None = None  # passes when every check of one alternative passes
 
@@ -186,7 +209,17 @@ class Expect(BaseModel):
                 raise ValueError(f"weekday {day} is not 0..6")
         if self.any_of is not None and not self.any_of:
             raise ValueError("any_of needs at least one alternative")
+        if self.cardio_minutes is not None and self.cardio_minutes[0] > self.cardio_minutes[1]:
+            raise ValueError("cardio_minutes: the low bound is above the high bound")
         return self
+
+    def keys(self) -> set[str]:
+        """The checks this block names (`any_of` excluded)."""
+        return {
+            key
+            for key in self.model_fields_set
+            if key != "any_of" and getattr(self, key) is not None
+        }
 
 
 class Turn(BaseModel):
@@ -304,7 +337,10 @@ class TurnRecord:
     staged: bool = False
     checks: list[CheckResult] = field(default_factory=list)
     latency_s: float = 0.0
-    model_calls: int = 0
+    model_calls: int = 0  # agent runs that returned (llm_calls rows with ok = 1)
+    failed_calls: int = 0  # agent runs that failed: no tokens are recorded for them
+    purposes: tuple[str, ...] = ()  # every agent run's purpose, in order
+    guards: tuple[GuardVerdict, ...] = ()  # legacy: the round's fired verdicts
     input_tokens: int = 0
     output_tokens: int = 0
     cost_usd: float = 0.0
@@ -334,6 +370,10 @@ class ConversationResult:
     @property
     def model_calls(self) -> int:
         return sum(turn.model_calls for turn in self.turns)
+
+    @property
+    def failed_calls(self) -> int:
+        return sum(turn.failed_calls for turn in self.turns)
 
     @property
     def input_tokens(self) -> int:
@@ -373,9 +413,13 @@ class Observed:
     plan: Plan | None  # the current draft, else the plan saved in this turn
     previous: Plan | None  # the previous turn's plan
     has_draft: bool  # an unsaved draft is current
-    saved_match: bool  # a saved plan version equals the last staged draft
+    saved_match: bool  # a plan version saved in this turn equals the last staged draft
     profile_location: Location
     history_kg: Mapping[str, float] = field(default_factory=dict)
+    # Planner mode: `plan` as the model staged it, before the guards' load substitution.
+    requested: Plan | None = None
+    # Legacy mode: the verdicts the round fired in this turn.
+    guards: Sequence[GuardVerdict] = ()
 
 
 def _items(plan: Plan) -> list[Prescription]:
@@ -418,8 +462,10 @@ def cardio_minutes(plan: Plan, catalog: Catalog) -> int:
 
 def _changed_items(previous: Plan, current: Plan) -> tuple[int, set[str], bool]:
     """(how many items differ, the ids on either side of a difference, schedule changed).
-    Items are aligned per workout key with `difflib`, so an inserted or removed item counts
-    once instead of shifting everything after it."""
+    Compares each item's full JSON, so a changed note, load, set count or target counts as a
+    difference; a block's kind or role and a workout's title do not (only items are
+    compared). Items are aligned per workout key with `difflib`, so an inserted or removed
+    item counts once instead of shifting everything after it."""
     changed = 0
     ids: set[str] = set()
     keys = {w.key for w in previous.workouts} | {w.key for w in current.workouts}
@@ -441,6 +487,15 @@ def _changed_items(previous: Plan, current: Plan) -> tuple[int, set[str], bool]:
     return changed, ids, schedule_changed
 
 
+def _changed_ids(previous: Plan, current: Plan) -> tuple[set[str], set[str]]:
+    """(exercise ids removed, exercise ids added) across the whole plan, ignoring sets, loads,
+    notes and positions: "replace X with Y" is one id out and one in however many workouts
+    carry X."""
+    before = {item.exercise_id for item in _items(previous)}
+    after = {item.exercise_id for item in _items(current)}
+    return before - after, after - before
+
+
 def _max_kg(plan: Plan | None, exercise_id: str) -> float | None:
     if plan is None:
         return None
@@ -456,6 +511,9 @@ def _plan_checks(expect: Expect, plan: Plan, seen: Observed, catalog: Catalog) -
     results: list[CheckResult] = []
     items = _items(plan)
     catalog_items = [(item, catalog.by_id(item.exercise_id)) for item in items]
+    # Load checks read the plan as the model asked for it (see `_LOAD_RULES`).
+    asked = seen.requested if seen.requested is not None else plan
+    asked_items = [(item, catalog.by_id(item.exercise_id)) for item in _items(asked)]
 
     if expect.days is not None:
         got = sorted({day.weekday for day in plan.schedule})
@@ -470,9 +528,11 @@ def _plan_checks(expect: Expect, plan: Plan, seen: Observed, catalog: Catalog) -
         most = max((len(_workout_items(plan, w.key)) for w in plan.workouts), default=0)
         results.append(_ok("items_max", most <= expect.items_max, f"{most} item(s) at most"))
     if expect.no_kg_loads is not None:
-        kg = [item for item in items if item.load.kind == "kg"]
+        kg = [item for item, _ in asked_items if item.load.kind == "kg"]
         detail = f"kg on {_ids(kg)}" if kg else ""
-        results.append(_ok("no_kg_loads", (not kg) == expect.no_kg_loads, detail))
+        ids = {item.exercise_id for item in items}
+        ok = (not kg) == expect.no_kg_loads
+        results.append(_load_check("no_kg_loads", ok, detail, seen, ids))
     if expect.no_equipment is not None:
         gear = [item for item, ex in catalog_items if ex is not None and ex.equipment]
         detail = f"equipment on {_ids(gear)}" if gear else ""
@@ -491,7 +551,9 @@ def _plan_checks(expect: Expect, plan: Plan, seen: Observed, catalog: Catalog) -
     if expect.include_ids_any is not None:
         present = {item.exercise_id for item in items} & set(expect.include_ids_any)
         results.append(_ok("include_ids_any", bool(present), ", ".join(sorted(present))))
-    if expect.activity_items_min is not None:
+    if _legacy_cannot(expect, "activity_items_min", seen) is not None:
+        results.append(CheckResult("activity_items_min", "n/a", LEGACY_NO_ACTIVITY))
+    elif expect.activity_items_min is not None:
         count = sum(
             1
             for day in plan.schedule
@@ -506,18 +568,41 @@ def _plan_checks(expect: Expect, plan: Plan, seen: Observed, catalog: Catalog) -
         results.append(_ok("reps_items_max", ok, f"{count} item(s) in reps"))
     if expect.location is not None:
         where = plan.location or seen.profile_location
-        results.append(_ok("location", where == expect.location, where.value))
+        if _legacy_cannot(expect, "location", seen) is not None:
+            results.append(CheckResult("location", "n/a", LEGACY_NO_LOCATION))
+        else:
+            results.append(_ok("location", where == expect.location, where.value))
+    if expect.outdoor_allowed is not None:
+        indoor = [
+            item
+            for item, ex in catalog_items
+            if ex is not None and Location.OUTDOOR not in ex.locations
+        ]
+        ok = (not indoor) == expect.outdoor_allowed
+        results.append(
+            _ok("outdoor_allowed", ok, f"not outdoors: {_ids(indoor)}" if indoor else "")
+        )
     if expect.catalog_only is not None:
         outside = [item for item, ex in catalog_items if ex is None]
         results.append(_ok("catalog_only", (not outside) == expect.catalog_only, _ids(outside)))
     if expect.compound_loads is not None:
         allowed = set(expect.compound_loads)
-        wrong = [
-            item
-            for item, ex in catalog_items
-            if ex is not None and ex.kind == ExerciseKind.COMPOUND and item.load.kind not in allowed
+        compound = [
+            item for item, ex in asked_items if ex is not None and ex.kind == ExerciseKind.COMPOUND
         ]
-        results.append(_ok("compound_loads", not wrong, _ids(wrong)))
+        wrong = [item for item in compound if item.load.kind not in allowed]
+        ids = {item.exercise_id for item in compound}
+        results.append(_load_check("compound_loads", not wrong, _ids(wrong), seen, ids))
+    if expect.history_loads is not None:
+        seeded = [item for item, _ in asked_items if item.exercise_id in seen.history_kg]
+        not_kg = [item for item in seeded if item.load.kind != "kg"]
+        if not seeded:
+            detail = "no exercise with seeded history in the plan"
+        else:
+            detail = f"not in kg: {_ids(not_kg)}" if not_kg else _ids(seeded)
+        ok = (not not_kg) == expect.history_loads
+        ids = {item.exercise_id for item in seeded}
+        results.append(_load_check("history_loads", ok, detail, seen, ids))
     if expect.single_change is not None or expect.unchanged_except is not None:
         results.extend(_change_checks(expect, plan, seen.previous))
     if expect.swap_load is not None:
@@ -553,16 +638,48 @@ def _change_checks(expect: Expect, plan: Plan, previous: Plan | None) -> list[Ch
         detail += "; schedule changed"
     results = []
     if expect.single_change is not None:
-        ok = (changed == 1 and not schedule_changed) == expect.single_change
-        results.append(_ok("single_change", ok, detail))
+        removed, added = _changed_ids(previous, plan)
+        one = bool(removed | added) and len(removed) <= 1 and len(added) <= 1
+        ok = (one and not schedule_changed) == expect.single_change
+        swap = f"out: {', '.join(sorted(removed)) or '-'}; in: {', '.join(sorted(added)) or '-'}"
+        if schedule_changed:
+            swap += "; schedule changed"
+        results.append(_ok("single_change", ok, swap))
     if expect.unchanged_except is not None:
         ok = ids <= set(expect.unchanged_except) and not schedule_changed
         results.append(_ok("unchanged_except", ok, detail))
     return results
 
 
+def _load_guard_hits(seen: Observed, exercise_ids: set[str]) -> list[str]:
+    hits = set()
+    for verdict in seen.guards:
+        if verdict.rule not in _LOAD_RULES and not verdict.rule.startswith(_LOAD_RULE_PREFIXES):
+            continue
+        for exercise_id in exercise_ids:
+            if re.search(rf"\b{re.escape(exercise_id)}\b", verdict.detail):
+                hits.add(f"{verdict.rule} on {exercise_id}")
+    return sorted(hits)
+
+
+def _load_check(
+    name: str, ok: bool, detail: str, seen: Observed, exercise_ids: set[str]
+) -> CheckResult:
+    """A load check's result. In legacy mode a load guard that fired on one of the checked
+    exercises in this turn fails it: the judged plan shows the guards' load, not the
+    model's."""
+    if seen.mode == "legacy":
+        hits = _load_guard_hits(seen, exercise_ids)
+        if hits:
+            return CheckResult(name, "fail", f"a load guard fired this turn: {'; '.join(hits)}")
+    if seen.requested is not None and detail:
+        detail += " (as staged, before the guards)"
+    return _ok(name, ok, detail)
+
+
 def _swap_check(swap: SwapLoad, plan: Plan, seen: Observed) -> CheckResult:
-    swapped = [item for item in _items(plan) if item.exercise_id == swap.to]
+    asked = seen.requested if seen.requested is not None else plan
+    swapped = [item for item in _items(asked) if item.exercise_id == swap.to]
     if not swapped:
         return CheckResult("swap_load", "fail", f"{swap.to} is not in the plan")
     reference = _max_kg(seen.previous, swap.from_id) or seen.history_kg.get(swap.from_id)
@@ -571,12 +688,14 @@ def _swap_check(swap: SwapLoad, plan: Plan, seen: Observed) -> CheckResult:
         key=lambda load: load.kg if load.kind == "kg" and load.kg is not None else -1.0,
     )
     if worst.kind != "kg":
-        return CheckResult("swap_load", "pass", f"{swap.to}: {worst.kind}")
+        return _load_check("swap_load", True, f"{swap.to}: {worst.kind}", seen, {swap.to})
     assert worst.kg is not None
     if reference is None:
         return CheckResult("swap_load", "fail", f"{swap.to}: {worst.kg:g} kg, no reference")
-    ok = worst.kg <= reference
-    return _ok("swap_load", ok, f"{swap.to}: {worst.kg:g} kg vs {swap.from_id} {reference:g} kg")
+    # Strictly below: carrying the barbell's number over to dumbbells is the mistake.
+    ok = worst.kg < reference
+    detail = f"{swap.to}: {worst.kg:g} kg vs {swap.from_id} {reference:g} kg"
+    return _load_check("swap_load", ok, detail, seen, {swap.to})
 
 
 def evaluate(expect: Expect, seen: Observed, catalog: Catalog) -> list[CheckResult]:
@@ -586,22 +705,23 @@ def evaluate(expect: Expect, seen: Observed, catalog: Catalog) -> list[CheckResu
     results: list[CheckResult] = []
     if expect.question is not None:
         if seen.mode == "legacy":
-            results.append(CheckResult("question", "n/a", "the legacy pipeline cannot ask"))
+            results.append(
+                CheckResult("question", "n/a", "the legacy pipeline cannot ask", soft=True)
+            )
         else:
-            asked = not seen.staged and seen.reply.rstrip().endswith(("?", "？"))
-            results.append(_ok("question", asked == expect.question, "asked" if asked else ""))
+            lines = [line for line in seen.reply.splitlines() if line.strip()]
+            last = lines[-1] if lines else ""
+            asked = not seen.staged and ("?" in last or "？" in last)
+            outcome: CheckOutcome = "pass" if asked == expect.question else "fail"
+            results.append(CheckResult("question", outcome, "asked" if asked else "", soft=True))
     if expect.draft is not None:
         results.append(_ok("draft", seen.has_draft == expect.draft, f"draft={seen.has_draft}"))
     if expect.saved is not None:
         results.append(_ok("saved", seen.saved_match == expect.saved, f"saved={seen.saved_match}"))
-    plan_keys = set(expect.model_fields_set) - {"question", "draft", "saved", "any_of"}
-    plan_keys = {key for key in plan_keys if getattr(expect, key) is not None}
+    plan_keys = expect.keys() - {"question", "draft", "saved"}
     if plan_keys:
         if seen.plan is None:
-            results.extend(
-                CheckResult(key, "fail", "no plan", soft=key in _SOFT_CHECKS)
-                for key in sorted(plan_keys)
-            )
+            results.extend(_no_plan(expect, key, seen) for key in sorted(plan_keys))
         else:
             results.extend(_plan_checks(expect, seen.plan, seen, catalog))
     if expect.any_of is not None:
@@ -609,28 +729,49 @@ def evaluate(expect: Expect, seen: Observed, catalog: Catalog) -> list[CheckResu
     return results
 
 
+def _legacy_cannot(expect: Expect, key: str, seen: Observed) -> str | None:
+    """Why legacy mode cannot pass `key` by construction, or `None`."""
+    if seen.mode != "legacy":
+        return None
+    if key == "location" and expect.location != seen.profile_location:
+        return LEGACY_NO_LOCATION
+    if key == "activity_items_min" and (expect.activity_items_min or 0) > 0:
+        return LEGACY_NO_ACTIVITY
+    return None
+
+
+def _no_plan(expect: Expect, key: str, seen: Observed) -> CheckResult:
+    reason = _legacy_cannot(expect, key, seen)
+    if reason is not None:
+        return CheckResult(key, "n/a", reason)
+    return CheckResult(key, "fail", "no plan", soft=key in _SOFT_CHECKS)
+
+
 def _summary(alternative: Expect) -> str:
-    return "+".join(
-        key
-        for key in alternative.model_fields_set
-        if getattr(alternative, key) is not None and key != "any_of"
-    )
+    return "+".join(sorted(alternative.keys()))
 
 
 def _any_of(alternatives: Sequence[Expect], seen: Observed, catalog: Catalog) -> list[CheckResult]:
+    """Passes when one alternative passes: its hard checks that apply (n/a ones aside) all
+    pass, or, for an alternative of soft checks only, those pass. When any alternative is
+    soft only (a question), `any_of` itself is soft: it can be met by asking."""
+    soft_only = any(not (alternative.keys() - _SOFT_CHECKS) for alternative in alternatives)
     misses: list[str] = []
     for number, alternative in enumerate(alternatives, start=1):
         checks = evaluate(alternative, seen, catalog)
-        hard = [check for check in checks if not check.soft]
+        hard = [check for check in checks if not check.soft and check.outcome != "n/a"]
         soft = [check for check in checks if check.soft]
-        if hard and all(check.outcome == "pass" for check in hard):
+        judged = hard if hard else [check for check in soft if check.outcome != "n/a"]
+        if judged and all(check.outcome == "pass" for check in judged):
             detail = f"alternative {number} ({_summary(alternative)})"
-            return [CheckResult("any_of", "pass", detail), *soft]
+            extra = [check for check in soft if check not in judged]
+            return [CheckResult("any_of", "pass", detail, soft=soft_only), *extra]
         failed = [
-            f"{c.name}: {c.detail}" if c.detail else c.name for c in hard if c.outcome != "pass"
+            f"{c.name}: {c.detail}" if c.detail else c.name for c in checks if c.outcome != "pass"
         ]
         misses.append(f"{number} ({'; '.join(failed)})")
-    return [CheckResult("any_of", "fail", "no alternative passed: " + " | ".join(misses))]
+    detail = "no alternative passed: " + " | ".join(misses)
+    return [CheckResult("any_of", "fail", detail, soft=soft_only)]
 
 
 # --- Seeding ----------------------------------------------------------------------------------
@@ -738,6 +879,7 @@ class _Run:
     history_kg: dict[str, float]
     catalog: Catalog
     last_staged: Plan | None = None
+    last_requested: Plan | None = None  # planner: `last_staged` before load substitution
     previous: Plan | None = None
     last_call_id: int = 0
 
@@ -749,11 +891,15 @@ async def _new_calls(run: _Run, turn: TurnRecord) -> None:
         ]
     if calls:
         run.last_call_id = max(call.id for call in calls)
-    turn.model_calls = len(calls)
-    turn.input_tokens = sum(call.input_tokens for call in calls)
-    turn.output_tokens = sum(call.output_tokens for call in calls)
-    turn.cost_usd = sum(call.cost_estimate_usd or 0.0 for call in calls)
-    turn.cost_known = all(call.cost_estimate_usd is not None for call in calls)
+    done = [call for call in calls if call.ok]
+    turn.model_calls = len(done)
+    turn.failed_calls = len(calls) - len(done)
+    turn.purposes = tuple(call.purpose for call in calls)
+    turn.input_tokens = sum(call.input_tokens for call in done)
+    turn.output_tokens = sum(call.output_tokens for call in done)
+    turn.cost_usd = sum(call.cost_estimate_usd or 0.0 for call in done)
+    # Unknown only when a model that answered has no price entry (`FITME_PRICES_FILE`).
+    turn.cost_known = all(call.cost_estimate_usd is not None for call in done)
     turn.models = tuple(sorted({call.model for call in calls}))
     turn.events.extend(f"model call failed: {call.purpose}" for call in calls if not call.ok)
 
@@ -767,20 +913,31 @@ async def _current_draft(run: _Run) -> Plan | None:
     )
 
 
-async def _saved_bodies(run: _Run) -> list[Plan]:
+async def _saved_versions(run: _Run) -> dict[int, Plan]:
+    """Every saved plan version of the user, by version id."""
     async with run.db.read() as conn:
         plans = await list_plans_for_user(conn, run.user_id)
         versions = [v for plan in plans for v in await list_plan_versions(conn, plan.id)]
-    return [Plan.model_validate(version.body) for version in versions]
+    return {version.id: Plan.model_validate(version.body) for version in versions}
 
 
-async def _finish_turn(run: _Run, turn: TurnRecord, expect: Expect, saved_now: bool) -> None:
+async def _finish_turn(
+    run: _Run,
+    turn: TurnRecord,
+    expect: Expect,
+    saved_now: bool,
+    versions_before: set[int],
+) -> None:
     await _new_calls(run, turn)
     draft = await _current_draft(run)
-    saved = await _saved_bodies(run)
-    saved_match = run.last_staged is not None and run.last_staged in saved
+    # Only versions written during this turn count: a seeded plan never makes `saved` pass.
+    new = [body for vid, body in (await _saved_versions(run)).items() if vid not in versions_before]
+    saved_match = run.last_staged is not None and run.last_staged in new
     plan = draft if draft is not None else (run.last_staged if saved_now else None)
     turn.plan = plan
+    requested = None
+    if run.mode == "planner" and plan is not None and plan == run.last_staged:
+        requested = run.last_requested
     seen = Observed(
         mode=run.mode,
         reply=turn.reply,
@@ -791,31 +948,41 @@ async def _finish_turn(run: _Run, turn: TurnRecord, expect: Expect, saved_now: b
         saved_match=saved_match,
         profile_location=run.profile_location,
         history_kg=run.history_kg,
+        requested=requested,
+        guards=turn.guards,
     )
     turn.checks = evaluate(expect, seen, run.catalog)
     if plan is not None:
         run.previous = plan
 
 
-def _describe_item(item: assistant.Item) -> tuple[str, Plan | None, bool]:
-    """(an event line, a staged plan, saved) for one planner turn item."""
+@dataclass(frozen=True, slots=True)
+class _ItemSeen:
+    line: str
+    staged: Plan | None = None  # the judged draft
+    requested: Plan | None = None  # the same draft as staged, before load substitution
+    saved: bool = False
+
+
+def _describe_item(item: assistant.Item) -> _ItemSeen:
+    """What one planner turn item did, for the transcript and the checks."""
     if isinstance(item, assistant.DraftUpdated):
         result = item.result
         if result.round is None:
-            return f"draft not staged: {'; '.join(result.errors)}", None, False
+            return _ItemSeen(f"draft not staged: {'; '.join(result.errors)}")
         fired = [v.rule for v in result.round.guards_fired]
         line = f"draft staged (decision {result.round.decision_id}, whole={item.whole})"
         if fired:
             line += f"; guards fired: {', '.join(fired)}"
-        return line, result.round.plan, False
+        return _ItemSeen(line, staged=result.round.plan, requested=result.requested)
     if isinstance(item, assistant.DraftSaved):
         status = item.confirm.status
         saved = status == planning.ConfirmStatus.SAVED
-        return f"save: {status.value} (version {item.confirm.version})", None, saved
+        return _ItemSeen(f"save: {status.value} (version {item.confirm.version})", saved=saved)
     if isinstance(item, assistant.Notice):
         details = f" ({'; '.join(item.details)})" if item.details else ""
-        return f"notice: {item.key}{details}", None, False
-    return type(item).__name__, None, False
+        return _ItemSeen(f"notice: {item.key}{details}")
+    return _ItemSeen(type(item).__name__)
 
 
 async def _scan(run: _Run, text: str, turn: TurnRecord) -> int | None:
@@ -840,6 +1007,7 @@ async def _scan(run: _Run, text: str, turn: TurnRecord) -> int | None:
 
 async def _planner_turn(run: _Run, index: int, spec: Turn) -> TurnRecord:
     turn = TurnRecord(index=index, action="message", user=spec.user)
+    versions_before = set(await _saved_versions(run))
     started = time.monotonic()
     saved_now = False
     try:
@@ -854,16 +1022,17 @@ async def _planner_turn(run: _Run, index: int, spec: Turn) -> TurnRecord:
             else:
                 turn.reply = result.message or ""
             for item in result.items:
-                line, staged, saved = _describe_item(item)
-                turn.events.append(line)
-                if staged is not None:
+                seen = _describe_item(item)
+                turn.events.append(seen.line)
+                if seen.staged is not None:
                     turn.staged = True
-                    run.last_staged = staged
-                saved_now = saved_now or saved
+                    run.last_staged = seen.staged
+                    run.last_requested = seen.requested
+                saved_now = saved_now or seen.saved
     except Exception as exc:  # recorded, not raised: one bad turn must not end the eval
         turn.error = f"{type(exc).__name__}: {exc}"
     turn.latency_s = time.monotonic() - started
-    await _finish_turn(run, turn, spec.expect, saved_now)
+    await _finish_turn(run, turn, spec.expect, saved_now, versions_before)
     return turn
 
 
@@ -875,6 +1044,7 @@ def _round_reply(result: planning.PlanRoundResult) -> str:
 
 async def _legacy_turn(run: _Run, index: int, action: str, text: str, expect: Expect) -> TurnRecord:
     turn = TurnRecord(index=index, action=action, user=text)
+    versions_before = set(await _saved_versions(run))
     started = time.monotonic()
     saved_now = False
     try:
@@ -903,6 +1073,7 @@ async def _legacy_turn(run: _Run, index: int, action: str, text: str, expect: Ex
             turn.reply = _round_reply(result)
             if result.refusal is not None:
                 turn.events.append(f"refusal: {result.refusal.code.value}")
+            turn.guards = tuple(result.guards_fired)
             fired = [v.rule for v in result.guards_fired]
             if fired:
                 turn.events.append(f"guards fired: {', '.join(fired)}")
@@ -912,7 +1083,7 @@ async def _legacy_turn(run: _Run, index: int, action: str, text: str, expect: Ex
     except Exception as exc:  # recorded, not raised
         turn.error = f"{type(exc).__name__}: {exc}"
     turn.latency_s = time.monotonic() - started
-    await _finish_turn(run, turn, expect, saved_now)
+    await _finish_turn(run, turn, expect, saved_now, versions_before)
     return turn
 
 
@@ -1000,11 +1171,14 @@ async def run_conversations(
 
 
 def with_model_override(settings: Settings, model: str) -> Settings:
-    """`settings` with every agent resolved to `model` (as `FITME_LLM_AGENT_<NAME>` would),
-    so the recorded model name and its price entry match what actually ran."""
+    """`settings` with every agent and every tier resolved to `model` (as
+    `FITME_LLM_AGENT_<NAME>` and `FITME_LLM_TIER_*` would), so the large-tier escalation runs
+    it too and the recorded model name and its price entry match what actually ran."""
     from fitme.llm.models import AGENT_DEFAULT_TIER
 
-    overridden = settings.model_copy()
+    overridden = settings.model_copy(
+        update={"llm_tier_large": model, "llm_tier_medium": model, "llm_tier_small": model}
+    )
     overridden._llm_agent_overrides = dict.fromkeys(AGENT_DEFAULT_TIER, model)
     return overridden
 
@@ -1016,15 +1190,20 @@ def _cost(result: ConversationResult) -> str:
     return f"${result.cost_usd:.4f}" if result.cost_known else "unknown"
 
 
+def _failed_text(count: int) -> str:
+    return f"{count} failed calls, tokens not recorded" if count else "0"
+
+
 def _metric_rows(result: ConversationResult | None) -> list[str]:
     if result is None:
-        return ["—"] * 8
+        return ["—"] * 9
     if result.error is not None:
-        return ["setup failed"] + ["—"] * 7
+        return ["setup failed"] + ["—"] * 8
     return [
         f"{result.checks_passed}/{result.checks_total}",
         str(len(result.turns)),
         str(result.model_calls),
+        _failed_text(result.failed_calls),
         f"{result.input_tokens} / {result.output_tokens}",
         _cost(result),
         f"{result.latency_s:.1f} s",
@@ -1037,6 +1216,7 @@ _METRICS = (
     "checks passed",
     "turns",
     "model calls",
+    "failed calls",
     "tokens in / out",
     "estimated cost",
     "latency",
@@ -1057,15 +1237,13 @@ def _by_scenario(
 def render_summary(results: Sequence[ConversationResult]) -> str:
     """One table, a row per scenario and mode: what the CLI prints."""
     lines = [
-        "| scenario | mode | checks | turns | model calls | tokens in / out | cost | latency |",
-        "|---|---|---|---|---|---|---|---|",
+        "| scenario | mode | checks | turns | model calls | failed calls | tokens in / out "
+        "| cost | latency |",
+        "|---|---|---|---|---|---|---|---|---|",
     ]
     for result in results:
         row = _metric_rows(result)
-        lines.append(
-            f"| {result.scenario} | {result.mode} | {row[0]} | {row[1]} | {row[2]} | "
-            f"{row[3]} | {row[4]} | {row[5]} |"
-        )
+        lines.append(f"| {result.scenario} | {result.mode} | {' | '.join(row[:7])} |")
     total_cost = sum(r.cost_usd for r in results)
     known = all(r.cost_known for r in results)
     lines.append("")
@@ -1128,9 +1306,10 @@ def _transcript(result: ConversationResult, catalog: Catalog) -> list[str]:
         return lines
     for turn in result.turns:
         cost = f"${turn.cost_usd:.4f}" if turn.cost_known else "cost unknown"
+        failed = f" ({_failed_text(turn.failed_calls)})" if turn.failed_calls else ""
         lines.append(
             f"**Turn {turn.index + 1} ({turn.action})** — {turn.latency_s:.1f} s, "
-            f"{turn.model_calls} model call(s), {turn.input_tokens}/{turn.output_tokens} "
+            f"{turn.model_calls} model call(s){failed}, {turn.input_tokens}/{turn.output_tokens} "
             f"tokens, {cost}"
         )
         lines.append("")
@@ -1192,6 +1371,8 @@ def render_report(
         "pipeline (`propose_new_plan`, then `revise_plan` per follow-up, then "
         "`confirm_plan`), each on a fresh database seeded from the fixture.",
         "",
+        LEGEND,
+        "",
         "## Summary",
         "",
         render_summary(results),
@@ -1218,9 +1399,9 @@ def render_report(
 def write_report(
     results: Sequence[ConversationResult], out_dir: Path, *, now: datetime | None = None
 ) -> Path:
-    """`out_dir/llm_first_eval_<YYYY-MM-DD_HHMM>.md` (local time); returns the path."""
+    """`out_dir/llm_first_eval_<YYYY-MM-DD_HHMMSS>.md` (local time); returns the path."""
     stamp = now or datetime.now()
     out_dir.mkdir(parents=True, exist_ok=True)
-    path = out_dir / f"llm_first_eval_{stamp.strftime('%Y-%m-%d_%H%M')}.md"
+    path = out_dir / f"llm_first_eval_{stamp.strftime('%Y-%m-%d_%H%M%S')}.md"
     path.write_text(render_report(results, title_time=stamp), encoding="utf-8")
     return path
