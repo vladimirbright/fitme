@@ -20,7 +20,7 @@ from fitme.domain.catalog import Catalog, Exercise
 from fitme.domain.enums import BlockRole, Measure
 from fitme.domain.models import Block, Plan, Prescription
 from fitme.i18n import t, wording
-from fitme.services import prescribing, session_time
+from fitme.services import prescribing, session_time, time_budget
 from fitme.services.prescribing import load_label
 
 TELEGRAM_MESSAGE_LIMIT = 4096
@@ -238,12 +238,25 @@ def session_draft_markup(decision_id: int, lang: str) -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 
+def duration_warning_text(warning: time_budget.DurationWarning, lang: str) -> str:
+    key = "plan.workout_over_target_kept" if warning.main_work_kept else "plan.workout_over_target"
+    return t(key, lang, requested=warning.requested_minutes, estimated=warning.estimated_minutes)
+
+
 def render_plan_text(
-    plan: Plan, *, catalog: Catalog, lang: str, title: str, unmatched: Sequence[str] = ()
+    plan: Plan,
+    *,
+    catalog: Catalog,
+    lang: str,
+    title: str,
+    unmatched: Sequence[str] = (),
+    session_minutes: int | None = None,
 ) -> str:
     """The whole plan as one text (split with `split_message` before sending): `title`, the
     schedule, every workout with supersets grouped, the "Not matched:" list of a pasted plan's
-    exercises that map to no catalog id (M8b, when any), and the AI disclosure footer."""
+    exercises that map to no catalog id (M8b, when any), and the AI disclosure footer.
+    ADR 0016: with the user's `session_minutes`, a workout estimated longer says so once,
+    under its estimate."""
     unmatched = displayable_unmatched(unmatched)
     lines: list[str] = [title, "", t("plan.schedule_title", lang)]
     workouts_by_key = {workout.key: workout for workout in plan.workouts}
@@ -262,6 +275,9 @@ def render_plan_text(
         if workout.blocks:
             minutes = session_time.display_minutes(workout, catalog)
             lines.append(t("plan.workout_estimate", lang, minutes=minutes))
+            warning = time_budget.duration_warning(workout, catalog, session_minutes)
+            if warning is not None:
+                lines.append(duration_warning_text(warning, lang))
         lines.extend(workout_block_lines(workout.blocks, catalog, lang))
     if unmatched:
         lines.extend(["", t("plan.unmatched_title", lang)])

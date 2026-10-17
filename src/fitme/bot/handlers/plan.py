@@ -80,6 +80,12 @@ def _message_of(query: CallbackQuery) -> Message:
     return message
 
 
+async def _session_minutes(db: Database, user_id: int) -> int | None:
+    """The profile's session length: what a workout's estimate is compared with (ADR 0016)."""
+    profile = (await profile_service.get_snapshot(db, user_id)).profile
+    return None if profile is None else profile.session_minutes
+
+
 async def _send_plan(
     message: Message,
     plan: Plan,
@@ -87,10 +93,16 @@ async def _send_plan(
     title: str,
     lang: str,
     markup: InlineKeyboardMarkup,
+    session_minutes: int | None,
     unmatched: Sequence[str] = (),
 ) -> None:
     text = rendering.render_plan_text(
-        plan, catalog=load_catalog(), lang=lang, title=title, unmatched=unmatched
+        plan,
+        catalog=load_catalog(),
+        lang=lang,
+        title=title,
+        unmatched=unmatched,
+        session_minutes=session_minutes,
     )
     chunks = rendering.split_message(text)
     for chunk in chunks[:-1]:
@@ -121,6 +133,7 @@ async def _show_round(
         title=t(title_key, lang),
         lang=lang,
         markup=rendering.draft_markup(result.decision_id, lang),
+        session_minutes=await _session_minutes(db, user_id),
         unmatched=result.unmatched,
     )
     await _draft_in_session(
@@ -206,7 +219,9 @@ async def _ask_or_generate(
     )
 
 
-async def _send_detail(message: Message, detail: planning.PlanDetail, lang: str) -> None:
+async def _send_detail(
+    message: Message, detail: planning.PlanDetail, lang: str, session_minutes: int | None
+) -> None:
     default = t("plan.default_suffix", lang) if detail.record.is_default else ""
     title = t(
         "plan.plan_title",
@@ -221,6 +236,7 @@ async def _send_detail(message: Message, detail: planning.PlanDetail, lang: str)
         title=title,
         lang=lang,
         markup=rendering.plan_actions_markup(detail.record, lang),
+        session_minutes=session_minutes,
     )
 
 
@@ -237,7 +253,7 @@ async def show_plan(message: Message, db: Database, user_id: int, plan_id: int, 
     if detail is None:
         await message.answer(t("plan.not_found", lang))
         return
-    await _send_detail(message, detail, lang)
+    await _send_detail(message, detail, lang, await _session_minutes(db, user_id))
 
 
 async def new_plan(
@@ -296,6 +312,7 @@ async def show_draft(
         title=t("plan.draft_title", lang),
         lang=lang,
         markup=rendering.session_draft_markup(decision_id, lang),
+        session_minutes=await _session_minutes(db, user_id),
     )
 
 
@@ -375,7 +392,7 @@ async def on_plan_menu(
 
     if action == "view":
         await query.answer()
-        await _send_detail(message, detail, lang)
+        await _send_detail(message, detail, lang, await _session_minutes(db, user_id))
         return
     if action == "default":
         if await planning.set_default(db, user_id, detail.record.id):

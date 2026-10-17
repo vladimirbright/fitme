@@ -369,3 +369,122 @@ async def test_a_shortened_plan_that_fails_the_guards_is_not_used(
     assert any(
         note.startswith("shortened plan failed the guards and was not used") for note in notes
     )
+
+
+# --- ADR 0016: an unreachable time budget is a warning the user sees -----------------------
+
+
+def _power_only(minutes_of_work: int) -> Plan:
+    """A power session with nothing but its main objective's work after the warm-up."""
+    return Plan(
+        name="Power",
+        schedule=[ScheduledDay(weekday=1, workout_key="A")],
+        workouts=[
+            Workout(
+                key="A",
+                qualities=[Quality.POWER],
+                title="Power",
+                blocks=[
+                    Block(
+                        kind="single",
+                        role=BlockRole.WARM_UP,
+                        items=[
+                            _rx(
+                                "jump_rope_skipping", 1, measure="time", seconds=600, rest_seconds=0
+                            )
+                        ],
+                    ),
+                    *[
+                        Block(
+                            kind="single",
+                            role=BlockRole.POWER,
+                            items=[_rx(name, sets, reps_min=5, reps_max=5, rest_seconds=120)],
+                        )
+                        for name, sets in (
+                            ("medicine_ball_rotational_side_throw", minutes_of_work),
+                            ("medicine_ball_overhead_slam", minutes_of_work),
+                        )
+                    ],
+                ],
+            )
+        ],
+    )
+
+
+def _draft_text(plan: Plan, minutes: int) -> str:
+    return render_plan_text(
+        plan, catalog=load_catalog(), lang="en", title="Draft:", session_minutes=minutes
+    )
+
+
+async def test_a_workout_that_fits_shows_its_estimate_and_no_warning(
+    db: Database, user_id: int
+) -> None:
+    await _seed_boxer(db, user_id)
+    short = _power_only(3)
+    assert session_time.estimate(short.workouts[0], load_catalog()).minutes <= 60
+    llm = FakeLlm([short, short])
+    result = await planning.propose_new_plan(db, llm.runtime(), user_id)
+    assert result.plan is not None
+    text = _draft_text(result.plan, 60)
+    minutes = session_time.display_minutes(result.plan.workouts[0], load_catalog())
+    assert f"About {minutes} min (estimated" in text
+    assert "⚠" not in text and "Requested:" not in text
+    assert not [v for v in result.guards_fired if v.rule == "plan.time_budget"]
+
+
+async def test_a_workout_shortened_to_the_target_carries_no_stale_warning(
+    db: Database, user_id: int
+) -> None:
+    await _seed_boxer(db, user_id)
+    llm = FakeLlm([_long_plan(), _long_plan()])
+    result = await planning.propose_new_plan(db, llm.runtime(), user_id)
+    assert result.plan is not None
+    catalog = load_catalog()
+    workout = result.plan.workouts[0]
+    assert session_time.estimate(workout, catalog).minutes <= 60
+    text = _draft_text(result.plan, 60)
+    assert f"About {session_time.display_minutes(workout, catalog)} min" in text
+    assert "⚠" not in text  # the original 73 min candidate's length is nowhere
+
+
+async def test_a_workout_that_cannot_reach_the_target_is_kept_and_says_so_once(
+    db: Database, user_id: int
+) -> None:
+    """45 min requested; only the warm-up and the main objective's work are left at about
+    55 min. A structurally valid draft, with the warning in the text the user gets."""
+    await _seed_boxer(db, user_id)
+    async with db.transaction() as conn:
+        await conn.execute("UPDATE profiles SET session_minutes = 45 WHERE user_id = ?", (user_id,))
+    long = _power_only(10)
+    llm = FakeLlm([long, long])
+
+    result = await planning.propose_new_plan(db, llm.runtime(), user_id)
+
+    assert result.plan is not None and result.refusal is None  # accepted, not refused
+    budget = [v for v in result.guards_fired if v.rule == "plan.time_budget"]
+    assert budget and not budget[0].ok
+    workout = result.plan.workouts[0]
+    estimated = session_time.display_minutes(workout, load_catalog())
+    assert estimated > 45
+    text = _draft_text(result.plan, 45)
+    warning = (
+        f"⚠ Requested: 45 min. Estimated: about {estimated} min. Shortening it further would "
+        "cut the main training objective's work, so it is kept."
+    )
+    assert text.count(warning) == 1 and text.count("⚠") == 1
+    assert f"About {estimated} min (estimated" in text  # the same number as the warning
+
+
+async def test_a_structural_failure_is_still_a_refusal_whatever_the_length(
+    db: Database, user_id: int
+) -> None:
+    await _seed_boxer(db, user_id)
+    broken = _power_only(8)
+    broken.workouts[0].blocks[1].items[0].exercise_id = "not_a_catalog_exercise"
+    llm = FakeLlm([broken, broken])
+
+    result = await planning.propose_new_plan(db, llm.runtime(), user_id)
+
+    assert result.plan is None and result.refusal is not None
+    assert not [v for v in result.guards_fired if v.rule == "plan.time_budget"]

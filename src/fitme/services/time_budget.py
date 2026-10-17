@@ -36,6 +36,8 @@ length.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from fitme.domain.catalog import Catalog
 from fitme.domain.enums import BlockRole, Quality
 from fitme.domain.guard_types import GuardVerdict
@@ -203,6 +205,44 @@ def fit_workout(
             ),
         )
     ]
+
+
+@dataclass(frozen=True, slots=True)
+class DurationWarning:
+    """ADR 0016: a workout, as it is shown, estimated longer than the user's session length.
+    `main_work_kept`: shortening it by `fit_workout`'s rules couldn't reach the target, so
+    what makes it longer is the warm-up and the main objective's work; otherwise the user
+    can shorten it (ask for a shorter version, drop an accessory)."""
+
+    workout_key: str
+    requested_minutes: int
+    estimated_minutes: int
+    main_work_kept: bool
+
+
+def duration_warning(
+    workout: Workout,
+    catalog: Catalog,
+    session_minutes: int | None,
+    model: session_time.TimeModel = session_time.DEFAULT_MODEL,
+) -> DurationWarning | None:
+    """The warning for `workout` *as it is now* — the plan the user is shown, never a
+    candidate before it was shortened — or `None` when its displayed estimate
+    (`session_time.display_minutes`) is within the session length. A planning estimate only:
+    nothing here reads how long a workout actually took. Pure: `workout` isn't changed."""
+    if session_minutes is None:
+        return None
+    estimated = session_time.display_minutes(workout, catalog, model)
+    if estimated <= session_minutes:
+        return None
+    trial = workout.model_copy(deep=True)
+    verdicts = fit_workout(trial, catalog, session_minutes, model)
+    return DurationWarning(
+        workout_key=workout.key,
+        requested_minutes=session_minutes,
+        estimated_minutes=estimated,
+        main_work_kept=bool(verdicts) and not verdicts[0].ok,
+    )
 
 
 def fit_plan(

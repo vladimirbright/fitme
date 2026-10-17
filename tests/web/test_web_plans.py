@@ -533,3 +533,41 @@ async def test_make_default_for_a_foreign_or_unknown_plan_errors(
     assert missing.headers["location"] == "/app/plans?error=not_found"
     plans = {p.id: p for p in await planning.list_plans(db, user_id)}
     assert plans[one].is_default
+
+
+# --- ADR 0016: a workout longer than the session says so ------------------------------------
+
+
+async def test_a_workout_longer_than_the_session_is_flagged_once_on_every_plan_page(
+    client: AsyncClient, db: Database, user_id: int, sent_codes: list[SentCode]
+) -> None:
+    from fitme.catalog import load_catalog
+    from fitme.services import session_time
+
+    await seed_profile(db, user_id)
+    async with db.transaction() as conn:
+        await conn.execute("UPDATE profiles SET session_minutes = 30 WHERE user_id = ?", (user_id,))
+    plan = make_plan(60.0)
+    for item in (i for b in plan.workouts[0].blocks for i in b.items):
+        item.sets, item.rest_seconds = 10, 240  # workout A: far longer than 30 minutes
+    plan_id, _version_id = await seed_confirmed_plan(db, user_id, plan)
+    await login(client, sent_codes)
+    catalog = load_catalog()
+    over = [w for w in plan.workouts if session_time.display_minutes(w, catalog) > 30]
+    assert [w.key for w in over] == ["A"]
+    for url in (f"/app/plans/{plan_id}", f"/app/plans/{plan_id}/revise"):
+        body = (await client.get(url)).text
+        assert body.count('class="duration-warning"') == len(over)
+        for workout in over:
+            estimated = session_time.display_minutes(workout, catalog)
+            assert f"Requested: 30 min. Estimated: about {estimated} min." in body
+
+
+async def test_no_duration_warning_when_every_workout_fits(
+    client: AsyncClient, db: Database, user_id: int, sent_codes: list[SentCode]
+) -> None:
+    await seed_profile(db, user_id)  # 60 min sessions
+    plan_id, _version_id = await seed_confirmed_plan(db, user_id, make_plan(60.0))
+    await login(client, sent_codes)
+    body = (await client.get(f"/app/plans/{plan_id}")).text
+    assert "duration-warning" not in body and "estimated from the sets and rests" in body
