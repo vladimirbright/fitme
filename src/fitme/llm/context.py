@@ -168,7 +168,9 @@ class UserContext(BaseModel):
     experience: Experience
     barbell_experience: BarbellExperience
     preferences: list[Preference]
-    focus: Focus
+    # ADR 0017: `None` when the request says what the plan is for: the planner then gets the
+    # profile's physical data only, not its focus or preferences.
+    focus: Focus | None
     location: Location
     equipment: list[Equipment]
     sessions_per_week: Annotated[int, Field(ge=1, le=6)]

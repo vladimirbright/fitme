@@ -56,8 +56,11 @@ class PendingImport:
 
 @dataclass(frozen=True, slots=True)
 class PendingNewPlan:
-    """The next free text describes the new plan to generate: asked when the user already
-    has plans, so the new one isn't a near-copy of them."""
+    """The new plan's description was asked for: asked when the user already has plans, so
+    the new one isn't a near-copy of them. ADR 0017: the answer goes to the assistant in
+    the new plan's planning session (opened with the question in its history), which asks
+    a clarifying question when it must, or generates; this marker only keeps "Generate
+    anyway" and Cancel valid."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -207,7 +210,8 @@ async def _ask_or_generate(
 ) -> None:
     """ "New plan": with no plans yet, generate straight from the profile. With plans, first
     ask what the new one should be — the answer arrives as free text (stop-word scan first,
-    `free_text.py`) and goes to the generator as guidance; "Generate anyway" skips it."""
+    `free_text.py`) and goes to the assistant in the new plan's session (ADR 0017), which
+    may ask one clarifying question before it generates; "Generate anyway" skips it."""
     plans = await planning.list_plans(db, user_id)
     if not plans or await planning.is_gated(db, user_id):
         # Nothing to tell apart, or the gate refuses anyway: go straight to the round (which
@@ -216,10 +220,12 @@ async def _ask_or_generate(
         return
     pending_plan_revisions[user_id] = PendingNewPlan()
     names = ", ".join(f"“{plan.name}”" for plan in plans)
-    await message.answer(
-        t("plan.new_guidance_prompt", lang, names=names),
-        reply_markup=rendering.new_plan_guidance_markup(lang),
-    )
+    question = t("plan.new_guidance_prompt", lang, names=names)
+    await message.answer(question, reply_markup=rendering.new_plan_guidance_markup(lang))
+    # ADR 0017: the answer belongs to the new plan's session, and the assistant reading it
+    # sees what it answers.
+    record = await conversations.open_planning(db, user_id, None)
+    await conversations.record_outgoing(db, user_id, record.id, question)
 
 
 async def _send_detail(
@@ -469,6 +475,7 @@ async def on_plan_draft(
             await message.answer(t("plan.rename_cancelled", lang))
             return
         if isinstance(pending, PendingNewPlan):
+            await conversations.close_planning(db, user_id, status="discarded")
             await message.answer(t("plan.new_cancelled", lang))
             return
         current = await planning.current_draft_id(db, user_id)
@@ -549,8 +556,8 @@ async def handle_plan_text(
     pending_plan_revisions: PendingRevisions,
 ) -> bool:
     """Called by the free-text handler *after* the stop-word scan (A§6.3). Returns `True`
-    if a revision, an import (M8b), a rename or a new plan's guidance was pending and the
-    text was consumed by it."""
+    if a revision, an import (M8b) or a rename was pending and the text was consumed by it.
+    A new plan's description is not consumed: it goes on to the assistant (ADR 0017)."""
     pending = pending_plan_revisions.pop(user_id, None)
     if pending is None:
         return False
@@ -559,8 +566,9 @@ async def handle_plan_text(
         await _rename(message, db, user_id, pending.plan_id, text, lang)
         return True
     if isinstance(pending, PendingNewPlan):
-        await _generate(message, db, llm, user_id, lang, text)
-        return True
+        # ADR 0017: not consumed here — the free-text handler passes it on to the assistant,
+        # in the new plan's session opened with the question.
+        return False
     if isinstance(pending, PendingImport):
         await message.answer(t("plan.importing", lang))
         async with waiting_message(message):

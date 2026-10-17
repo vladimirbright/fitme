@@ -92,6 +92,19 @@ class Sport(StrEnum):
     OTHER = "other"
 
 
+class Activity(StrEnum):
+    """ADR 0017: a sport or activity a plan *request* names ("бег по субботам", "bjj два раза
+    в неделю"). Read from the request's words, never stored; unlike `Sport` (the profile's
+    training elsewhere) it says what this one plan is about."""
+
+    RUNNING = "running"
+    CYCLING = "cycling"
+    SWIMMING = "swimming"
+    BOXING = "boxing"
+    GRAPPLING = "grappling"
+    CLIMBING = "climbing"
+
+
 class Location(StrEnum):
     PUBLIC_GYM = "public_gym"
     STUDIO_GYM = "studio_gym"
