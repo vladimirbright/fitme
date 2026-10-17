@@ -184,7 +184,7 @@ def _sent(session: FakeSession) -> list[SendMessage]:
 
 
 def _texts(session: FakeSession) -> list[str]:
-    return [m.text or "" for m in _sent(session)]
+    return session.chat_texts()
 
 
 def _toasts(session: FakeSession) -> list[str]:

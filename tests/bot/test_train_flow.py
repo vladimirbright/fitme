@@ -315,11 +315,11 @@ def _sent(session: FakeSession) -> list[SendMessage]:
 
 
 def _last_text(session: FakeSession) -> str:
-    return _sent(session)[-1].text or ""
+    return _texts(session)[-1]
 
 
 def _texts(session: FakeSession) -> list[str]:
-    return [m.text or "" for m in _sent(session)]
+    return session.chat_texts()
 
 
 def _toasts(session: FakeSession) -> list[str]:
