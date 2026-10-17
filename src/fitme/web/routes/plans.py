@@ -450,6 +450,8 @@ def _parse_prescription(
             rest_seconds=rest_seconds,
             note=item.note,
             declared_kg=item.declared_kg,
+            # An activity item keeps its name; a swap to a catalog exercise drops it.
+            activity_name=item.activity_name if str(exercise_id) == item.exercise_id else None,
         )
     except ValidationError as exc:
         return None, _field_error(prefix, exc)
@@ -499,7 +501,15 @@ def parse_edit_form(base: Plan, form: FormData) -> tuple[Plan | None, list[str]]
     if errors:
         return None, errors
     try:
-        return Plan(name=base.name, schedule=list(base.schedule), workouts=workouts), []
+        return (
+            Plan(
+                name=base.name,
+                location=base.location,
+                schedule=list(base.schedule),
+                workouts=workouts,
+            ),
+            [],
+        )
     except ValidationError as exc:
         return None, _field_error("", exc)
 

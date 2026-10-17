@@ -27,16 +27,19 @@ that's present but not finite/positive produces a failing verdict directly inste
 
 from __future__ import annotations
 
+import dataclasses
 import math
 
 from fitme.domain.catalog import Exercise
+from fitme.domain.enums import Location
 from fitme.domain.guard_types import GuardVerdict
-from fitme.domain.models import Load, Plan, Prescription, Workout
+from fitme.domain.models import Load, Plan, Prescription, Workout, is_activity_id
 from fitme.guards import ceiling, checkins, experience, screening
 from fitme.guards.context import GuardContext
 from fitme.guards.progression import check_weekly_increment
 
 _CATALOG_RULE = "plan.catalog_id"
+_ACTIVITY_RULE = "plan.activity"
 _LOCATION_RULE = "plan.location_fit"
 _EQUIPMENT_RULE = "plan.equipment_fit"
 _SCHEDULE_LENGTH_RULE = "plan.schedule_length"
@@ -158,10 +161,21 @@ def load_verdicts(exercise: Exercise, load: Load, ctx: GuardContext) -> list[Gua
     return verdicts
 
 
+def at_location(ctx: GuardContext, location: Location | None) -> GuardContext:
+    """`ctx` with its location replaced by a plan's own `location` (`Plan.location`), or
+    `ctx` itself when the plan has none (the profile's location). Only the location-fit
+    verdict reads it; equipment stays what the service resolved for the profile."""
+    if location is None or location == ctx.location:
+        return ctx
+    return dataclasses.replace(ctx, location=location)
+
+
 def validate_plan(plan: Plan, ctx: GuardContext) -> list[GuardVerdict]:
-    """Every guard verdict for `plan`, in `ctx`. Some verdicts are plan-wide (schedule
-    length/keys); most are per-prescription. The caller decides what to do with a `False`
-    verdict (retry, refuse); this function only reports."""
+    """Every guard verdict for `plan`, in `ctx` (at the plan's own location when it has one,
+    `at_location`). Some verdicts are plan-wide (schedule length/keys); most are
+    per-prescription. The caller decides what to do with a `False` verdict (retry, refuse);
+    this function only reports."""
+    ctx = at_location(ctx, plan.location)
     verdicts: list[GuardVerdict] = []
 
     verdicts.append(screening.plan_allowed(ctx.flags, ctx.holds))
@@ -220,11 +234,15 @@ def _excluded_verdicts(workout: Workout, ctx: GuardContext) -> list[GuardVerdict
     ]
 
 
-def validate_workout(workout: Workout, ctx: GuardContext) -> list[GuardVerdict]:
+def validate_workout(
+    workout: Workout, ctx: GuardContext, *, location: Location | None = None
+) -> list[GuardVerdict]:
     """A§6.5.1: the verdicts for *one* workout trained today — the screening gate plus every
     per-prescription check (`prescription_verdicts`) — without the plan-wide schedule rules,
     which say nothing about whether today's workout is safe. `/train` judges a session's
-    workout with this; `/plan` judges a whole plan with `validate_plan`."""
+    workout with this; `/plan` judges a whole plan with `validate_plan`. `location` is the
+    workout's plan's own `Plan.location` (`None`: the profile's)."""
+    ctx = at_location(ctx, location)
     return [
         screening.plan_allowed(ctx.flags, ctx.holds),
         *_workout_prescription_verdicts(workout, ctx),
@@ -234,8 +252,17 @@ def validate_workout(workout: Workout, ctx: GuardContext) -> list[GuardVerdict]:
 def prescription_verdicts(prescription: Prescription, ctx: GuardContext) -> list[GuardVerdict]:
     """Every per-prescription verdict: catalog id, location and equipment fit, contraindication
     (`screening.exercise_allowed`), experience for an advanced exercise
-    (`experience.exercise_level_allowed`) and the load verdicts (`load_verdicts`)."""
+    (`experience.exercise_level_allowed`) and the load verdicts (`load_verdicts`).
+
+    A non-catalog activity item (`activity:<slug>`, `domain.models.is_activity_id`) has no
+    catalog entry to check location, equipment, contraindications, experience or a kg
+    ceiling against: the model only lets it be timed, bodyweight-loaded and without reps in
+    reserve, so it gets one informational verdict. The screening *plan* gate still runs for
+    the whole plan or workout. A bare unknown id (no `activity:` prefix) still fails
+    `plan.catalog_id`."""
     exercise_id = prescription.exercise_id
+    if is_activity_id(exercise_id):
+        return [_activity_verdict(prescription)]
     exercise = ctx.catalog.by_id(exercise_id)
     if exercise is None:
         return [
@@ -259,6 +286,19 @@ def _workout_prescription_verdicts(workout: Workout, ctx: GuardContext) -> list[
         for prescription in block.items:
             verdicts.extend(prescription_verdicts(prescription, ctx))
     return verdicts
+
+
+def _activity_verdict(prescription: Prescription) -> GuardVerdict:
+    ok = prescription.load.kind == "bodyweight"  # the model enforces it; fail closed anyway
+    return GuardVerdict(
+        rule=_ACTIVITY_RULE,
+        ok=ok,
+        detail=(
+            f"{prescription.exercise_id}: a non-catalog activity, timed and unloaded"
+            if ok
+            else f"{prescription.exercise_id}: a non-catalog activity takes no load"
+        ),
+    )
 
 
 def _exercise_catalog_verdict(exercise_id: str) -> GuardVerdict:

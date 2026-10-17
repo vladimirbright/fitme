@@ -19,7 +19,12 @@ from fitme.catalog import load_catalog
 from fitme.config.settings import Settings
 from fitme.db.connection import Database
 from fitme.domain.enums import BlockRole
-from fitme.domain.models import NAME_MAX_LENGTH, Prescription
+from fitme.domain.models import (
+    NAME_MAX_LENGTH,
+    Prescription,
+    activity_fallback_name,
+    is_activity_id,
+)
 from fitme.services import prescribing, session_time, time_budget, webauth
 from fitme.services.llm_runtime import LlmRuntime
 from fitme.services.webauth import SendCode, SessionState
@@ -151,6 +156,8 @@ def render(
         # Read by the shared `_plan_body.html` partial (plan detail, draft and revise pages)
         # and the plan rename form; a route may still pass its own values.
         "exercise_names": exercise_display_names(lang),
+        # A non-catalog id (an `activity:` item's logged sets) as words, never the raw id.
+        "display_name": display_name,
         # ADR 0011: the same load text as the bot (`services.prescribing`).
         "load_phrase": lambda item, role=None: prescription_load_phrase(item, lang, role),
         "load_units": exercise_load_units(),
@@ -174,6 +181,12 @@ def exercise_display_names(lang: str) -> dict[str, str]:
         exercise.id: exercise.names.get(lang, exercise.names.get("en", exercise.id))
         for exercise in catalog.exercise
     }
+
+
+def display_name(exercise_id: str) -> str:
+    """A name for an id `exercise_display_names` doesn't know: an `activity:` id's slug in
+    words; anything else as it is (a catalog id removed since it was logged)."""
+    return activity_fallback_name(exercise_id) if is_activity_id(exercise_id) else exercise_id
 
 
 def prescription_load_phrase(item: Prescription, lang: str, role: BlockRole | None = None) -> str:

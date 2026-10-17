@@ -45,7 +45,7 @@ TRAINING = "training"
 # A planning session nobody touched for this long is over: its draft stays a draft (it can
 # still be confirmed from its own buttons), but new text starts fresh.
 PLANNING_IDLE_HOURS = 12
-HISTORY_LIMIT = 20
+HISTORY_LIMIT = 100
 
 
 @dataclass(frozen=True, slots=True)

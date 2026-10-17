@@ -50,7 +50,7 @@ from fitme.domain.enums import DecisionKind
 from fitme.domain.guard_types import GuardVerdict
 from fitme.domain.models import MAX_IMPLEMENT_KG, MAX_TOTAL_KG, LoadChange, Plan
 from fitme.guards.context import GuardContext
-from fitme.guards.plan import prescription_verdicts
+from fitme.guards.plan import at_location, prescription_verdicts
 from fitme.services import exclusions, planning
 from fitme.services.catalog import available_exercises
 from fitme.services.decisions import PromptMeta, prompt_columns
@@ -67,6 +67,7 @@ def load_cap_warnings(plan: Plan, ctx: GuardContext) -> dict[str, list[str]]:
     confirm checkbox. Every other failure is reported by `blocking_errors` instead, and always
     blocks the save."""
     warnings: dict[str, list[str]] = {}
+    ctx = at_location(ctx, plan.location)
     for workout in plan.workouts:
         for block in workout.blocks:
             for prescription in block.items:
@@ -112,6 +113,7 @@ def blocking_errors(plan: Plan, ctx: GuardContext) -> list[str]:
     exercise, a garbage reference load, and the absolute plausibility bounds. These always
     block the save, warning checkbox or not."""
     errors: list[str] = []
+    ctx = at_location(ctx, plan.location)
     for workout in plan.workouts:
         for block in workout.blocks:
             for prescription in block.items:

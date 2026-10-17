@@ -8,11 +8,12 @@ unexpected key is a validation error at parse time, not silently-ignored noise.
 from __future__ import annotations
 
 import math
+import re
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, model_validator
 
-from fitme.domain.enums import BlockRole, Measure, Quality, RefusalCode
+from fitme.domain.enums import BlockRole, Location, Measure, Quality, RefusalCode
 
 _STRICT_CONFIG = ConfigDict(extra="forbid", allow_inf_nan=False)
 
@@ -25,6 +26,7 @@ _STRICT_CONFIG = ConfigDict(extra="forbid", allow_inf_nan=False)
 # trims instead, so a display-text length quirk can no longer sink a structurally valid plan.
 NAME_MAX_LENGTH = 60
 TITLE_MAX_LENGTH = 60
+ACTIVITY_NAME_MAX_LENGTH = 60
 NOTE_MAX_LENGTH = 200
 # One pasted-plan exercise name the import agent couldn't map (`PlanImport.unmatched`): shown
 # back to the user once, never stored in a plan body.
@@ -62,6 +64,10 @@ def _trim_name(value: object) -> object:
 
 def _trim_title(value: object) -> object:
     return _trim_to_limit(value, TITLE_MAX_LENGTH)
+
+
+def _trim_activity_name(value: object) -> object:
+    return _trim_to_limit(value, ACTIVITY_NAME_MAX_LENGTH)
 
 
 def _trim_note(value: object) -> object:
@@ -125,8 +131,30 @@ class Load(BaseModel):
         return self
 
 
-MAX_SET_SECONDS = 3600
+# A timed set may be a whole activity session (a 90-minute class as one set), not only a
+# hold or a conditioning interval.
+MAX_SET_SECONDS = 10800
 MAX_SET_METERS = 2000
+
+# A non-catalog activity item (a class, a run, a walk): `Prescription.exercise_id` in this
+# namespace names no catalog exercise; the item carries its own `activity_name` and is always
+# one timed bodyweight set block. No catalog id may use this prefix (a test checks it).
+ACTIVITY_PREFIX = "activity:"
+_ACTIVITY_ID = re.compile(r"activity:[a-z0-9_]{3,60}")
+
+
+def is_activity_id(exercise_id: str) -> bool:
+    """Whether `exercise_id` is a non-catalog activity id (`activity:<slug>`, slug 3..60
+    characters of `a-z`, `0-9`, `_`)."""
+    return _ACTIVITY_ID.fullmatch(exercise_id) is not None
+
+
+def activity_fallback_name(exercise_id: str) -> str:
+    """A readable name for an activity id where its item's `activity_name` isn't at hand
+    (a logged set, a recap line): the slug in words ("activity:bjj_class" → "Bjj class"),
+    so the raw id is never shown."""
+    slug = exercise_id.removeprefix(ACTIVITY_PREFIX).replace("_", " ").strip()
+    return slug[:1].upper() + slug[1:] if slug else exercise_id
 
 
 class Prescription(BaseModel):
@@ -137,7 +165,11 @@ class Prescription(BaseModel):
 
     model_config = _STRICT_CONFIG
 
-    exercise_id: str  # must exist in the catalog; checked by guards.plan.validate_plan
+    # A catalog id (checked by guards.plan.validate_plan), or an `activity:<slug>` id for a
+    # non-catalog activity (`is_activity_id`), which then needs `activity_name`.
+    exercise_id: str
+    # Display name of an activity item ("BJJ class"); `None` for every catalog exercise.
+    activity_name: Annotated[str, BeforeValidator(_trim_activity_name)] | None = None
     sets: Annotated[int, Field(ge=1, le=10)]
     measure: Measure = Measure.REPS
     reps_min: Annotated[int, Field(ge=1, le=50)] | None = None
@@ -181,6 +213,22 @@ class Prescription(BaseModel):
                 raise ValueError("measure 'distance' needs meters")
             if has_reps or self.seconds is not None:
                 raise ValueError("measure 'distance' takes no reps or seconds")
+        return self
+
+    @model_validator(mode="after")
+    def _activity_shape(self) -> Prescription:
+        if not is_activity_id(self.exercise_id):
+            if self.activity_name is not None:
+                raise ValueError("activity_name is only for an activity: item")
+            return self
+        if not self.activity_name:
+            raise ValueError("an activity: item needs activity_name")
+        if self.measure != Measure.TIME:
+            raise ValueError("an activity: item is measured in time")
+        if self.load.kind != "bodyweight":
+            raise ValueError("an activity: item takes a bodyweight load")
+        if self.rir is not None:
+            raise ValueError("an activity: item takes no rir")
         return self
 
 
@@ -234,6 +282,10 @@ class Plan(BaseModel):
     model_config = _STRICT_CONFIG
 
     name: Annotated[str, BeforeValidator(_trim_name)]
+    # Where this plan is trained, when it differs from the profile's location (an outdoor
+    # running plan for a gym profile). The guards judge the plan's items here; `None` (every
+    # plan made before it) means the profile's location.
+    location: Location | None = None
     schedule: list[ScheduledDay]
     workouts: list[Workout]
 

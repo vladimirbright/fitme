@@ -117,6 +117,7 @@ from fitme.domain.catalog import Catalog, Exercise
 from fitme.domain.enums import (
     DecisionKind,
     HealthHoldReason,
+    Location,
     RefusalCode,
     ScreeningFlag,
     WorkoutSessionStatus,
@@ -210,6 +211,8 @@ class ActiveSession:
     session: WorkoutSessionRecord
     workout: Workout
     plan_name: str
+    # The plan's own `Plan.location` (`None`: the profile's), for judging a mid-session edit.
+    location: Location | None = None
 
     @property
     def total_blocks(self) -> int:
@@ -373,15 +376,17 @@ def _plan_with(plan: Plan, workout: Workout) -> Plan:
     in-place load substitution by `planning.judge` lands on it)."""
     return Plan(
         name=plan.name,
+        location=plan.location,
         schedule=list(plan.schedule),
         workouts=[workout if item.key == workout.key else item for item in plan.workouts],
     )
 
 
-def _judge_workout(workout: Workout, inputs: planning.Inputs) -> planning.Judgement:
+def _judge_workout(workout: Workout, inputs: planning.Inputs, plan: Plan) -> planning.Judgement:
     """A§6.5.1: the gate plus per-prescription verdicts over today's workout (with load
-    substitution), not the plan-wide schedule rules."""
-    return planning.judge_workout(workout, inputs)
+    substitution), not the plan-wide schedule rules — at `plan`'s own location, if it has
+    one (`Plan.location`)."""
+    return planning.judge_workout(workout, inputs, location=plan.location)
 
 
 def _workout_load_changes(workout: Workout, inputs: planning.Inputs) -> list[LoadChange]:
@@ -483,7 +488,12 @@ async def active_session(db: Database, user_id: int) -> ActiveSession | None:
             return None
         started = await started_workout(conn, session.id)
     workout = started if started is not None else ctx.workout
-    return ActiveSession(session=session, workout=workout, plan_name=ctx.plan_record.name)
+    return ActiveSession(
+        session=session,
+        workout=workout,
+        plan_name=ctx.plan_record.name,
+        location=ctx.plan.location,
+    )
 
 
 async def entry(db: Database, user_id: int) -> Entry:
@@ -757,7 +767,7 @@ async def adjust(
         # The adjustment is for this session's workout, whatever key the model wrote.
         workout.key = ctx.workout.key
         planning.restore_declared(_plan_with(ctx.plan, workout), plan_declared)
-        judgement = _judge_workout(workout, inputs)
+        judgement = _judge_workout(workout, inputs, ctx.plan)
         judgements[id(workout)] = judgement
         return judgement.verdicts
 
@@ -844,7 +854,7 @@ async def save_to_plan(
         latest = await get_latest_plan_version(conn, ctx.plan_record.id)
         base = ctx.plan if latest is None else Plan.model_validate(latest.body)
         new_plan = _plan_with(base, draft)
-        judgement = _judge_workout(draft, inputs)
+        judgement = _judge_workout(draft, inputs, base)
         if not judgement.ok:
             refusal = planning.refusal_for(RefusalCode.NO_SAFE_WORKOUT, lang)
             await planning.write_refusal_decision(
@@ -1021,7 +1031,7 @@ async def start(db: Database, settings: Settings, user_id: int, session_id: int)
             workout, fired = _engine_workout(ctx.workout, inputs, ctx.plan_record.id)
         else:
             workout = draft
-        judgement = _judge_workout(workout, inputs)
+        judgement = _judge_workout(workout, inputs, ctx.plan)
         fired.extend(judgement.fired)
         if not judgement.ok:
             refusal = planning.refusal_for(RefusalCode.NO_SAFE_WORKOUT, lang)
@@ -1893,7 +1903,7 @@ async def edit_remaining(
             return EditRemainingResult(status=Status.REFUSED, errors=(failure[1].detail,))
         inputs = planning.build_inputs(catalog, snapshot, settings, user_id)
         workout = edited.model_copy(deep=True)
-        judgement = _judge_workout(workout, inputs)
+        judgement = _judge_workout(workout, inputs, ctx.plan)
         if not judgement.ok:
             return EditRemainingResult(
                 status=Status.REFUSED,

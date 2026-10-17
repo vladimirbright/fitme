@@ -23,7 +23,7 @@ from fitme.bot.plan_rendering import (
 from fitme.db.records import CheckinRecord, PlanRecord
 from fitme.domain.catalog import Catalog, Exercise
 from fitme.domain.enums import BlockRole, CheckinAnswer, Measure
-from fitme.domain.models import Block, Load, Prescription, Workout
+from fitme.domain.models import Block, Load, Prescription, Workout, is_activity_id
 from fitme.domain.results import (
     ChangeReps,
     ChangeSets,
@@ -204,7 +204,9 @@ def block_text(view: BlockView, *, catalog: Catalog, lang: str) -> str:
     for index, item in enumerate(view.block.items):
         exercise = catalog.by_id(item.exercise_id)
         lines.append("")
-        lines.append(exercise_name(exercise, item.exercise_id, lang))
+        lines.append(
+            exercise_name(exercise, item.exercise_id, lang, activity_name=item.activity_name)
+        )
         # One prescription has one load for every set, so the sets are stated once ("4 × 6–8")
         # with that explicit load, instead of one identical line per set.
         # ADR 0016: a unilateral exercise's target is per side, here as in the plan view.
@@ -277,16 +279,17 @@ def youtube_search_buttons(
     or the name plus "technique", in the user's language (no user data), opened by the user's
     own device on tap — the server calls nothing. An https youtube.com link is what the
     YouTube app claims, so it opens there when installed (the Bot API allows no app-scheme
-    URLs)."""
+    URLs). A non-catalog activity item gets none."""
     buttons: list[InlineKeyboardButton] = []
-    for item in block.items:
+    items = [item for item in block.items if not is_activity_id(item.exercise_id)]
+    for item in items:
         exercise = catalog.by_id(item.exercise_id)
         name = exercise_name(exercise, item.exercise_id, lang)
         search = None if exercise is None else exercise.search.get(lang)
         query = search or t("workout.youtube_query", lang, name=name)
         text = (
             t("workout.youtube_button", lang)
-            if len(block.items) == 1
+            if len(items) == 1
             else t("workout.youtube_button_named", lang, name=name)
         )
         buttons.append(InlineKeyboardButton(text=text, url=_YOUTUBE_SEARCH + quote_plus(query)))

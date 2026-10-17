@@ -39,7 +39,7 @@
     <tbody>
       {% for exercise_id, points in data.load_over_time.items() %}
         {% for point in points %}
-        <tr><td>{{ exercise_names.get(exercise_id, exercise_id) }}</td><td>{{ point.date }}</td><td>{{ point.kg }}</td></tr>
+        <tr><td>{{ exercise_names.get(exercise_id) or display_name(exercise_id) }}</td><td>{{ point.date }}</td><td>{{ point.kg }}</td></tr>
         {% endfor %}
       {% endfor %}
     </tbody>

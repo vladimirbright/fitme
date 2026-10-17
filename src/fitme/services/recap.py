@@ -92,7 +92,7 @@ from fitme.domain.enums import (
 from fitme.domain.guard_types import GuardVerdict
 from fitme.domain.models import Load, Plan, Prescription, Refusal, Workout
 from fitme.domain.results import ChangeReps, ChangeSets, ChangeTarget, PlanChange, SwapExercise
-from fitme.guards.plan import prescription_verdicts
+from fitme.guards.plan import at_location, prescription_verdicts
 from fitme.i18n import wording
 from fitme.llm.context import render_user_prompt
 from fitme.llm.models import model_for
@@ -642,6 +642,7 @@ def _filter_suggestions(
     must name an exercise in the plan and stay valid. Dropped ones are logged."""
     kept: list[PlanChange] = []
     fired: list[GuardVerdict] = []
+    ctx = at_location(inputs.ctx, plan.location)
     prescriptions = [
         item for workout in plan.workouts for block in workout.blocks for item in block.items
     ]
@@ -669,6 +670,7 @@ def _filter_suggestions(
                     "load": planning.engine_load(target, inputs)[0],
                     "note": None,
                     "declared_kg": None,
+                    "activity_name": None,
                 }
             )
             if candidate.measure not in target.measures:
@@ -679,7 +681,7 @@ def _filter_suggestions(
                 verdict.detail
                 for item in targets
                 for verdict in prescription_verdicts(
-                    item.model_copy(update={"sets": change.sets}), inputs.ctx
+                    item.model_copy(update={"sets": change.sets}), ctx
                 )
                 if not verdict.ok
             ]
@@ -748,7 +750,7 @@ def _filter_suggestions(
             candidate = source.model_copy(
                 update={"reps_min": change.reps_min, "reps_max": change.reps_max}
             )
-        failures = [v for v in prescription_verdicts(candidate, inputs.ctx) if not v.ok]
+        failures = [v for v in prescription_verdicts(candidate, ctx) if not v.ok]
         if failures:
             fired.append(
                 GuardVerdict(
@@ -1073,6 +1075,7 @@ def _apply_change(
                     # M8b: a declared hint belongs to the exercise the user's pasted plan
                     # named; the swapped-in exercise gets none.
                     prescription.declared_kg = None
+                    prescription.activity_name = None  # a swap target is a catalog exercise
                     changed = True
                 elif isinstance(change, ChangeReps):
                     if (
