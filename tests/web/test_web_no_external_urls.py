@@ -7,10 +7,10 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from conftest import SentCode, login
 from httpx import AsyncClient
 from test_web_plans import make_plan, seed_confirmed_plan, seed_profile
 
+from conftest import SentCode, login
 from fitme.config.settings import Settings
 from fitme.db.connection import Database
 

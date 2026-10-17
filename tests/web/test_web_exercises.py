@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from conftest import SentCode, login
 from httpx import AsyncClient
 
+from conftest import SentCode, login
 from fitme.config.settings import Settings
 from fitme.services.reference_exercises import reference_path
 

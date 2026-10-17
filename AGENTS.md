@@ -137,6 +137,11 @@ implementing it.
 ## 9. Style
 
 - Python. Type hints on public functions. No clever metaprogramming.
+- Before every commit, run `make precommit`: it applies ruff's safe autofixes and formatting,
+  then runs `make check` (ruff lint + format check, mypy, catalog check, tests). Commit only
+  when it is green, and include the files the autofix touched. Fix what ruff and mypy report
+  instead of silencing it; a `# noqa` or `# type: ignore` needs the specific code and a
+  comment saying why.
 - Guards live in a dedicated module with unit tests. Every rule in §2 has a test that proves
   it blocks the bad case.
 - Prompts live in version-controlled files, not inline strings.

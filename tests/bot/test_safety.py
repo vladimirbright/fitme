@@ -10,8 +10,8 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 from aiogram import Bot, Dispatcher
-from conftest import FakeSession, callback_update, edited_message_update, make_user, message_update
 
+from conftest import FakeSession, callback_update, edited_message_update, make_user, message_update
 from fitme import clock
 from fitme.bot.callback_data import HoldClear
 from fitme.db.connection import Database

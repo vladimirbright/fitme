@@ -5,7 +5,6 @@ or implausible value is a form error — never a 500, never silently saved."""
 from __future__ import annotations
 
 import pytest
-from conftest import SentCode, get_csrf_token, login
 from httpx import AsyncClient
 from test_web_plans import (
     _SQUAT,
@@ -15,6 +14,7 @@ from test_web_plans import (
     seed_profile,
 )
 
+from conftest import SentCode, get_csrf_token, login
 from fitme.db.connection import Database
 from fitme.services import planning
 
