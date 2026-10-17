@@ -4,12 +4,12 @@ kind = "bodyweight"
 pattern = "vertical_push"
 measures = ["reps"]
 qualities = ["strength", "hypertrophy"]
-equipment = ["barbell", "rack"]
+equipment = ["smith_machine"]
 load_unit = "total"
 level = "advanced"
-locations = ["public_gym", "studio_gym", "home_equipment"]
+locations = ["public_gym", "studio_gym"]
 loads_areas = ["shoulder", "elbow_wrist"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
 increment_kg = 1.0
 start = { kind = "bodyweight" }
-instructions = { en = "Set an empty barbell on the rack's safety arms at about waist height and support yourself on it, bar in front of the hips and arms straight. Lean slightly forward and bend the elbows to lower the chest toward the bar, about to a right angle at the elbows. Press back up and avoid swinging the legs.", ru = "Положите пустой гриф на страховочные упоры рамы примерно на уровне пояса и обопритесь на него, гриф перед тазом, руки прямые. Слегка наклонитесь вперёд и сгибайте локти, опуская грудь к грифу примерно до прямого угла в локтях. Выжмитесь обратно, ноги не раскачивайте." }
+instructions = { en = "Lock the Smith machine bar on its hooks at about waist height and support yourself on it, bar in front of the hips and arms straight. Lean slightly forward and bend the elbows to lower the chest toward the bar, about to a right angle at the elbows. Press back up and avoid swinging the legs.", ru = "Зафиксируйте гриф тренажёра Смита на крюках примерно на уровне пояса и обопритесь на него, гриф перед тазом, руки прямые. Слегка наклонитесь вперёд и сгибайте локти, опуская грудь к грифу примерно до прямого угла в локтях. Выжмитесь обратно, ноги не раскачивайте." }

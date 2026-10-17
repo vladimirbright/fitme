@@ -16,11 +16,12 @@ availability was left as an open item below unless the owner decided it.
 - **Equipment added** (`Equipment`, en/ru locales): `towel`, `dip_belt`, `suspension_straps`,
   `wrist_roller`. The entries that need one now list it, and towel-only moves left
   `apartment_no_equipment`.
-- **Low fixed bar** (owner): exercises that need a bar at hip/waist height now use
-  `["barbell", "rack"]`, with an empty barbell resting on the safety arms. This covers
-  `bar_korean_dip`, `bodyweight_bent_knee_inverted_row`, `low_bar_inverted_row`,
-  `straight_bar_dip` and `weight_plate_straight_bar_dip`, and drops `outdoor` from them. A
-  doorway pull-up bar alone no longer selects them.
+- **Low fixed bar** (owner, revised after review): a doorway pull-up bar can't sit at
+  hip/waist height. A bar resting loose on supports can roll under a dip, so the dips
+  (`bar_korean_dip`, `straight_bar_dip`, `weight_plate_straight_bar_dip`) now use a locked
+  Smith machine bar and are gym-only. The rows (`bodyweight_bent_knee_inverted_row`,
+  `low_bar_inverted_row`) hang from the bar, so they use `["barbell", "rack"]` with the bar in
+  the J-hooks. `outdoor` is dropped from all five.
 - **Duplicates removed** (owner): `band_straight_leg_deadlift` (= `band_stiff_leg_deadlift`)
   and `barbell_reverse_grip_incline_bench_press` (= `barbell_incline_reverse_grip_press`). No
   plan version or set log referenced them.
@@ -28,7 +29,9 @@ availability was left as an open item below unless the owner decided it.
   dumbbell work on the ball and the supine loaded variants already marked `advanced` stay
   advanced. The two-arm supine ball press, fly, hammer press and pullover and the cable-on-ball
   entries stay general.
-- **Assisted machines**: `kg_loadable = false`, because their kg is assistance, not load.
+- **Assisted machines** stay as on `main` (kg-loadable). The earlier pass's `kg_loadable =
+  false` made the plausibility guard refuse any logged counterweight, so it was reverted.
+  Their real problem is still open (below).
 
 ## Notable corrections
 
@@ -53,6 +56,18 @@ availability was left as an open item below unless the owner decided it.
   reps in reserve, not speed). `stance_footwork_drill` is `specific = true`.
 
 ## Open items (not applied)
+
+- **Assisted-machine load direction** (pre-existing, needs a code change): on
+  `machine_assisted_*` a higher kg means more help. The load engine still treats kg as load:
+  after a good session it adds assistance, and after two weak ones it removes 10%, which makes
+  the move harder after failing. Guards treat any kg decrease as always safe. A fix needs an
+  assisted-load notion in `domain/catalog.py`, `services/loads.py` and the ceiling and
+  progression guards, with tests.
+- **Gym equipment assumption** (pre-existing, ADR 0008): gyms count as having every
+  `Equipment` value, including the new `dip_belt`, `suspension_straps` and `wrist_roller`.
+  This PR doesn't widen what gyms get, because those exercises were already selectable there.
+  It only narrows home and apartment availability. Separating standard from specialised gym
+  equipment would be a new ADR.
 
 - **Owner decisions**:
   - `smith_machine_hack_squat` describes a feet-forward back squat; some sources mean a bar

@@ -4,12 +4,12 @@ kind = "compound"
 pattern = "vertical_push"
 measures = ["reps"]
 qualities = ["strength", "hypertrophy"]
-equipment = ["barbell", "rack", "weight_plate", "dip_belt"]
+equipment = ["smith_machine", "weight_plate", "dip_belt"]
 level = "advanced"
-locations = ["public_gym", "studio_gym", "home_equipment"]
+locations = ["public_gym", "studio_gym"]
 loads_areas = ["shoulder", "elbow_wrist"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
 increment_kg = 2.5
 start = { kind = "calibration" }
-instructions = { en = "Set an empty barbell on the rack's safety arms at about waist height. Hang a plate from a dip belt and support yourself on the bar, hands on it in front. Lower by bending the elbows to about 90 degrees, then press up. Keep the movement slow and do not drop into the bottom.", ru = "Положите пустой гриф на страховочные упоры рамы примерно на уровне пояса. Подвесьте блин на пояс для отягощений и обопритесь на гриф, руки впереди. Опуститесь, сгибая локти примерно до 90 градусов, затем выжмитесь вверх. Двигайтесь медленно, не проваливайтесь в нижней точке." }
+instructions = { en = "Lock the Smith machine bar on its hooks at about waist height. Hang a plate from a dip belt and support yourself on the bar, hands on it in front. Lower by bending the elbows to about 90 degrees, then press up. Keep the movement slow and do not drop into the bottom.", ru = "Зафиксируйте гриф тренажёра Смита на крюках примерно на уровне пояса. Подвесьте блин на пояс для отягощений и обопритесь на гриф, руки впереди. Опуститесь, сгибая локти примерно до 90 градусов, затем выжмитесь вверх. Двигайтесь медленно, не проваливайтесь в нижней точке." }
 load_step_kg = 2.5

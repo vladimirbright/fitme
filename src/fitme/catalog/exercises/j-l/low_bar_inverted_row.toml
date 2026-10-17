@@ -12,4 +12,4 @@ loads_areas = ["shoulder", "elbow_wrist"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
 increment_kg = 2.5
 start = { kind = "bodyweight" }
-instructions = { en = "Set an empty barbell on the rack's safety arms at about hip height. Lie underneath with heels on the floor, body straight, hands on the bar. Pull your chest up to the bar, then lower back down under control.", ru = "Положите пустой гриф на страховочные упоры рамы примерно на уровне таза. Лягте под ним, пятки на полу, тело прямое, руки на грифе. Подтяните грудь к грифу, затем опуститесь под контролем." }
+instructions = { en = "Set an empty barbell in the rack's J-hooks at about hip height. Lie underneath with heels on the floor, body straight, hands on the bar. Pull your chest up to the bar, then lower back down under control.", ru = "Установите пустой гриф на крюки рамы примерно на уровне таза. Лягте под ним, пятки на полу, тело прямое, руки на грифе. Подтяните грудь к грифу, затем опуститесь под контролем." }
