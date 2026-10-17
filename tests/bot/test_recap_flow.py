@@ -1127,3 +1127,31 @@ async def test_an_app_rep_change_is_stale_after_the_range_was_edited(
 
     applied = await recap.apply_suggestion(db, settings, user_id, session_id, view.decision_id, 0)
     assert applied.status == Status.STALE
+
+
+async def test_the_model_cannot_add_volume_to_speed_work(
+    dispatcher: Dispatcher, bot: Bot, db: Database, llm: FakeLlm, settings: Settings
+) -> None:
+    """ADR 0016: a set or rep change for a power, speed or agility exercise is dropped in
+    code, not left to the prompt."""
+    from fitme.services.recap import _is_speed_work
+
+    catalog = load_catalog()
+    assert _is_speed_work(catalog, "stance_footwork_drill")
+    assert _is_speed_work(catalog, "kettlebell_swing")
+    assert not _is_speed_work(catalog, _PUSHUP)
+
+    user_id, _, version_id = await _ready(dispatcher, bot, db)
+    session_id = await _seed_completed_session(
+        db, user_id, version_id, workout_key="B", loads={_PUSHUP: None}
+    )
+    llm.recap_responses.append(
+        Recap(text="", suggestions=[ChangeSets(exercise_id="stance_footwork_drill", sets=6)])
+    )
+    view = await recap.build_recap(db, llm.runtime(settings), user_id, session_id)
+    assert view is not None and view.proposal.suggestions == []
+    async with db.read() as conn:
+        decision = await get_decision(conn, view.decision_id)
+    assert decision is not None and any(
+        "speed work keeps its volume" in v["detail"] for v in decision.guards_fired
+    )
