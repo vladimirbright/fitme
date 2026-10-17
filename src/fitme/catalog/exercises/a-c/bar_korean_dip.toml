@@ -5,12 +5,12 @@ kind = "bodyweight"
 pattern = "vertical_push"
 measures = ["reps"]
 qualities = ["strength", "hypertrophy"]
-equipment = ["barbell", "rack"]
+equipment = ["smith_machine"]
 level = "advanced"
-locations = ["public_gym", "studio_gym", "home_equipment"]
+locations = ["public_gym", "studio_gym"]
 loads_areas = ["shoulder", "elbow_wrist"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
 increment_kg = 1.0
 start = { kind = "bodyweight" }
-instructions = { en = "Set an empty barbell on the rack's safety arms at about hip height and stand with your back to it. Grip it shoulder-width and press up to straight arms, legs out in front. Bend the elbows and let the body move forward as the bar slides up behind you, only as deep as the shoulders stay comfortable, then press back up. Keep the shoulders down and move slowly.", ru = "Положите пустой гриф на страховочные упоры рамы примерно на уровне бёдер и встаньте к нему спиной. Возьмитесь за гриф на ширине плеч и выйдите в упор на прямых руках, ноги вытянуты вперёд. Сгибайте локти, позволяя корпусу смещаться вперёд, а грифу подниматься вдоль спины, только до комфортной для плеч глубины, затем выжмитесь вверх. Плечи опущены, двигайтесь медленно." }
+instructions = { en = "Lock the Smith machine bar on its hooks at about hip height and stand with your back to it. Grip it shoulder-width behind you and press up to straight arms, legs out in front. Bend the elbows and let the body move forward and down in front of the bar, only as deep as the shoulders stay comfortable, then press back up. Keep the shoulders down and move slowly.", ru = "Зафиксируйте гриф тренажёра Смита на крюках примерно на уровне бёдер и встаньте к нему спиной. Возьмитесь за гриф за спиной на ширине плеч и выйдите в упор на прямых руках, ноги вытянуты вперёд. Сгибайте локти, позволяя корпусу смещаться вперёд и вниз перед грифом, только до комфортной для плеч глубины, затем выжмитесь вверх. Плечи опущены, двигайтесь медленно." }
 load_step_kg = 1.0
