@@ -1,0 +1,50 @@
+{
+  "name": "d_hour_run",
+  "description": "Scenario D: 'run for about an hour' is a question, or a run of roughly an hour with no set/rep structure; the running minutes are reported, not counted.",
+  "profile": "experienced_public_gym",
+  "profile_overrides": {
+    "sessions_per_week": 3
+  },
+  "history": [
+    {
+      "exercise_id": "barbell_back_squat",
+      "kg": 80.0,
+      "reps": 5
+    },
+    {
+      "exercise_id": "barbell_bench_press",
+      "kg": 60.0,
+      "reps": 6
+    }
+  ],
+  "turns": [
+    {
+      "user": "I want to run for about an hour",
+      "expect": {
+        "any_of": [
+          {
+            "question": true
+          },
+          {
+            "draft": true,
+            "reps_items_max": 0,
+            "exclude_kinds": [
+              "compound",
+              "isolation"
+            ],
+            "cardio_minutes": [
+              50,
+              70
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "legacy": {
+    "request": {
+      "user": "I want to run for about an hour",
+      "expect_as": 0
+    }
+  }
+}

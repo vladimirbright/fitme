@@ -10,7 +10,7 @@ CATALOG_OUT ?= catalog.txt
 CAFFEINATE := $(shell command -v caffeinate >/dev/null 2>&1 && echo caffeinate -s)
 
 .DEFAULT_GOAL := help
-.PHONY: help install lock migrate serve activate test lint fmt fix typecheck catalog catalog-list catalog-index check precommit export delete purge unhold hold-clear import-history llm-eval clean docker-build up down logs backup activate-docker unhold-docker
+.PHONY: help install lock migrate serve activate test lint fmt fix typecheck catalog catalog-list catalog-index check precommit export delete purge unhold hold-clear import-history llm-eval llm-eval-conversations clean docker-build up down logs backup activate-docker unhold-docker
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -78,6 +78,9 @@ import-history: ## Import past trainings/plans from FILE (docs/import-format.md;
 
 llm-eval: ## Run LLM eval fixtures (spends money; AGENT=, MODEL= optional; add YES=1 to confirm)
 	$(FITME) llm eval $(if $(AGENT),--agent $(AGENT)) $(if $(MODEL),--model $(MODEL)) $(if $(YES),--yes)
+
+llm-eval-conversations: ## Replay planning conversations, planner vs legacy (spends money; MODE=, SCENARIO=, MODEL=, YES=1)
+	$(FITME) llm eval-conversations $(if $(MODE),--mode $(MODE)) $(if $(SCENARIO),--scenario $(SCENARIO)) $(if $(MODEL),--model $(MODEL)) $(if $(YES),--yes)
 
 clean: ## Remove caches
 	rm -rf .pytest_cache .mypy_cache .ruff_cache

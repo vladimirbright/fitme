@@ -1,0 +1,133 @@
+{
+  "name": "a_easy_run_saturdays",
+  "description": "Scenarios A, B, C, H in the owner's original Russian (ADR 0017): an easy outdoor run once a week on Saturdays for a gym profile with barbell history; remove the jump rope; no dumbbells on a run; agree and save in one message.",
+  "profile": "experienced_public_gym",
+  "profile_overrides": {
+    "language": "ru",
+    "sessions_per_week": 3
+  },
+  "history": [
+    {
+      "exercise_id": "barbell_back_squat",
+      "kg": 80.0,
+      "reps": 5
+    },
+    {
+      "exercise_id": "barbell_bench_press",
+      "kg": 60.0,
+      "reps": 6
+    }
+  ],
+  "turns": [
+    {
+      "user": "Давай разок в неделю по субботам легкую беговую на свежем воздухе. Мне надо понять как разминаться, как бежать",
+      "expect": {}
+    },
+    {
+      "user": "Выглядит хорошо",
+      "expect": {
+        "draft": true,
+        "days": [
+          5
+        ],
+        "no_kg_loads": true,
+        "no_equipment": true,
+        "exclude_kinds": [
+          "compound",
+          "isolation"
+        ],
+        "items_max": 6,
+        "location": "outdoor"
+      }
+    },
+    {
+      "user": "Убери скакалку",
+      "expect": {
+        "draft": true,
+        "days": [
+          5
+        ],
+        "no_kg_loads": true,
+        "no_equipment": true,
+        "exclude_kinds": [
+          "compound",
+          "isolation"
+        ],
+        "items_max": 6,
+        "location": "outdoor",
+        "exclude_ids": [
+          "jump_rope_skipping"
+        ],
+        "exclude_equipment": [
+          "dumbbells",
+          "barbell",
+          "kettlebell",
+          "machine"
+        ]
+      }
+    },
+    {
+      "user": "Зачем мне брать гантели на пробежку? Убери их",
+      "expect": {
+        "draft": true,
+        "days": [
+          5
+        ],
+        "no_kg_loads": true,
+        "no_equipment": true,
+        "exclude_kinds": [
+          "compound",
+          "isolation"
+        ],
+        "items_max": 6,
+        "location": "outdoor",
+        "exclude_ids": [
+          "jump_rope_skipping"
+        ],
+        "exclude_equipment": [
+          "dumbbells",
+          "barbell",
+          "kettlebell",
+          "machine"
+        ]
+      }
+    },
+    {
+      "user": "Выглядит хорошо. Сохрани.",
+      "expect": {
+        "saved": true,
+        "days": [
+          5
+        ],
+        "no_kg_loads": true,
+        "no_equipment": true,
+        "exclude_kinds": [
+          "compound",
+          "isolation"
+        ],
+        "exclude_ids": [
+          "jump_rope_skipping"
+        ]
+      }
+    }
+  ],
+  "legacy": {
+    "request": {
+      "user": "Давай разок в неделю по субботам легкую беговую на свежем воздухе. Мне надо понять как разминаться, как бежать",
+      "expect_as": 1
+    },
+    "revisions": [
+      {
+        "user": "Убери скакалку",
+        "expect_as": 2
+      },
+      {
+        "user": "Зачем мне брать гантели на пробежку? Убери их",
+        "expect_as": 3
+      }
+    ],
+    "save": {
+      "expect_as": 4
+    }
+  }
+}

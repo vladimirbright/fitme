@@ -1,0 +1,86 @@
+{
+  "name": "e_bjj_twice",
+  "description": "Scenario E in the owner's original Russian (ADR 0017): 'BJJ twice a week' is a question (or two BJJ sessions and no strength work); then the two classes on Monday and Thursday, saved.",
+  "profile": "experienced_public_gym",
+  "profile_overrides": {
+    "language": "ru",
+    "sessions_per_week": 3
+  },
+  "history": [
+    {
+      "exercise_id": "barbell_back_squat",
+      "kg": 80.0,
+      "reps": 5
+    },
+    {
+      "exercise_id": "barbell_bench_press",
+      "kg": 60.0,
+      "reps": 6
+    }
+  ],
+  "turns": [
+    {
+      "user": "bjj два раза в неделю",
+      "expect": {
+        "any_of": [
+          {
+            "question": true
+          },
+          {
+            "draft": true,
+            "activity_items_min": 2,
+            "exclude_kinds": [
+              "compound",
+              "isolation"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "user": "просто поставь две тренировки, пн и чт",
+      "expect": {
+        "draft": true,
+        "days": [
+          0,
+          3
+        ],
+        "activity_items_min": 2,
+        "exclude_kinds": [
+          "compound",
+          "isolation"
+        ]
+      }
+    },
+    {
+      "user": "Сохрани.",
+      "expect": {
+        "saved": true,
+        "days": [
+          0,
+          3
+        ],
+        "activity_items_min": 2,
+        "exclude_kinds": [
+          "compound",
+          "isolation"
+        ]
+      }
+    }
+  ],
+  "legacy": {
+    "request": {
+      "user": "bjj два раза в неделю",
+      "expect_as": 0
+    },
+    "revisions": [
+      {
+        "user": "просто поставь две тренировки, пн и чт",
+        "expect_as": 1
+      }
+    ],
+    "save": {
+      "expect_as": 2
+    }
+  }
+}
