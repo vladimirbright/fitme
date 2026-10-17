@@ -1094,3 +1094,36 @@ async def test_one_session_at_the_top_is_not_yet_a_reason_to_change(
     assert next(t for t in view.proposal.targets if t.exercise_id == _PUSHUP).kind == (
         TargetKind.HOLD
     )
+
+
+async def test_an_app_rep_change_is_stale_after_the_range_was_edited(
+    dispatcher: Dispatcher, bot: Bot, db: Database, llm: FakeLlm, settings: Settings
+) -> None:
+    """ADR 0016: the 8-10 -> 10-12 suggestion was decided from 8-10; once the plan says
+    12-16 for push-ups, tapping it changes nothing."""
+    user_id, plan_id, version_id = await _ready(dispatcher, bot, db)
+    await _seed_completed_session(db, user_id, version_id, workout_key="B", loads={_PUSHUP: None})
+    session_id = await _seed_completed_session(
+        db, user_id, version_id, workout_key="B", loads={_PUSHUP: None}
+    )
+    view = await recap.build_recap(db, llm.runtime(settings), user_id, session_id)
+    assert view is not None and isinstance(view.proposal.suggestions[0], ChangeReps)
+
+    async with db.read() as conn:
+        latest = (await list_plan_versions(conn, plan_id))[-1]
+    edited = Plan.model_validate(latest.body)
+    for item in (i for w in edited.workouts for b in w.blocks for i in b.items):
+        if item.exercise_id == _PUSHUP:
+            item.reps_min, item.reps_max = 12, 16
+    async with db.transaction() as conn:
+        await insert_plan_version(
+            conn,
+            plan_id=plan_id,
+            version=latest.version + 1,
+            body=edited.model_dump(mode="json"),
+            origin="user_edit",
+            decision_id=view.decision_id,
+        )
+
+    applied = await recap.apply_suggestion(db, settings, user_id, session_id, view.decision_id, 0)
+    assert applied.status == Status.STALE
