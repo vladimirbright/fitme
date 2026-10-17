@@ -550,17 +550,19 @@ def test_timed_and_distance_work_progress_one_variable_by_about_ten_percent() ->
     decision = progression.next_target(
         plank, _exercise("plank"), [_session(plank, 40, 40, 45), _session(plank, 40, 40, 40)]
     )
-    assert decision.change == ChangeTarget(exercise_id="plank", seconds=45)
+    assert decision.change == ChangeTarget(exercise_id="plank", from_target=40, seconds=45)
     ropes = rx("battle_rope_alternating_waves", 6, seconds=30)
     decision = progression.next_target(
         ropes, _exercise(ropes.exercise_id), [_session(ropes, *[30] * 6)] * 2
     )
-    assert decision.change == ChangeTarget(exercise_id=ropes.exercise_id, seconds=35)
+    assert decision.change == ChangeTarget(
+        exercise_id=ropes.exercise_id, from_target=30, seconds=35
+    )
     carry = rx("dumbbell_farmer_carry", 3, meters=40, rest=60)
     decision = progression.next_target(
         carry, _exercise(carry.exercise_id), [_session(carry, 40, 40, 40)] * 2
     )
-    assert decision.change == ChangeTarget(exercise_id=carry.exercise_id, meters=45)
+    assert decision.change == ChangeTarget(exercise_id=carry.exercise_id, from_target=40, meters=45)
 
 
 def test_at_the_top_of_a_useful_range_the_next_step_is_a_variation_not_more() -> None:
@@ -641,8 +643,15 @@ def test_a_target_change_is_stale_once_the_plans_targets_differ() -> None:
         workout("A", "A", single(rx("plank", 3, seconds=30))),
         workout("B", "B", single(rx("plank", 3, seconds=90))),
     )
-    change = ChangeTarget(exercise_id="plank", seconds=35)
+    change = ChangeTarget(exercise_id="plank", from_target=30, seconds=35)
     assert _one_target(same, change) and not _one_target(edited, change)
+    # Every plank edited to 60 s since: the 30 -> 35 s change is stale, not applied over it.
+    later = plan(
+        [(0, "A"), (3, "B")],
+        workout("A", "A", single(rx("plank", 3, seconds=60))),
+        workout("B", "B", single(rx("plank", 3, seconds=60))),
+    )
+    assert not _one_target(later, change)
 
 
 def test_the_active_workout_view_says_per_side_too() -> None:
@@ -657,3 +666,30 @@ def test_the_active_workout_view_says_per_side_too() -> None:
     assert "Sets: 3 × 10 reps per side" in view(rx("dumbbell_row", 3, reps=(10, 10)))
     assert "Sets: 3 × 30 s per side" in view(rx("side_plank", 3, seconds=30))
     assert "per side" not in view(rx("dumbbell_bench_press", 3, reps=(10, 10)))
+
+
+def test_trimming_never_empties_a_mobility_only_workout() -> None:
+    session = workout(
+        "A",
+        "Mobility",
+        [
+            role(BlockRole.MOBILITY, rx("mobility_hip_flexor_stretch", 6, seconds=120, rest=30)),
+            role(BlockRole.MOBILITY, rx("mobility_runners_stretch", 6, seconds=120, rest=30)),
+        ],
+    )
+    time_budget.fit_workout(session, _CATALOG, 10)
+    assert len(session.blocks) == 1
+
+
+def test_jump_rope_and_sprints_done_as_conditioning_count_as_knee_work() -> None:
+    for exercise_id, item in (
+        ("jump_rope_skipping", rx("jump_rope_skipping", 3, seconds=120)),
+        ("bodyweight_sprint_intervals", rx("bodyweight_sprint_intervals", 3, seconds=20)),
+    ):
+        exercise = _CATALOG.by_id(exercise_id)
+        if exercise is None:
+            continue
+        stimulus = workload.stimulus_of(item, exercise, BlockRole.CONDITIONING)
+        assert Region.KNEE in workload.regions_of(exercise, stimulus), exercise_id
+    ropes = _exercise("battle_rope_alternating_waves")
+    assert Region.KNEE not in workload.regions_of(ropes, Stimulus.CONDITIONING)

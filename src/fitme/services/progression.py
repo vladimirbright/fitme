@@ -158,14 +158,15 @@ def _more(
         if item.seconds >= cap:
             return None, f"already at {item.seconds} s"
         seconds = min(cap, item.seconds + _step(item.seconds))
-        return ChangeTarget(exercise_id=exercise.id, seconds=seconds), (
+        return ChangeTarget(exercise_id=exercise.id, from_target=item.seconds, seconds=seconds), (
             f"{item.seconds} -> {seconds} s"
         )
     assert item.meters is not None
     if item.meters >= cap:
         return None, f"already at {item.meters} m"
     meters = min(cap, item.meters + _step(item.meters))
-    return ChangeTarget(exercise_id=exercise.id, meters=meters), f"{item.meters} -> {meters} m"
+    change = ChangeTarget(exercise_id=exercise.id, from_target=item.meters, meters=meters)
+    return change, f"{item.meters} -> {meters} m"
 
 
 def _less(item: Prescription, exercise: Exercise) -> tuple[ChangeReps | ChangeTarget | None, str]:
@@ -184,14 +185,15 @@ def _less(item: Prescription, exercise: Exercise) -> tuple[ChangeReps | ChangeTa
         seconds = max(5, item.seconds - _step(item.seconds))
         if seconds == item.seconds:
             return None, "already at the shortest target"
-        return ChangeTarget(exercise_id=exercise.id, seconds=seconds), (
+        return ChangeTarget(exercise_id=exercise.id, from_target=item.seconds, seconds=seconds), (
             f"{item.seconds} -> {seconds} s"
         )
     assert item.meters is not None
     meters = max(5, item.meters - _step(item.meters))
     if meters == item.meters:
         return None, "already at the shortest target"
-    return ChangeTarget(exercise_id=exercise.id, meters=meters), f"{item.meters} -> {meters} m"
+    change = ChangeTarget(exercise_id=exercise.id, from_target=item.meters, meters=meters)
+    return change, f"{item.meters} -> {meters} m"
 
 
 def next_target(
