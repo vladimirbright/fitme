@@ -2372,16 +2372,21 @@ async def record_edit_draft(
     plan_id: int | None,
     user_report: dict[str, object],
     prompt: PromptMeta | None = None,
+    with_new_plan_exclusions: bool = False,
 ) -> EditDraftResult:
     """Judge an edited plan like any model draft (A§6.4 step 4: the gate, every guard, load
     substitution for a load-only failure, the wording check) and write it as a `plan_revise`
     draft round, so `confirm_plan` saves it unchanged. A structural failure writes nothing:
     the previous draft stays current. `user_report` carries `plan_id` when the draft revises
-    an existing plan."""
+    an existing plan. `with_new_plan_exclusions`: also the new-plan draft's exclusions
+    (a planner talk that turned out to be about `plan_id`; they move to it when the
+    session is retargeted)."""
     requested = plan.model_copy(deep=True)
     judged = plan.model_copy(deep=True)
     async with db.read() as conn:
-        snapshot = await read_snapshot(conn, user_id, plan_id=plan_id, new_plan=plan_id is None)
+        snapshot = await read_snapshot(
+            conn, user_id, plan_id=plan_id, new_plan=plan_id is None or with_new_plan_exclusions
+        )
     failure = gate(snapshot)
     if failure is not None:
         return EditDraftResult(requested=requested, errors=(failure[1].detail,))
