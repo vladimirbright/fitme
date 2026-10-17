@@ -122,10 +122,11 @@ def brief(
         # ADR 0016: the app estimates each workout's length and trims an over-long one by
         # priority (`services.time_budget`); the model plans to fit it in the first place.
         "time_budget": {
-            "session_minutes": context.session_minutes,
-            "tolerance": session_time.DEFAULT_MODEL.tolerance,
+            "target_minutes": context.session_minutes,
             "estimated_by": "app",
-            "over_budget": "lowest-priority blocks are shortened, then removed; rests are kept",
+            # The estimate's uncertainty, not extra time: the target stays the session length.
+            "estimate_uncertainty": round(session_time.DEFAULT_MODEL.tolerance - 1, 2),
+            "over_target": "lowest-priority volume is cut set by set, then blocks; rests kept",
         },
     }
     if context.sport is not None:

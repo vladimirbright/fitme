@@ -33,6 +33,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
+from enum import IntEnum
 
 from fitme.domain.catalog import Catalog, Exercise, intensity_mode
 from fitme.domain.enums import (
@@ -284,16 +285,54 @@ def _working_exercises(workout: Workout, catalog: Catalog) -> tuple[list[Exercis
     return list(working.values()), list(warm.values())
 
 
+def supports(exercise: Exercise, quality: Quality) -> bool:
+    """`exercise` supports `quality` without training it directly (`SUPPORTS`)."""
+    return quality not in exercise.qualities and bool(
+        set(exercise.qualities) & SUPPORTS.get(quality, frozenset())
+    )
+
+
 def coverage(quality: Quality, exercises: Sequence[Exercise]) -> tuple[int, int]:
     """(exercises that directly train `quality`, exercises that only support it)."""
     direct = sum(1 for exercise in exercises if quality in exercise.qualities)
-    supporting = sum(
-        1
-        for exercise in exercises
-        if quality not in exercise.qualities
-        and any(own in SUPPORTS.get(quality, frozenset()) for own in exercise.qualities)
+    return direct, sum(1 for exercise in exercises if supports(exercise, quality))
+
+
+class Relevance(IntEnum):
+    """ADR 0016: what an exercise does for a workout's stated objectives (`qualities`, the
+    main one first), from its catalog qualities and `SUPPORTS` — one definition for the
+    review (`off_objective`, coverage) and the time budget (what to keep). Higher is kept
+    longer."""
+
+    NONE = 0  # trains and supports none of them
+    SUPPORTING = 1  # supports one (strength for a power session), trains none directly
+    SECONDARY = 2  # directly trains a secondary objective
+    PRIMARY = 3  # directly trains the main objective
+
+
+def relevance(exercise: Exercise, objectives: Sequence[Quality]) -> Relevance:
+    if not objectives:
+        return Relevance.NONE
+    own = set(exercise.qualities)
+    if objectives[0] in own:
+        return Relevance.PRIMARY
+    if own & set(objectives[1:]):
+        return Relevance.SECONDARY
+    if any(supports(exercise, quality) for quality in objectives):
+        return Relevance.SUPPORTING
+    return Relevance.NONE
+
+
+def block_relevance(block: Block, catalog: Catalog, objectives: Sequence[Quality]) -> Relevance:
+    """The most relevant of a block's exercises (a superset is kept for its best one)."""
+    return max(
+        (
+            relevance(exercise, objectives)
+            for item in block.items
+            if (exercise := catalog.by_id(item.exercise_id)) is not None
+        ),
+        default=Relevance.NONE,
     )
-    return direct, supporting
 
 
 def _coverage_findings(workout: Workout, ctx: ReviewContext) -> list[GuardVerdict]:
@@ -338,7 +377,7 @@ def _coverage_findings(workout: Workout, ctx: ReviewContext) -> list[GuardVerdic
         for exercise_id in working_ids
         if (exercise := ctx.catalog.by_id(exercise_id)) is not None
         and workout.qualities
-        and not _serves(exercise, workout.qualities)
+        and relevance(exercise, workout.qualities) == Relevance.NONE
     ]
     if len(off) >= ctx.limits.off_objective_exercises:
         stated = ", ".join(quality.value for quality in workout.qualities)
@@ -351,14 +390,6 @@ def _coverage_findings(workout: Workout, ctx: ReviewContext) -> list[GuardVerdic
             )
         )
     return findings
-
-
-def _serves(exercise: Exercise, objectives: Sequence[Quality]) -> bool:
-    """Directly trains or supports (`SUPPORTS`) one of `objectives`."""
-    own = set(exercise.qualities)
-    return any(
-        quality in own or bool(own & SUPPORTS.get(quality, frozenset())) for quality in objectives
-    )
 
 
 def _role_findings(workout: Workout, ctx: ReviewContext) -> list[GuardVerdict]:

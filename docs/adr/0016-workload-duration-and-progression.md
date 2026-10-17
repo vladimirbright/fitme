@@ -56,22 +56,37 @@ prescribed seconds, or meters at 0.4 s/m (cardio, speed, pace) or 1.0 s/m (carri
 Unilateral: both sides plus a 10 s switch. Single blocks: the rest *between* sets. Supersets:
 each round is work plus transitions, and the round rest falls between rounds. Setup by
 equipment: 120 s for a barbell, rack or sled, 45 s for other equipment, 15 s with none.
-Warm-up and cool-down count like any block. Tolerance: 15% (`TimeModel.tolerance`). The bot
+Warm-up and cool-down count like any block. `TimeModel.tolerance` (15%) is the estimate's
+uncertainty, never extra training time: the review warns (`quality.duration`) only above
+`session_minutes × 1.15`, while the time budget aims at `session_minutes` itself. Duration is
+a planning estimate only; nothing tracks, stores or calibrates against how long a workout
+actually took. The bot
 and the web show each workout's estimate rounded to five minutes, as "About N min
 (estimated from the sets and rests, not measured)". Nothing measures real duration.
 
 **Time budget** (`services.time_budget`, generation only). After the guards pass, a
-generated workout over `session_minutes × 1.15` is shortened in place, in this order:
+generated workout estimated over `session_minutes` is shortened in place toward it. Each
+block is ranked by its relevance to the workout's objectives (`plan_quality.relevance`:
+primary, secondary, supporting, none — the definition the review's `off_objective` and
+coverage checks use), then by role (accessory, core, cool-down, conditioning, power,
+strength), then later first. The estimate is recomputed after every step:
 
-1. an accessory or core block that trains none of the workout's stated objectives is removed;
-2. one set comes off each remaining trimmable block (never below two);
-3. the lowest-priority blocks are removed.
+1. accessory or core blocks that serve none of the objectives are removed, lowest first;
+2. then one set at a time comes off the lowest-ranked block that still has more than two
+   (among equals, the one with the most sets), so 6 sets become 5, 4, 3 before anything
+   else goes;
+3. only when every trimmable block is at two sets is the lowest-ranked one removed.
 
 Never touched: the warm-up, any block that directly trains the main objective (without
-stated objectives, power and strength blocks), the last working block, and any rest. A
-secondary objective nothing trains any more is dropped from `Workout.qualities`. The change
-is logged as `plan.time_budget` (ok, informational). Revisions, imports and the user's own
-edits are what the user asked for, so the review only reports their length (`quality.duration`).
+stated objectives, power and strength blocks), the last working block, and any rest. The
+loop ends because every step removes a set or a block. A secondary objective nothing trains
+any more is dropped from `Workout.qualities`. The result is logged as `plan.time_budget`:
+`ok` when the target is reached, `ok=False` with "the rest is the warm-up and the main
+objective's work, which are kept" when it can't be reached without them. The plan as
+shortened is validated again (`guards.plan.validate_plan`) before the review; its fresh
+verdicts are the attempt's, and a shortened plan that failed them would be replaced by the
+plan that passed, with a note (never accepted). Revisions, imports and the user's own edits
+are what the user asked for, so the review only reports their length.
 
 **Weekly workload** (`services.workload`, pure, units per set):
 
@@ -115,9 +130,13 @@ more in, and to treat swings, RDLs, deadlifts and hip thrusts as one hinge deman
   raises the load, and short sets never lower it. Calibration still comes first, and the
   ceiling still clamps.
 - *Bodyweight reps, timed and distance work* (`services.progression`, deterministic) read
-  `set_logs` through `recent_completed_set_logs`, which takes completed app sessions only
-  (imported history is never evidence). A session counts only if it was done at the
-  *current* target, so the evidence restarts after every change:
+  `set_logs` through `recent_completed_set_logs`, which takes completed app sessions **of
+  the current plan** only (imported history and other programs are never evidence). A
+  session counts only if it was done at the *current* number of sets and target, and — for
+  a kg-loadable exercise such as a carry — at the same logged resistance as the newer one
+  (12 kg then 24 kg per hand over 40 m is a load progression, not two sessions at 40 m; a
+  session without a logged load, or with mixed loads, is no evidence). The evidence
+  restarts after every change:
   - two sessions in a row with every prescribed set performed at the top → one step up:
     the rep range +1 or +2, or about 10% more seconds or meters (at least 5);
   - two in a row short of the target → one step down;
@@ -125,6 +144,13 @@ more in, and to treat swings, RDLs, deadlifts and hip thrusts as one hinge deman
   - speed work keeps its volume;
   - at 20 reps, a 120 s hold, a 300 s interval, a 100 m carry or an 800 m run, the next step
     is a harder variation, not more of the same.
+- *kg lifts* (`services.loads.scope_history`): a session outcome now carries the plan, the
+  rep range and the number of sets it was done at. Where a prescription's load is decided
+  for a plan — at review and Start, and in the recap preview — only sessions of that same
+  prescription in that plan count as a success or a failure. Others keep their loads (the
+  start of a new program, and the ceiling) but earn no increase and trigger no decrease;
+  a rep target above the one the last load was used for (a 6-rep load for 10) is
+  calibration. Without a prescription (substituting a model's violating load), as before.
 - The recap offers the step as a suggestion, ahead of the model's: `change_reps` or the new
   `change_target` (`seconds` or `meters`). It applies only when the exercise appears once in
   today's workout outside a superset and every prescription of it in the plan has the same
@@ -140,13 +166,19 @@ more in, and to treat swings, RDLs, deadlifts and hip thrusts as one hinge deman
 
 ## Consequences
 
-- Durations are labelled estimates with a documented 15% tolerance, and the constants are
-  coarse. Real workout duration isn't measured, because `started_at`/`finished_at` include
-  pauses.
+- Durations are labelled planning estimates with a documented 15% uncertainty, and the
+  constants are coarse. Actual workout duration is out of scope by design.
 - The workload units are a transparent weighting, not a fatigue model. They don't know the
   actual load or days of the user's sport sessions, only how many there are per week.
   Session spacing is judged on scheduled weekdays only.
-- Reps in reserve can't inform progression until something logs it. RPE stays unwritten.
+- Reps in reserve can't inform progression: `set_logs.rpe` exists but no path writes it
+  (button, assistant and import all store `NULL`), and nothing infers it. Progression stays
+  conservative accordingly: an increase needs every set at the top of the range, is one
+  increment, and passes the weekly cap, the ceiling and the check-ins; a target change needs
+  two sessions. A logging step for effort is out of scope here.
+- Progression history is plan-scoped by `plan_versions.plan_id`, with no migration. A
+  user who rebuilds the same program as a new plan starts its streak again (holding at the
+  known loads).
 - Kettlebell swings and throws no longer get automatic load increases. A heavier bell is
   the user's choice (an edit, judged by the same guards).
 - The trimmed draft can still carry findings (a removed block can leave a secondary quality

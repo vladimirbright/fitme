@@ -170,6 +170,14 @@ class SessionOutcome:
     # set) with every prescribed set at least at the prescription. The engine treats it like
     # `hit_reps_max`: one increment from the *prescribed* load, under the same guards.
     exceeded_prescription: bool = False
+    # ADR 0016: the prescription the result was earned at — the session's plan (`None` for an
+    # imported or unlinked session), its rep range and its number of prescribed sets. The
+    # engine counts a success or failure only towards the same prescription in the same plan
+    # (`services.loads.scope_history`); otherwise the session only informs the load.
+    plan_id: int | None = None
+    planned_reps_min: int | None = None
+    planned_reps_max: int | None = None
+    planned_sets: int = 0
 
 
 @dataclass(frozen=True, slots=True)

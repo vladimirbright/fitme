@@ -627,10 +627,12 @@ length.
 
 **ADR 0016.** Session length is estimated in code (`services/session_time`: reps, seconds or
 meters per set, both sides of a `unilateral` exercise, rests between sets, superset rounds,
-setup by equipment; 15% tolerance). A generated workout over the user's session length is
-shortened by priority (`services/time_budget`: redundant accessories, then a set off the
-lowest-priority blocks, then those blocks; never the warm-up, the main objective's work or a
-rest) and logged as `plan.time_budget`; revisions, imports and edits are only reviewed. The
+setup by equipment; a planning estimate only, 15% uncertainty). A generated workout over the
+user's session length is shortened toward it by objective relevance (`services/time_budget`:
+redundant accessories, then one set at a time off the lowest-priority blocks, then those
+blocks; never the warm-up, the main objective's work or a rest), logged as
+`plan.time_budget`, and validated again before the review; revisions, imports and edits are
+only reviewed. The
 weekly review weighs sets by stimulus (`services/workload`: load units per region, a heavy
 set 1, a drill 0.25, a stretch 0) and adds `hinge_overlap` and `off_objective`. The brief
 adds `session_objectives` (main objectives spread over the sessions) and `time_budget`; the
@@ -913,9 +915,14 @@ double progression:
   like every hold): topping its reps never raises it, short sets never lower it, and
   calibration still comes first. It progresses by speed and technique, which the app
   doesn't measure and never claims.
+- **Plan and prescription scope** (ADR 0016, `scope_history`): where a prescription's load
+  is decided for a plan (review, Start, recap preview), only sessions of the same sets and
+  rep range in the same plan are successes or failures; others only inform the load, and a
+  higher rep target than the last load was used for is calibration.
 - **Work the engine doesn't progress** (ADR 0016, `services/progression`): bodyweight reps,
-  and any timed or distance prescription. Two completed app sessions in a row at the current
-  target with every prescribed set at its top → one step up (rep range +1–2, or about 10%
+  and any timed or distance prescription. Two completed app sessions of the same plan in a
+  row at the current sets and target (and, for a loaded carry, the same logged resistance)
+  with every prescribed set at its top → one step up (rep range +1–2, or about 10%
   more seconds or meters); two in a row short of it → one step down; otherwise hold; speed
   work keeps its volume; at the top of a useful range a harder variation is next. The recap
   offers the change as a `change_reps`/`change_target` suggestion, applied only on **Apply**

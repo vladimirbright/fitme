@@ -11,6 +11,10 @@ change to either, the evidence starts again. Imported history never counts (A§7
   progressed by volume — more reps or longer bouts aren't faster ones. It is held, and the
   recap says it progresses by speed and clean technique; the app measures neither, so it
   claims neither;
+- **loaded** time or distance work (a kg-loadable exercise such as a carry) counts a
+  session only at the same logged resistance as the newer one: 12 kg then 24 kg per hand
+  over 40 m is a load progression, not two sessions at 40 m; a session without a logged
+  load is no evidence. Bodyweight work (a plank, jump rope) has no resistance to compare;
 - **two sessions in a row** with every prescribed set performed at the top of the target
   (`reps_max`, the prescribed seconds or meters) -> **one** step up: the rep range by 1-2,
   or about 10% more time or distance (at least 5 s / 5 m). One variable at a time: never the
@@ -128,6 +132,21 @@ def session_result(item: Prescription, rows: Sequence[SetLogRecord]) -> str | No
     return "mixed"
 
 
+def session_resistance(item: Prescription, rows: Sequence[SetLogRecord]) -> float | None:
+    """The one external load every prescribed set of a loaded exercise was done with, as
+    logged (per implement for two dumbbells, as the plan states it) — or `None` when a set
+    has no logged load, the sets differ, or the session was prescribed another kg load than
+    the current one. Never assumed: a missing load is no evidence."""
+    prescribed = [row for row in rows if not row.extra]
+    if item.load.kind == "kg" and any(row.planned_load_kg != item.load.kg for row in prescribed):
+        return None
+    loads = {row.actual_load_kg for row in prescribed}
+    if len(loads) != 1:
+        return None
+    load = next(iter(loads))
+    return None if load is None or load <= 0 else load
+
+
 def _step(value: int) -> int:
     """About 10%, in steps of 5, at least 5."""
     return max(5, round(value * 0.1 / 5) * 5)
@@ -214,15 +233,30 @@ def next_target(
             TargetKind.SPEED, "speed work: volume held; progress by speed and clean technique"
         )
     results: list[str] = []
+    resistance: float | None = None
+    why = "not a trend yet"
     for rows in sessions[:SESSIONS_FOR_A_TREND]:
         result = session_result(item, rows)
         if result is None:
             break  # done at another target: the evidence for this one starts after it
+        if exercise.kg_loadable:
+            # Loaded time or distance work (a carry): the evidence is the target *at one
+            # resistance*. A heavier or lighter session, or one whose load wasn't logged, is
+            # another progression variable having changed — the streak starts after it.
+            load = session_resistance(item, rows)
+            if load is None:
+                why = "a session without one logged load is no evidence"
+                break
+            if resistance is not None and load != resistance:
+                why = (
+                    f"the load changed ({load:g} -> {resistance:g} kg): evidence starts at "
+                    "the new one"
+                )
+                break
+            resistance = load
         results.append(result)
     if len(results) < SESSIONS_FOR_A_TREND:
-        return TargetDecision(
-            TargetKind.HOLD, f"{len(results)} session(s) at this target: not a trend yet"
-        )
+        return TargetDecision(TargetKind.HOLD, f"{len(results)} session(s) at this target: {why}")
     if all(result == "met" for result in results):
         change, detail = _more(item, exercise, caps)
         if change is None:
