@@ -61,6 +61,7 @@ from fitme.domain.enums import (
     VALID_LOADS_AREAS,
     DecisionKind,
     HealthHoldReason,
+    Location,
     Measure,
     RefusalCode,
     WorkoutSessionStatus,
@@ -80,8 +81,10 @@ from fitme.services import (
     log_edit,
     measures,
     planning,
+    prescribing,
     training,
 )
+from fitme.services.catalog import available_exercises
 from fitme.services.decisions import PromptMeta, prompt_columns
 from fitme.services.llm_runtime import LlmRuntime
 from fitme.services.plan_edit import save_edit
@@ -443,6 +446,16 @@ def _load_notes_workout(requested: Workout, judged: Workout) -> list[str]:
     ]
 
 
+# What `planning.judge` repairs in place (rather than refuses), reported back to the model.
+_REPAIR_RULES = frozenset(
+    {
+        measures.MEASURE_SUBSTITUTED_RULE,
+        prescribing.RIR_DROPPED_RULE,
+        planning.WORDING_RULE,
+    }
+)
+
+
 def _load_notes(requested: Plan, judged: Plan) -> list[str]:
     notes: list[str] = []
     for asked, got in zip(requested.workouts, judged.workouts, strict=True):
@@ -463,12 +476,18 @@ class _Turn:
         inputs: planning.Inputs,
         planning_session: ConversationRecord | None,
         workout: training.ActiveSession | None,
+        settings: Settings,
+        planner: bool = False,
     ) -> None:
         self._db = db
         self._user_id = user_id
         self._catalog = catalog
         self._inputs = inputs
+        self._settings = settings
         self._allowed = frozenset(inputs.user_context.allowed_exercise_ids)
+        # The planner sets a plan's own location (an outdoor run for a gym profile), so it
+        # searches what the user may do anywhere; the guards judge the plan at its location.
+        self._searchable = _any_location_ids(inputs) if planner else self._allowed
         self._planning = planning_session
         self._workout = workout
         self.staged = _Staged()
@@ -559,7 +578,7 @@ class _Turn:
     def _allowed_exercises(self) -> list[Exercise]:
         return [
             exercise
-            for exercise_id in sorted(self._allowed)
+            for exercise_id in sorted(self._searchable)
             if (exercise := self._catalog.by_id(exercise_id)) is not None
         ]
 
@@ -573,10 +592,7 @@ class _Turn:
             self._allowed_exercises(),
             exercise_search.ExerciseQuery(text=query, limit=20),
         )
-        return [
-            {"exercise_id": hit.exercise_id, "names": self._names(hit.exercise_id)}
-            for hit in results
-        ]
+        return [{"exercise_id": hit.exercise_id, **self._facts(hit.exercise_id)} for hit in results]
 
     async def find_substitutes(
         self, exercise_id: str, avoid_areas: list[str]
@@ -600,16 +616,27 @@ class _Turn:
         return [
             {
                 "exercise_id": hit.exercise_id,
-                "names": self._names(hit.exercise_id),
+                **self._facts(hit.exercise_id),
                 "close": hit.close,
                 "why": hit.match_reasons,
             }
             for hit in results
         ]
 
-    def _names(self, exercise_id: str) -> dict[str, str]:
+    def _facts(self, exercise_id: str) -> dict[str, object]:
+        """Names plus what the model needs to prescribe it: whether it takes kg and per
+        what (`load_unit`: `total`, `per_implement`, `single_implement`), its equipment and
+        the locations it is done at."""
         exercise = self._catalog.by_id(exercise_id)
-        return {} if exercise is None else dict(exercise.names)
+        if exercise is None:
+            return {"names": {}}
+        return {
+            "names": dict(exercise.names),
+            "kg_loadable": exercise.kg_loadable,
+            "load_unit": exercise.load_unit,
+            "equipment": [item.value for item in exercise.equipment],
+            "locations": [location.value for location in exercise.locations],
+        }
 
     # --- planning session
 
@@ -665,30 +692,41 @@ class _Turn:
             hint="a draft: the user saves it with the Save button or by asking you",
         )
 
+    async def _inputs_for(self, plan_id: int | None) -> planning.Inputs:
+        """The judging inputs for the plan being staged (its own exclusions, ADR 0010), not
+        the turn's (read for the session's plan, else the default's) — as
+        `planning.record_edit_draft` reads them when the draft is recorded."""
+        async with self._db.read() as conn:
+            snapshot = await planning.read_snapshot(
+                conn, self._user_id, plan_id=plan_id, new_plan=plan_id is None
+            )
+        if snapshot.profile is None:
+            return self._inputs
+        return planning.build_inputs(self._catalog, snapshot, self._settings, self._user_id)
+
     async def stage_plan(self, plan: Plan, plan_id: int | None) -> dict[str, object]:
-        """The planner's whole plan as the session's draft: the same session rules as
-        `edit_plan` (one plan per session), then the same judging as any draft
-        (`planning.judge`: hard guards with load-engine substitution, wording, measure and
-        intensity repair). A failure is returned so the model can correct the plan within
-        the turn; nothing is staged."""
+        """The planner's whole plan as a draft: `plan_id` is the saved plan it replaces,
+        `None` a new plan. One plan per session (a current draft of another plan must be
+        saved or closed first; a draftless session follows the staged plan). Judged like any
+        draft (`planning.judge` with the target plan's inputs: hard guards with load-engine
+        substitution, wording, measure and intensity repair). A failure is returned so the
+        model can correct the plan within the turn; nothing is staged."""
         staged = self.staged
         if staged.rewrite is not None or staged.new_plan is not None:
             return _error("a redesign or a new plan is already staged this turn")
         session = self._planning
-        if plan_id is not None:
-            if await self._plan_record(plan_id) is None:
-                return _error(f"no plan {plan_id}")
-            target: int | None = plan_id
-        else:
-            target = None if session is None else session.plan_id
+        target = plan_id
+        if target is not None and await self._plan_record(target) is None:
+            return _error(f"no plan {target}")
         if (
             session is not None
             and session.plan_id != target
             and await self._draft_is_current(session)
         ):
+            open_for = "a new plan" if session.plan_id is None else f"plan_id {session.plan_id}"
             return _error(
-                "another plan's draft is open in the planning session: ask the user to save "
-                "or discard it first"
+                f"a draft of {open_for} is open in the planning session: pass that plan_id "
+                "to change it, or ask the user to save or close it first"
             )
         if staged.draft_plan is not None and staged.draft_plan_id != target:
             return _error("one plan per turn: a draft of another plan is already staged")
@@ -707,15 +745,19 @@ class _Turn:
         base = staged.draft_before
         planning.restore_declared(plan, {} if base is None else planning.declared_loads_of(base))
         preview = plan.model_copy(deep=True)
-        judgement = planning.judge(preview, self._inputs)
+        judgement = planning.judge(preview, await self._inputs_for(target))
         if not judgement.ok:
             return _error("; ".join(verdict.detail for verdict in judgement.failures))
         staged.draft_plan = plan
         staged.draft_plan_id = target
         staged.whole_draft = True
+        # Not the whole judged plan back (it is what the model just sent): only what the
+        # checks changed.
         return _ok(
-            draft=preview.model_dump(mode="json"),
             notes=_load_notes(plan, preview),
+            repaired=[
+                verdict.detail for verdict in judgement.fired if verdict.rule in _REPAIR_RULES
+            ],
             saved=False,
             hint="a draft: the user saves it with the Save button or by asking you",
         )
@@ -989,6 +1031,26 @@ class _Turn:
 # --- The message handler ----------------------------------------------------------------------
 
 
+def _any_location_ids(inputs: planning.Inputs) -> frozenset[str]:
+    """The exercises the user may do at any location: their equipment, screening flags,
+    experience and exclusions, every `Location`."""
+    profile = inputs.snapshot.profile
+    if profile is None:
+        return frozenset(inputs.user_context.allowed_exercise_ids)
+    return frozenset(
+        exercise.id
+        for location in Location
+        for exercise in available_exercises(
+            inputs.catalog,
+            location,
+            profile.equipment,
+            inputs.snapshot.flags,
+            profile.experience,
+            excluded=inputs.ctx.excluded_exercise_ids,
+        )
+    )
+
+
 def _current_block(active: training.ActiveSession | None) -> dict[str, object] | None:
     """The block on screen of an `in_progress` workout and the blocks after it: ids and
     numbers only. `None` before Start (precheck/review) or with no active session."""
@@ -1127,6 +1189,8 @@ async def handle_message(
         inputs=inputs,
         planning_session=planning_session,
         workout=workout,
+        settings=llm.settings,
+        planner=workout is None,
     )
     agent_name = AGENT_NAME if workout is not None else PLANNER_AGENT
     spec = model_for(agent_name, llm.settings)
@@ -1185,10 +1249,15 @@ async def handle_message(
     ended_in = conversation
     if conversation is None or conversation.kind == conversations.PLANNING:
         ended_in = await conversations.current_planning(db, user_id) or conversation
-    if ended_in is None and agent_name == PLANNER_AGENT:
+    if (
+        ended_in is None
+        and agent_name == PLANNER_AGENT
+        and not (turn.staged.save or turn.staged.discard)
+    ):
         # The planner works over several messages (a proposal, then "looks good"): an
         # exchange that started outside any session opens a new plan's planning session, so
-        # the next turn sees it in `history`.
+        # the next turn sees it in `history` (not after a turn that saved or closed one). A
+        # plan staged later in it retargets the session (`conversations.open_planning`).
         ended_in = await conversations.open_planning(db, user_id, None)
     if ended_in is not None:
         moved = conversation is None or ended_in.id != conversation.id
@@ -1269,6 +1338,7 @@ async def _apply(
     # the bot after this) already leaves the excluded exercises out.
     items.extend(await _apply_exclusions(db, user_id, staged, lang=turn.language))
 
+    recorded = True
     if staged.draft_plan is not None:
         plan_id = staged.draft_plan_id
         result = await planning.record_edit_draft(
@@ -1283,9 +1353,14 @@ async def _apply(
             },
             prompt=prompt,
         )
+        recorded = result.round is not None
         if result.round is not None:
             await conversations.planning_draft_shown(
-                db, user_id, plan_id=plan_id, draft_decision_id=result.round.decision_id
+                db,
+                user_id,
+                plan_id=plan_id,
+                draft_decision_id=result.round.decision_id,
+                retarget=staged.whole_draft,
             )
         items.append(
             DraftUpdated(result=result, before=staged.draft_before, whole=staged.whole_draft)
@@ -1334,7 +1409,11 @@ async def _apply(
         if detail is not None:
             items.append(Notice("assistant.made_default", name=detail.record.name))
 
-    if staged.save:
+    if staged.save and not recorded:
+        # This turn's draft didn't pass when recorded (shown as blocked): the previous draft
+        # is never confirmed in its place.
+        items.append(Notice("assistant.nothing_to_save"))
+    elif staged.save:
         session = await conversations.current_planning(db, user_id)
         draft_id = None if session is None else session.draft_decision_id
         if draft_id is None:

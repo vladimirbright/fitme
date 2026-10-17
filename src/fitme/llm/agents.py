@@ -277,11 +277,12 @@ async def _new_plan(ctx: Deps, guidance: str | None = None) -> object:
 
 async def _stage_plan(ctx: Deps, plan: Plan, plan_id: int | None = None) -> object:
     """Stage the whole plan the user agreed to, mirroring the conversation exactly (the same
-    days, items, durations and order). `plan_id`: the saved plan this replaces, or null for
-    the open planning session's plan or a new plan. The app checks it at once and, if it
-    fits, shows it to the user with Save / Change / Cancel buttons; it is not saved yet. The
-    answer says whether it fits (with the draft as it will be shown and any load notes) or
-    what to fix — fix the plan and call again, or tell the user what cannot be represented."""
+    days, items, durations and order). `plan_id`: the saved plan this changes (it is in
+    `state.planning_session.plan_id` or `list_plans`), or null for a NEW plan. The app
+    checks it at once and, if it fits, shows it to the user with Save / Change / Cancel
+    buttons; it is not saved yet. The answer says whether it fits (with any load notes and
+    what the checks repaired) or what to fix — fix the plan and call again, or tell the
+    user what cannot be represented."""
     return _NO_DATA if ctx.deps is None else await ctx.deps.stage_plan(plan, plan_id)
 
 

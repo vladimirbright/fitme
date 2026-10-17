@@ -14,8 +14,8 @@ from fitme.bot.handlers.train import PendingTrains, handle_cancel, show_pending_
 from fitme.bot.keyboards import hold_clear_markup
 from fitme.db.connection import Database
 from fitme.i18n import t
+from fitme.services import conversations, safety
 from fitme.services import profile as profile_service
-from fitme.services import safety
 from fitme.services.llm_runtime import LlmRuntime
 
 
@@ -84,6 +84,15 @@ async def cmd_cancel(
             if isinstance(pending_plan, PendingImport)
             else "plan.change_cancelled"
         )
+        await message.answer(t(key, lang))
+        return
+    if step is None and not was_deleting and await conversations.current_planning(db, user_id):
+        # An open planning conversation (a planner draft, or a plan being talked through)
+        # is what there is to cancel: close it without saving. "Draft discarded" when it
+        # held a draft or was about a saved plan; "New plan cancelled" for a new plan's talk.
+        closed = await conversations.close_planning(db, user_id, status="discarded")
+        talk_only = closed is None or (closed.plan_id is None and closed.draft_decision_id is None)
+        key = "plan.new_cancelled" if talk_only else "plan.change_cancelled"
         await message.answer(t(key, lang))
         return
     if step is not None:

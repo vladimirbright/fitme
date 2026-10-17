@@ -15,7 +15,7 @@ pseudonymized data only; the Change / Change something / New plan buttons feed t
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import pytest
@@ -40,10 +40,13 @@ from conftest import FakeSession, make_user, message_update
 from fitme import clock
 from fitme.bot.app import build_dispatcher
 from fitme.bot.callback_data import PlanDraft, PlanMenu, TrainAction, TrainPick
+from fitme.catalog import load_catalog
+from fitme.cli.commands import sync_search_index
 from fitme.config.settings import Settings
 from fitme.db.connection import Database
 from fitme.db.controllers.profile import upsert_profile, upsert_screening_flag
 from fitme.db.records import DecisionRecord
+from fitme.db.selectors.conversations import list_open_conversations
 from fitme.db.selectors.decisions import list_decisions_for_user, list_llm_calls_since
 from fitme.db.selectors.plans import list_plan_versions, list_plans_for_user
 from fitme.db.selectors.training import list_set_logs_for_session
@@ -53,7 +56,7 @@ from fitme.domain.models import Block, Load, Plan, Prescription, ScheduledDay, W
 from fitme.domain.results import Recap
 from fitme.i18n import t
 from fitme.llm.agents import assistant_agent, plan_generate_agent, planner_agent, recap_agent
-from fitme.services import conversations, planning
+from fitme.services import conversations, exclusions, planning
 from fitme.services import profile as profile_service
 from fitme.services.identity import issue_activation_code
 from fitme.services.llm_runtime import LlmRuntime
@@ -547,7 +550,7 @@ async def test_staging_another_plan_while_a_draft_is_open_is_refused(
     llm.steps = [_stage(_saturday_run(), seeded.plan_id), say("Save or discard it first.")]
     await _send(dispatcher, bot, "and change my home plan too")
     answer = llm.returns("stage_plan")[-1]
-    assert answer["ok"] is False and "save or discard" in answer["error"]
+    assert answer["ok"] is False and "save or close it first" in answer["error"]
     assert len(await _planner_drafts(db, seeded.user_id)) == 1
 
 
@@ -655,3 +658,228 @@ async def test_new_plan_with_no_plans_asks_first(
         turn["text"] for turn in llm.prompts()[-1]["history"]
     ]
     assert await _purposes(db) == ["planner"]
+
+
+# --- Sessions and targeting (review fixes) ------------------------------------------------------
+
+
+def _home_plan_with(*items: Prescription) -> Plan:
+    return Plan(
+        name="Home plan",
+        schedule=[ScheduledDay(weekday=1, workout_key="A")],
+        workouts=[Workout(key="A", title="Full body", blocks=[_single(i) for i in items])],
+    )
+
+
+async def _exclusion_rows(db: Database, user_id: int) -> list[tuple[str, str, int | None]]:
+    return [
+        (row.value, row.scope, row.plan_id) for row in await exclusions.list_for_user(db, user_id)
+    ]
+
+
+async def test_a_talk_about_a_saved_plan_keeps_its_exclusion_and_history_when_staged(
+    dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
+) -> None:
+    """A session-less question opens a new plan's conversation; the exclusion made in it
+    and the conversation itself follow the plan staged later, instead of being dropped."""
+    seeded = await _ready(dispatcher, bot, db)
+    llm.steps = [say("It has squats, push-ups and a dumbbell press.")]
+    await _send(dispatcher, bot, "what is in my home plan?")
+    first = await conversations.current_planning(db, seeded.user_id)
+    assert first is not None and first.plan_id is None
+
+    exclude = {"kind": "name", "value": "lunge", "for_all_plans": False}
+    llm.steps = [Call("add_exclusion", exclude), say("No lunges.")]
+    await _send(dispatcher, bot, "no lunges in it")
+    assert await _exclusion_rows(db, seeded.user_id) == [("lunge", "new_plan", None)]
+
+    changed = _home_plan_with(_reps("pushup", Load(kind="bodyweight")))
+    llm.steps = [_stage(changed, seeded.plan_id), say("Only push-ups now.")]
+    await _send(dispatcher, bot, "just push-ups in the home plan")
+
+    record = await conversations.current_planning(db, seeded.user_id)
+    assert record is not None and record.id == first.id and record.plan_id == seeded.plan_id
+    assert record.draft_decision_id == _draft_id(session)
+    assert await _exclusion_rows(db, seeded.user_id) == [("lunge", "plan", seeded.plan_id)]
+    texts = [turn.text for turn in await conversations.history(db, record.id)]
+    assert "what is in my home plan?" in texts and "no lunges in it" in texts
+    # The draft says which plan it replaces.
+    title = t("plan.changes_draft_title", "en", name="Home plan")
+    assert (_draft_message(session).text or "").startswith(title)
+
+
+async def test_staging_and_saving_in_the_first_message_leaves_no_session_open(
+    dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
+) -> None:
+    user_id = await _fresh(dispatcher, bot, db)
+    llm.steps = [_stage(_saturday_run()), Call("save_draft"), say("Saved.")]
+    await _send(dispatcher, bot, "an easy outdoor run on Saturdays, save it")
+    _, bodies = await _only_plan(db, user_id)
+    assert len(bodies) == 1
+    async with db.read() as conn:
+        assert await list_open_conversations(conn, user_id) == []
+
+
+async def test_a_null_plan_id_is_a_new_plan_even_in_a_saved_plans_session(
+    dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
+) -> None:
+    seeded = await _ready(dispatcher, bot, db)
+    await _click(dispatcher, bot, PlanMenu(action="revise", plan_id=seeded.plan_id))
+    llm.steps = [_stage(_saturday_run()), say("A separate Saturday run plan.")]
+    await _send(dispatcher, bot, "actually, a separate Saturday run plan")
+    assert (_draft_message(session).text or "").startswith(t("plan.draft_title", "en"))
+    await _click(dispatcher, bot, PlanDraft(action="confirm", decision_id=_draft_id(session)))
+    async with db.read() as conn:
+        plans = await list_plans_for_user(conn, seeded.user_id)
+        home = await list_plan_versions(conn, seeded.plan_id)
+    assert sorted(p.name for p in plans) == ["Home plan", "Saturday run"]
+    assert len(home) == 1  # not version 2 of the home plan
+
+
+async def test_staging_judges_with_the_target_plans_own_exclusions(
+    dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
+) -> None:
+    seeded = await _ready(dispatcher, bot, db)
+    catalog = load_catalog()
+    # The default plan excludes push-ups for itself: a new plan may still have them.
+    await exclusions.add(
+        db,
+        seeded.user_id,
+        "exercise",
+        "pushup",
+        catalog,
+        scope=exclusions.Scope.PLAN,
+        plan_id=seeded.plan_id,
+    )
+    with_pushups = _home_plan_with(_reps("pushup", Load(kind="bodyweight")))
+    llm.steps = [_stage(with_pushups.model_copy(update={"name": "New"})), say("Staged.")]
+    await _send(dispatcher, bot, "a new plan with push-ups")
+    assert llm.returns("stage_plan")[-1]["ok"] is True
+    await _click(dispatcher, bot, PlanDraft(action="confirm", decision_id=_draft_id(session)))
+
+    # A second, non-default plan that excludes rows: staging rows into it is refused at
+    # once, although the turn's snapshot is read for the default plan.
+    async with db.read() as conn:
+        other = next(
+            p.id for p in await list_plans_for_user(conn, seeded.user_id) if p.name == "New"
+        )
+    await exclusions.add(
+        db,
+        seeded.user_id,
+        "exercise",
+        "dumbbell_row",
+        catalog,
+        scope=exclusions.Scope.PLAN,
+        plan_id=other,
+    )
+    rows = _home_plan_with(_reps("dumbbell_row", Load(kind="calibration")))
+    llm.steps = [_stage(rows, other), say("Rows are excluded there.")]
+    await _send(dispatcher, bot, "add rows to the new plan")
+    answer = llm.returns("stage_plan")[-1]
+    assert answer["ok"] is False and "dumbbell_row" in answer["error"]
+
+
+async def test_save_after_a_draft_that_fails_when_recorded_saves_nothing(
+    dispatcher: Dispatcher,
+    bot: Bot,
+    db: Database,
+    session: FakeSession,
+    llm: ScriptedLlm,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    user_id = await _fresh(dispatcher, bot, db)
+    llm.steps = [_stage(_saturday_run()), say("Staged.")]
+    await _send(dispatcher, bot, "an easy Saturday run plan")
+    previous = _draft_id(session)
+
+    async def blocked(*_args: Any, **_kwargs: Any) -> planning.EditDraftResult:
+        return planning.EditDraftResult(errors=("blocked when recorded",))
+
+    monkeypatch.setattr(planning, "record_edit_draft", blocked)
+    longer = _saturday_run()
+    longer.workouts[0].blocks[1].items[0].seconds = 1800
+    llm.steps = [_stage(longer), Call("save_draft"), say("Saved.")]
+    await _send(dispatcher, bot, "make the jog 30 minutes and save it")
+
+    texts = "\n".join(_texts(session))
+    assert t("assistant.blocked", "en") in texts and "blocked when recorded" in texts
+    assert await _decisions(db, user_id, "plan_confirm") == []
+    assert await planning.current_draft_id(db, user_id) == previous
+
+
+async def test_stage_plan_answers_only_what_changed(
+    dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
+) -> None:
+    await _fresh(dispatcher, bot, db)
+    plan = _saturday_run()
+    plan.workouts[0].blocks[1].items[0].rir = 2  # no reps in reserve on an easy jog
+    llm.steps = [_stage(plan), say("Staged.")]
+    await _send(dispatcher, bot, "an easy Saturday run plan")
+    answer = llm.returns("stage_plan")[0]
+    assert set(answer) == {"ok", "notes", "repaired", "saved", "hint"}
+    assert answer["notes"] == []
+    assert any(line.startswith("easy_jog: rir 2 dropped") for line in answer["repaired"])
+
+
+async def test_search_gives_the_planner_exercise_facts_and_outdoor_exercises(
+    dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
+) -> None:
+    """A gym profile's planner finds outdoor-only exercises (the plan's location is what
+    the guards judge), and each hit says how it is loaded and where it is done."""
+    await _fresh(dispatcher, bot, db, location="public_gym")
+    await sync_search_index(db)
+    llm.steps = [
+        Call("find_exercises", {"query": "interval run outdoors"}),
+        Call("find_substitutes", {"exercise_id": "barbell_bench_press", "avoid_areas": []}),
+        say("Found."),
+    ]
+    await _send(dispatcher, bot, "what can I do for intervals outside?")
+    found = llm.returns("find_exercises")[0]
+    jog = next(hit for hit in found if hit["exercise_id"] == "outdoor_interval_jog")
+    assert jog["locations"] == ["outdoor"]
+    assert jog["kg_loadable"] is False and jog["equipment"] == []
+    substitutes = llm.returns("find_substitutes")[0]
+    assert substitutes
+    assert {"kg_loadable", "load_unit", "equipment", "locations"} <= set(substitutes[0])
+
+
+async def test_cancel_closes_an_open_planning_conversation(
+    dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
+) -> None:
+    user_id = await _fresh(dispatcher, bot, db)
+    llm.steps = [say("Saturdays? Shall I put this into a plan?")]
+    await _send(dispatcher, bot, "a running plan")
+    await _send(dispatcher, bot, "/cancel")
+    assert _last_text(session) == t("plan.new_cancelled", "en")
+    assert await conversations.current_planning(db, user_id) is None
+
+    llm.steps = [_stage(_saturday_run()), say("Staged.")]
+    await _send(dispatcher, bot, "a Saturday run plan")
+    await _send(dispatcher, bot, "/cancel")
+    assert _last_text(session) == t("plan.change_cancelled", "en")
+    assert await conversations.current_planning(db, user_id) is None
+
+
+async def test_change_on_a_draft_whose_session_idled_out_reopens_it_for_the_planner(
+    dispatcher: Dispatcher,
+    bot: Bot,
+    db: Database,
+    session: FakeSession,
+    llm: ScriptedLlm,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    user_id = await _fresh(dispatcher, bot, db)
+    llm.steps = [_stage(_saturday_run()), say("Staged.")]
+    await _send(dispatcher, bot, "a Saturday run plan")
+    draft_id = _draft_id(session)
+
+    later = clock.now() + timedelta(hours=conversations.PLANNING_IDLE_HOURS + 1)
+    monkeypatch.setattr(clock, "now", lambda: later)
+    assert await conversations.current_planning(db, user_id) is None  # idled out
+    await _click(dispatcher, bot, PlanDraft(action="change", decision_id=draft_id))
+    record = await conversations.current_planning(db, user_id)
+    assert record is not None and record.draft_decision_id == draft_id
+
+    llm.steps = [say("How long should the jog be?")]
+    await _send(dispatcher, bot, "a longer jog")
+    assert llm.prompts()[-1]["state"]["planning_session"]["draft"]["name"] == "Saturday run"

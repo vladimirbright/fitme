@@ -353,10 +353,21 @@ async def show_staged_draft(
     plan = round_.plan
     session = await conversations.current_planning(db, user_id)
     is_open = session is not None and session.draft_decision_id == round_.decision_id
+    # A draft that replaces a saved plan says which one.
+    replaces = (
+        None
+        if round_.plan_id is None
+        else await planning.get_plan_detail(db, user_id, round_.plan_id)
+    )
+    title = (
+        t("plan.draft_title", lang)
+        if replaces is None
+        else t("plan.changes_draft_title", lang, name=replaces.record.name)
+    )
     await _send_plan(
         message,
         plan,
-        title=t("plan.draft_title", lang),
+        title=title,
         lang=lang,
         markup=rendering.draft_markup(round_.decision_id, lang) if is_open else None,
         session_minutes=None,
@@ -571,9 +582,14 @@ async def on_plan_draft(
         await message.answer(
             change_prompt, reply_markup=rendering.cancel_revision_markup(decision_id, lang)
         )
-        session = await conversations.current_planning(db, user_id)
-        if session is not None:
-            await conversations.record_outgoing(db, user_id, session.id, change_prompt)
+        # The draft is the session's current one again, even if its session idled out.
+        session = await conversations.planning_draft_shown(
+            db,
+            user_id,
+            plan_id=await planning.draft_plan_id(db, user_id, decision_id),
+            draft_decision_id=decision_id,
+        )
+        await conversations.record_outgoing(db, user_id, session.id, change_prompt)
         return
 
     await query.answer(t("errors.stale_callback", lang))
