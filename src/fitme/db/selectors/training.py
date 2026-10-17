@@ -165,6 +165,38 @@ async def last_completed_workout_key_for_plan(
     return None if row is None else str(row[0])
 
 
+_SET_LOG_COLUMNS = (
+    "s.id, s.session_id, s.exercise_id, s.set_index, s.planned_load_kg, s.planned_reps_min, "
+    "s.planned_reps_max, s.actual_load_kg, s.actual_reps, s.skipped, s.rpe, s.source, "
+    "s.created_at, s.planned_seconds, s.planned_meters, s.actual_seconds, s.actual_meters, "
+    "s.extra_for_block, s.extra_for_item"
+)
+
+
+def _set_log(row: aiosqlite.Row) -> SetLogRecord:
+    return SetLogRecord(
+        id=row[0],
+        session_id=row[1],
+        exercise_id=row[2],
+        set_index=row[3],
+        planned_load_kg=row[4],
+        planned_reps_min=row[5],
+        planned_reps_max=row[6],
+        actual_load_kg=row[7],
+        actual_reps=row[8],
+        skipped=bool(row[9]),
+        rpe=row[10],
+        source=row[11],
+        created_at=row[12],
+        planned_seconds=row[13],
+        planned_meters=row[14],
+        actual_seconds=row[15],
+        actual_meters=row[16],
+        extra_for_block=row[17],
+        extra_for_item=row[18],
+    )
+
+
 async def list_set_logs_for_session(
     conn: aiosqlite.Connection, session_id: int
 ) -> list[SetLogRecord]:
@@ -172,38 +204,37 @@ async def list_set_logs_for_session(
     created, in workout order, A§4.2), which also orders sets within a prescription by
     `set_index`."""
     async with conn.execute(
-        "SELECT id, session_id, exercise_id, set_index, planned_load_kg, planned_reps_min, "
-        "planned_reps_max, actual_load_kg, actual_reps, skipped, rpe, source, created_at, "
-        "planned_seconds, planned_meters, actual_seconds, actual_meters, "
-        "extra_for_block, extra_for_item "
-        "FROM set_logs WHERE session_id = ? ORDER BY id",
+        f"SELECT {_SET_LOG_COLUMNS} FROM set_logs s WHERE s.session_id = ? ORDER BY s.id",
         (session_id,),
     ) as cursor:
         rows = await cursor.fetchall()
-    return [
-        SetLogRecord(
-            id=row[0],
-            session_id=row[1],
-            exercise_id=row[2],
-            set_index=row[3],
-            planned_load_kg=row[4],
-            planned_reps_min=row[5],
-            planned_reps_max=row[6],
-            actual_load_kg=row[7],
-            actual_reps=row[8],
-            skipped=bool(row[9]),
-            rpe=row[10],
-            source=row[11],
-            created_at=row[12],
-            planned_seconds=row[13],
-            planned_meters=row[14],
-            actual_seconds=row[15],
-            actual_meters=row[16],
-            extra_for_block=row[17],
-            extra_for_item=row[18],
-        )
-        for row in rows
-    ]
+    return [_set_log(row) for row in rows]
+
+
+async def recent_completed_set_logs(
+    conn: aiosqlite.Connection, user_id: int, exercise_id: str, *, limit: int = 2
+) -> list[list[SetLogRecord]]:
+    """ADR 0016: this exercise's set rows from the user's `limit` most recent **completed**
+    sessions run in the app, most recent first (by `finished_at`, then id, like
+    `recent_session_outcomes`), each session's rows in creation order. Imported history
+    (`import_hash` set) is left out: it never counts as a success for progression (A§7.3)."""
+    async with conn.execute(
+        f"SELECT {_SET_LOG_COLUMNS} FROM set_logs s "
+        "JOIN workout_sessions w ON w.id = s.session_id "
+        "WHERE w.user_id = ? AND s.exercise_id = ? AND w.status = 'completed' "
+        "AND w.import_hash IS NULL "
+        "ORDER BY w.finished_at DESC, w.id DESC, s.id ASC",
+        (user_id, exercise_id),
+    ) as cursor:
+        rows = await cursor.fetchall()
+    sessions: dict[int, list[SetLogRecord]] = {}
+    for row in rows:
+        if row[1] not in sessions:
+            if len(sessions) >= limit:
+                continue
+            sessions[row[1]] = []
+        sessions[row[1]].append(_set_log(row))
+    return list(sessions.values())
 
 
 async def historical_max_kg(

@@ -4,6 +4,7 @@ kind = "compound"
 pattern = "hinge"
 measures = ["reps"]
 qualities = ["strength", "hypertrophy"]
+unilateral = true
 level = "advanced"
 equipment = ["dumbbells", "plyo_box"]
 load_unit = "single_implement"

@@ -4,6 +4,7 @@ kind = "isolation"
 pattern = "accessory"
 measures = ["reps"]
 qualities = ["hypertrophy"]
+unilateral = true
 level = "advanced"
 equipment = ["dumbbells"]
 load_unit = "single_implement"

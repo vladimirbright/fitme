@@ -4,6 +4,7 @@ kind = "isolation"
 pattern = "core"
 measures = ["reps"]
 qualities = ["core_stability"]
+unilateral = true
 equipment = ["resistance_bands"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

@@ -4,6 +4,7 @@ kind = "isolation"
 pattern = "accessory"
 measures = ["reps"]
 qualities = ["hypertrophy"]
+unilateral = true
 equipment = ["dumbbells", "bench", "plyo_box"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]
