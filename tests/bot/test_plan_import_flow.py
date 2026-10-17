@@ -23,6 +23,7 @@ from pydantic_ai.models.function import AgentInfo, FunctionModel
 from fitme import clock
 from fitme.bot.app import build_dispatcher
 from fitme.bot.callback_data import PlanDraft, PlanMenu, TrainAction, TrainPick
+from fitme.bot.handlers.plan import PendingRevision
 from fitme.config.settings import Settings
 from fitme.db.connection import Database
 from fitme.db.controllers.profile import upsert_profile, upsert_screening_flag
@@ -35,7 +36,8 @@ from fitme.domain.assistant import AssistantTurn
 from fitme.domain.enums import AREA_FLAGS, RED_FLAGS
 from fitme.domain.models import Plan, PlanImport, Refusal
 from fitme.i18n import t
-from fitme.llm.agents import assistant_agent, plan_import_agent, plan_revise_agent
+from fitme.llm.agents import assistant_agent, plan_import_agent, plan_revise_agent, planner_agent
+from fitme.services import planning
 from fitme.services import profile as profile_service
 from fitme.services.identity import issue_activation_code
 from fitme.services.llm_runtime import LlmRuntime
@@ -106,6 +108,11 @@ class FakeLlm:
                     FunctionModel(self._respond, model_name=str(model))
                 ),
                 "assistant": lambda model: assistant_agent(
+                    FunctionModel(self._assistant, model_name=str(model))
+                ),
+                # Experiment (llm-first planning): free text outside a workout goes to the
+                # planner; these tests only need its plain answer.
+                "planner": lambda model: planner_agent(
                     FunctionModel(self._assistant, model_name=str(model))
                 ),
             },
@@ -338,6 +345,12 @@ async def test_change_something_on_an_import_draft_revises_and_keeps_the_hints(
 
     await _click(dispatcher, bot, PlanDraft(action="change", decision_id=first_id))
     assert _texts(session)[-1] == t("plan.change_prompt", "ru")
+    # Experiment (llm-first planning): Change routes the next text to the planner; the
+    # legacy revise flow behind a pending revision is kept, so set it directly.
+    assert user_id not in dispatcher["pending_plan_revisions"]
+    dispatcher["pending_plan_revisions"][user_id] = PendingRevision(
+        base=planning.DraftBase(decision_id=first_id)
+    )
     revised = user_plan_import().plan
     revised.name = "Переименованный"
     for workout in revised.workouts:
@@ -473,10 +486,12 @@ async def test_cancel_command_drops_a_pending_paste_or_revision(
     draft_id = _last_draft_id(session)
     await _click(dispatcher, bot, PlanDraft(action="change", decision_id=draft_id))
     assert _texts(session)[-1] == t("plan.change_prompt", "ru")
+    # Experiment (llm-first planning): Change leaves no pending prompt for /cancel to drop —
+    # the draft stays open with its buttons, and the next text goes to the planner.
     await _send(dispatcher, bot, "/cancel")
-    assert _texts(session)[-1] == t("plan.change_cancelled", "ru")
+    assert _texts(session)[-1] == t("cancel.nothing_active", "ru")
     await _send(dispatcher, bot, "убери планку")
-    assert llm.calls == 1  # no revise call: the prompt was dropped
+    assert llm.calls == 1  # no revise call
     assert llm.assistant_calls == 2
     assert _ASSISTANT_REPLY in _texts(session)[-1]
     # /cancel with nothing pending is the ordinary message.

@@ -35,7 +35,7 @@ from fitme.domain.assistant import (
     PlanOp,
     WorkoutOp,
 )
-from fitme.domain.models import PlanImportProposal, PlanProposal, SessionAdjustProposal
+from fitme.domain.models import Plan, PlanImportProposal, PlanProposal, SessionAdjustProposal
 from fitme.domain.results import Recap, SetResult
 from fitme.llm.models import model_settings_for, output_retries_for
 from fitme.llm.prompts import render_prompt
@@ -159,6 +159,8 @@ class AssistantTools(Protocol):
 
     async def new_plan(self, guidance: str | None) -> dict[str, object]: ...
 
+    async def stage_plan(self, plan: Plan, plan_id: int | None) -> dict[str, object]: ...
+
     async def save_draft(self) -> dict[str, object]: ...
 
     async def discard_draft(self) -> dict[str, object]: ...
@@ -271,6 +273,16 @@ async def _new_plan(ctx: Deps, guidance: str | None = None) -> object:
     plan to be). Opens a planning session for it; the draft is shown after this turn. If the
     user already has plans and hasn't said what the new one should be, ask first instead."""
     return _NO_DATA if ctx.deps is None else await ctx.deps.new_plan(guidance)
+
+
+async def _stage_plan(ctx: Deps, plan: Plan, plan_id: int | None = None) -> object:
+    """Stage the whole plan the user agreed to, mirroring the conversation exactly (the same
+    days, items, durations and order). `plan_id`: the saved plan this replaces, or null for
+    the open planning session's plan or a new plan. The app checks it at once and, if it
+    fits, shows it to the user with Save / Change / Cancel buttons; it is not saved yet. The
+    answer says whether it fits (with the draft as it will be shown and any load notes) or
+    what to fix — fix the plan and call again, or tell the user what cannot be represented."""
+    return _NO_DATA if ctx.deps is None else await ctx.deps.stage_plan(plan, plan_id)
 
 
 async def _save_draft(ctx: Deps) -> object:
@@ -408,6 +420,30 @@ _ASSISTANT_TOOLS: tuple[Tool[Any], ...] = (
 )
 
 
+_PLANNER_TOOLS: tuple[Tool[Any], ...] = (
+    Tool(_list_plans, name="list_plans"),
+    Tool(_get_plan, name="get_plan"),
+    Tool(_list_recent_sessions, name="list_recent_sessions"),
+    Tool(_get_session, name="get_session"),
+    Tool(_find_exercises, name="find_exercises"),
+    Tool(_find_substitutes, name="find_substitutes"),
+    Tool(_stage_plan, name="stage_plan"),
+    Tool(_save_draft, name="save_draft"),
+    Tool(_discard_draft, name="discard_draft"),
+    Tool(_rename_plan, name="rename_plan"),
+    Tool(_set_default_plan, name="set_default_plan"),
+    Tool(_add_exclusion, name="add_exclusion"),
+    Tool(_remove_exclusion, name="remove_exclusion"),
+    Tool(_fix_logged_sets, name="fix_logged_sets"),
+    Tool(_report_safety_concern, name="report_safety_concern"),
+    Tool(_show, name="show"),
+)
+"""The planner's tools: lookups, `stage_plan` for whole plans, and the session/plan/log
+actions that make sense outside a started workout. No typed edit ops, no delegation to the
+plan designer (`rewrite_plan`/`new_plan`), no workout logging — a started workout stays with
+the legacy `assistant`."""
+
+
 def assistant_agent(model: AgentModel) -> BuiltAgent[AssistantOutput]:
     """ADR 0003/0004: the owner's free text (with the session's recent turns) in, a short
     `AssistantTurn` or a `Refusal` out; actions go through the tools above. Run with `deps=`
@@ -422,6 +458,21 @@ def assistant_agent(model: AgentModel) -> BuiltAgent[AssistantOutput]:
     )
 
 
+def planner_agent(model: AgentModel) -> BuiltAgent[AssistantOutput]:
+    """Experiment (llm-first planning): the conversational planner. The owner's free text
+    outside a started workout (with the session's turns) in, an `AssistantTurn` or a
+    `Refusal` out; it proposes sessions in plain language and, when the user agrees, stages
+    the structured `Plan` itself with `stage_plan`. Same deps as `assistant`. Default tier:
+    large."""
+    return _built(
+        "planner",
+        model,
+        AssistantOutput,
+        deps_type=AssistantTools,
+        tools=_PLANNER_TOOLS,
+    )
+
+
 # Every factory above, keyed by agent name — the single source of truth `llm/escalation.py`
 # and `cli`'s `llm eval` use to go from an agent name (a plain string, e.g. from
 # `--agent plan_revise`) to the right factory, instead of each maintaining their own copy of
@@ -433,4 +484,5 @@ AGENT_FACTORIES: dict[str, Callable[[AgentModel], BuiltAgent[Any]]] = {
     "recap": recap_agent,
     "plan_import": plan_import_agent,
     "assistant": assistant_agent,
+    "planner": planner_agent,
 }

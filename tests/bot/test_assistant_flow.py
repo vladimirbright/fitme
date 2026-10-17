@@ -90,6 +90,11 @@ class ScriptedLlm:
     steps: list[Step] = field(default_factory=list)
     requests: list[ModelRequest] = field(default_factory=list)
     calls: int = 0
+    # Experiment (llm-first planning): outside a started workout, free text goes to the
+    # `planner`. The tests in this module cover the legacy assistant's tools (`edit_plan`,
+    # `rewrite_plan`, `new_plan`, ...), which stay in the code, so by default they run the
+    # legacy agent under the planner's name; `test_planner_flow.py` passes `planner_agent`.
+    planner_factory: Any = assistant_agent
 
     def _respond(self, messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         self.calls += 1
@@ -115,6 +120,7 @@ class ScriptedLlm:
             prices={},
             agent_factories={
                 "assistant": wrap(assistant_agent),
+                "planner": wrap(self.planner_factory),
                 "plan_generate": wrap(plan_generate_agent),
             },
         )

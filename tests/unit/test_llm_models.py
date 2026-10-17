@@ -208,3 +208,12 @@ def test_escalating_agents_get_the_largest_output_retry_budget() -> None:
 def test_output_retries_for_unknown_agent_fails_fast() -> None:
     with pytest.raises(SettingsError, match="unknown agent"):
         models.output_retries_for("not_a_real_agent")
+
+
+def test_the_planner_defaults_to_the_large_tier_with_a_whole_plan_budget() -> None:
+    """Experiment (llm-first planning): one planner run per message replaces assistant +
+    plan_generate chains, and it emits whole plans inside a tool call."""
+    assert models.AGENT_DEFAULT_TIER["planner"] == "large"
+    planner = models.model_settings_for("planner")
+    assert planner.get("max_tokens") == 16000
+    assert planner.get("timeout") == 240

@@ -88,6 +88,10 @@ from fitme.services.plan_edit import save_edit
 from fitme.services.safety import HaltResult, halt
 
 AGENT_NAME = "assistant"
+# Experiment (llm-first planning): every message outside a started workout goes to the
+# conversational planner, which stages whole plans itself (`_Turn.stage_plan`); a started
+# workout keeps the assistant and its logging tools.
+PLANNER_AGENT = "planner"
 SOURCE = "assistant"
 UNDO_SOURCE = "assistant_undo"
 # Model requests per message: lookups, a few staged actions with corrections, the answer.
@@ -282,10 +286,13 @@ def apply_workout_ops(
 
 @dataclass(frozen=True, slots=True)
 class DraftUpdated:
-    """The planning session's draft after this turn's edits (shown as a diff, Save / Close)."""
+    """The planning session's draft after this turn's edits (shown as a diff, Save / Close).
+    `whole`: staged as a whole plan by the planner (`stage_plan`), shown whole like a
+    generated draft (Confirm / Change / Cancel) instead of as a diff."""
 
     result: planning.EditDraftResult
     before: Plan | None
+    whole: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -392,6 +399,7 @@ class _Staged:
     draft_plan: Plan | None = None  # the planning draft as edited this turn
     draft_before: Plan | None = None
     draft_plan_id: int | None = None
+    whole_draft: bool = False  # `draft_plan` was staged whole by the planner (`stage_plan`)
     today: Workout | None = None
     today_before: Workout | None = None
     today_session_id: int | None = None
@@ -657,6 +665,61 @@ class _Turn:
             hint="a draft: the user saves it with the Save button or by asking you",
         )
 
+    async def stage_plan(self, plan: Plan, plan_id: int | None) -> dict[str, object]:
+        """The planner's whole plan as the session's draft: the same session rules as
+        `edit_plan` (one plan per session), then the same judging as any draft
+        (`planning.judge`: hard guards with load-engine substitution, wording, measure and
+        intensity repair). A failure is returned so the model can correct the plan within
+        the turn; nothing is staged."""
+        staged = self.staged
+        if staged.rewrite is not None or staged.new_plan is not None:
+            return _error("a redesign or a new plan is already staged this turn")
+        session = self._planning
+        if plan_id is not None:
+            if await self._plan_record(plan_id) is None:
+                return _error(f"no plan {plan_id}")
+            target: int | None = plan_id
+        else:
+            target = None if session is None else session.plan_id
+        if (
+            session is not None
+            and session.plan_id != target
+            and await self._draft_is_current(session)
+        ):
+            return _error(
+                "another plan's draft is open in the planning session: ask the user to save "
+                "or discard it first"
+            )
+        if staged.draft_plan is not None and staged.draft_plan_id != target:
+            return _error("one plan per turn: a draft of another plan is already staged")
+        if staged.draft_plan is None:
+            draft_id = (
+                session.draft_decision_id
+                if session is not None and session.plan_id == target
+                else None
+            )
+            staged.draft_before = await planning.draft_base_plan(
+                self._db, self._user_id, plan_id=target, draft_decision_id=draft_id
+            )
+        # M8b: a declared-kg hint only ever traces back to a pasted plan — the model's own
+        # `declared_kg` is replaced by the base's (none for a new plan), like `plan_revise`.
+        plan = plan.model_copy(deep=True)
+        base = staged.draft_before
+        planning.restore_declared(plan, {} if base is None else planning.declared_loads_of(base))
+        preview = plan.model_copy(deep=True)
+        judgement = planning.judge(preview, self._inputs)
+        if not judgement.ok:
+            return _error("; ".join(verdict.detail for verdict in judgement.failures))
+        staged.draft_plan = plan
+        staged.draft_plan_id = target
+        staged.whole_draft = True
+        return _ok(
+            draft=preview.model_dump(mode="json"),
+            notes=_load_notes(plan, preview),
+            saved=False,
+            hint="a draft: the user saves it with the Save button or by asking you",
+        )
+
     async def rewrite_plan(self, plan_id: int | None, request: str) -> dict[str, object]:
         staged = self.staged
         if staged.draft_plan is not None or staged.new_plan is not None:
@@ -758,6 +821,8 @@ class _Turn:
             return exclusions.Scope.PLAN, staged.rewrite.base.plan_id
         if staged.draft_plan is not None and staged.draft_plan_id is not None:
             return exclusions.Scope.PLAN, staged.draft_plan_id
+        if staged.draft_plan is not None and staged.whole_draft:
+            return exclusions.Scope.NEW_PLAN, None  # a new plan the planner staged
         session = self._planning
         if session is None:
             return None
@@ -1063,12 +1128,13 @@ async def handle_message(
         planning_session=planning_session,
         workout=workout,
     )
-    spec = model_for(AGENT_NAME, llm.settings)
+    agent_name = AGENT_NAME if workout is not None else PLANNER_AGENT
+    spec = model_for(agent_name, llm.settings)
     outcome = await run_agent(
-        llm.factory(AGENT_NAME),
+        llm.factory(agent_name),
         spec.model,
         rendered.text,
-        purpose=AGENT_NAME,
+        purpose=agent_name,
         model_name=spec.model,
         prices=llm.prices,
         language=lang,
@@ -1077,7 +1143,7 @@ async def handle_message(
     )
     output = outcome.output
     prompt = PromptMeta(
-        template_name=outcome.prompt.template_name if outcome.prompt else AGENT_NAME,
+        template_name=outcome.prompt.template_name if outcome.prompt else agent_name,
         version=outcome.prompt.version if outcome.prompt else 0,
         model=spec.model,
         llm_input=rendered.payload,
@@ -1206,14 +1272,19 @@ async def _apply(
             user_id,
             plan=staged.draft_plan,
             plan_id=plan_id,
-            user_report={**report, "base": "assistant_edit"},
+            user_report={
+                **report,
+                "base": "planner_stage" if staged.whole_draft else "assistant_edit",
+            },
             prompt=prompt,
         )
         if result.round is not None:
             await conversations.planning_draft_shown(
                 db, user_id, plan_id=plan_id, draft_decision_id=result.round.decision_id
             )
-        items.append(DraftUpdated(result=result, before=staged.draft_before))
+        items.append(
+            DraftUpdated(result=result, before=staged.draft_before, whole=staged.whole_draft)
+        )
 
     if staged.today is not None and staged.today_before is not None:
         assert staged.today_session_id is not None

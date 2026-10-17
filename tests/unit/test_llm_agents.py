@@ -28,6 +28,7 @@ def test_every_factory_is_registered_in_agent_factories() -> None:
         "recap",
         "plan_import",
         "assistant",
+        "planner",
     }
 
 
@@ -144,3 +145,36 @@ async def test_plan_revise_agent_recovers_from_two_invalid_attempts_within_its_b
     result = await built.agent.run("revise please")
     assert result.output == valid_plan
     assert calls["n"] == 3
+
+
+def _tool_names(built: object) -> set[str]:
+    agent = built.agent  # type: ignore[attr-defined]
+    return set(agent._function_toolset.tools)
+
+
+def test_the_planner_stages_whole_plans_and_has_no_typed_edit_or_logging_tools() -> None:
+    """Experiment (llm-first planning): the planner stages whole plans with `stage_plan`;
+    the typed edit ops, the plan-designer delegation and the workout logging stay with the
+    legacy `assistant`, which does not get `stage_plan`."""
+    planner = _tool_names(AGENT_FACTORIES["planner"](TestModel()))
+    assert planner == {
+        "list_plans",
+        "get_plan",
+        "list_recent_sessions",
+        "get_session",
+        "find_exercises",
+        "find_substitutes",
+        "stage_plan",
+        "save_draft",
+        "discard_draft",
+        "rename_plan",
+        "set_default_plan",
+        "add_exclusion",
+        "remove_exclusion",
+        "fix_logged_sets",
+        "report_safety_concern",
+        "show",
+    }
+    assistant = _tool_names(AGENT_FACTORIES["assistant"](TestModel()))
+    assert "stage_plan" not in assistant
+    assert {"edit_plan", "rewrite_plan", "new_plan", "edit_today"} <= assistant
