@@ -694,6 +694,40 @@ plan view shows each workout's estimate, labelled as one.
 7. **Confirm** stores `plans` + `plan_versions(version=1, origin=llm)`. If this is the only
    plan, it becomes the default.
 
+#### 6.4.1 The conversational planner (experiment branch `experiment/llm-first-planning`)
+
+On this branch, steps 1–6 above are reached only through **Generate anyway**; the default
+path is the `planner` agent (§8.1, `prompts/planner.v1.md`).
+
+- **Entry.** Every free-text message outside a started workout (`services.assistant.
+  handle_message`: no active `/train` session) runs `planner`; a started workout keeps the
+  legacy `assistant` and its logging tools. **New plan** always asks what the plan should
+  be first (also with no plans yet), **Change** on a draft and **Change something** on a
+  saved plan answer "what should change?" in that plan's planning session — none of them
+  sets a pending revision, so the next text reaches the planner with the draft in
+  `state.planning_session.draft` and the session's turns in `history`. An exchange that
+  starts outside any session opens a new plan's planning session, so the next message
+  sees it.
+- **Tools.** Lookups (`list_plans`, `get_plan`, `list_recent_sessions`, `get_session`,
+  `find_exercises`, `find_substitutes`), `stage_plan(plan, plan_id)`, `save_draft`,
+  `discard_draft`, `rename_plan`, `set_default_plan`, the exclusions, `fix_logged_sets`,
+  `report_safety_concern`, `show`. No typed edit ops, no `rewrite_plan`/`new_plan`, no
+  workout logging.
+- **What runs.** The model talks the plan through in plain language and, when the user
+  agrees, stages a whole `Plan` (catalog ids, `activity:` items, an optional `location`).
+  `stage_plan` applies the session rules of `edit_plan` (one plan per session), replaces any
+  `declared_kg` with the base's, and judges it with `planning.judge` (no scope): hard guards
+  with load-engine substitution, wording, measure and intensity repair. A failure goes back
+  to the model in the same run; nothing is staged. The programming brief, candidate pool,
+  `plan_quality.review`, `time_budget` and `plan_generate`/`plan_revise` do **not** run.
+- **Draft, show, save.** After the run the staged plan becomes a `plan_revise` draft round
+  (`planning.record_edit_draft`, `user_report.base = "planner_stage"`, the planner's prompt
+  version and model) and the session's draft. The bot shows it whole with Confirm / Change /
+  Cancel (no session-length warning: the profile's length is a default), then any load the
+  guards limited. Confirm — or `save_draft` in the same turn when the user said "save it" —
+  is the unchanged `planning.confirm_plan` (a new `plans` row for a new plan,
+  `plan_versions.origin = llm`).
+
 ### 6.5 `/train` — the workout loop
 
 The state machine is stored in `workout_sessions.status` and `current_block`:
@@ -991,11 +1025,12 @@ One pydantic-ai `Agent` per purpose. Each has a typed output, and its prompt is 
 | `plan_import` | context + `imported_text` (scrubbed) | `PlanImport{plan, unmatched} \| Refusal` | medium |
 | `recap` | planned vs actual (incl. `extra_sets`) + engine decisions + `next_targets` (ADR 0016) | `Recap { text: str, suggestions: list[PlanChange] }` (swap, rep range, set count — ADR 0015; timed/distance target — ADR 0016) | large |
 | `assistant` | context + `state` + session `history` + user text (scrubbed); lookup and staging tools | `AssistantTurn \| Refusal` (ADR 0003, ADR 0004) | medium |
+| `planner` | as `assistant`; lookups, `stage_plan` (a whole `Plan`) and session tools, no typed edits or logging (§6.4.1, experiment branch) | `AssistantTurn \| Refusal` | large |
 
 - The prompt loader returns `(template_name, version, rendered_text)`. Template name and
   version go into `decisions`. Current versions (ADR 0017): `plan_generate.v8`,
   `plan_revise.v5`, `plan_import.v2`, `session_adjust.v2`, `recap.v3`,
-  `assistant.v11`. (`result_parse` was removed with the ✏️ button, ADR 0013.)
+  `assistant.v11`, `planner.v1` (experiment branch). (`result_parse` was removed with the ✏️ button, ADR 0013.)
 - Each agent's model comes from its tier or override (§8.5). Nothing in the code is tied to
   one provider.
 - `llm/usage.py` wraps every run: records `llm_calls` from `result.usage` (a property), latency, and
