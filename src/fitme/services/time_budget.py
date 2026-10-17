@@ -116,7 +116,7 @@ def fit_workout(
 
     changes: list[str] = []
 
-    def remove(block: Block) -> bool:
+    def last_working(block: Block) -> bool:
         roles = block_roles(workout, catalog)
         working = [
             other
@@ -129,7 +129,10 @@ def fit_workout(
                 for other, role in zip(workout.blocks, roles, strict=True)
                 if role != BlockRole.WARM_UP
             ]
-        if any(other is block for other in working) and len(working) <= 1:
+        return any(other is block for other in working) and len(working) <= 1
+
+    def remove(block: Block) -> bool:
+        if last_working(block):
             return False  # never the last working block: a workout is never emptied
         workout.blocks = [other for other in workout.blocks if other is not block]
         changes.append(f"removed {_names(block)}")
@@ -147,8 +150,8 @@ def fit_workout(
         if fits():
             break
         block = candidate.block
-        if max(item.sets for item in block.items) <= _MIN_SETS:
-            continue
+        if max(item.sets for item in block.items) <= _MIN_SETS or last_working(block):
+            continue  # the only working block keeps its volume too
         old = max(item.sets for item in block.items)
         for item in block.items:
             if item.sets > _MIN_SETS:
