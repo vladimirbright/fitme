@@ -344,10 +344,12 @@ async def started_workout(conn: Connection, session_id: int) -> Workout | None:
 
 
 def _engine_workout(
-    workout: Workout, inputs: planning.Inputs
+    workout: Workout, inputs: planning.Inputs, plan_id: int
 ) -> tuple[Workout, list[GuardVerdict]]:
     """A copy of `workout` with every prescription's load replaced by the load engine's value
-    (A§6.5 step 4: "the loads come from the load engine, not stored plan numbers alone")."""
+    (A§6.5 step 4: "the loads come from the load engine, not stored plan numbers alone").
+    ADR 0016: for that prescription in plan `plan_id` — a session of another plan or
+    prescription informs the load but earns no increase."""
     copy = workout.model_copy(deep=True)
     fired: list[GuardVerdict] = []
     for block in copy.blocks:
@@ -355,7 +357,9 @@ def _engine_workout(
             exercise = inputs.catalog.by_id(prescription.exercise_id)
             if exercise is None:
                 continue  # a non-catalog id fails `judge` structurally; nothing to compute
-            load, reason, verdicts = planning.engine_load(exercise, inputs)
+            load, reason, verdicts = planning.engine_load(
+                exercise, inputs, prescription=prescription, plan_id=plan_id
+            )
             prescription.load = load
             fired.append(
                 GuardVerdict(rule=_ENGINE_RULE, ok=True, detail=f"{exercise.id}: {reason}")
@@ -578,7 +582,7 @@ async def _build_review(
         return ReviewView(
             session_id=session_id, workout=draft, plan_name=ctx.plan_record.name, adjusted=True
         )
-    workout, _fired = _engine_workout(ctx.workout, inputs)
+    workout, _fired = _engine_workout(ctx.workout, inputs, ctx.plan_record.id)
     return ReviewView(
         session_id=session_id, workout=workout, plan_name=ctx.plan_record.name, adjusted=False
     )
@@ -730,7 +734,9 @@ async def adjust(
             )
         return AdjustResult(status=Status.REFUSED, refusal=refusal)
     inputs = planning.build_inputs(load_catalog(), snapshot, llm.settings, user_id)
-    current = draft if draft is not None else _engine_workout(ctx.workout, inputs)[0]
+    current = (
+        draft if draft is not None else _engine_workout(ctx.workout, inputs, ctx.plan_record.id)[0]
+    )
 
     payload_by_text: dict[str, dict[str, object]] = {}
     judgements: dict[int, planning.Judgement] = {}
@@ -1012,7 +1018,7 @@ async def start(db: Database, settings: Settings, user_id: int, session_id: int)
         draft, draft_id = await _draft_workout(conn, session_id)
         fired: list[GuardVerdict] = []
         if draft is None:
-            workout, fired = _engine_workout(ctx.workout, inputs)
+            workout, fired = _engine_workout(ctx.workout, inputs, ctx.plan_record.id)
         else:
             workout = draft
         judgement = _judge_workout(workout, inputs)

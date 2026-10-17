@@ -16,12 +16,23 @@ from fitme.db.controllers.training import (
     insert_set_log,
     insert_workout_session,
 )
-from fitme.db.selectors.training import recent_completed_set_logs
+from fitme.db.selectors.plans import get_plan_version
+from fitme.db.selectors.training import (
+    historical_max_kg,
+    recent_completed_set_logs,
+    recent_session_outcomes,
+)
 from fitme.domain.catalog import Exercise
 from fitme.domain.models import Load, Prescription
 from fitme.domain.results import ChangeTarget
 from fitme.services import progression
-from fitme.services.loads import LoadKind, next_load_for_exercise
+from fitme.services.loads import (
+    ExerciseHistory,
+    LoadKind,
+    next_load,
+    next_load_for_exercise,
+    scope_history,
+)
 from fitme.services.progression import TargetKind
 
 _CATALOG = load_catalog()
@@ -34,7 +45,7 @@ def _exercise(exercise_id: str) -> Exercise:
     return exercise
 
 
-async def _plan_version(db: Database, user_id: int) -> int:
+async def _plan_version(db: Database, user_id: int, name: str = "Plan") -> int:
     async with db.transaction() as conn:
         decision_id = await insert_decision(
             conn,
@@ -50,22 +61,30 @@ async def _plan_version(db: Database, user_id: int) -> int:
             guards_fired=[],
         )
         plan_id = await insert_plan(
-            conn, user_id=user_id, name="Plan", is_default=True, status="active"
+            conn, user_id=user_id, name=name, is_default=name == "Plan", status="active"
         )
         return await insert_plan_version(
             conn,
             plan_id=plan_id,
             version=1,
-            body={"name": "Plan", "workouts": []},
+            body={"name": name, "workouts": []},
             origin="llm",
             decision_id=decision_id,
         )
 
 
 async def _bench_session(
-    db: Database, user_id: int, version: int, kg: float, reps: list[int], *, exercise_id: str
+    db: Database,
+    user_id: int,
+    version: int,
+    kg: float,
+    reps: list[int],
+    *,
+    exercise_id: str,
+    planned: tuple[int, int] = (4, 6),
 ) -> None:
-    """One completed session: 4 × 4-6 prescribed at `kg`, performed as `reps` at `kg`."""
+    """One completed session: len(reps) × `planned` prescribed at `kg`, performed as `reps`
+    at `kg`."""
     async with db.transaction() as conn:
         session_id = await insert_workout_session(
             conn, user_id=user_id, plan_version_id=version, workout_key="A", status="completed"
@@ -77,8 +96,8 @@ async def _bench_session(
                 exercise_id=exercise_id,
                 set_index=index,
                 planned_load_kg=kg,
-                planned_reps_min=4,
-                planned_reps_max=6,
+                planned_reps_min=planned[0],
+                planned_reps_max=planned[1],
                 actual_load_kg=kg,
                 actual_reps=done,
                 rpe=None,
@@ -188,9 +207,16 @@ _PLANK = Prescription.model_validate(
 )
 
 
-async def _plank_target(db: Database, user_id: int) -> progression.TargetDecision:
+async def _plan_of(db: Database, version_id: int) -> int:
     async with db.read() as conn:
-        sessions = await recent_completed_set_logs(conn, user_id, "plank", limit=2)
+        version = await get_plan_version(conn, version_id)
+    assert version is not None
+    return version.plan_id
+
+
+async def _plank_target(db: Database, user_id: int, plan_id: int) -> progression.TargetDecision:
+    async with db.read() as conn:
+        sessions = await recent_completed_set_logs(conn, user_id, "plank", plan_id=plan_id, limit=2)
     return progression.next_target(_PLANK, _exercise("plank"), sessions)
 
 
@@ -198,17 +224,21 @@ async def test_a_timed_target_grows_only_after_two_app_sessions_at_it(
     db: Database, user_id: int
 ) -> None:
     version = await _plan_version(db, user_id)
-    assert (await _plank_target(db, user_id)).kind == TargetKind.HOLD  # no history: nothing
+    assert (
+        await _plank_target(db, user_id, await _plan_of(db, version))
+    ).kind == TargetKind.HOLD  # no history: nothing
 
     # Imported history is not evidence (A§7.3), however good it looks.
     await _timed_session(db, user_id, version, [60, 60, 60], imported="first")
     await _timed_session(db, user_id, version, [60, 60, 60], imported="second")
-    assert (await _plank_target(db, user_id)).change is None
+    assert (await _plank_target(db, user_id, await _plan_of(db, version))).change is None
 
     await _timed_session(db, user_id, version, [40, 40, 40])
-    assert (await _plank_target(db, user_id)).kind == TargetKind.HOLD  # one is not a trend
+    assert (
+        await _plank_target(db, user_id, await _plan_of(db, version))
+    ).kind == TargetKind.HOLD  # one is not a trend
     await _timed_session(db, user_id, version, [40, 45, 40])
-    decision = await _plank_target(db, user_id)
+    decision = await _plank_target(db, user_id, await _plan_of(db, version))
     assert decision.kind == TargetKind.MORE
     assert decision.change == ChangeTarget(exercise_id="plank", from_target=40, seconds=45)
 
@@ -217,16 +247,95 @@ async def test_an_incomplete_session_earns_no_longer_target(db: Database, user_i
     version = await _plan_version(db, user_id)
     await _timed_session(db, user_id, version, [40, 40, 40])
     await _timed_session(db, user_id, version, [40, 40, None])  # a set left unlogged
-    assert (await _plank_target(db, user_id)).change is None
+    assert (await _plank_target(db, user_id, await _plan_of(db, version))).change is None
 
 
 async def test_only_the_newest_sessions_are_read_and_in_order(db: Database, user_id: int) -> None:
     version = await _plan_version(db, user_id)
     for seconds in ([10, 10, 10], [20, 20, 20], [30, 30, 30]):
         await _timed_session(db, user_id, version, seconds)
+    plan_id = await _plan_of(db, version)
     async with db.read() as conn:
-        sessions = await recent_completed_set_logs(conn, user_id, "plank", limit=2)
+        sessions = await recent_completed_set_logs(conn, user_id, "plank", plan_id=plan_id, limit=2)
     assert [[row.actual_seconds for row in rows] for rows in sessions] == [
         [30, 30, 30],
         [20, 20, 20],
     ]
+
+
+# --- ADR 0016 follow-up: progression history is plan- and prescription-scoped ----------------
+
+
+async def _scoped_next(
+    db: Database, user_id: int, *, plan_id: int | None, sets: int, reps: tuple[int, int]
+) -> Load:
+    """The engine's next bench load for `sets` × `reps` in plan `plan_id`, from the real
+    outcome selector — as `planning.engine_decision` computes it for a prescription."""
+    bench = _exercise("barbell_bench_press")
+    async with db.read() as conn:
+        sessions = await recent_session_outcomes(conn, user_id, bench.id, limit=2)
+        history_max = await historical_max_kg(conn, user_id, bench.id)
+    history, higher = scope_history(
+        ExerciseHistory(history_max_kg=history_max, sessions=sessions),
+        plan_id=plan_id,
+        sets=sets,
+        reps_min=reps[0],
+        reps_max=reps[1],
+    )
+    if higher:
+        return Load(kind="calibration")
+    return next_load(bench, history, {}, [], 2.5, flagged_areas=frozenset()).load
+
+
+async def test_the_outcome_selector_records_the_prescription_and_plan(
+    db: Database, user_id: int
+) -> None:
+    version = await _plan_version(db, user_id)
+    await _bench_session(
+        db, user_id, version, 60.0, [6, 6, 6, 6], exercise_id="barbell_bench_press"
+    )
+    async with db.read() as conn:
+        (outcome,) = await recent_session_outcomes(conn, user_id, "barbell_bench_press", limit=2)
+    assert outcome.plan_id == await _plan_of(db, version)
+    assert (outcome.planned_sets, outcome.planned_reps_min, outcome.planned_reps_max) == (4, 4, 6)
+
+
+async def test_repeated_workouts_in_one_plan_progress_and_another_plan_starts_at_the_load(
+    db: Database, user_id: int
+) -> None:
+    """Scenario D: program A's 4 x 6 success at 60 kg."""
+    plan_a = await _plan_of(db, version_a := await _plan_version(db, user_id))
+    plan_b = await _plan_of(db, await _plan_version(db, user_id, "Program B"))
+    await _bench_session(
+        db, user_id, version_a, 60.0, [6, 6, 6, 6], exercise_id="barbell_bench_press"
+    )
+
+    assert await _scoped_next(db, user_id, plan_id=plan_a, sets=4, reps=(4, 6)) == Load(
+        kind="kg", kg=62.5
+    )
+    # Program B, same prescription: A's load is the start, A's streak earns nothing there.
+    assert await _scoped_next(db, user_id, plan_id=plan_b, sets=4, reps=(4, 6)) == Load(
+        kind="kg", kg=60.0
+    )
+    # Program B, 3 x 10: a 6-rep load is no start for 10 reps; calibrate.
+    assert await _scoped_next(db, user_id, plan_id=plan_b, sets=3, reps=(8, 10)) == Load(
+        kind="calibration"
+    )
+    # Program A with a set fewer: hold, the streak was at four sets.
+    assert await _scoped_next(db, user_id, plan_id=plan_a, sets=3, reps=(4, 6)) == Load(
+        kind="kg", kg=60.0
+    )
+
+
+async def test_target_evidence_from_another_plan_is_not_enough_here(
+    db: Database, user_id: int
+) -> None:
+    version_a = await _plan_version(db, user_id)
+    plan_b = await _plan_of(db, await _plan_version(db, user_id, "Program B"))
+    await _timed_session(db, user_id, version_a, [40, 40, 40])
+    await _timed_session(db, user_id, version_a, [40, 40, 40])
+    assert (await _plank_target(db, user_id, await _plan_of(db, version_a))).kind == (
+        TargetKind.MORE
+    )
+    insufficient = await _plank_target(db, user_id, plan_b)
+    assert insufficient.kind == TargetKind.HOLD and insufficient.change is None

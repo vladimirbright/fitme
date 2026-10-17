@@ -145,6 +145,7 @@ from fitme.domain.models import (
     LoadChange,
     Plan,
     PlanImport,
+    Prescription,
     Refusal,
     Workout,
     plausible_declared_kg,
@@ -183,7 +184,13 @@ from fitme.services import (
 from fitme.services.catalog import available_exercises
 from fitme.services.decisions import PromptMeta, prompt_columns
 from fitme.services.llm_runtime import LlmRuntime
-from fitme.services.loads import ExerciseHistory, LoadDecision, next_load
+from fitme.services.loads import (
+    ExerciseHistory,
+    LoadDecision,
+    LoadKind,
+    next_load,
+    scope_history,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -591,20 +598,59 @@ def _load_text(load: Load) -> str:
     return f"{load.kg:g} kg" if load.kind == "kg" and load.kg is not None else load.kind
 
 
-def engine_load(exercise: Exercise, inputs: Inputs) -> tuple[Load, str, list[GuardVerdict]]:
+def engine_load(
+    exercise: Exercise,
+    inputs: Inputs,
+    *,
+    prescription: Prescription | None = None,
+    plan_id: int | None = None,
+) -> tuple[Load, str, list[GuardVerdict]]:
     """The load engine's value for `exercise` (A§7.3): `calibration` with no completed
-    session, otherwise deterministic double progression from the last prescribed load."""
-    decision = engine_decision(exercise, inputs)
+    session, otherwise deterministic double progression from the last prescribed load
+    (ADR 0016: of the same prescription in the same plan, when `prescription` is given)."""
+    decision = engine_decision(exercise, inputs, prescription=prescription, plan_id=plan_id)
     return decision.load, decision.reason, decision.guards_fired
 
 
-def engine_decision(exercise: Exercise, inputs: Inputs) -> LoadDecision:
+def engine_decision(
+    exercise: Exercise,
+    inputs: Inputs,
+    *,
+    prescription: Prescription | None = None,
+    plan_id: int | None = None,
+) -> LoadDecision:
     """`engine_load` with the engine's full structured decision (M8: the recap reads `kind`
-    and `blocked_by`)."""
+    and `blocked_by`). ADR 0016: with the `prescription` it is for (and the plan it belongs
+    to), only sessions of that same prescription in that plan count as successes or failures
+    (`loads.scope_history`); a rep target higher than the last load was used for is
+    calibration. Without one, as before."""
     history = ExerciseHistory(
         history_max_kg=inputs.snapshot.history_max.get(exercise.id),
         sessions=inputs.snapshot.outcomes.get(exercise.id, []),
     )
+    if (
+        prescription is not None
+        and exercise.kg_loadable
+        and prescription.measure == Measure.REPS
+        and prescription.reps_min is not None
+        and prescription.reps_max is not None
+        and history.sessions
+    ):
+        history, higher = scope_history(
+            history,
+            plan_id=plan_id,
+            sets=prescription.sets,
+            reps_min=prescription.reps_min,
+            reps_max=prescription.reps_max,
+        )
+        if higher:
+            return LoadDecision(
+                load=Load(kind="calibration"),
+                reason=(
+                    "more reps than the last load was used for: calibration — log what you use"
+                ),
+                kind=LoadKind.CALIBRATION,
+            )
     decision = next_load(
         exercise,
         history,
@@ -1162,6 +1208,32 @@ async def _set_aside_later_attempts(
             await insert_decision_outcome(conn, decision_id=attempt.decision_id, outcome=outcome)
 
 
+def _fit_time_budget(plan: Plan, inputs: Inputs, judgement: Judgement) -> Judgement:
+    """ADR 0016: `time_budget.fit_plan` on a plan that passed `judge`, in place, and the
+    judgement of the plan *as it now is*: the guards run again on the shortened plan, so no
+    verdict describes the plan before it. A shortened plan that fails them (never expected:
+    trimming only removes sets and blocks) is restored to the passing plan, and the attempt
+    keeps its original judgement with a note — never a plan the guards haven't passed."""
+    before = plan.model_copy(deep=True)
+    budget = time_budget.fit_plan(plan, inputs.catalog, inputs.user_context.session_minutes)
+    if not budget:
+        return judgement
+    verdicts = validate_plan(plan, inputs.ctx)
+    failures = [verdict for verdict in verdicts if not verdict.ok]
+    if failures:
+        plan.workouts = before.workouts
+        reverted = GuardVerdict(
+            rule=time_budget.RULE,
+            ok=False,
+            detail="shortened plan failed the guards and was not used: "
+            + "; ".join(verdict.detail for verdict in failures),
+        )
+        return Judgement(verdicts=judgement.verdicts, fired=[*judgement.fired, reverted])
+    # The fresh verdicts replace the old ones; the re-check fires nothing new (the gate verdict
+    # is the same one), so `fired` keeps the first judging's notes plus the shortening.
+    return Judgement(verdicts=verdicts, fired=[*judgement.fired, *budget])
+
+
 async def propose_new_plan(
     db: Database, llm: LlmRuntime, user_id: int, *, guidance: str | None = None
 ) -> PlanRoundResult:
@@ -1251,13 +1323,12 @@ async def propose_new_plan(
             judgement = judge(output, inputs)
             if judgement.ok:
                 # ADR 0016: a workout longer than the session is shortened by priority in
-                # code (logged), before the review sees it.
-                budget = time_budget.fit_plan(
-                    output, inputs.catalog, inputs.user_context.session_minutes
-                )
+                # code, then the plan as shortened is validated again and reviewed.
+                judgement = _fit_time_budget(output, inputs, judgement)
+            if judgement.ok:
                 findings = review_quality(output, inputs, qualities, request=guidance)
                 judgement = Judgement(
-                    verdicts=judgement.verdicts, fired=[*judgement.fired, *budget, *findings]
+                    verdicts=judgement.verdicts, fired=[*judgement.fired, *findings]
                 )
         last = await _log_attempt(
             db,

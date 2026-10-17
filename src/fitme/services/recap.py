@@ -349,9 +349,10 @@ def _next_kind(decision: LoadDecision) -> tuple[NextKind, Load | None]:
 
 
 def _preview(
-    workout: Workout, inputs: planning.Inputs
+    workout: Workout, inputs: planning.Inputs, plan_id: int
 ) -> tuple[list[NextLoad], list[GuardVerdict]]:
-    """The engine's next load per distinct exercise, in workout order (A§7.3)."""
+    """The engine's next load per distinct exercise, in workout order (A§7.3), for its
+    prescription in plan `plan_id` (ADR 0016), as the next Start computes it."""
     preview: list[NextLoad] = []
     fired: list[GuardVerdict] = []
     seen: set[str] = set()
@@ -363,7 +364,9 @@ def _preview(
             exercise = inputs.catalog.by_id(item.exercise_id)
             if exercise is None:
                 continue
-            decision = planning.engine_decision(exercise, inputs)
+            decision = planning.engine_decision(
+                exercise, inputs, prescription=item, plan_id=plan_id
+            )
             fired.extend(decision.guards_fired)
             kind, _unused = _next_kind(decision)
             if_fine = None
@@ -837,7 +840,11 @@ async def build_recap(
         snapshot = await planning.read_snapshot(conn, user_id)
         history = {
             exercise_id: await recent_completed_set_logs(
-                conn, user_id, exercise_id, limit=progression.SESSIONS_FOR_A_TREND
+                conn,
+                user_id,
+                exercise_id,
+                plan_id=ctx.plan_record.id,
+                limit=progression.SESSIONS_FOR_A_TREND,
             )
             for exercise_id in {item.exercise_id for b in workout.blocks for item in b.items}
         }
@@ -846,7 +853,7 @@ async def build_recap(
         return None
     inputs = planning.build_inputs(catalog, snapshot, llm.settings, user_id)
     summaries = _summaries(workout, rows, previous_max, catalog)
-    preview, fired = _preview(workout, inputs)
+    preview, fired = _preview(workout, inputs, ctx.plan_record.id)
     targets, target_changes = _targets(workout, ctx.plan, catalog, history)
     kept_targets, target_verdicts = _filter_suggestions(
         target_changes, ctx.plan, inputs, summaries, ctx.session.workout_key, preview

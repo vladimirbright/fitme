@@ -168,16 +168,16 @@ def _long_boxing_friday() -> Workout:
 def test_an_over_budget_workout_is_shortened_by_priority_without_cutting_rest() -> None:
     friday = _long_boxing_friday()
     rests = {item.exercise_id: item.rest_seconds for block in friday.blocks for item in block.items}
-    # 45 min: dropping one accessory that serves no objective is enough; nothing else moves.
+    # 45 min: dropping the two accessories that serve no objective is enough; nothing else.
     lighter = _long_boxing_friday()
     fired = time_budget.fit_workout(lighter, _CATALOG, 45)
-    assert fired[0].detail.count("removed") == 1 and "sets" not in fired[0].detail
+    assert fired[0].detail.count("removed") == 2 and "sets" not in fired[0].detail
     # 40 min: both redundant accessories go, then volume, never the main objective's.
     before = session_time.estimate(friday, _CATALOG).minutes
-    assert before > 40 * _MODEL.tolerance
+    assert before > 40
     fired = time_budget.fit_workout(friday, _CATALOG, 40)
     after = session_time.estimate(friday, _CATALOG).minutes
-    assert after <= 40 * _MODEL.tolerance < before
+    assert after <= 40 < before  # the target itself, not the target plus the tolerance
     assert [verdict.rule for verdict in fired] == ["plan.time_budget"] and fired[0].ok
     kept = [item.exercise_id for block in friday.blocks for item in block.items]
     # The warm-up and the main objective's footwork are kept, at their full volume.
@@ -482,17 +482,22 @@ def test_power_work_without_history_is_still_calibration() -> None:
 
 
 def _set(
-    item: Prescription, value: int | None, *, skipped: bool = False, session: int = 1
+    item: Prescription,
+    value: int | None,
+    *,
+    skipped: bool = False,
+    session: int = 1,
+    kg: float | None = None,
 ) -> SetLogRecord:
     return SetLogRecord(
         id=0,
         session_id=session,
         exercise_id=item.exercise_id,
         set_index=1,
-        planned_load_kg=None,
+        planned_load_kg=item.load.kg,
         planned_reps_min=item.reps_min,
         planned_reps_max=item.reps_max,
-        actual_load_kg=None,
+        actual_load_kg=kg,
         actual_reps=value if item.measure.value == "reps" else None,
         skipped=skipped,
         rpe=None,
@@ -505,8 +510,10 @@ def _set(
     )
 
 
-def _session(item: Prescription, *values: int | None) -> list[SetLogRecord]:
-    return [_set(item, value, skipped=value is None) for value in values]
+def _session(
+    item: Prescription, *values: int | None, kg: float | None = None
+) -> list[SetLogRecord]:
+    return [_set(item, value, skipped=value is None, kg=kg) for value in values]
 
 
 def test_bodyweight_reps_progress_after_two_sessions_at_the_top_of_the_range() -> None:
@@ -562,7 +569,7 @@ def test_timed_and_distance_work_progress_one_variable_by_about_ten_percent() ->
     )
     carry = rx("dumbbell_farmer_carry", 3, meters=40, rest=60)
     decision = progression.next_target(
-        carry, _exercise(carry.exercise_id), [_session(carry, 40, 40, 40)] * 2
+        carry, _exercise(carry.exercise_id), [_session(carry, 40, 40, 40, kg=16.0)] * 2
     )
     assert decision.change == ChangeTarget(exercise_id=carry.exercise_id, from_target=40, meters=45)
 

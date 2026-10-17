@@ -212,22 +212,25 @@ async def list_set_logs_for_session(
 
 
 async def recent_completed_set_logs(
-    conn: aiosqlite.Connection, user_id: int, exercise_id: str, *, limit: int = 2
+    conn: aiosqlite.Connection, user_id: int, exercise_id: str, *, plan_id: int, limit: int = 2
 ) -> list[list[SetLogRecord]]:
     """ADR 0016: this exercise's set rows from the user's `limit` most recent **completed**
-    sessions run in the app, most recent first (by `finished_at`, then id, like
-    `recent_session_outcomes`), each session's rows in creation order. Imported history
-    (`import_hash` set) is left out: it never counts as a success for progression (A§7.3)."""
+    sessions of plan `plan_id` (any of its versions) run in the app, most recent first (by
+    `finished_at`, then id, like `recent_session_outcomes`), each session's rows in creation
+    order. Progression evidence is plan-specific: the same exercise in another program, and
+    imported history (`import_hash` set, no plan), never count towards it (A§7.3)."""
     async with conn.execute(
         "WITH recent AS ("
         "SELECT w.id, w.finished_at FROM workout_sessions w "
-        "WHERE w.user_id = ? AND w.status = 'completed' AND w.import_hash IS NULL "
+        "JOIN plan_versions v ON v.id = w.plan_version_id "
+        "WHERE w.user_id = ? AND v.plan_id = ? AND w.status = 'completed' "
+        "AND w.import_hash IS NULL "
         "AND EXISTS (SELECT 1 FROM set_logs x WHERE x.session_id = w.id AND x.exercise_id = ?) "
         "ORDER BY w.finished_at DESC, w.id DESC LIMIT ?) "
         f"SELECT {_SET_LOG_COLUMNS} FROM set_logs s JOIN recent r ON r.id = s.session_id "
         "WHERE s.exercise_id = ? "
         "ORDER BY r.finished_at DESC, r.id DESC, s.id ASC",
-        (user_id, exercise_id, limit, exercise_id),
+        (user_id, plan_id, exercise_id, limit, exercise_id),
     ) as cursor:
         rows = await cursor.fetchall()
     sessions: dict[int, list[SetLogRecord]] = {}
@@ -319,8 +322,9 @@ async def recent_session_outcomes(
     async with conn.execute(
         "SELECT w.id, s.actual_load_kg, s.actual_reps, s.planned_load_kg, "
         "s.planned_reps_min, s.planned_reps_max, s.skipped, s.source, "
-        "s.extra_for_block IS NOT NULL "
+        "s.extra_for_block IS NOT NULL, v.plan_id "
         "FROM set_logs s JOIN workout_sessions w ON w.id = s.session_id "
+        "LEFT JOIN plan_versions v ON v.id = w.plan_version_id "
         "WHERE w.user_id = ? AND s.exercise_id = ? AND w.status = 'completed' "
         "ORDER BY w.finished_at DESC, w.id DESC, s.set_index ASC",
         (user_id, exercise_id),
@@ -361,8 +365,9 @@ async def recent_session_outcomes_by_exercise(
     async with conn.execute(
         "SELECT w.id, s.actual_load_kg, s.actual_reps, s.planned_load_kg, "
         "s.planned_reps_min, s.planned_reps_max, s.skipped, s.source, "
-        "s.extra_for_block IS NOT NULL, s.exercise_id "
+        "s.extra_for_block IS NOT NULL, v.plan_id, s.exercise_id "
         "FROM set_logs s JOIN workout_sessions w ON w.id = s.session_id "
+        "LEFT JOIN plan_versions v ON v.id = w.plan_version_id "
         "WHERE w.user_id = ? AND w.status = 'completed' "
         "ORDER BY w.finished_at DESC, w.id DESC, s.set_index ASC",
         (user_id,),
@@ -371,7 +376,7 @@ async def recent_session_outcomes_by_exercise(
 
     rows_by_exercise: dict[str, list[aiosqlite.Row]] = {}
     for row in rows:
-        rows_by_exercise.setdefault(row[9], []).append(row)
+        rows_by_exercise.setdefault(row[10], []).append(row)
     return {
         exercise_id: _group_outcomes(exercise_rows, limit=limit)
         for exercise_id, exercise_rows in rows_by_exercise.items()
@@ -433,6 +438,8 @@ def _session_outcome_from_set_rows(all_rows: list[aiosqlite.Row]) -> SessionOutc
         hit_reps_max = False
         below_reps_min = False
         exceeded_prescription = False
+    ranges = {(row[4], row[5]) for row in set_rows}
+    reps_min, reps_max = next(iter(ranges)) if len(ranges) == 1 else (None, None)
     return SessionOutcome(
         load_kg=load_kg,
         planned_load_kg=planned_load_kg,
@@ -440,6 +447,10 @@ def _session_outcome_from_set_rows(all_rows: list[aiosqlite.Row]) -> SessionOutc
         below_reps_min=below_reps_min,
         min_reps_performed=min_reps_performed,
         exceeded_prescription=exceeded_prescription,
+        plan_id=all_rows[0][9] if all_rows else None,
+        planned_reps_min=reps_min,
+        planned_reps_max=reps_max,
+        planned_sets=len(set_rows),
     )
 
 

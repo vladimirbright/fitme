@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Collection, Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from enum import StrEnum
 
 from fitme.db.connection import Database
@@ -166,6 +166,40 @@ def _within_ceiling(
         kind=LoadKind.CLAMPED,
         blocked_by=BlockedBy.CEILING,
     )
+
+
+def scope_history(
+    history: ExerciseHistory, *, plan_id: int | None, sets: int, reps_min: int, reps_max: int
+) -> tuple[ExerciseHistory, bool]:
+    """ADR 0016: the history as evidence for *this* prescription — `sets` × `reps_min`-
+    `reps_max` in plan `plan_id` (`None` for a plan not saved yet). A session done in another
+    plan, or at another number of sets or rep range, keeps its loads (they still say what the
+    user can lift, and the ceiling still reads them) but is neither a success nor a failure
+    here: a streak in one program isn't one in the next, so a new program starts by holding
+    at the known load, never by increasing it.
+
+    The second value is whether the target now asks for more reps than the last session's
+    load was used for (a 6-rep load prescribed for 10): that load is then not a sound start,
+    and the caller calibrates instead."""
+    scoped = []
+    for outcome in history.sessions:
+        same = (
+            outcome.plan_id == plan_id
+            and outcome.planned_sets == sets
+            and (outcome.planned_reps_min, outcome.planned_reps_max) == (reps_min, reps_max)
+        )
+        scoped.append(
+            outcome
+            if same
+            else replace(
+                outcome, hit_reps_max=False, below_reps_min=False, exceeded_prescription=False
+            )
+        )
+    last = history.sessions[0] if history.sessions else None
+    higher = (
+        last is not None and last.planned_reps_max is not None and reps_max > last.planned_reps_max
+    )
+    return ExerciseHistory(history_max_kg=history.history_max_kg, sessions=scoped), higher
 
 
 def next_load(

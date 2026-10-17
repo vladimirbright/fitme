@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 
+import pytest
 from test_planning_service import FakeLlm, _settings
 
 from fitme import clock
@@ -16,9 +17,12 @@ from fitme.bot.plan_rendering import render_plan_text
 from fitme.catalog import load_catalog
 from fitme.db.connection import Database
 from fitme.db.controllers.profile import upsert_profile, upsert_screening_flag
+from fitme.db.selectors.decisions import list_decisions_for_user
 from fitme.domain.enums import AREA_FLAGS, RED_FLAGS, BlockRole, Measure, Quality
+from fitme.domain.guard_types import GuardVerdict
 from fitme.domain.models import Block, Load, Plan, Prescription, ScheduledDay, Workout
-from fitme.services import planning, session_time
+from fitme.guards.plan import validate_plan
+from fitme.services import planning, session_time, time_budget
 
 _GYM = [
     "dumbbells", "barbell", "rack", "bench", "pull_up_bar", "kettlebell", "resistance_bands",
@@ -281,14 +285,87 @@ async def test_a_generated_workout_over_the_session_length_is_shortened_by_prior
     assert result.plan is not None
     catalog = load_catalog()
     workout = result.plan.workouts[0]
-    assert session_time.estimate(workout, catalog).minutes <= 60 * 1.15
+    assert session_time.estimate(workout, catalog).minutes <= 60  # the target itself
     kept = [item.exercise_id for block in workout.blocks for item in block.items]
     assert kept[:3] == ["jump_rope_skipping", "stance_footwork_drill", "shuttle_run"]
     assert "machine_lat_pulldown" not in kept
     budget = [v for v in result.guards_fired if v.rule == "plan.time_budget"]
     assert budget and budget[0].ok and "removed machine_lat_pulldown" in budget[0].detail
     payload = json.loads(llm.prompts[0])
-    assert payload["programming_brief"]["time_budget"]["session_minutes"] == 60
+    assert payload["programming_brief"]["time_budget"]["target_minutes"] == 60
     assert len(payload["programming_brief"]["session_objectives"]) == 2  # one per session
     text = render_plan_text(result.plan, catalog=catalog, lang="en", title="Draft:")
     assert "(estimated from the sets and rests, not measured)" in text
+
+
+# --- ADR 0016 follow-up: the plan judged is the plan as shortened -----------------------------
+
+
+def _two_long_sessions() -> Plan:
+    """Two over-long workouts; B's only conditioning work is an accessory-ranked block."""
+    first = _long_plan().workouts[0]
+    second = first.model_copy(deep=True, update={"key": "B"})
+    return Plan(
+        name="Boxing support",
+        schedule=[
+            ScheduledDay(weekday=1, workout_key="A"),
+            ScheduledDay(weekday=4, workout_key="B"),
+        ],
+        workouts=[first, second],
+    )
+
+
+async def _draft_decision_plan(db: Database, user_id: int, decision_id: int) -> Plan:
+    async with db.read() as conn:
+        decisions = {d.id: d for d in await list_decisions_for_user(conn, user_id)}
+    proposal = decisions[decision_id].proposal
+    assert proposal is not None
+    return Plan.model_validate(proposal["plan"])
+
+
+async def test_every_shortened_session_is_judged_again_and_the_draft_is_what_was_judged(
+    db: Database, user_id: int
+) -> None:
+    await _seed_boxer(db, user_id)
+    llm = FakeLlm([_two_long_sessions(), _two_long_sessions()])
+
+    result = await planning.propose_new_plan(db, llm.runtime(), user_id)
+
+    assert result.plan is not None
+    budget = [v for v in result.guards_fired if v.rule == "plan.time_budget"]
+    assert [v.detail.split(":")[0] for v in budget] == ["workout A", "workout B"]
+    # The stored draft is the shortened plan, and the guards pass on exactly it.
+    stored = await _draft_decision_plan(db, user_id, result.decision_id)
+    assert stored == result.plan
+    async with db.read() as conn:
+        snapshot = await planning.read_snapshot(conn, user_id)
+    inputs = planning.build_inputs(load_catalog(), snapshot, _settings(), user_id)
+    assert all(v.ok for v in validate_plan(stored, inputs.ctx))
+    # The review ran on the shortened plan: nothing it says names a removed exercise.
+    findings = [v.detail for v in result.guards_fired if v.rule.startswith("quality.")]
+    assert not any("machine_lat_pulldown" in detail for detail in findings)
+
+
+async def test_a_shortened_plan_that_fails_the_guards_is_not_used(
+    db: Database, user_id: int, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Never expected from trimming, which only removes sets and blocks — but if the plan as
+    changed fails the guards, the plan that passed them is the draft, with a note."""
+    await _seed_boxer(db, user_id)
+
+    def broken_fit(plan: Plan, catalog: object, minutes: int) -> list[GuardVerdict]:
+        plan.workouts[0].blocks[1].items[0].exercise_id = "not_a_catalog_exercise"
+        return [GuardVerdict(rule="plan.time_budget", ok=True, detail="workout A: changed")]
+
+    monkeypatch.setattr(time_budget, "fit_plan", broken_fit)
+    llm = FakeLlm([_long_plan(), _long_plan()])
+
+    result = await planning.propose_new_plan(db, llm.runtime(), user_id)
+
+    assert result.plan is not None
+    ids = [i.exercise_id for b in result.plan.workouts[0].blocks for i in b.items]
+    assert "not_a_catalog_exercise" not in ids and "machine_lat_pulldown" in ids
+    notes = [v.detail for v in result.guards_fired if v.rule == "plan.time_budget"]
+    assert any(
+        note.startswith("shortened plan failed the guards and was not used") for note in notes
+    )
