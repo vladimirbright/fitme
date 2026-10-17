@@ -2,7 +2,8 @@
 
 Subcommands mirror docs/ARCHITECTURE.md §11. `db upgrade`, `export`, `delete`, `purge`,
 `catalog check`, `activate` and `serve` are implemented (M1, M3, M5); `llm eval` is
-implemented too (M4), and `hold clear` is the operator's hold bypass (A§6.6). `health` and
+implemented too (M4), with `llm eval-conversations` beside it (the llm-first planning
+experiment), and `hold clear` is the operator's hold bypass (A§6.6). `health` and
 `backup` are the M10 deployment commands: the container healthcheck and the online-backup
 CLI, respectively. `catalog index|reindex|search|substitutes` are the search index and
 retrieval commands (ADR 0007). `db <other>` subcommands remain stubs.
@@ -17,7 +18,7 @@ import sys
 from collections.abc import Callable, Coroutine, Sequence
 from typing import Any
 
-from fitme.cli import catalog_search, commands, llm_eval
+from fitme.cli import catalog_search, commands, llm_eval, llm_eval_conversations
 from fitme.cli.catalog_check import catalog_check
 from fitme.config.settings import Settings, SettingsError, load_settings
 from fitme.domain.enums import (
@@ -186,6 +187,19 @@ def _build_parser() -> argparse.ArgumentParser:
     eval_parser.add_argument(
         "--yes", action="store_true", help="Confirm spending real money on a live provider call."
     )
+    conversations_parser = llm_subparsers.add_parser(
+        "eval-conversations",
+        help="Replay the planning conversations (planner and legacy) against a model and "
+        "write a report. Spends money; never run in CI.",
+    )
+    conversations_parser.add_argument(
+        "--mode", choices=("planner", "legacy", "both"), default="both", help="Which path to run."
+    )
+    conversations_parser.add_argument("--scenario", help="Limit the run to one fixture name.")
+    conversations_parser.add_argument("--model", help="Model string for every agent.")
+    conversations_parser.add_argument(
+        "--yes", action="store_true", help="Confirm spending real money on live provider calls."
+    )
 
     return parser
 
@@ -281,6 +295,17 @@ def main(argv: Sequence[str] | None = None) -> int:
                 parser,
                 lambda settings: llm_eval.run(
                     settings, agent=args.agent, model=args.model, confirmed=args.yes
+                ),
+            )
+        if args.llm_command == "eval-conversations":
+            return _with_settings(
+                parser,
+                lambda settings: llm_eval_conversations.run(
+                    settings,
+                    mode=args.mode,
+                    scenario=args.scenario,
+                    model=args.model,
+                    confirmed=args.yes,
                 ),
             )
         return _stub(f"llm {args.llm_command}")

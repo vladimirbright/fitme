@@ -1,0 +1,133 @@
+{
+  "name": "a_easy_run_saturdays_en",
+  "description": "Scenarios A, B, C, H in English: the same conversation as a_easy_run_saturdays.",
+  "profile": "experienced_public_gym",
+  "profile_overrides": {
+    "language": "en",
+    "sessions_per_week": 3
+  },
+  "history": [
+    {
+      "exercise_id": "barbell_back_squat",
+      "kg": 80.0,
+      "reps": 5
+    },
+    {
+      "exercise_id": "barbell_bench_press",
+      "kg": 60.0,
+      "reps": 6
+    }
+  ],
+  "turns": [
+    {
+      "user": "Let's do an easy outdoor run once a week, on Saturdays. I need to learn how to warm up and how to run.",
+      "expect": {}
+    },
+    {
+      "user": "Looks good",
+      "expect": {
+        "draft": true,
+        "days": [
+          5
+        ],
+        "no_kg_loads": true,
+        "no_equipment": true,
+        "exclude_kinds": [
+          "compound",
+          "isolation"
+        ],
+        "items_max": 6,
+        "location": "outdoor"
+      }
+    },
+    {
+      "user": "Remove the jump rope, I won't take one on a run.",
+      "expect": {
+        "draft": true,
+        "days": [
+          5
+        ],
+        "no_kg_loads": true,
+        "no_equipment": true,
+        "exclude_kinds": [
+          "compound",
+          "isolation"
+        ],
+        "items_max": 6,
+        "location": "outdoor",
+        "exclude_ids": [
+          "jump_rope_skipping"
+        ],
+        "exclude_equipment": [
+          "dumbbells",
+          "barbell",
+          "kettlebell",
+          "machine"
+        ]
+      }
+    },
+    {
+      "user": "Why would I bring dumbbells on a run? Take them out.",
+      "expect": {
+        "draft": true,
+        "days": [
+          5
+        ],
+        "no_kg_loads": true,
+        "no_equipment": true,
+        "exclude_kinds": [
+          "compound",
+          "isolation"
+        ],
+        "items_max": 6,
+        "location": "outdoor",
+        "exclude_ids": [
+          "jump_rope_skipping"
+        ],
+        "exclude_equipment": [
+          "dumbbells",
+          "barbell",
+          "kettlebell",
+          "machine"
+        ]
+      }
+    },
+    {
+      "user": "Looks good. Save it.",
+      "expect": {
+        "saved": true,
+        "days": [
+          5
+        ],
+        "no_kg_loads": true,
+        "no_equipment": true,
+        "exclude_kinds": [
+          "compound",
+          "isolation"
+        ],
+        "exclude_ids": [
+          "jump_rope_skipping"
+        ]
+      }
+    }
+  ],
+  "legacy": {
+    "request": {
+      "user": "Let's do an easy outdoor run once a week, on Saturdays. I need to learn how to warm up and how to run.",
+      "expect_as": 1
+    },
+    "revisions": [
+      {
+        "user": "Remove the jump rope, I won't take one on a run.",
+        "expect_as": 2
+      },
+      {
+        "user": "Why would I bring dumbbells on a run? Take them out.",
+        "expect_as": 3
+      }
+    ],
+    "save": {
+      "expect_as": 4
+    }
+  }
+}

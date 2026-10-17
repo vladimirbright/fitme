@@ -1,0 +1,86 @@
+{
+  "name": "e_bjj_twice_en",
+  "description": "Scenario E in English: the same conversation as e_bjj_twice.",
+  "profile": "experienced_public_gym",
+  "profile_overrides": {
+    "language": "en",
+    "sessions_per_week": 3
+  },
+  "history": [
+    {
+      "exercise_id": "barbell_back_squat",
+      "kg": 80.0,
+      "reps": 5
+    },
+    {
+      "exercise_id": "barbell_bench_press",
+      "kg": 60.0,
+      "reps": 6
+    }
+  ],
+  "turns": [
+    {
+      "user": "BJJ twice a week",
+      "expect": {
+        "any_of": [
+          {
+            "question": true
+          },
+          {
+            "draft": true,
+            "activity_items_min": 2,
+            "exclude_kinds": [
+              "compound",
+              "isolation"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "user": "Just put in the two classes, Monday and Thursday",
+      "expect": {
+        "draft": true,
+        "days": [
+          0,
+          3
+        ],
+        "activity_items_min": 2,
+        "exclude_kinds": [
+          "compound",
+          "isolation"
+        ]
+      }
+    },
+    {
+      "user": "Save it.",
+      "expect": {
+        "saved": true,
+        "days": [
+          0,
+          3
+        ],
+        "activity_items_min": 2,
+        "exclude_kinds": [
+          "compound",
+          "isolation"
+        ]
+      }
+    }
+  ],
+  "legacy": {
+    "request": {
+      "user": "BJJ twice a week",
+      "expect_as": 0
+    },
+    "revisions": [
+      {
+        "user": "Just put in the two classes, Monday and Thursday",
+        "expect_as": 1
+      }
+    ],
+    "save": {
+      "expect_as": 2
+    }
+  }
+}

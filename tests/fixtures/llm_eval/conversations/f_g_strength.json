@@ -1,0 +1,89 @@
+{
+  "name": "f_g_strength",
+  "description": "Scenarios F, G: a three-day gym strength program with familiar working weights from history, then one swap (barbell to dumbbell bench press) that changes one item and does not carry the barbell kg; saved.",
+  "profile": "experienced_public_gym",
+  "profile_overrides": {
+    "sessions_per_week": 3
+  },
+  "history": [
+    {
+      "exercise_id": "barbell_back_squat",
+      "kg": 80.0,
+      "reps": 5
+    },
+    {
+      "exercise_id": "barbell_bench_press",
+      "kg": 60.0,
+      "reps": 6
+    }
+  ],
+  "turns": [
+    {
+      "user": "Make me a three-day gym strength program. Use my familiar working weights.",
+      "expect": {}
+    },
+    {
+      "user": "Good, go ahead.",
+      "expect": {
+        "draft": true,
+        "days_count": 3,
+        "catalog_only": true,
+        "compound_loads": [
+          "kg",
+          "calibration"
+        ]
+      }
+    },
+    {
+      "user": "Replace barbell bench press with dumbbell bench press",
+      "expect": {
+        "draft": true,
+        "days_count": 3,
+        "catalog_only": true,
+        "single_change": true,
+        "unchanged_except": [
+          "barbell_bench_press",
+          "dumbbell_bench_press"
+        ],
+        "include_ids_any": [
+          "dumbbell_bench_press"
+        ],
+        "exclude_ids": [
+          "barbell_bench_press"
+        ],
+        "swap_load": {
+          "from": "barbell_bench_press",
+          "to": "dumbbell_bench_press"
+        }
+      }
+    },
+    {
+      "user": "Save it.",
+      "expect": {
+        "saved": true,
+        "days_count": 3,
+        "include_ids_any": [
+          "dumbbell_bench_press"
+        ],
+        "exclude_ids": [
+          "barbell_bench_press"
+        ]
+      }
+    }
+  ],
+  "legacy": {
+    "request": {
+      "user": "Make me a three-day gym strength program. Use my familiar working weights.",
+      "expect_as": 1
+    },
+    "revisions": [
+      {
+        "user": "Replace barbell bench press with dumbbell bench press",
+        "expect_as": 2
+      }
+    ],
+    "save": {
+      "expect_as": 3
+    }
+  }
+}
