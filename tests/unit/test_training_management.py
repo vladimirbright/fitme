@@ -273,6 +273,9 @@ def test_a_kettlebell_swing_counts_as_hip_hinge_work_although_filed_as_condition
     assert Region.SHOULDER not in workload.regions_of(swing, Stimulus.POWER)
     ropes = _exercise("battle_rope_alternating_waves")
     assert workload.regions_of(ropes, Stimulus.CONDITIONING) == {Region.SHOULDER}
+    # A slam loads the hips too, but it is a medicine-ball throw, not a hinge.
+    slam = _exercise("medicine_ball_overhead_slam")
+    assert Region.HINGE not in workload.regions_of(slam, Stimulus.POWER)
 
 
 def _observed_two_day_week() -> list[Workout]:
