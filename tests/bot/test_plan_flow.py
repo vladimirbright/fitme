@@ -20,6 +20,7 @@ from fitme import clock
 from fitme.bot import waiting
 from fitme.bot.app import build_dispatcher
 from fitme.bot.callback_data import PlanDraft, PlanMenu, TrainPick
+from fitme.bot.handlers.plan import PendingRevision
 from fitme.config.settings import Settings
 from fitme.db.connection import Database
 from fitme.db.controllers.profile import upsert_profile, upsert_screening_flag
@@ -30,7 +31,7 @@ from fitme.domain.enums import AREA_FLAGS, RED_FLAGS
 from fitme.domain.models import Block, Load, Plan, Prescription, Refusal, ScheduledDay, Workout
 from fitme.i18n import t
 from fitme.llm.agents import plan_generate_agent, plan_revise_agent
-from fitme.services import conversations
+from fitme.services import conversations, planning
 from fitme.services.identity import issue_activation_code
 from fitme.services.llm_runtime import LlmRuntime
 from tests.bot.conftest import FakeSession, callback_update, make_user, message_update
@@ -208,13 +209,25 @@ def _last_draft_id(session: FakeSession) -> int:
     raise AssertionError("no draft keyboard was sent")
 
 
-async def _new_draft(dispatcher: Dispatcher, bot: Bot, session: FakeSession) -> int:
+async def _new_round(dispatcher: Dispatcher, bot: Bot, session: FakeSession) -> None:
+    """New plan, then "Generate anyway" (the legacy generator) when the question is asked:
+    experiment (llm-first planning) — New plan always asks first, unless the gate refuses."""
     await _click(dispatcher, bot, PlanMenu(action="new", plan_id=0))
-    # With plans already there, New plan first asks what the new one should be.
     skip = PlanMenu(action="new_skip", plan_id=0).pack()
     if skip in _callback_datas(_sent_messages(session)[-1]):
         await _click(dispatcher, bot, skip)
+
+
+async def _new_draft(dispatcher: Dispatcher, bot: Bot, session: FakeSession) -> int:
+    await _new_round(dispatcher, bot, session)
     return _last_draft_id(session)
+
+
+def _legacy_revision(dispatcher: Dispatcher, user_id: int, base: planning.RevisionBase) -> None:
+    """Experiment (llm-first planning): the Change buttons no longer route the next text to
+    `plan_revise` (it goes to the planner). The legacy revise flow behind a pending revision
+    stays in the code, so these tests set the pending prompt directly to keep covering it."""
+    dispatcher["pending_plan_revisions"][user_id] = PendingRevision(base=base)
 
 
 # --- Tests -----------------------------------------------------------------------------------
@@ -293,7 +306,14 @@ async def test_change_something_revises_over_free_text_and_confirm_saves_the_rev
 
     await _click(dispatcher, bot, PlanDraft(action="change", decision_id=first_id))
     assert _sent_messages(session)[-1].text == t("plan.change_prompt", "en")
+    # Experiment: Change sets no pending revision (the next text goes to the planner, see
+    # `test_planner_flow.py`), and the prompt is in the draft's planning session.
+    assert user_id not in dispatcher["pending_plan_revisions"]
+    record = await conversations.current_planning(db, user_id)
+    assert record is not None and record.draft_decision_id == first_id
+    assert (await conversations.history(db, record.id))[-1].text == t("plan.change_prompt", "en")
 
+    _legacy_revision(dispatcher, user_id, planning.DraftBase(decision_id=first_id))
     llm.responses.append(make_plan(name="Revised plan"))
     await _send(dispatcher, bot, "no superset please")
 
@@ -333,13 +353,15 @@ def _assert_animated_then_drafted(turn: list[Any], status: str) -> None:
 async def test_generating_and_revising_animate_a_placeholder_until_the_draft(
     dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
 ) -> None:
-    await _ready(dispatcher, bot, db)
+    user_id = await _ready(dispatcher, bot, db)
     llm.responses.append(make_plan())
+    await _click(dispatcher, bot, PlanMenu(action="new", plan_id=0))  # asks first
     before = len(session.sent)
-    first_id = await _new_draft(dispatcher, bot, session)
+    await _click(dispatcher, bot, PlanMenu(action="new_skip", plan_id=0))
+    first_id = _last_draft_id(session)
     _assert_animated_then_drafted(session.sent[before:], t("plan.generating", "en"))
 
-    await _click(dispatcher, bot, PlanDraft(action="change", decision_id=first_id))
+    _legacy_revision(dispatcher, user_id, planning.DraftBase(decision_id=first_id))
     llm.responses.append(make_plan(name="Revised plan"))
     before = len(session.sent)
     await _send(dispatcher, bot, "no superset please")
@@ -388,11 +410,11 @@ async def test_cancel_discards_the_draft_and_out_of_scope_shows_the_model_explan
 
     # `out_of_scope`: the model's own explanation is shown when it passes the wording check…
     llm.responses.append(Refusal(code="out_of_scope", message="Your profile says 3 days."))
-    await _click(dispatcher, bot, PlanMenu(action="new", plan_id=0))
+    await _new_round(dispatcher, bot, session)
     assert _sent_messages(session)[-1].text == "Your profile says 3 days."
     # …and falls back to the per-code copy when it doesn't (AGENTS.md §3).
     llm.responses.append(Refusal(code="out_of_scope", message="Ask your coach about that."))
-    await _click(dispatcher, bot, PlanMenu(action="new", plan_id=0))
+    await _new_round(dispatcher, bot, session)
     assert _sent_messages(session)[-1].text == t("refusal.out_of_scope", "en")
 
     # A confirm for a draft that was superseded by a refusal round is stale.
@@ -450,6 +472,15 @@ async def test_view_set_default_and_revise_from_the_list(
 
     await _click(dispatcher, bot, PlanMenu(action="revise", plan_id=two.id))
     assert _sent_messages(session)[-1].text == t("plan.change_prompt", "en")
+    # Experiment: "Change something" opens that plan's planning session for the planner,
+    # with the prompt in its history; no pending revision.
+    assert user_id not in dispatcher["pending_plan_revisions"]
+    record = await conversations.current_planning(db, user_id)
+    assert record is not None and record.plan_id == two.id
+    history = [turn.text for turn in await conversations.history(db, record.id)]
+    assert history == [f"{t('plan.revise_of', 'en', name='Two')}\n{t('plan.change_prompt', 'en')}"]
+
+    _legacy_revision(dispatcher, user_id, planning.PlanBase(plan_id=two.id))
     llm.responses.append(make_plan(name="Two b"))
     await _send(dispatcher, bot, "swap the push-ups")
     revised_id = _last_draft_id(session)
@@ -609,9 +640,10 @@ async def test_long_plan_is_split_into_several_messages(
     llm.responses.extend([big, big])
     before = len(_sent_messages(session))
 
-    await _click(dispatcher, bot, PlanMenu(action="new", plan_id=0))
+    await _new_round(dispatcher, bot, session)
 
-    chunks = _sent_messages(session)[before + 1 :]  # after the "generating" message
+    # after the New plan question and the "generating" message
+    chunks = _sent_messages(session)[before + 2 :]
     assert len(chunks) > 1
     assert all(len(m.text or "") <= 4096 for m in chunks)
     assert all(not _callback_datas(m) for m in chunks[:-1])
@@ -687,10 +719,10 @@ async def test_a_revision_with_fewer_days_than_the_profile_is_a_draft_not_a_refu
 ) -> None:
     """The profile's sessions per week (2 here) is a default, not a limit: "one day a week"
     gives a 1-day draft on the first attempt, with no guard retry and no refusal."""
-    await _ready(dispatcher, bot, db)
+    user_id = await _ready(dispatcher, bot, db)
     llm.responses.append(make_plan())
     draft_id = await _new_draft(dispatcher, bot, session)
-    await _click(dispatcher, bot, PlanDraft(action="change", decision_id=draft_id))
+    _legacy_revision(dispatcher, user_id, planning.DraftBase(decision_id=draft_id))
 
     one_day = make_plan()
     one_day.schedule = [ScheduledDay(weekday=2, workout_key="A")]

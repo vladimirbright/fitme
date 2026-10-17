@@ -31,6 +31,7 @@ _REAL_PROMPT_VERSIONS = {
     # v6: find_substitutes and hybrid find_exercises (ADR 0007); v7: exclusions, measures (0009)
     # v9: sets beyond the prescription (ADR 0012); v10: logged sets are not repeated;
     # v11: one clarifying question before a new plan or redesign, full requests (ADR 0017)
+    "planner": 1,  # experiment: the conversational planner that stages whole plans
 }
 _REAL_PROMPT_NAMES = tuple(_REAL_PROMPT_VERSIONS)
 

@@ -58,6 +58,10 @@ AGENT_DEFAULT_TIER: dict[str, str] = {
     # ADR 0003: maps a free-text request to typed edit ops with a few read-only lookups —
     # needs tool use and careful id mapping, not whole-program design.
     "assistant": "medium",
+    # Experiment (llm-first planning): the conversational planner talks about training and
+    # stages whole plans itself — one run per message replaces assistant + plan_generate
+    # chains, so it gets the large model. Overridable with `FITME_LLM_AGENT_PLANNER`.
+    "planner": "large",
 }
 
 # A§8.5 rule 6: per-agent ModelSettings, in code. Kept to cross-provider `ModelSettings` keys
@@ -78,6 +82,8 @@ AGENT_MODEL_SETTINGS: dict[str, ModelSettings] = {
     "session_adjust": ModelSettings(max_tokens=8000, timeout=120),
     "recap": ModelSettings(max_tokens=4096, timeout=120),
     "assistant": ModelSettings(max_tokens=8000, timeout=120),
+    # The planner emits whole plans inside a `stage_plan` tool call — a plan agent's budget.
+    "planner": ModelSettings(max_tokens=16000, timeout=240),
 }
 
 # Bug fix (plan_revise output-validation failures): per-agent output-retry budgets, passed to
@@ -100,6 +106,7 @@ AGENT_OUTPUT_RETRIES: dict[str, int] = {
     # the long, transliterated input that motivated the budget in the first place.
     "plan_import": 3,
     "assistant": 2,
+    "planner": 2,
 }
 
 

@@ -131,7 +131,10 @@ async def _show_item(
     pending_plan_revisions: plan_handlers.PendingRevisions,
 ) -> None:
     if isinstance(item, assistant.DraftUpdated):
-        await plan_handlers.show_edit_draft(message, item.result, item.before, lang)
+        if item.whole:
+            await plan_handlers.show_staged_draft(message, db, user_id, item.result, lang)
+        else:
+            await plan_handlers.show_edit_draft(message, item.result, item.before, lang)
     elif isinstance(item, assistant.TodayChanged):
         await _show_today(message, item, lang)
     elif isinstance(item, assistant.LogFixed):

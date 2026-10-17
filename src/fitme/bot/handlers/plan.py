@@ -208,19 +208,24 @@ async def _ask_or_generate(
     lang: str,
     pending_plan_revisions: PendingRevisions,
 ) -> None:
-    """ "New plan": with no plans yet, generate straight from the profile. With plans, first
-    ask what the new one should be — the answer arrives as free text (stop-word scan first,
-    `free_text.py`) and goes to the assistant in the new plan's session (ADR 0017), which
-    may ask one clarifying question before it generates; "Generate anyway" skips it."""
-    plans = await planning.list_plans(db, user_id)
-    if not plans or await planning.is_gated(db, user_id):
-        # Nothing to tell apart, or the gate refuses anyway: go straight to the round (which
-        # logs the refusal as usual) instead of asking a question that leads nowhere.
+    """ "New plan": first ask what the new one should be — the answer arrives as free text
+    (stop-word scan first, `free_text.py`) and goes to the planner in the new plan's session,
+    which talks it through and stages the plan when the user agrees; "Generate anyway" runs
+    the legacy generator from the profile instead. Experiment (llm-first planning): asked
+    with no plans yet too, so a first plan is the one the user describes, not the profile's
+    default."""
+    if await planning.is_gated(db, user_id):
+        # The gate refuses anyway: go straight to the round (which logs the refusal as
+        # usual) instead of asking a question that leads nowhere.
         await _generate(message, db, llm, user_id, lang)
         return
+    plans = await planning.list_plans(db, user_id)
     pending_plan_revisions[user_id] = PendingNewPlan()
-    names = ", ".join(f"“{plan.name}”" for plan in plans)
-    question = t("plan.new_guidance_prompt", lang, names=names)
+    if plans:
+        names = ", ".join(f"“{plan.name}”" for plan in plans)
+        question = t("plan.new_guidance_prompt", lang, names=names)
+    else:
+        question = t("plan.new_first_prompt", lang)
     await message.answer(question, reply_markup=rendering.new_plan_guidance_markup(lang))
     # ADR 0017: the answer belongs to the new plan's session, and the assistant reading it
     # sees what it answers.
@@ -326,6 +331,41 @@ async def show_draft(
     )
 
 
+async def show_staged_draft(
+    message: Message,
+    db: Database,
+    user_id: int,
+    result: planning.EditDraftResult,
+    lang: str,
+) -> None:
+    """A whole plan the planner staged (`stage_plan`): shown whole like a generated draft,
+    with Confirm / Change / Cancel, then any load the guards limited; the session's history
+    notes it was shown (the session's draft was already set when it was recorded). No
+    session-length comparison: the profile's session length is a default, and the planner's
+    plan has the length the user asked for (a 90-minute class)."""
+    round_ = result.round
+    if round_ is None or round_.plan is None:
+        lines = [t("assistant.blocked", lang), *(f"• {e}" for e in result.errors)]
+        await message.answer("\n".join(lines))
+        return
+    plan = round_.plan
+    await _send_plan(
+        message,
+        plan,
+        title=t("plan.draft_title", lang),
+        lang=lang,
+        markup=rendering.draft_markup(round_.decision_id, lang),
+        session_minutes=None,
+    )
+    if result.requested is not None:
+        notes = rendering.load_change_notes(result.requested, plan, load_catalog(), lang)
+        if notes:
+            await message.answer("\n".join(notes))
+    await _draft_in_session(
+        db, user_id, plan_id=round_.plan_id, round_=round_, plan=plan, lang=lang
+    )
+
+
 async def show_edit_draft(
     message: Message,
     result: planning.EditDraftResult,
@@ -420,14 +460,17 @@ async def on_plan_menu(
         )
         return
     if action == "revise":
+        # Experiment (llm-first planning): the answer goes to the planner, in this plan's
+        # planning session (opened here, with the prompt in its history), not to the legacy
+        # `plan_revise` designer.
         await query.answer()
-        pending_plan_revisions[user_id] = PendingRevision(
-            base=planning.PlanBase(plan_id=detail.record.id)
-        )
-        await message.answer(t("plan.revise_of", lang, name=detail.record.name))
-        await message.answer(
-            t("plan.change_prompt", lang), reply_markup=rendering.cancel_revision_markup(0, lang)
-        )
+        pending_plan_revisions.pop(user_id, None)
+        revise_of = t("plan.revise_of", lang, name=detail.record.name)
+        change_prompt = t("plan.change_prompt", lang)
+        await message.answer(revise_of)
+        await message.answer(change_prompt, reply_markup=rendering.cancel_revision_markup(0, lang))
+        record = await conversations.open_planning(db, user_id, detail.record.id)
+        await conversations.record_outgoing(db, user_id, record.id, f"{revise_of}\n{change_prompt}")
         return
     if action == "delete":
         await query.answer()
@@ -506,14 +549,17 @@ async def on_plan_draft(
         return
 
     if action == "change":
+        # Experiment (llm-first planning): no pending revision — the next free text reaches
+        # the planner, which sees this draft as `state.planning_session.draft`.
         await query.answer()
-        pending_plan_revisions[user_id] = PendingRevision(
-            base=planning.DraftBase(decision_id=decision_id)
-        )
+        pending_plan_revisions.pop(user_id, None)
+        change_prompt = t("plan.change_prompt", lang)
         await message.answer(
-            t("plan.change_prompt", lang),
-            reply_markup=rendering.cancel_revision_markup(decision_id, lang),
+            change_prompt, reply_markup=rendering.cancel_revision_markup(decision_id, lang)
         )
+        session = await conversations.current_planning(db, user_id)
+        if session is not None:
+            await conversations.record_outgoing(db, user_id, session.id, change_prompt)
         return
 
     await query.answer(t("errors.stale_callback", lang))
