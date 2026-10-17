@@ -88,6 +88,18 @@ verdicts are the attempt's, and a shortened plan that failed them would be repla
 plan that passed, with a note (never accepted). Revisions, imports and the user's own edits
 are what the user asked for, so the review only reports their length.
 
+Three outcomes, kept apart: a workout shortened to the target (no warning); a structurally
+valid workout still over it, which is **accepted** with a soft warning (`plan.time_budget`
+`ok=False` in the log; it never touches `Judgement.ok`); and a workout that fails the guards,
+which stays a refusal as before. The user sees the warning in the plan itself:
+`time_budget.duration_warning` compares each workout *as shown* (rounded estimate) with the
+profile's session length, so a stale candidate's length can never appear. Under the
+estimate, once: "⚠ Requested: 45 min. Estimated: about 55 min." plus "Shortening it further
+would cut the main training objective's work, so it is kept." when a trial run of the same
+trimming can't reach the target, or "Ask for a shorter version, or drop an accessory
+exercise." when it could (an edited or saved plan). Same text in the bot (`render_plan_text`)
+and on the web (`_plan_body.html`), on drafts and saved plans.
+
 **Weekly workload** (`services.workload`, pure, units per set):
 
 | what | units |

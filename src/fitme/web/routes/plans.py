@@ -116,7 +116,15 @@ async def _draft_context(
         "refusal": round_result.refusal,
         "exercise_names": exercise_display_names(lang),
         "draft_trail": trail,
+        "session_minutes": await _session_minutes(db, user_id),
     }
+
+
+async def _session_minutes(db: Database, user_id: int) -> int | None:
+    """The profile's session length, which each workout's estimate is compared with
+    (ADR 0016, `_plan_body.html`)."""
+    profile = (await profile_service.get_snapshot(db, user_id)).profile
+    return None if profile is None else profile.session_minutes
 
 
 @router.post("/new")
@@ -167,6 +175,7 @@ async def revise_plan_form(
         settings=settings,
         session=session,
         detail=detail,
+        session_minutes=None if snapshot.profile is None else snapshot.profile.session_minutes,
     )
 
 
@@ -300,6 +309,7 @@ async def _render_detail(
         exercise_names=exercise_display_names(snapshot.language),
         timezone=snapshot.timezone,
         rename_error=rename_error,
+        session_minutes=None if snapshot.profile is None else snapshot.profile.session_minutes,
     )
 
 

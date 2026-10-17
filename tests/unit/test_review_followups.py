@@ -375,3 +375,50 @@ def test_a_failure_elsewhere_never_triggers_a_decrease_here() -> None:
     )
     decision = next_load(_BENCH, history, {}, [], 2.5, flagged_areas=frozenset())
     assert decision.load == Load(kind="kg", kg=60.0)
+
+
+# --- An unreachable target is a warning, as the plan is now ------------------------------------
+
+
+def test_the_duration_warning_says_whether_the_main_work_is_all_that_is_left() -> None:
+    from fitme.bot.plan_rendering import render_plan_text
+
+    kept = workout(
+        "A",
+        "Power",
+        [
+            role(BlockRole.WARM_UP, rx("jump_rope_skipping", 1, seconds=600, rest=0)),
+            role(BlockRole.POWER, rx("medicine_ball_rotational_side_throw", 10, reps=(5, 5))),
+        ],
+        [Quality.POWER],
+    )
+    shortenable = _power_session(6)  # its supporting squat could still lose sets
+    fits = workout(
+        "C",
+        "Short",
+        [role(BlockRole.WARM_UP, rx("jump_rope_skipping", 1, seconds=300, rest=0))],
+    )
+    target = 15
+    first = time_budget.duration_warning(kept, _CATALOG, target)
+    second = time_budget.duration_warning(shortenable, _CATALOG, target)
+    assert first is not None and first.main_work_kept
+    assert second is not None and not second.main_work_kept
+    assert time_budget.duration_warning(fits, _CATALOG, target) is None
+    assert time_budget.duration_warning(kept, _CATALOG, None) is None  # no session length
+    # Pure: the plan shown is the plan judged; the trial run changed nothing.
+    assert _sets(shortenable, "barbell_back_squat") == 6
+    shortenable = shortenable.model_copy(update={"key": "B"})
+    text = render_plan_text(
+        plan([(0, "A"), (2, "B"), (4, "C")], kept, shortenable, fits),
+        catalog=_CATALOG,
+        lang="en",
+        title="Plan:",
+        session_minutes=target,
+    )
+    assert text.count("⚠") == 2
+    assert "so it is kept." in text and "Ask for a shorter version" in text
+    assert first.estimated_minutes == session_time.display_minutes(kept, _CATALOG)
+    ru = render_plan_text(
+        plan([(0, "A")], kept), catalog=_CATALOG, lang="ru", title="План:", session_minutes=target
+    )
+    assert f"Запрошено: {target} мин. По оценке: около {first.estimated_minutes} мин." in ru

@@ -632,7 +632,8 @@ user's session length is shortened toward it by objective relevance (`services/t
 redundant accessories, then one set at a time off the lowest-priority blocks, then those
 blocks; never the warm-up, the main objective's work or a rest), logged as
 `plan.time_budget`, and validated again before the review; revisions, imports and edits are
-only reviewed. The
+only reviewed. A valid workout still over the length is accepted, and the plan view (bot and
+web) shows "⚠ Requested … Estimated …" under its estimate (`time_budget.duration_warning`). The
 weekly review weighs sets by stimulus (`services/workload`: load units per region, a heavy
 set 1, a drill 0.25, a stretch 0) and adds `hinge_overlap` and `off_objective`. The brief
 adds `session_objectives` (main objectives spread over the sessions) and `time_budget`; the

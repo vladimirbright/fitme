@@ -20,7 +20,7 @@ from fitme.config.settings import Settings
 from fitme.db.connection import Database
 from fitme.domain.enums import BlockRole
 from fitme.domain.models import NAME_MAX_LENGTH, Prescription
-from fitme.services import prescribing, session_time, webauth
+from fitme.services import prescribing, session_time, time_budget, webauth
 from fitme.services.llm_runtime import LlmRuntime
 from fitme.services.webauth import SendCode, SessionState
 from fitme.web.ratelimit import SlidingWindowLimiter
@@ -157,6 +157,9 @@ def render(
         # ADR 0016: "per side" on a unilateral exercise, and each workout's estimated length.
         "unilateral_ids": unilateral_exercise_ids(),
         "workout_minutes": lambda workout: session_time.display_minutes(workout, load_catalog()),
+        "duration_warning": lambda workout, minutes: time_budget.duration_warning(
+            workout, load_catalog(), minutes
+        ),
         "name_max_length": NAME_MAX_LENGTH,
         **context,
     }

@@ -674,3 +674,33 @@ async def test_a_revision_with_fewer_days_than_the_profile_is_a_draft_not_a_refu
     assert draft.startswith(t("plan.draft_title", "en"))
     assert "Wednesday: A — Full body" in draft and "Tuesday" not in draft
     assert llm.calls == 2  # one generate + one revise attempt: nothing was retried
+
+
+async def test_a_draft_longer_than_the_session_says_so_once_in_the_telegram_message(
+    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
+) -> None:
+    """ADR 0016: a 30 min profile and a draft whose main lifts alone take longer: the draft
+    is accepted, and its message carries one warning with both numbers."""
+    from fitme.catalog import load_catalog
+    from fitme.services import session_time
+
+    user_id = await _ready(dispatcher, bot, db)
+    async with db.transaction() as conn:
+        await conn.execute("UPDATE profiles SET session_minutes = 30 WHERE user_id = ?", (user_id,))
+    long = make_plan()
+    for item in (i for b in long.workouts[0].blocks for i in b.items):
+        item.sets, item.rest_seconds = 8, 180
+    llm.responses.extend([long, long])
+
+    await _new_draft(dispatcher, bot, session)
+
+    draft = "\n".join(
+        m.text or ""
+        for m in _sent_messages(session)
+        if (m.text or "").startswith(t("plan.draft_title", "en")) or "⚠" in (m.text or "")
+    )
+    estimated = session_time.display_minutes(long.workouts[0], load_catalog())
+    assert estimated > 30
+    assert draft.count("⚠") == 1
+    assert f"⚠ Requested: 30 min. Estimated: about {estimated} min." in draft
+    assert f"About {estimated} min (estimated" in draft
