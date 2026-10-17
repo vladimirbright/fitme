@@ -1,6 +1,7 @@
 id = "stability_ball_close_grip_push_up"
 names = { en = "Stability ball close-grip push-up", ru = "Отжимания узким хватом на фитболе" }
 kind = "bodyweight"
+level = "advanced"
 pattern = "horizontal_push"
 measures = ["reps"]
 qualities = ["strength", "hypertrophy"]

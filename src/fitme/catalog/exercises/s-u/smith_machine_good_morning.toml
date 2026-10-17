@@ -11,5 +11,5 @@ loads_areas = ["lower_back", "hip", "neck"]
 contraindicated_by = ["lower_back_injury_current", "hernia", "hip_injury_current", "neck_injury_current"]
 increment_kg = 2.5
 start = { kind = "calibration" }
-instructions = { en = "Set the bar at upper-chest height and place it across the upper back, not the neck. Feet hip-width, knees softly bent. Push the hips back and lower the torso toward parallel, then return. Set the safety stops at the lowest point of the movement.", ru = "Установите гриф на уровне верха груди и положите на верх спины, не на шею. Ноги на ширине таза, колени слегка согнуты. Отведите таз назад и наклоните корпус почти до параллели с полом, затем вернитесь. Выставьте ограничители чуть ниже нижней точки движения." }
+instructions = { en = "Set the bar at upper-chest height and place it across the upper back, not the neck. Feet hip-width, knees softly bent. Push the hips back and lower the torso toward parallel, then return. Set the safety stops just below the lowest point of the movement.", ru = "Установите гриф на уровне верха груди и положите на верх спины, не на шею. Ноги на ширине таза, колени слегка согнуты. Отведите таз назад и наклоните корпус почти до параллели с полом, затем вернитесь. Выставьте ограничители чуть ниже нижней точки движения." }
 load_step_kg = 2.5

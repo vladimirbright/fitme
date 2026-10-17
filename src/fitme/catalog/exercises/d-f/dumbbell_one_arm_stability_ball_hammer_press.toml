@@ -5,6 +5,7 @@ pattern = "horizontal_push"
 measures = ["reps"]
 qualities = ["strength", "hypertrophy"]
 equipment = ["dumbbells", "stability_ball"]
+level = "advanced"
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["shoulder", "elbow_wrist", "hip"]

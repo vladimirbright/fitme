@@ -11,4 +11,4 @@ loads_areas = ["ankle"]
 contraindicated_by = ["ankle_injury_current"]
 increment_kg = 1.0
 start = { kind = "bodyweight" }
-instructions = { en = "Sit on the edge of a chair with one leg extended and the heel on the floor. Lean forward from the hips, back straight, until you feel a gentle pull in the calf. Hold 20-30 seconds, then switch legs.", ru = "Сядьте на край стула, одна нога вытянута, пятка на полу. Наклонитесь вперёд от бёдер, спина прямая, до лёгкого натяжения в икре. Удерживайте 20-30 секунд, затем смените ногу." }
+instructions = { en = "Sit on the floor with one leg extended. Reach for the ball of that foot and gently draw the toes toward your shin until you feel a mild calf stretch. Keep the knee straight without locking it. Hold 20-30 seconds, then switch legs.", ru = "Сядьте на пол и вытяните одну ногу. Возьмитесь за переднюю часть стопы и мягко потяните носок к голени до лёгкого натяжения в икре. Держите колено прямым, но не переразгибайте его. Удерживайте 20-30 секунд, затем смените ногу." }

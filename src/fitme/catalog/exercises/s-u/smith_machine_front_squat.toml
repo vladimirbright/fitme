@@ -7,7 +7,7 @@ qualities = ["strength", "hypertrophy"]
 equipment = ["smith_machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]
-loads_areas = ["knee", "hip", "lower_back", "shoulder", "neck"]
+loads_areas = ["knee", "hip", "lower_back", "shoulder", "elbow_wrist", "neck"]
 contraindicated_by = ["knee_injury_current", "hernia", "hip_injury_current", "lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "neck_injury_current"]
 increment_kg = 2.5
 start = { kind = "calibration" }

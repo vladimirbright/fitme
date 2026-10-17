@@ -7,8 +7,8 @@ qualities = ["strength", "hypertrophy"]
 equipment = ["dumbbells", "bench"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]
-loads_areas = ["knee", "hip", "ankle"]
-contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current"]
+loads_areas = ["knee", "hip", "ankle", "lower_back"]
+contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current", "lower_back_injury_current", "hernia"]
 increment_kg = 1.0
 start = { kind = "kg", kg = 2.0 }
 instructions = { en = "Rest the top of one foot on a bench behind you, most of your weight on the front foot. Hold a dumbbell in each hand. Lower the back knee toward the floor, then drive back up through the front foot. Complete all reps on one side before switching.", ru = "Поставьте подъём одной стопы на скамью позади себя, вес — на передней ноге. Держите гантели в обеих руках. Опускайте заднее колено к полу, затем поднимайтесь через переднюю ногу. Выполните все повторения на одну сторону, затем смените ногу." }

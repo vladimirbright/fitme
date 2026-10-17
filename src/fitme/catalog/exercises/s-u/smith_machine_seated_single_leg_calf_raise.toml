@@ -4,11 +4,11 @@ kind = "isolation"
 pattern = "accessory"
 measures = ["reps"]
 qualities = ["hypertrophy"]
-equipment = ["smith_machine", "bench"]
+equipment = ["smith_machine", "bench", "weight_plate"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["ankle", "knee"]
 contraindicated_by = ["ankle_injury_current", "knee_injury_current"]
 increment_kg = 2.5
 start = { kind = "calibration" }
-instructions = { en = "Sit on a bench under the bar with the ball of one foot on a low block, heel free. Rest the bar on the thigh just above the knee, with a pad, and unhook it. Raise the heel, pause, lower slowly, then re-hook the bar before standing. Switch legs.", ru = "Сядьте на скамью под гриф, передняя часть одной стопы на невысоком блоке, пятка свободна. Положите гриф на бедро чуть выше колена, подложив мягкую накладку, и снимите его с фиксаторов. Поднимите пятку, задержитесь, медленно опустите и верните гриф на фиксаторы, прежде чем встать. Смените ногу." }
+instructions = { en = "Sit on a bench under the bar with the ball of one foot on a weight plate, heel free. Rest the bar on the thigh just above the knee, with a pad, and unhook it. Raise the heel, pause, lower slowly, then re-hook the bar before standing. Switch legs.", ru = "Сядьте на скамью под гриф, передняя часть одной стопы на блине, пятка свободна. Положите гриф на бедро чуть выше колена, подложив мягкую накладку, и снимите его с фиксаторов. Поднимите пятку, задержитесь, медленно опустите и верните гриф на фиксаторы, прежде чем встать. Смените ногу." }

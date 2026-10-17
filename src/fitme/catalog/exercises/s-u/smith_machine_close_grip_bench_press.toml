@@ -8,7 +8,7 @@ equipment = ["smith_machine", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["shoulder", "elbow_wrist"]
-contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
 increment_kg = 2.5
 start = { kind = "calibration" }
 instructions = { en = "Set the safety stops just below the lowest point. Lie on the bench under the bar, feet flat, hands about shoulder-width apart. Unhook the bar, lower it to the lower chest with elbows tucked, then press up and re-hook it after the set.", ru = "Установите страховочные упоры чуть ниже нижней точки. Лягте на скамью под гриф, стопы на полу, руки примерно на ширине плеч. Снимите гриф с крюков, опустите к нижней части груди, локти прижаты, выжмите вверх и после подхода повесьте гриф на крюки." }

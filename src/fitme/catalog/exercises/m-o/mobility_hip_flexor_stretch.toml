@@ -7,8 +7,8 @@ qualities = ["mobility"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
-loads_areas = ["hip"]
-contraindicated_by = ["hip_injury_current"]
+loads_areas = ["hip", "knee"]
+contraindicated_by = ["hip_injury_current", "knee_injury_current"]
 increment_kg = 1.0
 start = { kind = "bodyweight" }
-instructions = { en = "Kneel on one knee with the other foot planted in front. Shift your weight forward gently until you feel a stretch at the front of the hip on the kneeling side. Hold, then switch sides.", ru = "Встаньте на одно колено, другая стопа впереди. Плавно сместите вес вперёд, пока не почувствуете растяжение в передней части бедра опорной ноги. Задержитесь, затем смените сторону." }
+instructions = { en = "Kneel on one knee with the other foot planted in front. Shift your weight forward gently until you feel a stretch at the front of the hip on the kneeling side. Hold, then switch sides.", ru = "Встаньте на одно колено, другая стопа впереди. Плавно сместите вес вперёд, пока не почувствуете растяжение в передней части бедра ноги, стоящей коленом на полу. Задержитесь, затем смените сторону." }

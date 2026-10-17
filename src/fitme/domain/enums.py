@@ -131,6 +131,10 @@ class Equipment(StrEnum):
     SLED = "sled"
     TIRE = "tire"
     SLEDGEHAMMER = "sledgehammer"
+    TOWEL = "towel"
+    DIP_BELT = "dip_belt"
+    SUSPENSION_STRAPS = "suspension_straps"
+    WRIST_ROLLER = "wrist_roller"
 
 
 class ScreeningFlag(StrEnum):

@@ -4,7 +4,7 @@ search = { en = "cable wood chop", ru = "дровосек на блоке" }
 kind = "compound"
 pattern = "core"
 measures = ["reps"]
-qualities = ["rotational_power", "core_stability"]
+qualities = ["core_stability", "rotational_power"]
 equipment = ["cable"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]
@@ -12,5 +12,5 @@ loads_areas = ["shoulder", "lower_back", "hip"]
 contraindicated_by = ["shoulder_injury_current", "lower_back_injury_current", "hip_injury_current", "hernia"]
 increment_kg = 2.5
 start = { kind = "calibration" }
-instructions = { en = "Set the lightest resistance. Turn the torso gradually as the handle travels across the body.", ru = "Установите минимальное сопротивление. Плавно поворачивайте корпус, ведя рукоять по диагонали." }
+instructions = { en = "Set the lightest resistance and a high pulley. Stand side-on to the stack with both hands on the handle above the near shoulder. Turn the torso and pull the handle diagonally down across the body to the opposite hip, arms mostly straight, then return under control. Finish one side, then switch.", ru = "Установите минимальное сопротивление и верхний блок. Встаньте боком к тренажёру, обе руки на рукояти над ближним плечом. Поворачивая корпус, ведите рукоять по диагонали вниз через тело к противоположному бедру, руки почти прямые, затем верните под контролем. Закончите одну сторону, затем смените." }
 load_step_kg = 2.5

@@ -11,4 +11,4 @@ loads_areas = ["elbow_wrist"]
 contraindicated_by = ["elbow_wrist_injury_current"]
 increment_kg = 1.0
 start = { kind = "kg", kg = 2.0 }
-instructions = { en = "Rest one upper arm on a preacher pad (or an incline bench with your chest against it) and hold the dumbbell with an overhand grip. Curl up with the wrist straight, then lower slowly to a nearly straight arm. Use a light weight.", ru = "Положите одно плечо на упор скамьи Скотта (или на наклонную скамью, грудью к спинке), гантель в хвате сверху. Согните руку, запястье ровное, затем медленно опустите почти до выпрямления. Берите лёгкий вес." }
+instructions = { en = "Set a bench to a steep incline and stand or kneel behind it, chest against the top of the backrest, one upper arm resting on the pad, and hold the dumbbell with an overhand grip. Curl up with the wrist straight, then lower slowly to a nearly straight arm. Use a light weight.", ru = "Установите скамью под крутым наклоном, встаньте или опуститесь на колени позади неё, грудью к верху спинки; одно плечо лежит на спинке, гантель в хвате сверху. Согните руку, запястье ровное, затем медленно опустите почти до выпрямления. Берите лёгкий вес." }

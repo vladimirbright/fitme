@@ -11,5 +11,5 @@ loads_areas = ["shoulder", "elbow_wrist"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
 increment_kg = 2.0
 start = { kind = "calibration" }
-instructions = { en = "Loop a light band over a secure bar. Pull the ends toward the upper chest.", ru = "Закрепите лёгкий эспандер на прочной перекладине. Тяните концы к верхней части груди." }
+instructions = { en = "Loop a light band over a secure bar above your head and hold the ends with a wide overhand grip. Pull the elbows down to bring the hands toward the upper chest, then return slowly. Keep the torso upright.", ru = "Закрепите лёгкий эспандер на прочной перекладине над головой и возьмите концы широким хватом сверху. Опуская локти, тяните руки к верхней части груди, затем медленно верните. Корпус прямой." }
 load_step_kg = 1.0

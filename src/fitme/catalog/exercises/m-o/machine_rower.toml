@@ -7,8 +7,8 @@ qualities = ["conditioning"]
 equipment = ["machine"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym"]
-loads_areas = ["lower_back", "shoulder", "hip"]
-contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "hip_injury_current"]
+loads_areas = ["lower_back", "shoulder", "hip", "knee", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "hernia", "shoulder_injury_current", "hip_injury_current", "knee_injury_current", "elbow_wrist_injury_current"]
 increment_kg = 1.0
 start = { kind = "calibration" }
 instructions = { en = "Drive with the legs first, then the body, then the arms; reverse the order on the way back. Keep the back neutral and row at a moderate, steady rate for about 10 minutes.", ru = "Сначала толчок ногами, затем корпус, затем руки; на возврате — в обратном порядке. Спина нейтральная, гребите в умеренном ровном темпе около 10 минут." }

@@ -4,12 +4,12 @@ kind = "isolation"
 pattern = "core"
 measures = ["reps"]
 qualities = ["core_stability", "hypertrophy"]
-equipment = ["barbell"]
+equipment = ["barbell", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]
-loads_areas = ["lower_back", "neck"]
-contraindicated_by = ["lower_back_injury_current", "neck_injury_current", "hernia"]
+loads_areas = ["lower_back", "neck", "hip"]
+contraindicated_by = ["lower_back_injury_current", "neck_injury_current", "hip_injury_current", "hernia"]
 increment_kg = 2.5
 start = { kind = "calibration" }
-instructions = { en = "Lie on a mat, knees bent, feet anchored, a light barbell held across your upper chest with both hands. Curl up to about 45 degrees, then lower slowly. Keep the bar on your chest, never over your face. Use a light bar.", ru = "Лягте на коврик, колени согнуты, стопы зафиксированы, лёгкий гриф удерживайте двумя руками на верхней части груди. Поднимитесь примерно на 45 градусов, затем медленно опуститесь. Гриф остаётся на груди, не над лицом. Берите лёгкий вес." }
+instructions = { en = "Lie on a mat, knees bent and feet hooked under a fixed bench, a light barbell held across your upper chest with both hands. Curl up to about 45 degrees, then lower slowly. Keep the bar on your chest, never over your face. Use a light bar.", ru = "Лягте на коврик, колени согнуты, стопы зафиксированы под неподвижной скамьёй, лёгкий гриф удерживайте двумя руками на верхней части груди. Поднимитесь примерно на 45 градусов, затем медленно опуститесь. Гриф остаётся на груди, не над лицом. Берите лёгкий вес." }
 load_step_kg = 2.5

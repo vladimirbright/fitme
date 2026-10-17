@@ -9,7 +9,7 @@ equipment = ["foam_roller"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["lower_back", "shoulder", "elbow_wrist"]
-contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
 increment_kg = 2.5
 start = { kind = "bodyweight" }
 instructions = { en = "Set up in a forearm plank with your forearms on a roller. Roll forward a short distance by pushing your elbows ahead, then pull back. Keep your body in one line and stop before your hips sag.", ru = "Примите планку, предплечья лежат на валике. Прокатитесь немного вперёд, выдвигая локти, затем вернитесь. Тело — прямая линия, остановитесь до того, как таз начнёт проваливаться." }

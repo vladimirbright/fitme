@@ -11,5 +11,5 @@ loads_areas = ["shoulder", "elbow_wrist"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
 increment_kg = 1.0
 start = { kind = "calibration" }
-instructions = { en = "Stand in the middle of the stack with feet shoulder-width apart, a handle in each hand and arms out to the sides. Keeping the elbows slightly bent, bring the hands together in front of the body and cross them, then open back out under control.", ru = "Встаньте посередине тренажёра, ноги на ширине плеч, рукояти в руках, руки в стороны. С чуть согнутыми локтями сведите кисти перед телом и скрестите их, затем подконтрольно разведите." }
+instructions = { en = "Set both pulleys high and stand in the middle of the stack with feet shoulder-width apart, a handle in each hand and arms out to the sides. Keeping the elbows slightly bent, bring the hands together in front of the body and cross them, then open back out under control.", ru = "Установите оба блока вверху и встаньте посередине тренажёра, ноги на ширине плеч, рукояти в руках, руки в стороны. С чуть согнутыми локтями сведите кисти перед телом и скрестите их, затем подконтрольно разведите." }
 load_step_kg = 1.0

@@ -11,4 +11,4 @@ loads_areas = ["lower_back", "shoulder", "neck"]
 contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "hernia", "neck_injury_current"]
 increment_kg = 2.5
 start = { kind = "bodyweight" }
-instructions = { en = "Hang from the bar with arms extended. Keeping your legs straight or knees bent, raise them toward your chest, then lower back down under control.", ru = "Повисните на перекладине с прямыми руками. Держа ноги прямыми или согнутыми в коленях, поднимите их к груди, затем опустите под контролем." }
+instructions = { en = "Hang from the bar with arms extended and legs straight. Without swinging, raise your straight legs in front of you to about hip height, then lower them under control. Step down if your grip tires.", ru = "Повисните на перекладине с прямыми руками и выпрямленными ногами. Без раскачивания поднимите прямые ноги перед собой примерно до уровня таза, затем подконтрольно опустите. Если хват устаёт, спуститесь с перекладины." }

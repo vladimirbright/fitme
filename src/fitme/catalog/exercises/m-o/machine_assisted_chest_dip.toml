@@ -6,6 +6,8 @@ measures = ["reps"]
 qualities = ["strength", "hypertrophy"]
 equipment = ["machine"]
 load_unit = "total"
+# Machine kg denotes assistance, so increasing it does not progress the working load.
+kg_loadable = false
 locations = ["public_gym", "studio_gym"]
 loads_areas = ["shoulder", "elbow_wrist"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]

@@ -1,5 +1,5 @@
 id = "jump_rope_skipping"
-names = { en = "Jump rope", ru = "Скакалка" }
+names = { en = "Jump rope", ru = "Прыжки через скакалку" }
 kind = "cardio"
 pattern = "conditioning"
 measures = ["time"]

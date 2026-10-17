@@ -6,8 +6,8 @@ measures = ["reps"]
 qualities = ["strength", "hypertrophy"]
 equipment = ["machine"]
 locations = ["public_gym", "studio_gym"]
-loads_areas = ["shoulder", "elbow_wrist"]
-contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
 increment_kg = 2.5
 start = { kind = "calibration" }
 instructions = { en = "Adjust the seat, take the V-bar with both hands and sit with a flat back and soft knees. Pull the handle toward the abdomen, pause, then return slowly with the shoulders under control.", ru = "Отрегулируйте сиденье, возьмите V-рукоять обеими руками, спина прямая, колени слегка согнуты. Тяните рукоять к животу, задержитесь и медленно верните, контролируя плечи." }

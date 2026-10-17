@@ -1,5 +1,5 @@
 id = "bodyweight_v_sit"
-names = { en = "V-sit", ru = "V-подъём лёжа" }
+names = { en = "V-sit", ru = "V-сит (удержание «уголка»)" }
 kind = "bodyweight"
 level = "advanced"
 pattern = "core"

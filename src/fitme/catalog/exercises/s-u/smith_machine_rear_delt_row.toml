@@ -11,5 +11,5 @@ loads_areas = ["lower_back", "shoulder", "elbow_wrist"]
 contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
 increment_kg = 2.5
 start = { kind = "calibration" }
-instructions = { en = "Hold the bar with a wide overhand grip and hinge forward at the hips with a flat back, knees soft. Pull the bar toward your upper chest with elbows flared out, then lower to straight arms. Keep your torso still.", ru = "Возьмите гриф широким хватом сверху и наклонитесь от бёдер с ровной спиной, колени слегка согнуты. Тяните гриф к верху груди, локти разведены в стороны, затем опустите до прямых рук. Корпус неподвижен." }
+instructions = { en = "Set the safety stops just below the lowest point of the row. Hold the bar with a wide overhand grip and hinge forward at the hips with a flat back, knees soft. Pull the bar toward your upper chest with elbows flared out, then lower to straight arms. Keep your torso still.", ru = "Установите страховочные упоры чуть ниже нижней точки тяги. Возьмите гриф широким хватом сверху и наклонитесь от бёдер с ровной спиной, колени слегка согнуты. Тяните гриф к верху груди, локти разведены в стороны, затем опустите до прямых рук. Корпус неподвижен." }
 load_step_kg = 2.5

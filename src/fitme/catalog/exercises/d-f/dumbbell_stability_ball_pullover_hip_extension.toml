@@ -9,7 +9,7 @@ level = "advanced"
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["shoulder", "elbow_wrist", "hip", "lower_back"]
-contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hip_injury_current", "lower_back_injury_current"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hip_injury_current", "lower_back_injury_current", "hernia"]
 increment_kg = 1.0
 start = { kind = "kg", kg = 2.0 }
 instructions = { en = "Lie back on a stability ball with your upper back supported and feet wide. Hold one dumbbell with both hands above your chest. Lower it behind your head within a comfortable range, bring it back, then lift your hips into a straight line with your torso and lower them again. Use a light weight.", ru = "Лягте на фитбол верхней частью спины, ноги широко. Одну гантель держите двумя руками над грудью. Опустите её за голову в комфортной амплитуде, верните, затем поднимите таз до одной линии с корпусом и опустите. Вес лёгкий." }

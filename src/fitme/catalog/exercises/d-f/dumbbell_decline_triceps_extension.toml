@@ -1,5 +1,5 @@
 id = "dumbbell_decline_triceps_extension"
-names = { en = "Decline dumbbell triceps extension", ru = "Разгибания рук с гантелями на скамье головой вниз" }
+names = { en = "Decline dumbbell triceps extension", ru = "Разгибания рук с гантелями на скамье с наклоном вниз" }
 kind = "isolation"
 pattern = "accessory"
 measures = ["reps"]
@@ -8,7 +8,7 @@ equipment = ["dumbbells", "bench"]
 load_unit = "per_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["elbow_wrist", "shoulder"]
-contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
+contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current", "hernia"]
 increment_kg = 1.0
 start = { kind = "kg", kg = 2.0 }
 instructions = { en = "Lie on a decline bench, feet secured, dumbbells held above your chest with palms facing each other. Bend only the elbows to lower the weights beside your head, then extend back up. Use a light weight with a firm grip and keep the bench angle shallow.", ru = "Лягте на скамью с наклоном вниз, ноги закреплены, гантели над грудью, ладони смотрят друг на друга. Сгибайте только локти, опуская гантели по сторонам от головы, затем разогните руки. Вес лёгкий, хват крепкий, наклон скамьи небольшой." }

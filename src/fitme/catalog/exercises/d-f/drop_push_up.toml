@@ -1,5 +1,7 @@
 id = "drop_push_up"
-names = { en = "Drop push-up", ru = "Отжимания с опусканием на колени" }
+names = { en = "Knee-drop push-up", ru = "Отжимания с опусканием на колени" }
+# "Drop push-up" elsewhere means a plyometric push-up with hands leaving the floor; this is the plank-to-knees variant.
+search = { en = "knee drop push-up", ru = "отжимания с опусканием на колени" }
 kind = "bodyweight"
 pattern = "horizontal_push"
 measures = ["reps"]

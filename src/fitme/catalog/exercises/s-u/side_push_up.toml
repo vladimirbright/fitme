@@ -8,9 +8,9 @@ qualities = ["strength", "hypertrophy"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
-loads_areas = ["shoulder", "elbow_wrist"]
-contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current"]
 increment_kg = 1.0
 start = { kind = "bodyweight" }
-instructions = { en = "Lie on your side with legs stacked, the bottom hand under the shoulder. Press through that hand to lift the body, keeping the legs straight and the top arm raised. Lower under control and switch sides.", ru = "Лягте на бок, ноги вместе, нижняя ладонь под плечом. Давите нижней рукой, поднимая тело, ноги прямые, верхняя рука вверх. Подконтрольно опуститесь и смените сторону." }
+instructions = { en = "Lie on your side with legs stacked and knees slightly bent, the bottom arm wrapped around the torso. Place the top palm flat on the floor beside the bottom elbow, fingers toward the head. Press into the floor with the top arm to lift the upper body until the elbow is nearly straight, then lower slowly to just above parallel. Finish all reps, then switch sides.", ru = "Лягте на бок, ноги вместе и слегка согнуты в коленях, нижняя рука обхватывает корпус. Поставьте ладонь верхней руки на пол рядом с нижним локтем, пальцы направлены к голове. Давите верхней рукой в пол, поднимая верхнюю часть тела почти до выпрямления локтя, затем медленно опуститесь чуть выше параллели с полом. Выполните все повторения и смените сторону." }
 load_step_kg = 1.0

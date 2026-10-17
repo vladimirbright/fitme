@@ -8,7 +8,7 @@ equipment = ["dumbbells"]
 load_unit = "single_implement"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["shoulder", "elbow_wrist", "lower_back"]
-contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "lower_back_injury_current", "hernia"]
 increment_kg = 1.0
 start = { kind = "kg", kg = 2.0 }
 instructions = { en = "Lie on your side with the forearm under the shoulder and lift into a side plank, a light dumbbell in the top hand. Raise the dumbbell toward the ceiling in an arc, then lower it slowly. Keep the hips lifted and the body in one line, then switch sides.", ru = "Лягте на бок, предплечье под плечом, поднимитесь в боковую планку, в верхней руке лёгкая гантель. Поднимите гантель дугой к потолку, затем медленно опустите. Таз поднят, тело на одной линии, затем смените сторону." }

@@ -11,5 +11,5 @@ loads_areas = ["elbow_wrist", "shoulder"]
 contraindicated_by = ["elbow_wrist_injury_current", "shoulder_injury_current"]
 increment_kg = 1.0
 start = { kind = "calibration" }
-instructions = { en = "Sit on an incline bench under the bar and set the safety stops so the bar cannot reach your head. Unhook the bar and hold it above the chest with straight arms. Bend only the elbows to lower it toward the forehead, then extend. Use a light weight.", ru = "Сядьте на наклонную скамью под грифом и установите страховочные упоры так, чтобы гриф не мог дойти до головы. Снимите гриф с крюков и удерживайте над грудью на прямых руках. Сгибайте только локти, опуская гриф ко лбу, затем разогните. Вес лёгкий." }
+instructions = { en = "Lie back on an incline bench under the bar and set the safety stops so the bar cannot reach your head. Unhook the bar and hold it above the chest with straight arms. Bend only the elbows to lower it toward the forehead, then extend. Use a light weight.", ru = "Лягте на наклонную скамью под грифом и установите страховочные упоры так, чтобы гриф не мог дойти до головы. Снимите гриф с крюков и удерживайте над грудью на прямых руках. Сгибайте только локти, опуская гриф ко лбу, затем разогните. Вес лёгкий." }
 load_step_kg = 1.0

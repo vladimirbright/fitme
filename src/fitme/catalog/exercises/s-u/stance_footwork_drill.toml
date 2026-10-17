@@ -5,6 +5,8 @@ kind = "cardio"
 pattern = "conditioning"
 measures = ["time"]
 qualities = ["agility", "conditioning"]
+# One footwork pattern from boxing, not general conditioning.
+specific = true
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

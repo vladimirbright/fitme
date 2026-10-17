@@ -1,6 +1,7 @@
 id = "stability_ball_push_up"
 names = { en = "Push-up with hands on stability ball", ru = "Отжимания с руками на фитболе" }
 kind = "bodyweight"
+level = "advanced"
 pattern = "horizontal_push"
 measures = ["reps"]
 qualities = ["strength", "hypertrophy"]

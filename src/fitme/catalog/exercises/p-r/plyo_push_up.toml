@@ -11,5 +11,5 @@ loads_areas = ["shoulder", "elbow_wrist"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
 increment_kg = 1.0
 start = { kind = "bodyweight" }
-instructions = { en = "Start in a plank with hands slightly wider than shoulders. Lower the chest to just above the floor, then push hard enough that the hands leave the floor. Land on soft elbows and go straight into the next rep. Use a mat or non-slip floor and stop when the landings get sloppy.", ru = "Примите упор лёжа, руки чуть шире плеч. Опустите грудь почти до пола, затем оттолкнитесь так, чтобы ладони оторвались от пола. Приземлитесь на мягкие руки и сразу переходите к следующему повторению. Используйте коврик или нескользкий пол и прекращайте, когда приземление становится неаккуратным." }
+instructions = { en = "Start in a plank with hands slightly wider than shoulders. Lower the chest, then push hard enough that the hands leave the floor. Land softly with elbows slightly bent and go into the next rep only while you can control the landing. Use a non-slip surface.", ru = "Примите упор лёжа, руки чуть шире плеч. Опустите грудь, затем оттолкнитесь так, чтобы ладони оторвались от пола. Мягко приземлитесь со слегка согнутыми локтями и продолжайте, только пока контролируете приземление. Используйте нескользкую поверхность." }
 load_step_kg = 1.0

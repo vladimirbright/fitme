@@ -4,11 +4,11 @@ kind = "isolation"
 pattern = "accessory"
 measures = ["reps"]
 qualities = ["hypertrophy"]
-equipment = ["weight_plate"]
+equipment = ["weight_plate", "dip_belt", "bench", "plyo_box"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["ankle", "knee", "lower_back"]
 contraindicated_by = ["ankle_injury_current", "knee_injury_current", "lower_back_injury_current", "hernia"]
 increment_kg = 2.5
 start = { kind = "calibration" }
-instructions = { en = "Hang a plate from a dip belt around the hips. Stand with the balls of the feet on a low block, hinge forward and rest the hands on a bench or rail with the back flat. Lower the heels for a gentle stretch, rise as high as you can, pause, then lower slowly.", ru = "Подвесьте блин на пояс для отягощений вокруг таза. Встаньте передней частью стоп на невысокий блок, наклонитесь вперёд и обопритесь руками о скамью или перекладину, спина ровная. Опустите пятки до лёгкого растяжения, поднимитесь на носки как можно выше, задержитесь и медленно опуститесь." }
+instructions = { en = "Hang a plate from a dip belt around the hips. Stand with the balls of the feet on a low, stable plyo box, hinge forward and rest the hands on a bench with the back flat. Lower the heels for a gentle stretch, rise as high as you can, pause, then lower slowly.", ru = "Подвесьте блин на пояс для отягощений вокруг таза. Встаньте передней частью стоп на невысокий устойчивый плио-бокс, наклонитесь вперёд и обопритесь руками о скамью, спина ровная. Опустите пятки до лёгкого растяжения, поднимитесь на носки как можно выше, задержитесь и медленно опуститесь." }

@@ -7,8 +7,8 @@ qualities = ["conditioning"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
-loads_areas = ["knee", "ankle"]
-contraindicated_by = ["knee_injury_current", "ankle_injury_current"]
+loads_areas = ["knee", "ankle", "hip", "shoulder"]
+contraindicated_by = ["knee_injury_current", "ankle_injury_current", "hip_injury_current", "shoulder_injury_current"]
 increment_kg = 1.0
 start = { kind = "bodyweight" }
 instructions = { en = "Jump your feet out wide while raising your arms overhead, then jump back to standing with arms at your sides. Keep a steady rhythm.", ru = "Прыжком расставьте ноги в стороны, одновременно поднимая руки над головой, затем прыжком вернитесь в исходное положение, руки вдоль тела. Держите ровный ритм." }

@@ -4,12 +4,10 @@ kind = "bodyweight"
 pattern = "horizontal_pull"
 measures = ["reps"]
 qualities = ["strength", "hypertrophy"]
-# Suspension straps have no Equipment value: the bar is the anchor, and the move is limited to gyms,
-# which are assumed to have straps, so a home pull-up bar alone never selects it.
-equipment = ["pull_up_bar"]
-locations = ["public_gym", "studio_gym"]
+equipment = ["pull_up_bar", "suspension_straps"]
+locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["shoulder", "elbow_wrist"]
 contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
 increment_kg = 2.5
 start = { kind = "bodyweight" }
-instructions = { en = "Hang suspension straps from a secure bar or rig at about chest height and test that they hold your weight. Lean back with the body straight, arms extended, then pull the chest to the handles and lower under control.", ru = "Закрепите подвесные петли на надёжной перекладине или раме примерно на уровне груди и проверьте, что они выдерживают ваш вес. Отклонитесь назад с прямым телом и вытянутыми руками, затем подтяните грудь к рукоятям и опуститесь под контролем." }
+instructions = { en = "Hang suspension straps from a secure pull-up bar at about chest height and test that they hold your weight. Lean back with the body straight, arms extended, then pull the chest to the handles and lower under control.", ru = "Закрепите подвесные петли на надёжной перекладине примерно на уровне груди и проверьте, что они выдерживают ваш вес. Отклонитесь назад с прямым телом и вытянутыми руками, затем подтяните грудь к рукоятям и опуститесь под контролем." }

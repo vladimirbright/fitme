@@ -8,8 +8,8 @@ qualities = ["rotational_power", "power"]
 equipment = ["medicine_ball"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]
-loads_areas = ["lower_back", "shoulder", "hip"]
-contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "hip_injury_current", "hernia"]
+loads_areas = ["lower_back", "shoulder", "hip", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "hip_injury_current", "elbow_wrist_injury_current", "hernia"]
 increment_kg = 1.0
 start = { kind = "calibration" }
 instructions = { en = "Stand side-on to a solid wall, a step or two away, holding the ball at the hip farther from the wall. Turn the back foot and hips towards the wall and throw the ball into it with straight-ish arms, letting the rotation start from the legs. Catch the rebound, reset and repeat; do both sides. Use a light ball and a wall that is clear of people and objects.", ru = "Встаньте боком к прочной стене в шаге-двух от неё, мяч у бедра, дальнего от стены. Разверните заднюю стопу и таз к стене и бросьте мяч в стену почти прямыми руками, начиная разворот с ног. Поймайте отскок, вернитесь в исходное положение и повторите; выполните в обе стороны. Берите лёгкий мяч, рядом со стеной не должно быть людей и предметов." }

@@ -228,6 +228,10 @@ battle_rope = "Battle rope"
 sled = "Sled"
 tire = "Tire"
 sledgehammer = "Sledgehammer"
+towel = "Towel"
+dip_belt = "Dip belt"
+suspension_straps = "Suspension straps"
+wrist_roller = "Wrist roller"
 
 [enum.screening_red_flag]
 heart_condition = "Do you have a heart or cardiovascular condition?"
