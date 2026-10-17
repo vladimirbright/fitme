@@ -487,6 +487,7 @@ importing = "Читаю программу… это может занять о�
 import_title = "Ваша программа (черновик):"
 unmatched_title = "Не сопоставлено (пропущено; в каталоге нет такого же движения):"
 draft_title = "Предлагаемый план (черновик):"
+changes_draft_title = "Изменения плана «{name}» (черновик):"
 plan_title = "{name} (версия {version}{default}):"
 default_suffix = ", основной"
 schedule_title = "Расписание:"

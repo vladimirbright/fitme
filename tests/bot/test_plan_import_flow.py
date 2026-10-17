@@ -486,14 +486,17 @@ async def test_cancel_command_drops_a_pending_paste_or_revision(
     draft_id = _last_draft_id(session)
     await _click(dispatcher, bot, PlanDraft(action="change", decision_id=draft_id))
     assert _texts(session)[-1] == t("plan.change_prompt", "ru")
-    # Experiment (llm-first planning): Change leaves no pending prompt for /cancel to drop —
-    # the draft stays open with its buttons, and the next text goes to the planner.
+    # Experiment (llm-first planning): Change leaves no pending prompt; /cancel closes the
+    # draft's planning session instead, and the next text goes to the planner.
     await _send(dispatcher, bot, "/cancel")
-    assert _texts(session)[-1] == t("cancel.nothing_active", "ru")
+    assert _texts(session)[-1] == t("plan.change_cancelled", "ru")
     await _send(dispatcher, bot, "убери планку")
     assert llm.calls == 1  # no revise call
     assert llm.assistant_calls == 2
     assert _ASSISTANT_REPLY in _texts(session)[-1]
+    # That planner turn opened a new plan's conversation; /cancel ends it.
+    await _send(dispatcher, bot, "/cancel")
+    assert _texts(session)[-1] == t("plan.new_cancelled", "ru")
     # /cancel with nothing pending is the ordinary message.
     await _send(dispatcher, bot, "/cancel")
     assert _texts(session)[-1] == t("cancel.nothing_active", "ru")

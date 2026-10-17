@@ -206,6 +206,7 @@ _ALLOWED_EXERCISES_RULE = "plan.allowed_exercises"
 _SUBSTITUTION_RULE = "loads.substituted"
 _IMPORT_CALIBRATION_RULE = "loads.import_calibration"  # M8b: no history -> calibration + hint
 _WORDING_RULE = "wording.forbidden_term"
+WORDING_RULE = _WORDING_RULE  # what `_sanitize_wording` reports a replacement as
 _ACTIVITY_NOT_ALLOWED_RULE = "plan.activity_not_allowed"
 _LOCATION_NOT_ALLOWED_RULE = "plan.location_not_allowed"
 _PLAN_STATUS_ACTIVE = "active"  # the only `plans.status` ever written (A§4.3: all plans are equal)
@@ -2325,6 +2326,15 @@ class EditDraftResult:
     errors: tuple[str, ...] = ()
 
 
+async def draft_plan_id(db: Database, user_id: int, decision_id: int) -> int | None:
+    """The saved plan a draft round revises (`None`: a new plan, or not this user's)."""
+    async with db.read() as conn:
+        decision = await get_decision(conn, decision_id)
+    if decision is None or decision.user_id != user_id:
+        return None
+    return _plan_id_of(decision)
+
+
 async def draft_base_plan(
     db: Database, user_id: int, *, plan_id: int | None, draft_decision_id: int | None
 ) -> Plan | None:
@@ -2415,6 +2425,7 @@ async def record_edit_draft(
 __all__ = [
     "EditDraftResult",
     "draft_base_plan",
+    "draft_plan_id",
     "record_edit_draft",
     "ConfirmResult",
     "ConfirmStatus",

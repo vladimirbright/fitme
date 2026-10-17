@@ -8,6 +8,12 @@ saved as asked; a started workout is a training session (log each exercise as pl
 its numbers or skipped, only after the checks pass; a reported safety concern halts; change
 the remaining blocks, carry the changes into the plan); a stop word halts and an open hold
 refuses before any model call; refusals are logged; the model sees pseudonymized data.
+
+Experiment (llm-first planning): outside a workout, production routes free text to the
+`planner` agent, which has no `edit_plan`/`rewrite_plan`/`new_plan`; production reaches
+those legacy assistant tools only during a workout (precheck, review or started). These
+tests still cover them: `ScriptedLlm` runs the legacy `assistant` agent under the planner's
+name by default (`planner_factory`). `test_planner_flow.py` runs the real planner.
 """
 
 from __future__ import annotations

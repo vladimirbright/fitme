@@ -28,15 +28,17 @@ from fitme.db.controllers.conversations import (
     insert_conversation,
     link_chat_message,
     set_conversation_draft,
+    set_conversation_plan,
     touch_conversation,
 )
-from fitme.db.controllers.profile import delete_new_plan_exclusions
+from fitme.db.controllers.profile import attach_new_plan_exclusions, delete_new_plan_exclusions
 from fitme.db.records import ConversationRecord
 from fitme.db.selectors.conversations import (
     get_conversation,
     list_conversation_messages,
     list_open_conversations,
 )
+from fitme.db.selectors.decisions import get_latest_plan_round_decision
 from fitme.db.selectors.training import get_active_workout_session, get_workout_session
 from fitme.domain.enums import WorkoutSessionStatus
 
@@ -102,15 +104,40 @@ async def active(db: Database, user_id: int) -> ConversationRecord | None:
     return training if training is not None else planning
 
 
-async def open_planning(db: Database, user_id: int, plan_id: int | None) -> ConversationRecord:
+async def _has_current_draft(conn: Connection, record: ConversationRecord) -> bool:
+    if record.draft_decision_id is None:
+        return False
+    latest = await get_latest_plan_round_decision(conn, record.user_id)
+    return latest is not None and latest.id == record.draft_decision_id
+
+
+async def _retarget(conn: Connection, record: ConversationRecord, plan_id: int | None) -> None:
+    """The draftless session is now about `plan_id`, keeping its messages. ADR 0010: the
+    exclusions made for a new plan's draft move to the plan it turned out to be about."""
+    await set_conversation_plan(conn, record.id, plan_id=plan_id)
+    if record.plan_id is None and plan_id is not None:
+        await attach_new_plan_exclusions(conn, user_id=record.user_id, plan_id=plan_id)
+
+
+async def open_planning(
+    db: Database, user_id: int, plan_id: int | None, *, retarget: bool = False
+) -> ConversationRecord:
     """The open planning session for `plan_id` (`None`: a new plan), reusing the current one
-    when it is about the same plan, otherwise closing it and starting a new one."""
+    when it is about the same plan, otherwise closing it and starting a new one. With
+    `retarget` (the planner staged a plan in the conversation it is having), an open session
+    about another plan that holds no current draft is moved to `plan_id` instead: the
+    conversation, and the exclusions made in it, carry on."""
     async with db.transaction() as conn:
         for record in await list_open_conversations(conn, user_id):
             if record.kind != PLANNING:
                 continue
             if record.plan_id == plan_id and not _idle(record):
                 await touch_conversation(conn, record.id)
+                refreshed = await get_conversation(conn, record.id)
+                assert refreshed is not None
+                return refreshed
+            if retarget and not _idle(record) and not await _has_current_draft(conn, record):
+                await _retarget(conn, record, plan_id)
                 refreshed = await get_conversation(conn, record.id)
                 assert refreshed is not None
                 return refreshed
@@ -124,11 +151,17 @@ async def open_planning(db: Database, user_id: int, plan_id: int | None) -> Conv
 
 
 async def planning_draft_shown(
-    db: Database, user_id: int, *, plan_id: int | None, draft_decision_id: int
+    db: Database,
+    user_id: int,
+    *,
+    plan_id: int | None,
+    draft_decision_id: int,
+    retarget: bool = False,
 ) -> ConversationRecord:
     """A draft round was shown (any entry point: a button, the assistant, a pasted
-    program): it is now the current draft of the planning session for that plan."""
-    record = await open_planning(db, user_id, plan_id)
+    program): it is now the current draft of the planning session for that plan.
+    `retarget` as in `open_planning`."""
+    record = await open_planning(db, user_id, plan_id, retarget=retarget)
     async with db.transaction() as conn:
         await set_conversation_draft(conn, record.id, draft_decision_id=draft_decision_id)
         refreshed = await get_conversation(conn, record.id)

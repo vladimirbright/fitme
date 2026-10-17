@@ -705,9 +705,13 @@ path is the `planner` agent (§8.1, `prompts/planner.v1.md`).
   be first (also with no plans yet), **Change** on a draft and **Change something** on a
   saved plan answer "what should change?" in that plan's planning session — none of them
   sets a pending revision, so the next text reaches the planner with the draft in
-  `state.planning_session.draft` and the session's turns in `history`. An exchange that
-  starts outside any session opens a new plan's planning session, so the next message
-  sees it.
+  `state.planning_session.draft` and the session's turns in `history` (Change on a draft
+  whose session idled out makes it the session's draft again). An exchange that starts
+  outside any session opens a new plan's planning session, so the next message sees it
+  (not after a turn that saved or closed one). A planner draft for another plan than a
+  draftless session's moves that session to it (`conversations.open_planning(retarget=)`):
+  its messages stay, and exclusions made for the new plan move to that plan. `/cancel`
+  closes an open planning session.
 - **Tools.** Lookups (`list_plans`, `get_plan`, `list_recent_sessions`, `get_session`,
   `find_exercises`, `find_substitutes`), `stage_plan(plan, plan_id)`, `save_draft`,
   `discard_draft`, `rename_plan`, `set_default_plan`, the exclusions, `fix_logged_sets`,
@@ -715,16 +719,22 @@ path is the `planner` agent (§8.1, `prompts/planner.v1.md`).
   workout logging.
 - **What runs.** The model talks the plan through in plain language and, when the user
   agrees, stages a whole `Plan` (catalog ids, `activity:` items, an optional `location`).
-  `stage_plan` applies the session rules of `edit_plan` (one plan per session), replaces any
-  `declared_kg` with the base's, and judges it with `planning.judge` (no scope): hard guards
-  with load-engine substitution, wording, measure and intensity repair. A failure goes back
-  to the model in the same run; nothing is staged. The programming brief, candidate pool,
+  `stage_plan(plan, plan_id)`: `plan_id` is the saved plan it changes, null a new plan; a
+  current draft of another plan in the session must be saved or closed first. It replaces
+  any `declared_kg` with the base's and judges the plan with `planning.judge` (no scope)
+  against inputs read for the target plan (its own exclusions): hard guards with
+  load-engine substitution, wording, measure and intensity repair. A failure goes back to
+  the model in the same run; nothing is staged. A success answers only the load notes and
+  what was repaired. The planner's `find_exercises`/`find_substitutes` rank what the user
+  may do at any location (the plan's location is what the guards judge) and give each
+  hit's `kg_loadable`, `load_unit`, `equipment` and `locations`. The programming brief, candidate pool,
   `plan_quality.review`, `time_budget` and `plan_generate`/`plan_revise` do **not** run.
 - **Draft, show, save.** After the run the staged plan becomes a `plan_revise` draft round
   (`planning.record_edit_draft`, `user_report.base = "planner_stage"`, the planner's prompt
   version and model) and the session's draft. The bot shows it whole with Confirm / Change /
-  Cancel (no session-length warning: the profile's length is a default), then any load the
-  guards limited. Confirm — or `save_draft` in the same turn when the user said "save it" —
+  Cancel, titled with the plan it changes when it has one (no session-length warning: the
+  profile's length is a default), then any load the guards limited. A "save it" whose draft
+  fails when recorded saves nothing. Confirm — or `save_draft` in the same turn when the user said "save it" —
   is the unchanged `planning.confirm_plan` (a new `plans` row for a new plan,
   `plan_versions.origin = llm`).
 
