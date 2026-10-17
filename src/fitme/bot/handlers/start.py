@@ -8,7 +8,7 @@ from aiogram.filters import Command
 from aiogram.types import Message
 
 from fitme.bot.commands import COMMAND_NAMES
-from fitme.bot.handlers.plan import PendingImport, PendingRevisions
+from fitme.bot.handlers.plan import PendingImport, PendingNewPlan, PendingRevisions
 from fitme.bot.handlers.setup import show_step
 from fitme.bot.handlers.train import PendingTrains, handle_cancel, show_pending_recap
 from fitme.bot.keyboards import hold_clear_markup
@@ -77,6 +77,11 @@ async def cmd_cancel(
     if await handle_cancel(message, db, user_id, pending_train):
         # A§6.2: an in-progress workout is kept (resumable); an unstarted one is aborted.
         # `cancel_train` has already said which.
+        return
+    if isinstance(pending_plan, PendingNewPlan):
+        # The New plan question opened the new plan's session: it ends with the prompt.
+        await conversations.close_planning(db, user_id, status="discarded")
+        await message.answer(t("plan.new_cancelled", lang))
         return
     if pending_plan is not None:
         key = (

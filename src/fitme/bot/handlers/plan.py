@@ -588,6 +588,7 @@ async def on_plan_draft(
             user_id,
             plan_id=await planning.draft_plan_id(db, user_id, decision_id),
             draft_decision_id=decision_id,
+            retarget=True,
         )
         await conversations.record_outgoing(db, user_id, session.id, change_prompt)
         return

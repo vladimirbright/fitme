@@ -403,6 +403,9 @@ class _Staged:
     draft_before: Plan | None = None
     draft_plan_id: int | None = None
     whole_draft: bool = False  # `draft_plan` was staged whole by the planner (`stage_plan`)
+    # The staged plan is a saved one, talked about in a draftless new-plan session: the
+    # exclusions made in that talk move to it when the draft is recorded, so they judge it.
+    carry_new_plan_exclusions: bool = False
     today: Workout | None = None
     today_before: Workout | None = None
     today_session_id: int | None = None
@@ -487,6 +490,7 @@ class _Turn:
         self._allowed = frozenset(inputs.user_context.allowed_exercise_ids)
         # The planner sets a plan's own location (an outdoor run for a gym profile), so it
         # searches what the user may do anywhere; the guards judge the plan at its location.
+        self._planner = planner
         self._searchable = _any_location_ids(inputs) if planner else self._allowed
         self._planning = planning_session
         self._workout = workout
@@ -692,17 +696,22 @@ class _Turn:
             hint="a draft: the user saves it with the Save button or by asking you",
         )
 
-    async def _inputs_for(self, plan_id: int | None) -> planning.Inputs:
-        """The judging inputs for the plan being staged (its own exclusions, ADR 0010), not
-        the turn's (read for the session's plan, else the default's) — as
-        `planning.record_edit_draft` reads them when the draft is recorded."""
+    async def _inputs_for(self, plan_id: int | None, *, carry: bool) -> planning.Inputs:
+        """The judging inputs for the plan being staged (its own exclusions, ADR 0010, plus
+        a draftless new-plan talk's when `carry`), not the turn's (read for the session's
+        plan, else the default's) — as `planning.record_edit_draft` reads them when the
+        draft is recorded and `confirm_plan` once they moved to the plan. The planner's
+        search follows the same exclusions from then on."""
         async with self._db.read() as conn:
             snapshot = await planning.read_snapshot(
-                conn, self._user_id, plan_id=plan_id, new_plan=plan_id is None
+                conn, self._user_id, plan_id=plan_id, new_plan=plan_id is None or carry
             )
         if snapshot.profile is None:
             return self._inputs
-        return planning.build_inputs(self._catalog, snapshot, self._settings, self._user_id)
+        inputs = planning.build_inputs(self._catalog, snapshot, self._settings, self._user_id)
+        if self._planner:
+            self._searchable = _any_location_ids(inputs)
+        return inputs
 
     async def stage_plan(self, plan: Plan, plan_id: int | None) -> dict[str, object]:
         """The planner's whole plan as a draft: `plan_id` is the saved plan it replaces,
@@ -745,12 +754,19 @@ class _Turn:
         base = staged.draft_before
         planning.restore_declared(plan, {} if base is None else planning.declared_loads_of(base))
         preview = plan.model_copy(deep=True)
-        judgement = planning.judge(preview, await self._inputs_for(target))
+        carry = (
+            target is not None
+            and session is not None
+            and session.plan_id is None
+            and not await self._draft_is_current(session)
+        )
+        judgement = planning.judge(preview, await self._inputs_for(target, carry=carry))
         if not judgement.ok:
             return _error("; ".join(verdict.detail for verdict in judgement.failures))
         staged.draft_plan = plan
         staged.draft_plan_id = target
         staged.whole_draft = True
+        staged.carry_new_plan_exclusions = carry
         # Not the whole judged plan back (it is what the model just sent): only what the
         # checks changed.
         return _ok(
@@ -1347,6 +1363,7 @@ async def _apply(
             user_id,
             plan=staged.draft_plan,
             plan_id=plan_id,
+            with_new_plan_exclusions=staged.carry_new_plan_exclusions,
             user_report={
                 **report,
                 "base": "planner_stage" if staged.whole_draft else "assistant_edit",

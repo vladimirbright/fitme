@@ -710,8 +710,10 @@ path is the `planner` agent (§8.1, `prompts/planner.v1.md`).
   outside any session opens a new plan's planning session, so the next message sees it
   (not after a turn that saved or closed one). A planner draft for another plan than a
   draftless session's moves that session to it (`conversations.open_planning(retarget=)`):
-  its messages stay, and exclusions made for the new plan move to that plan. `/cancel`
-  closes an open planning session.
+  its messages stay, and exclusions made for the new plan move to that plan — the staged
+  plan is already judged (staged, recorded and saved) with them. An exclusion the user
+  stated about that plan stays on it even if the draft is then cancelled. `/cancel` closes
+  an open planning session.
 - **Tools.** Lookups (`list_plans`, `get_plan`, `list_recent_sessions`, `get_session`,
   `find_exercises`, `find_substitutes`), `stage_plan(plan, plan_id)`, `save_draft`,
   `discard_draft`, `rename_plan`, `set_default_plan`, the exclusions, `fix_logged_sets`,

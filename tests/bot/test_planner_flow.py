@@ -883,3 +883,80 @@ async def test_change_on_a_draft_whose_session_idled_out_reopens_it_for_the_plan
     llm.steps = [say("How long should the jog be?")]
     await _send(dispatcher, bot, "a longer jog")
     assert llm.prompts()[-1]["state"]["planning_session"]["draft"]["name"] == "Saturday run"
+
+
+# --- Review fixes, round 2 -----------------------------------------------------------------------
+
+
+async def test_a_talks_exclusion_judges_the_saved_plan_it_turns_out_to_be_about(
+    dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
+) -> None:
+    """The exclusion made in a draftless new-plan talk moves to the saved plan the talk is
+    about, so it judges the staged plan at once: stage, record and Save agree."""
+    seeded = await _ready(dispatcher, bot, db)
+    llm.steps = [say("Squats, push-ups and a dumbbell press.")]
+    await _send(dispatcher, bot, "what is in my home plan?")
+    exclude = {"kind": "name", "value": "lunge", "for_all_plans": False}
+    llm.steps = [Call("add_exclusion", exclude), say("No lunges.")]
+    await _send(dispatcher, bot, "no lunges in it")
+
+    with_lunge = _home_plan_with(
+        _reps("pushup", Load(kind="bodyweight")),
+        _reps("barbell_forward_lunge", Load(kind="calibration")),
+    )
+    without = _home_plan_with(_reps("pushup", Load(kind="bodyweight")))
+    llm.steps = [
+        _stage(with_lunge, seeded.plan_id),
+        _stage(without, seeded.plan_id),
+        say("Lunges are excluded: push-ups only."),
+    ]
+    await _send(dispatcher, bot, "push-ups and lunges in the home plan")
+    refused, accepted = llm.returns("stage_plan")
+    assert refused["ok"] is False and "barbell_forward_lunge" in refused["error"]
+    assert accepted["ok"] is True
+
+    await _click(dispatcher, bot, PlanDraft(action="confirm", decision_id=_draft_id(session)))
+    assert _last_text(session).startswith(t("plan.saved", "en", name="Home plan", version=2))
+    assert await _exclusion_rows(db, seeded.user_id) == [("lunge", "plan", seeded.plan_id)]
+
+
+async def test_cancel_while_the_new_plan_question_is_pending_closes_its_session(
+    dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
+) -> None:
+    seeded = await _ready(dispatcher, bot, db)
+    await _click(dispatcher, bot, PlanMenu(action="new", plan_id=0))
+    assert await conversations.current_planning(db, seeded.user_id) is not None
+    await _send(dispatcher, bot, "/cancel")
+    assert _last_text(session) == t("plan.new_cancelled", "en")
+    assert await conversations.current_planning(db, seeded.user_id) is None
+
+
+async def test_change_after_idle_moves_a_draftless_talk_and_keeps_its_exclusion(
+    dispatcher: Dispatcher,
+    bot: Bot,
+    db: Database,
+    session: FakeSession,
+    llm: ScriptedLlm,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seeded = await _ready(dispatcher, bot, db)
+    changed = _home_plan_with(_reps("pushup", Load(kind="bodyweight")))
+    llm.steps = [_stage(changed, seeded.plan_id), say("Staged.")]
+    await _send(dispatcher, bot, "only push-ups in the home plan")
+    draft_id = _draft_id(session)
+
+    later = clock.now() + timedelta(hours=conversations.PLANNING_IDLE_HOURS + 1)
+    monkeypatch.setattr(clock, "now", lambda: later)
+    llm.steps = [say("What should change?")]
+    await _send(dispatcher, bot, "about my plans")  # opens a new, draftless talk
+    exclude = {"kind": "name", "value": "lunge", "for_all_plans": False}
+    llm.steps = [Call("add_exclusion", exclude), say("No lunges.")]
+    await _send(dispatcher, bot, "no lunges")
+    talk = await conversations.current_planning(db, seeded.user_id)
+    assert talk is not None and talk.plan_id is None and talk.draft_decision_id is None
+
+    await _click(dispatcher, bot, PlanDraft(action="change", decision_id=draft_id))
+    record = await conversations.current_planning(db, seeded.user_id)
+    assert record is not None and record.id == talk.id
+    assert record.plan_id == seeded.plan_id and record.draft_decision_id == draft_id
+    assert await _exclusion_rows(db, seeded.user_id) == [("lunge", "plan", seeded.plan_id)]
