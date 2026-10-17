@@ -18,7 +18,7 @@ import pytest
 from aiogram import Bot, Dispatcher
 from aiogram.client.session.base import BaseSession
 from aiogram.filters.callback_data import CallbackData
-from aiogram.methods import TelegramMethod
+from aiogram.methods import DeleteMessage, EditMessageText, SendMessage, TelegramMethod
 from aiogram.methods.base import TelegramType
 from aiogram.types import CallbackQuery, Chat, Message, Update, User
 
@@ -37,6 +37,7 @@ class FakeSession(BaseSession):
     def __init__(self) -> None:
         super().__init__()
         self.sent: list[TelegramMethod[Any]] = []
+        self.replies: list[tuple[TelegramMethod[Any], Message | None]] = []
         self._next_message_id = 1000
 
     async def close(self) -> None:
@@ -61,6 +62,7 @@ class FakeSession(BaseSession):
     ) -> TelegramType:
         self.sent.append(method)
         if method.__returning__ is bool:
+            self.replies.append((method, None))
             return True  # type: ignore[return-value]
 
         chat_id = getattr(method, "chat_id", None)
@@ -74,8 +76,22 @@ class FakeSession(BaseSession):
             date=datetime.now(UTC),
             chat=Chat(id=chat_id if isinstance(chat_id, int) else 0, type="private"),
             text=text,
-        )
+        ).as_(bot)
+        self.replies.append((method, message))
         return message  # type: ignore[return-value]
+
+    def chat_texts(self) -> list[str]:
+        """The texts of the bot's messages as the chat shows them now, in the order they were
+        sent: an edit replaces its message's text, a deleted message is gone."""
+        texts: dict[int, str] = {}
+        for method, message in self.replies:
+            if isinstance(method, DeleteMessage):
+                texts.pop(method.message_id, None)
+            elif isinstance(method, SendMessage) and message is not None:
+                texts[message.message_id] = method.text
+            elif isinstance(method, EditMessageText) and method.message_id in texts:
+                texts[method.message_id] = method.text
+        return list(texts.values())
 
     def last_sent_text(self) -> str | None:
         for method in reversed(self.sent):

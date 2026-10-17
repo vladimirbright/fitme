@@ -18,7 +18,7 @@ from typing import Any
 
 import pytest
 from aiogram import Bot, Dispatcher
-from aiogram.methods import SendMessage
+from aiogram.methods import EditMessageText, SendMessage
 from pydantic_ai.messages import (
     ModelMessage,
     ModelRequest,
@@ -30,6 +30,7 @@ from pydantic_ai.models.function import AgentInfo, FunctionModel
 
 from conftest import FakeSession, callback_update, make_user, message_update
 from fitme import clock
+from fitme.bot import waiting
 from fitme.bot.app import build_dispatcher
 from fitme.bot.callback_data import PlanDraft, TrainAction
 from fitme.catalog import load_catalog
@@ -289,7 +290,7 @@ def _messages(session: FakeSession) -> list[SendMessage]:
 
 
 def _texts(session: FakeSession) -> list[str]:
-    return [m.text or "" for m in _messages(session)]
+    return session.chat_texts()
 
 
 def _last_text(session: FakeSession) -> str:
@@ -378,6 +379,22 @@ async def test_a_plan_edit_goes_to_a_draft_and_is_saved_with_the_button(
     await _click(dispatcher, bot, PlanDraft(action="confirm", decision_id=draft_id).pack())
     assert [_kg(b) for b in await _bodies(db, seeded.plan_id)] == [60.0, 62.5]
     assert await _open_conversations(db, seeded.user_id) == []
+
+
+async def test_the_reply_is_written_into_the_waiting_placeholder(
+    dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
+) -> None:
+    await _ready(dispatcher, bot, db)
+    before = len(session.sent)
+    llm.steps = [say("Ок.")]
+    await _send(dispatcher, bot, "hello")
+
+    turn = session.sent[before:]
+    placeholder, reply = turn[0], turn[-1]
+    assert isinstance(placeholder, SendMessage)
+    assert placeholder.text in {waiting.frames(runner)[0] for runner in waiting.RUNNERS}
+    assert isinstance(reply, EditMessageText) and reply.text.startswith("Ок.")
+    assert [m for m in turn if isinstance(m, SendMessage)] == [placeholder]
 
 
 async def test_the_session_remembers_the_conversation_and_saves_by_asking(

@@ -2,6 +2,10 @@
 prompt or setup step claimed goes to `services.assistant.handle_message`; what it did is
 shown here.
 
+While the model works, an animated placeholder (`bot/waiting.py`) stands in the chat; the
+reply, refusal or "not understood" is written into it, or it is deleted when the turn only
+has effects to show.
+
 Called only from `bot/handlers/free_text.py`, after the message was saved and passed the
 stop-word scan (A§6.3) — a halting message never reaches this module. The assistant's own
 words come first (wording-checked in the service, marked as AI-generated), then every effect
@@ -23,6 +27,7 @@ from fitme.bot.handlers import plan as plan_handlers
 from fitme.bot.handlers import stats as stats_handlers
 from fitme.bot.handlers import train as train_handlers
 from fitme.bot.rendering import refusal_text
+from fitme.bot.waiting import waiting_message
 from fitme.catalog import load_catalog
 from fitme.config.settings import Settings
 from fitme.db.connection import Database
@@ -193,14 +198,17 @@ async def handle_assistant_text(
     """The free-text handler's last step (A§6.3, ADR 0003/0004): after the stop-word scan,
     with no pending prompt. Always answers something."""
     lang = (await profile_service.get_snapshot(db, user_id)).language
-    if message.bot is not None:
-        await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")
-    result = await assistant.handle_message(db, llm, user_id, text, chat_message_id=chat_message_id)
-    if result.refusal is not None:
-        await message.answer(refusal_text(result.refusal, lang))
-        return
-    if result.message:
-        await message.answer(f"{result.message}\n\n{t('assistant.reply_footer', lang)}")
+    async with waiting_message(message) as waiting:
+        result = await assistant.handle_message(
+            db, llm, user_id, text, chat_message_id=chat_message_id
+        )
+        if result.refusal is not None:
+            await waiting.finish(refusal_text(result.refusal, lang))
+            return
+        if result.message:
+            await waiting.finish(f"{result.message}\n\n{t('assistant.reply_footer', lang)}")
+        elif not result.items:
+            await waiting.finish(t("assistant.not_understood", lang))
     for item in result.items:
         await _show_item(
             message,
@@ -212,8 +220,6 @@ async def handle_assistant_text(
             lang=lang,
             pending_plan_revisions=pending_plan_revisions,
         )
-    if not result.message and not result.items:
-        await message.answer(t("assistant.not_understood", lang))
 
 
 async def on_undo(
