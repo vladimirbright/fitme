@@ -4,8 +4,8 @@ plank, an interval, a carry). Pure and deterministic; the recap offers its resul
 ordinary suggestion the user applies with a tap, so nothing changes in a plan by itself.
 
 It reads **actual** performance (`set_logs`) against the **planned** target the user had at
-the time, and only the sessions done at the current target count: after a change, the
-evidence starts again. Imported history never counts (A§7.3). Per exercise:
+the time, and only the sessions done at the current target and number of sets count: after a
+change to either, the evidence starts again. Imported history never counts (A§7.3). Per exercise:
 
 - **speed work** (`IntensityMode.SPEED`: throws, jumps, sprints, footwork) is never
   progressed by volume — more reps or longer bouts aren't faster ones. It is held, and the
@@ -108,15 +108,18 @@ def session_result(item: Prescription, rows: Sequence[SetLogRecord]) -> str | No
     at the top), `short` (a performed set below the floor), `mixed`, or `None` when that
     session was done at a different target (a change since, so it isn't evidence)."""
     prescribed = [row for row in rows if not row.extra]
-    if not prescribed or any(_planned(row) != _target(item) for row in prescribed):
+    # Another target or another number of sets is another prescription: not evidence.
+    if (
+        not prescribed
+        or len(prescribed) != item.sets
+        or any(_planned(row) != _target(item) for row in prescribed)
+    ):
         return None
     top, floor = _top_and_floor(item)
     values = [_value(row, item.measure) for row in prescribed]
     # A skipped or unlogged set makes the session inconclusive either way: it neither earns
     # more nor, with a short set next to it, counts as falling short.
-    if len(prescribed) < item.sets or any(
-        row.skipped or value is None for row, value in zip(prescribed, values, strict=True)
-    ):
+    if any(row.skipped or value is None for row, value in zip(prescribed, values, strict=True)):
         return "mixed"
     if any(value is not None and value < floor for value in values):
         return "short"
