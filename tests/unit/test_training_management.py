@@ -5,6 +5,8 @@ model is called."""
 
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 from test_plan_quality import plan, rules, rx, single, superset, workout
 
@@ -630,28 +632,42 @@ def test_the_recap_model_cannot_suggest_a_timed_or_distance_target() -> None:
         )
 
 
-def test_a_target_change_is_stale_once_the_plans_targets_differ() -> None:
-    from fitme.services.recap import _one_target
+def test_a_target_change_is_stale_once_the_sets_or_target_were_edited() -> None:
+    from fitme.services.recap import NextTarget, _signature, _still_decided
 
-    same = plan(
-        [(0, "A"), (3, "B")],
-        workout("A", "A", single(rx("plank", 3, seconds=30))),
-        workout("B", "B", single(rx("plank", 3, seconds=30))),
-    )
-    edited = plan(
-        [(0, "A"), (3, "B")],
-        workout("A", "A", single(rx("plank", 3, seconds=30))),
-        workout("B", "B", single(rx("plank", 3, seconds=90))),
-    )
+    def week(a: Prescription, b: Prescription) -> Any:
+        return plan(
+            [(0, "A"), (3, "B")], workout("A", "A", single(a)), workout("B", "B", single(b))
+        )
+
+    plank = rx("plank", 3, seconds=30)
+    decided = [
+        NextTarget(
+            exercise_id="plank",
+            kind=TargetKind.MORE,
+            reason="",
+            from_prescription=_signature(plank),
+        )
+    ]
     change = ChangeTarget(exercise_id="plank", from_target=30, seconds=35)
-    assert _one_target(same, change) and not _one_target(edited, change)
-    # Every plank edited to 60 s since: the 30 -> 35 s change is stale, not applied over it.
-    later = plan(
-        [(0, "A"), (3, "B")],
-        workout("A", "A", single(rx("plank", 3, seconds=60))),
-        workout("B", "B", single(rx("plank", 3, seconds=60))),
+    assert _still_decided(week(plank, plank), change, decided)
+    assert not _still_decided(week(plank, rx("plank", 3, seconds=90)), change, decided)
+    assert not _still_decided(
+        week(rx("plank", 3, seconds=60), rx("plank", 3, seconds=60)), change, decided
     )
-    assert not _one_target(later, change)
+    assert not _still_decided(week(rx("plank", 5, seconds=30), plank), change, decided)  # sets
+    assert not _still_decided(week(plank, plank), change, [])  # never a model's target change
+
+
+def test_a_change_needs_every_prescription_at_the_evidenced_sets() -> None:
+    from fitme.services.recap import _single_target
+
+    three, five = rx("plank", 3, seconds=30), rx("plank", 5, seconds=30)
+    today = workout("A", "A", single(three))
+    mixed = plan([(0, "A"), (3, "B")], today, workout("B", "B", single(five)))
+    assert _single_target(mixed, today, "plank") is None
+    same = plan([(0, "A"), (3, "B")], today, workout("B", "B", single(three)))
+    assert _single_target(same, today, "plank") is not None
 
 
 def test_the_active_workout_view_says_per_side_too() -> None:

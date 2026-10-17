@@ -200,10 +200,10 @@ class NextTarget(BaseModel):
     exercise_id: str
     kind: TargetKind
     reason: str
-    # The rep range it was decided from (reps prescriptions only): Apply refuses a rep change
-    # as stale once the plan's range for the exercise is no longer this one.
-    from_reps_min: int | None = None
-    from_reps_max: int | None = None
+    # The prescription it was decided from (sets, measure, target): every prescription of the
+    # exercise in the plan had exactly this, and Apply refuses its change as stale once any
+    # no longer does (an edit since).
+    from_prescription: list[object] = Field(default_factory=list)
 
 
 class RecapProposal(BaseModel):
@@ -381,10 +381,26 @@ def _preview(
     return preview, fired
 
 
+def _signature(item: Prescription) -> list[object]:
+    """What progression evidence is tied to: the number of sets, the measure and the target."""
+    return [item.sets, item.measure.value, item.reps_min, item.reps_max, item.seconds, item.meters]
+
+
+def _all_match(plan: Plan, exercise_id: str, signature: list[object]) -> bool:
+    return all(
+        _signature(item) == signature
+        for workout in plan.workouts
+        for block in workout.blocks
+        for item in block.items
+        if item.exercise_id == exercise_id
+    )
+
+
 def _single_target(plan: Plan, workout: Workout, exercise_id: str) -> Prescription | None:
     """Today's one prescription of `exercise_id`, when a target change can be paired with it:
     it appears once in today's workout, outside a superset, and every prescription of it in
-    the plan has the same measure and target (a change applies to all of them)."""
+    the plan has the same sets, measure and target (a change applies to all of them, so all
+    of them must be what the evidence was gathered at)."""
     today = [
         (block, item)
         for block in workout.blocks
@@ -394,13 +410,7 @@ def _single_target(plan: Plan, workout: Workout, exercise_id: str) -> Prescripti
     if len(today) != 1 or today[0][0].kind == "superset":
         return None
     item = today[0][1]
-    target = (item.measure, item.reps_min, item.reps_max, item.seconds, item.meters)
-    for other in (
-        p for w in plan.workouts for b in w.blocks for p in b.items if p.exercise_id == exercise_id
-    ):
-        if (other.measure, other.reps_min, other.reps_max, other.seconds, other.meters) != target:
-            return None
-    return item
+    return item if _all_match(plan, exercise_id, _signature(item)) else None
 
 
 def _targets(
@@ -429,8 +439,7 @@ def _targets(
                     exercise_id=exercise.id,
                     kind=decision.kind,
                     reason=decision.reason,
-                    from_reps_min=single.reps_min,
-                    from_reps_max=single.reps_max,
+                    from_prescription=_signature(single),
                 )
             )
             if decision.change is not None:
@@ -749,44 +758,26 @@ def _filter_suggestions(
     return kept, fired
 
 
-def _one_target(plan: Plan, change: ChangeTarget) -> bool:
-    """Every prescription of the exercise in the change's measure still has the target the
-    change was decided from (`from_target`): none was edited since."""
-    measure = Measure.TIME if change.seconds is not None else Measure.DISTANCE
-    targets = {
-        item.seconds if measure == Measure.TIME else item.meters
-        for workout in plan.workouts
-        for block in workout.blocks
-        for item in block.items
-        if item.exercise_id == change.exercise_id and item.measure == measure
-    }
-    return targets == {change.from_target}
-
-
-def _same_reps(plan: Plan, change: ChangeReps, targets: Sequence[NextTarget]) -> bool:
-    """ADR 0016: a rep change the app decided (`targets`) still applies only while every
-    reps prescription of the exercise has the range it was decided from. A model's rep
-    change (no target for its exercise) is applied as before."""
+def _still_decided(plan: Plan, change: PlanChange, targets: Sequence[NextTarget]) -> bool:
+    """ADR 0016: a rep or target change the app decided (`targets`) still applies only while
+    every prescription of the exercise has the sets and target it was decided from. A
+    target change always comes from the app; a model's rep change (no decision for its
+    exercise) and every other change are applied as before."""
+    if not isinstance(change, ChangeReps | ChangeTarget):
+        return True
     decided = next(
         (
             target
             for target in targets
             if target.exercise_id == change.exercise_id
             and target.kind in (TargetKind.MORE, TargetKind.LESS)
-            and target.from_reps_min is not None
+            and target.from_prescription
         ),
         None,
     )
     if decided is None:
-        return True
-    ranges = {
-        (item.reps_min, item.reps_max)
-        for workout in plan.workouts
-        for block in workout.blocks
-        for item in block.items
-        if item.exercise_id == change.exercise_id and item.measure == Measure.REPS
-    }
-    return ranges == {(decided.from_reps_min, decided.from_reps_max)}
+        return isinstance(change, ChangeReps)
+    return _all_match(plan, change.exercise_id, decided.from_prescription)
 
 
 def _change_exercise(change: PlanChange) -> str:
@@ -1139,11 +1130,9 @@ async def apply_suggestion(
             )
             if problems:
                 return ApplyResult(status=Status.STALE)
-        if isinstance(change, ChangeReps) and not _same_reps(base, change, proposal.targets):
-            return ApplyResult(status=Status.STALE)
-        if isinstance(change, ChangeTarget) and not _one_target(base, change):
-            # ADR 0016: a target change applies to every prescription of the exercise in its
-            # measure; if any no longer has the target it was decided from, it isn't current.
+        if not _still_decided(base, change, proposal.targets):
+            # ADR 0016: an app-decided change applies to every prescription of the exercise;
+            # once any no longer has the sets and target it was decided from, it isn't current.
             return ApplyResult(status=Status.STALE)
         modified = base.model_copy(deep=True)
         if not _apply_change(

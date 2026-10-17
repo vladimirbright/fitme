@@ -127,11 +127,12 @@ more in, and to treat swings, RDLs, deadlifts and hip thrusts as one hinge deman
 - The recap offers the step as a suggestion, ahead of the model's: `change_reps` or the new
   `change_target` (`seconds` or `meters`). It applies only when the exercise appears once in
   today's workout outside a superset and every prescription of it in the plan has the same
-  target. A target change is the app's alone: the model's output schema has no
+  sets and target (a different number of sets is a different prescription, and restarts the
+  evidence too). A target change is the app's alone: the model's output schema has no
   `change_target` (`ModelPlanChange`), and its rep or set change for the same exercise is
   dropped (one progression at a time). **Apply** is judged as before and saved as an
-  `origin=progression` version; a target change is stale once the plan's prescriptions of the
-  exercise no longer share one target. A session with a skipped or unlogged set is
+  `origin=progression` version; an app-decided rep or target change is stale once any
+  prescription of the exercise no longer has the sets and target it was decided from. A session with a skipped or unlogged set is
   inconclusive: it neither earns a step up nor counts towards a step down. `recap.v3` gets
   `next_targets` and is told never to claim the user got faster.
 
