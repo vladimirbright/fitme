@@ -697,14 +697,16 @@ def _weekly_findings(plan: Plan, ctx: ReviewContext) -> list[GuardVerdict]:
                 demanding.setdefault(session.weekday, []).append(region.value)
     days = sorted(demanding)
     if len(days) > 1:
+        # Two demanding lower-body days in a row, whichever region each one loads: a squat
+        # day before a deadlift day is as hard to recover from as two squat days.
         for first, second in zip(days, [*days[1:], days[0] + 7], strict=True):
-            shared = set(demanding[first]) & set(demanding[second % 7])
-            if second - first == 1 and shared:
+            if second - first == 1:
                 findings.append(
                     _finding(
                         "consecutive_heavy",
-                        f"demanding {' and '.join(sorted(shared))} work on consecutive days "
-                        f"(weekdays {first} and {second % 7}); leave a day between them",
+                        f"demanding lower-body work on consecutive days (weekday {first}: "
+                        f"{' and '.join(demanding[first])}; weekday {second % 7}: "
+                        f"{' and '.join(demanding[second % 7])}); leave a day between them",
                     )
                 )
     findings.extend(_split_findings(plan, ctx))

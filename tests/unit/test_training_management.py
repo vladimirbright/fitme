@@ -693,3 +693,23 @@ def test_jump_rope_and_sprints_done_as_conditioning_count_as_knee_work() -> None
         assert Region.KNEE in workload.regions_of(exercise, stimulus), exercise_id
     ropes = _exercise("battle_rope_alternating_waves")
     assert Region.KNEE not in workload.regions_of(ropes, Stimulus.CONDITIONING)
+
+
+def test_a_squat_day_then_a_deadlift_day_is_back_to_back_lower_body_work() -> None:
+    def day(key: str, lift: str) -> Workout:
+        return workout(
+            key,
+            "Lower",
+            [
+                role(BlockRole.WARM_UP, rx("mobility_cat_cow", 1, seconds=60, rest=0)),
+                role(BlockRole.STRENGTH, rx(lift, 4, reps=(3, 5), rest=180)),
+            ],
+        )
+
+    week = plan([(1, "A"), (2, "B")], day("A", "barbell_back_squat"), day("B", "barbell_deadlift"))
+    found = [
+        f.detail
+        for f in review(week, ReviewContext(_CATALOG))
+        if f.rule == "quality.consecutive_heavy"
+    ]
+    assert found and "knee-dominant legs" in found[0] and "hip hinge" in found[0]
