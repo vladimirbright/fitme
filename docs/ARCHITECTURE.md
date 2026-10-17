@@ -647,7 +647,9 @@ plan view shows each workout's estimate, labelled as one.
    **Guidance.** If the gates pass and the user already has plans, **New plan** first asks
    what the new one should be ("a gym version of my home plan", "more upper body"), with
    **Generate anyway** and **Cancel**. The answer is free text: stop-word scan first (§6.3),
-   then it goes to `plan_generate` as `user_request`. A compact `existing_plans` summary goes
+   then it goes to the assistant in the new plan's planning session, which may ask one
+   clarifying question before it calls `new_plan` (ADR 0017); its guidance reaches
+   `plan_generate` as `user_request`. A compact `existing_plans` summary goes
    with it (scrubbed names, workout titles, exercise ids, no loads) whenever plans exist, so
    the request can refer to them and the new plan isn't a copy. The website's new-plan form
    has the same optional field. Prompt: `plan_generate.v2.md`.
@@ -655,6 +657,10 @@ plan view shows each workout's estimate, labelled as one.
    location, equipment, preferences, focus, frequency, session length, **flag codes**, the
    **allowed exercise ids** (catalog filtered by location, equipment and contraindications),
    and a history summary (per exercise: last working load, reps, historical max).
+   **Request frame** (ADR 0017, `services.plan_request`): the request's activity, sessions,
+   weekdays, length and an outdoor setting replace the profile's defaults; when it names an
+   activity or a quality, focus and preferences are left out and history is limited to
+   exercises that serve it (physical data only).
 3. **LLM** (`plan_generate` agent, output type `PlanProposal`).
 4. **Guards** (`guards.validate_plan`, §7). On a violation, re-prompt once with the list of
    violations. If the second attempt also fails, return a `Refusal(NO_SAFE_PLAN)`. Every
@@ -966,9 +972,9 @@ One pydantic-ai `Agent` per purpose. Each has a typed output, and its prompt is 
 | `assistant` | context + `state` + session `history` + user text (scrubbed); lookup and staging tools | `AssistantTurn \| Refusal` (ADR 0003, ADR 0004) | medium |
 
 - The prompt loader returns `(template_name, version, rendered_text)`. Template name and
-  version go into `decisions`. Current versions (ADR 0016): `plan_generate.v7`,
-  `plan_revise.v4`, `plan_import.v2`, `session_adjust.v2`, `recap.v3`,
-  `assistant.v10`. (`result_parse` was removed with the ✏️ button, ADR 0013.)
+  version go into `decisions`. Current versions (ADR 0017): `plan_generate.v8`,
+  `plan_revise.v5`, `plan_import.v2`, `session_adjust.v2`, `recap.v3`,
+  `assistant.v11`. (`result_parse` was removed with the ✏️ button, ADR 0013.)
 - Each agent's model comes from its tier or override (§8.5). Nothing in the code is tied to
   one provider.
 - `llm/usage.py` wraps every run: records `llm_calls` from `result.usage` (a property), latency, and

@@ -69,7 +69,7 @@ from __future__ import annotations
 import logging
 import math
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import timedelta
 from enum import StrEnum
 from typing import Any
@@ -177,6 +177,7 @@ from fitme.services import (
     exercise_search,
     measures,
     plan_quality,
+    plan_request,
     prescribing,
     programming,
     time_budget,
@@ -1142,15 +1143,93 @@ def review_quality(
 def request_qualities(inputs: Inputs, guidance: str | None) -> list[Quality]:
     """ADR 0009: the physical qualities this request asks for (the request's words, the
     other sport, focus and preferences), in order; feeds the candidate pool, the planner's
-    `requested_qualities` and the goal/exercise check."""
+    `requested_qualities` and the goal/exercise check. ADR 0017: after `apply_request` an
+    understood request has no focus, preferences or sport left, so only its own count."""
     context = inputs.user_context
     return exercise_search.requested_qualities(
         guidance, focus=context.focus, preferences=context.preferences, sport=context.sport
     )
 
 
+def apply_request(
+    inputs: Inputs,
+    request: plan_request.PlanRequest,
+    *,
+    plan_qualities: Sequence[Quality] = (),
+    keep_history: Sequence[str] = (),
+) -> tuple[Inputs, list[Quality]]:
+    """ADR 0017: the round's inputs and requested qualities as the request frames them.
+
+    - Its sessions per week and session length replace the profile's defaults.
+    - Outdoors, the allowed set keeps what can be done outdoors with outdoor equipment *and*
+      at the profile's location (the plan is judged against the profile on Save and Start,
+      so nothing outside it may be offered).
+    - When it says what the plan is for (an activity or a quality), or a revision's plan
+      already does (`plan_qualities`, its workouts' declared objectives), the planner gets
+      the profile's physical data only: age, weight, experience, screening and the training
+      the user already does elsewhere (a load to recover from) stay; focus and preferences
+      go, and history stays only for exercises that train one of the qualities (or
+      `keep_history`, the plan's own exercises), so a bench press no longer rides into a
+      running plan.
+    The guard context is unchanged: the guards judge against everything the profile allows.
+    """
+    context = inputs.user_context
+    catalog = inputs.catalog
+    update: dict[str, object] = {}
+    if (sessions := request.sessions) is not None:
+        update["sessions_per_week"] = sessions
+    if request.session_minutes is not None:
+        update["session_minutes"] = request.session_minutes
+    allowed = list(context.allowed_exercise_ids)
+    if request.outdoor:
+        outdoor = LOCATION_DEFAULT_EQUIPMENT[Location.OUTDOOR] & frozenset(context.equipment)
+        allowed = [
+            exercise_id
+            for exercise_id in allowed
+            if (exercise := catalog.by_id(exercise_id)) is not None
+            and Location.OUTDOOR in exercise.locations
+            and set(exercise.equipment) <= outdoor
+        ]
+        update["location"] = Location.OUTDOOR
+        update["equipment"] = sorted(outdoor, key=lambda item: item.value)
+        update["allowed_exercise_ids"] = allowed
+        update["exercise_measures"] = {
+            exercise_id: measures
+            for exercise_id, measures in context.exercise_measures.items()
+            if exercise_id in set(allowed)
+        }
+    if request.understood:
+        qualities = list(request.qualities)
+    elif plan_qualities:
+        qualities = list(plan_qualities)
+    else:
+        qualities = []
+    if qualities:
+        wanted = set(qualities)
+        kept = set(keep_history)
+        allowed_set = set(allowed)
+        update["preferences"] = []
+        update["focus"] = None
+        update["history"] = [
+            summary
+            for summary in context.history
+            if summary.exercise_id in kept
+            or (
+                summary.exercise_id in allowed_set
+                and (exercise := catalog.by_id(summary.exercise_id)) is not None
+                and wanted & set(exercise.qualities)
+            )
+        ]
+    framed = replace(inputs, user_context=context.model_copy(update=update)) if update else inputs
+    return framed, qualities or request_qualities(framed, None)
+
+
 async def _candidate_pool(
-    db: Database, inputs: Inputs, guidance: str | None, qualities: Sequence[Quality] = ()
+    db: Database,
+    inputs: Inputs,
+    guidance: str | None,
+    qualities: Sequence[Quality] = (),
+    include: Sequence[str] = (),
 ) -> tuple[UserContext, list[dict[str, object]]]:
     """ADR 0007: the exercises `plan_generate` sees — a balanced pool retrieved from the
     allowed set (`exercise_search.plan_candidates`), with their catalog facts. Only the
@@ -1162,7 +1241,9 @@ async def _candidate_pool(
         for exercise_id in context.allowed_exercise_ids
         if (exercise := inputs.catalog.by_id(exercise_id)) is not None
     ]
-    history_ids = sorted(set(inputs.snapshot.history_max) | set(inputs.snapshot.outcomes))
+    # ADR 0017: the history the context carries (an understood request keeps only what
+    # serves it), not every lift ever logged.
+    history_ids = sorted({summary.exercise_id for summary in context.history})
     try:
         runtime = await exercise_search.runtime_for(db, inputs.catalog)
         pool = await exercise_search.plan_candidates(
@@ -1171,9 +1252,10 @@ async def _candidate_pool(
             allowed,
             history_ids=history_ids,
             preferences=context.preferences,
-            focus=context.focus,
+            focus=context.focus or Focus.GENERAL_FITNESS,
             request=guidance,
             qualities=qualities,
+            include=include,
         )
     except Exception:  # retrieval must never block plan generation (ADR 0007 fallback)
         _logger.exception("plan_generate: candidate retrieval failed; sending every allowed id")
@@ -1182,6 +1264,7 @@ async def _candidate_pool(
     narrowed = context.model_copy(
         update={
             "allowed_exercise_ids": pool,
+            "history": [summary for summary in context.history if summary.exercise_id in pooled],
             "exercise_measures": {
                 exercise_id: accepted
                 for exercise_id, accepted in context.exercise_measures.items()
@@ -1266,7 +1349,12 @@ async def propose_new_plan(
             lang=lang,
         )
 
-    inputs = build_inputs(load_catalog(), snapshot, llm.settings, user_id)
+    # ADR 0017: the request's own frame (activity, sessions, days, length, outdoors) first;
+    # an understood request leaves the profile's physical data only.
+    request = plan_request.read(guidance)
+    inputs, qualities = apply_request(
+        build_inputs(load_catalog(), snapshot, llm.settings, user_id), request
+    )
     empty = _no_allowed_exercises(inputs)
     if empty is not None:
         return await _record_refusal(
@@ -1279,15 +1367,17 @@ async def propose_new_plan(
             lang=lang,
         )
 
-    qualities = request_qualities(inputs, guidance)
     # ADR 0011: the weekly frame first (sessions, objectives, structure, fatigue), then the
     # candidate pool; the model states objectives and block roles before it picks exercises.
     brief = programming.brief(
         inputs.user_context,
         qualities,
         split_wanted=programming.split_wanted(inputs.user_context, guidance),
+        request=request,
     )
-    pool_context, facts = await _candidate_pool(db, inputs, guidance, qualities)
+    pool_context, facts = await _candidate_pool(
+        db, inputs, guidance, qualities, include=request.exercises
+    )
     spec = model_for("plan_generate", llm.settings)
     feedback: list[str] | None = None
     last: _Attempt | None = None
@@ -1491,7 +1581,22 @@ async def revise_plan(
             lang=lang,
         )
 
-    inputs = build_inputs(load_catalog(), snapshot, llm.settings, user_id)
+    # ADR 0017: the request's own frame; a request that names no goal ("убери скакалку")
+    # keeps working toward what the plan's workouts declare, not the profile's focus.
+    request = plan_request.read(request_text)
+    inputs, qualities = apply_request(
+        build_inputs(load_catalog(), snapshot, llm.settings, user_id),
+        request,
+        plan_qualities=plan_request.plan_qualities(
+            [workout.qualities for workout in resolved.plan.workouts]
+        ),
+        keep_history=[
+            item.exercise_id
+            for workout in resolved.plan.workouts
+            for block in workout.blocks
+            for item in block.items
+        ],
+    )
     empty = _no_allowed_exercises(inputs)
     if empty is not None:
         return await _record_refusal(
@@ -1503,12 +1608,17 @@ async def revise_plan(
             plan_id=resolved.plan_id,
             lang=lang,
         )
+    brief = programming.brief(
+        inputs.user_context,
+        qualities,
+        split_wanted=programming.split_wanted(inputs.user_context, request_text),
+        request=request,
+    )
 
     payload_by_text: dict[str, dict[str, object]] = {}
     judgements: dict[int, Judgement] = {}
     attempts: list[_Attempt] = []
     base_declared = declared_loads_of(resolved.plan)  # M8b: hints survive a revision
-    qualities = request_qualities(inputs, request_text)
 
     def build_prompt(verdicts: Sequence[GuardVerdict] | None) -> str:
         feedback = (
@@ -1520,6 +1630,7 @@ async def revise_plan(
             current_plan=resolved.plan,
             guard_feedback=feedback,
             requested_qualities=qualities,
+            programming_brief=brief,
         )
         payload_by_text[rendered.text] = rendered.payload
         return rendered.text

@@ -637,12 +637,15 @@ async def plan_candidates(
     request: str | None = None,
     size: int = POOL_SIZE,
     qualities: Sequence[Quality] = (),
+    include: Iterable[str] = (),
 ) -> list[str]:
     """A balanced pool of allowed exercise ids for `plan_generate`: every movement pattern
     the allowed set offers, compound before isolation, varied equipment, exercises the
-    request text matches first, and every allowed exercise with history (so progression
-    continues). When the allowed set is no larger than `size`, it is returned whole; otherwise
-    the pool is the per-pattern quotas plus request matches up to `size`."""
+    request text matches first, every allowed exercise with history (so progression
+    continues) and every allowed one in `include` (ADR 0017: the activity a request is
+    about, such as the catalog's runs). When the allowed set is no larger than `size`, it is
+    returned whole; otherwise the pool is the per-pattern quotas plus request matches up to
+    `size`."""
     if len(allowed) <= size:
         return [exercise.id for exercise in allowed]
     allowed_ids = {exercise.id for exercise in allowed}
@@ -654,7 +657,9 @@ async def plan_candidates(
     if positive.strip():
         hits = await search(db, runtime, allowed, ExerciseQuery(text=positive, limit=size))
         relevance = {hit.exercise_id: rank for rank, hit in enumerate(hits)}
-    chosen: list[str] = [exercise_id for exercise_id in history_ids if exercise_id in allowed_ids]
+    chosen: list[str] = [
+        exercise_id for exercise_id in (*include, *history_ids) if exercise_id in allowed_ids
+    ]
     chosen = list(dict.fromkeys(chosen))
     quotas = _quotas(preferences, focus)
     by_pattern: dict[ExercisePattern, list[Exercise]] = {}

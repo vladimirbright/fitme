@@ -31,6 +31,7 @@ from fitme.domain.enums import AREA_FLAGS, RED_FLAGS
 from fitme.domain.models import Block, Load, Plan, Prescription, Refusal, ScheduledDay, Workout
 from fitme.i18n import t
 from fitme.llm.agents import plan_generate_agent, plan_revise_agent
+from fitme.services import conversations
 from fitme.services.identity import issue_activation_code
 from fitme.services.llm_runtime import LlmRuntime
 
@@ -627,10 +628,13 @@ async def _one_confirmed_plan(
     return user_id
 
 
-async def test_with_existing_plans_new_plan_asks_for_guidance_and_sends_it(
+async def test_with_existing_plans_new_plan_asks_for_guidance_in_a_new_plans_session(
     dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
 ) -> None:
-    await _one_confirmed_plan(dispatcher, bot, session, db, llm)
+    """ADR 0017: the question opens the new plan's planning session with itself in the
+    history; the answer goes to the assistant there (`test_assistant_flow`), not straight
+    to the generator."""
+    user_id = await _one_confirmed_plan(dispatcher, bot, session, db, llm)
     assert llm.calls == 1
 
     await _click(dispatcher, bot, PlanMenu(action="new", plan_id=0))
@@ -638,17 +642,10 @@ async def test_with_existing_plans_new_plan_asks_for_guidance_and_sends_it(
     assert question.text == t("plan.new_guidance_prompt", "en", names="“Home plan”")
     assert PlanMenu(action="new_skip", plan_id=0).pack() in _callback_datas(question)
     assert llm.calls == 1  # nothing generated yet
-
-    llm.responses.append(make_plan(name="Gym plan"))
-    await _send(dispatcher, bot, "a gym version of my home plan")
-    assert llm.calls == 2
-    payload = json.loads(llm.prompts[-1])
-    assert payload["user_request"] == "a gym version of my home plan"
-    assert [p["name"] for p in payload["existing_plans"]] == ["Home plan"]
-    workout = payload["existing_plans"][0]["workouts"][0]
-    assert workout["exercise_ids"] == ["barbell_back_squat", "dumbbell_bench_press", "pushup"]
-    assert "load" not in json.dumps(payload["existing_plans"])  # never copies loads
-    assert _sent_messages(session)[-1].text.startswith(t("plan.draft_title", "en"))
+    record = await conversations.current_planning(db, user_id)
+    assert record is not None and record.plan_id is None
+    turns = await conversations.history(db, record.id)
+    assert [turn.text for turn in turns] == [question.text]
 
 
 async def test_generate_anyway_skips_guidance_but_still_sends_existing_plans(
@@ -675,6 +672,7 @@ async def test_guidance_can_be_cancelled_and_a_stop_word_in_it_halts_with_no_llm
     await _click(dispatcher, bot, PlanMenu(action="new", plan_id=0))
     await _click(dispatcher, bot, PlanDraft(action="cancel", decision_id=0))
     assert _sent_messages(session)[-1].text == t("plan.new_cancelled", "en")
+    assert await conversations.current_planning(db, user_id) is None
 
     await _click(dispatcher, bot, PlanMenu(action="new", plan_id=0))
     await _send(dispatcher, bot, "something like the old one, my back has sharp pain")

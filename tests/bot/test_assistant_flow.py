@@ -32,7 +32,7 @@ from conftest import FakeSession, callback_update, make_user, message_update
 from fitme import clock
 from fitme.bot import waiting
 from fitme.bot.app import build_dispatcher
-from fitme.bot.callback_data import PlanDraft, TrainAction
+from fitme.bot.callback_data import PlanDraft, PlanMenu, TrainAction
 from fitme.catalog import load_catalog
 from fitme.cli.commands import sync_search_index
 from fitme.config.content import content_version
@@ -429,7 +429,7 @@ async def test_a_redesign_while_a_new_plans_draft_is_open_never_targets_a_saved_
     # ADR 0009: a generated plan warms up before its heavy squat (else a repair round runs).
     warm_up = _item("mobility_cat_cow", Load(kind="bodyweight"))
     new_plan.workouts[0].blocks.insert(0, Block(kind="single", items=[warm_up]))
-    llm.steps = [Call("new_plan", {"guidance": "бокс"}), say("Составляю."), new_plan]
+    llm.steps = [Call("new_plan", {"guidance": "второй план"}), say("Составляю."), new_plan]
     await _send(dispatcher, bot, "план для бокса")
     [conversation] = await _open_conversations(db, seeded.user_id)
     assert conversation.plan_id is None and conversation.draft_decision_id is not None
@@ -1221,7 +1221,7 @@ async def test_a_new_plans_exclusion_reaches_its_generation_and_moves_to_it_when
     sees it), and saving the draft makes it that plan's exclusion; nothing for all plans."""
     seeded = await _ready(dispatcher, bot, db)
     llm.steps = [
-        Call("new_plan", {"guidance": "бокс"}),
+        Call("new_plan", {"guidance": "второй план"}),
         Call("add_exclusion", {"kind": "name", "value": "lunge"}),
         say("Составляю без выпадов."),
         _boxing_plan(),
@@ -1244,7 +1244,7 @@ async def test_a_new_plans_exclusion_goes_with_its_draft_when_closed_unsaved(
 ) -> None:
     seeded = await _ready(dispatcher, bot, db)
     llm.steps = [
-        Call("new_plan", {"guidance": "бокс"}),
+        Call("new_plan", {"guidance": "второй план"}),
         Call("add_exclusion", {"kind": "name", "value": "lunge"}),
         say("Составляю."),
         _boxing_plan(),
@@ -1255,3 +1255,37 @@ async def test_a_new_plans_exclusion_goes_with_its_draft_when_closed_unsaved(
     llm.steps = [Call("discard_draft"), say("Закрыл.")]
     await _send(dispatcher, bot, "не надо")
     assert await exclusions.list_for_user(db, seeded.user_id) == []
+
+
+async def test_the_new_plans_description_goes_to_the_assistant_which_may_ask_first(
+    dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
+) -> None:
+    """ADR 0017: the answer to "what should the new plan be?" reaches the assistant in the
+    new plan's session, with the question in its history. It can ask one clarifying
+    question; the user's answer then generates, framed by the request it passes on."""
+    seeded = await _ready(dispatcher, bot, db)
+    lang = await _lang(db, seeded.user_id)
+    await _click(dispatcher, bot, PlanMenu(action="new", plan_id=0))
+    question = _last_text(session)
+    assert question == t("plan.new_guidance_prompt", lang, names="“Home plan”")
+
+    clarify = "BJJ здесь — сами тренировки или ОФП под них?"
+    llm.steps = [say(clarify)]
+    await _send(dispatcher, bot, "bjj два раза в неделю")
+    seen = llm.prompts()[-1]
+    assert seen["user_request"] == "bjj два раза в неделю"
+    assert {"role": "assistant", "text": question} in seen["history"]
+    assert clarify in _last_text(session)
+    assert not [p for p in llm.prompts() if "programming_brief" in p]  # nothing generated
+
+    guidance = "ОФП под BJJ, два раза в неделю, BJJ тренирую отдельно"
+    llm.steps = [Call("new_plan", {"guidance": guidance}), say("Составляю."), _plan(), _plan()]
+    await _send(dispatcher, bot, "ОФП, борьбу тренирую отдельно")
+    assert {"role": "assistant", "text": clarify} in llm.prompts()[1]["history"]
+    generated = next(p for p in llm.prompts() if "programming_brief" in p)
+    assert generated["user_request"] == guidance
+    assert generated["programming_brief"]["activity"] == {"name": "grappling", "mode": "support"}
+    assert generated["programming_brief"]["sessions_per_week"] == 2
+    assert generated["context"]["focus"] is None
+    [conversation] = await _open_conversations(db, seeded.user_id)
+    assert conversation.plan_id is None and conversation.draft_decision_id is not None

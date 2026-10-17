@@ -48,7 +48,7 @@ from fitme.domain.enums import (
 from fitme.domain.guard_types import GuardVerdict
 from fitme.domain.models import Block, Plan, Prescription, Workout
 from fitme.llm.context import UserContext
-from fitme.services import programming, session_time, workload
+from fitme.services import plan_request, programming, session_time, workload
 from fitme.services.exercise_search import is_general_warm_up, requested_qualities
 from fitme.services.workload import Region
 
@@ -153,6 +153,9 @@ class ReviewContext:
     # for (preference or request), which turns the split check off.
     session_minutes: int | None = None
     split_wanted: bool = False
+    # ADR 0017: the request says what the plan is for (`plan_request.PlanRequest.understood`):
+    # a workout may state only those objectives, or one that supports them.
+    only_requested: bool = False
 
 
 def context_for(
@@ -173,6 +176,7 @@ def context_for(
         require_declared=bool(requested_qualities(request)),
         session_minutes=user_context.session_minutes,
         split_wanted=programming.split_wanted(user_context, request),
+        only_requested=bool(requested) and plan_request.read(request).understood,
     )
 
 
@@ -802,6 +806,31 @@ def _split_findings(plan: Plan, ctx: ReviewContext) -> list[GuardVerdict]:
     return findings
 
 
+def _unrequested_findings(plan: Plan, requested: Sequence[Quality]) -> list[GuardVerdict]:
+    """ADR 0017: a workout stating an objective the request didn't ask for (strength in an
+    easy outdoor run) — the frame the old profile-first brief let in. One that supports a
+    requested quality (strength for power) is fine."""
+    wanted = set(requested)
+    findings: list[GuardVerdict] = []
+    for workout in plan.workouts:
+        extra = [
+            quality.value
+            for quality in workout.qualities
+            if quality not in wanted
+            and not any(quality in SUPPORTS.get(target, frozenset()) for target in wanted)
+        ]
+        if extra:
+            findings.append(
+                _finding(
+                    "unrequested_objective",
+                    f"workout {workout.key} is for {', '.join(extra)}, which the request "
+                    f"didn't ask for (requested: {', '.join(q.value for q in requested)}); "
+                    "drop that objective and the exercises that serve only it",
+                )
+            )
+    return findings
+
+
 def review(plan: Plan, ctx: ReviewContext) -> list[GuardVerdict]:
     """Every finding for `plan` (failing `quality.*` verdicts), empty when there's nothing
     to fix. Pure."""
@@ -817,6 +846,8 @@ def review(plan: Plan, ctx: ReviewContext) -> list[GuardVerdict]:
         warm.extend(warm_up)
     trained = {quality for exercise in working for quality in exercise.qualities}
     trained |= {Quality.MOBILITY for exercise in warm if Quality.MOBILITY in exercise.qualities}
+    if ctx.only_requested:
+        findings.extend(_unrequested_findings(plan, ctx.requested))
     for quality in ctx.requested:
         if quality not in trained:
             findings.append(

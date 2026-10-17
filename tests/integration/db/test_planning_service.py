@@ -286,7 +286,7 @@ async def test_valid_plan_is_a_draft_then_version_1_on_confirm(db: Database, use
     decision = rounds[0]
     assert decision.id == result.decision_id
     assert decision.model == _settings().llm_tier_large
-    assert decision.prompt_template == "plan_generate" and decision.prompt_version == "7"
+    assert decision.prompt_template == "plan_generate" and decision.prompt_version == "8"
     assert decision.guards_fired  # the gate verdict at least
     assert decision.proposal is not None
     assert Plan.model_validate(decision.proposal["plan"]) == result.plan

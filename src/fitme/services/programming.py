@@ -22,6 +22,7 @@ from collections.abc import Sequence
 from fitme.domain.enums import BlockRole, Preference, Quality
 from fitme.llm.context import UserContext
 from fitme.services import exercise_search, session_time
+from fitme.services.plan_request import PlanRequest
 
 # A session's usual block order (A§6.4): warm-up, fast work while fresh, the main lifts,
 # accessories, trunk, conditioning, mobility. A session uses only the parts it needs.
@@ -105,9 +106,15 @@ def session_objectives(sessions_per_week: int, qualities: Sequence[Quality]) -> 
 
 
 def brief(
-    context: UserContext, qualities: Sequence[Quality], *, split_wanted: bool
+    context: UserContext,
+    qualities: Sequence[Quality],
+    *,
+    split_wanted: bool,
+    request: PlanRequest | None = None,
 ) -> dict[str, object]:
-    """The `programming_brief` for one plan request. Machine data, no user text."""
+    """The `programming_brief` for one plan request. Machine data, no user text. The
+    sessions and their length are the context's: ADR 0017's `planning.apply_request` has
+    already put the request's own numbers there."""
     low, high = working_blocks(context.session_minutes)
     result: dict[str, object] = {
         "sessions_per_week": context.sessions_per_week,
@@ -129,6 +136,19 @@ def brief(
             "over_target": "lowest-priority volume is cut set by set, then blocks; rests kept",
         },
     }
+    if request is not None and request.weekdays:
+        # ADR 0017: the days the request names (0 = Monday) are the schedule.
+        result["weekdays"] = list(request.weekdays)
+    if request is not None and request.activity is not None:
+        # ADR 0017: what the request is about. `practice`: the sessions are the activity
+        # itself (warm-up, the activity as the main work, cool-down); `support`: work for an
+        # activity done elsewhere, whose skills and sparring the catalog doesn't hold.
+        result["activity"] = {
+            "name": request.activity.value,
+            "mode": "practice" if request.practice else "support",
+        }
+    if request is not None and request.outdoor:
+        result["setting"] = "outdoors"
     if context.sport is not None:
         result["supporting_sport"] = {
             "sport": context.sport.value,
