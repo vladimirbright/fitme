@@ -17,7 +17,8 @@ from fitme.db.controllers.plans import insert_plan, insert_plan_version
 from fitme.db.controllers.profile import upsert_profile, upsert_screening_flag
 from fitme.db.controllers.training import insert_set_log, insert_workout_session
 from fitme.db.selectors.decisions import list_decisions_for_user
-from fitme.domain.enums import AREA_FLAGS, RED_FLAGS, DecisionKind
+from fitme.db.selectors.plans import list_plan_versions
+from fitme.domain.enums import AREA_FLAGS, RED_FLAGS, DecisionKind, Location, Measure
 from fitme.domain.models import Block, Load, Plan, Prescription, ScheduledDay, Workout
 from fitme.i18n import t
 from fitme.services import planning
@@ -571,3 +572,75 @@ async def test_no_duration_warning_when_every_workout_fits(
     await login(client, sent_codes)
     body = (await client.get(f"/app/plans/{plan_id}")).text
     assert "duration-warning" not in body and "estimated from the sets and rests" in body
+
+
+# Activity items and a plan's own location (A§4.5)
+
+
+def _activity_plan() -> Plan:
+    """An outdoor plan for a home profile: an outdoor interval jog and a 90-minute class."""
+    jog = Prescription(
+        exercise_id="outdoor_interval_jog",
+        sets=1,
+        measure=Measure.TIME,
+        seconds=900,
+        load=Load(kind="bodyweight"),
+        rest_seconds=60,
+    )
+    bjj = Prescription(
+        exercise_id="activity:bjj_class",
+        activity_name="BJJ class",
+        sets=1,
+        measure=Measure.TIME,
+        seconds=5400,
+        load=Load(kind="bodyweight"),
+        rest_seconds=0,
+        note="Gi class at the club",
+    )
+    return Plan(
+        name="Run and BJJ",
+        location=Location.OUTDOOR,
+        schedule=[ScheduledDay(weekday=1, workout_key="A")],
+        workouts=[
+            Workout(
+                key="A",
+                title="Run, then class",
+                blocks=[Block(kind="single", items=[jog]), Block(kind="single", items=[bjj])],
+            )
+        ],
+    )
+
+
+async def test_an_activity_plan_shows_the_name_and_location_and_saves_an_edit(
+    client: AsyncClient, db: Database, user_id: int, sent_codes: list[SentCode]
+) -> None:
+    await seed_profile(db, user_id)
+    plan_id, _version_id = await seed_confirmed_plan(db, user_id, _activity_plan())
+    await login(client, sent_codes)
+
+    detail = await client.get(f"/app/plans/{plan_id}")
+    assert detail.status_code == 200
+    assert "BJJ class" in detail.text and "activity:bjj_class" not in detail.text
+    where = t("plan.location_line", "en", location=t("enum.location.outdoor", "en"))
+    assert html.escape(where) in detail.text
+
+    edit_page = await client.get(f"/app/plans/{plan_id}/edit")
+    assert edit_page.status_code == 200
+    assert "BJJ class" in edit_page.text
+    form = {
+        "csrf_token": get_csrf_token(edit_page.text),
+        "w0_b1_i0_exercise": "activity:bjj_class",
+        "w0_b1_i0_sets": "1",
+        "w0_b1_i0_seconds": "4800",
+        "w0_b1_i0_rest": "0",
+        "w0_b1_i0_load_kind": "bodyweight",
+    }
+    saved = await client.post(f"/app/plans/{plan_id}/edit", data=form, follow_redirects=False)
+    assert saved.status_code == 303, saved.text
+
+    async with db.read() as conn:
+        versions = await list_plan_versions(conn, plan_id)
+    latest = Plan.model_validate(versions[-1].body)
+    assert latest.location == Location.OUTDOOR
+    item = latest.workouts[0].blocks[1].items[0]
+    assert (item.activity_name, item.seconds) == ("BJJ class", 4800)

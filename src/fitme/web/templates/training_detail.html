@@ -27,7 +27,7 @@
   <tbody>
     {% for row in detail.rows %}
     <tr>
-      <td>{{ exercise_names.get(row.exercise_id, row.exercise_id) }}</td>
+      <td>{{ exercise_names.get(row.exercise_id) or display_name(row.exercise_id) }}</td>
       <td>{{ row.set_index }}</td>
       <td>
         {% if row.extra %}{{ t('web.trainings.extra_set') }}

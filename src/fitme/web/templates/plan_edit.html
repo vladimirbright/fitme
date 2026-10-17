@@ -18,7 +18,7 @@
   <p>{{ t('web.plans.edit_cap_warning') }}</p>
   <ul>
     {% for exercise_id, details in warnings.items() %}
-    <li>{{ exercise_names.get(exercise_id, exercise_id) }}: {{ details|join('; ') }}</li>
+    <li>{{ exercise_names.get(exercise_id) or display_name(exercise_id) }}: {{ details|join('; ') }}</li>
     {% endfor %}
   </ul>
 </div>
@@ -44,7 +44,7 @@
               <option value="{{ exercise.id }}" {% if exercise.id == item.exercise_id %}selected{% endif %}>{{ exercise_names.get(exercise.id, exercise.id) }}</option>
             {% endfor %}
             {% if not current_offered.found %}
-            <option value="{{ item.exercise_id }}" selected>{{ exercise_names.get(item.exercise_id, item.exercise_id) }}</option>
+            <option value="{{ item.exercise_id }}" selected>{{ item.activity_name or exercise_names.get(item.exercise_id) or display_name(item.exercise_id) }}</option>
             {% endif %}
           </select>
         </label>
@@ -53,7 +53,7 @@
         </label>
         {% if item.measure == 'time' %}
         <label>{{ t('web.plans.edit_seconds_label') }}
-          <input type="number" name="{{ field }}seconds" value="{{ item.seconds }}" min="5" max="3600">
+          <input type="number" name="{{ field }}seconds" value="{{ item.seconds }}" min="5" max="10800">
         </label>
         {% elif item.measure == 'distance' %}
         <label>{{ t('web.plans.edit_meters_label') }}

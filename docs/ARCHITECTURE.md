@@ -329,6 +329,26 @@ ADR 0011: a `Block` has an optional `role` (`warm_up`, `power`, `strength`, `acc
 before choosing exercises. The last superset exercise's rest is the one round rest, shown
 once. Bodies stored before parse unchanged (no roles; the review infers them).
 
+**Activity items.** `Prescription.exercise_id` is a catalog id, or an id in the
+`activity:<slug>` namespace (`domain.models.ACTIVITY_PREFIX`, `is_activity_id`: slug of
+3..60 characters `a-z0-9_`) for a non-catalog activity such as a class, a run or a walk.
+An activity item needs `activity_name` (the display name, trimmed to 60 characters), is
+measured in `time`, takes a `bodyweight` load and no `rir`; every other item must leave
+`activity_name` empty. The guards skip the catalog, location, equipment, screening and
+experience checks for it and record one `plan.activity` verdict; the plan-wide screening
+gate still applies, and a bare unknown id still fails `plan.catalog_id`. It is rendered by
+its name, with its note as the instructions, never by its id.
+
+**Plan location.** `Plan.location` (optional, a profile `Location` value) is where that
+plan is trained when it differs from the profile (an outdoor running plan for a gym
+profile). The location-fit verdict uses it when set and the profile's location otherwise,
+for the whole plan (`validate_plan`), for a workout trained from it on Start, review and
+Save (`validate_workout(..., location=)`), and in the web editor and the recap. Equipment
+is still the profile's.
+
+**Set length.** `MAX_SET_SECONDS` is 10800 (3 h), so a 90-minute class fits as one timed
+set. `set_logs.planned_seconds`/`actual_seconds` have only a lower-bound CHECK.
+
 ```python
 class Load(BaseModel):
     kind: Literal["kg", "bodyweight", "calibration"]
@@ -579,7 +599,8 @@ Register the command list with `setMyCommands` for each supported language.
   always triggers the halt path (§6.6).
 - Free text that no command, pending prompt or setup step claims goes to the **free-text
   assistant** (ADR 0003, ADR 0004), after the stop-word scan and the `/plan` gate. It works
-  in **sessions** that remember their last 20 messages:
+  in **sessions** that remember their last 100 messages in both directions
+  (`services.conversations.HISTORY_LIMIT`; 20 before 2026-10-17):
   - **Planning**: a new plan, or changes to one plan, iterated on a draft. Each step is
     judged like any draft and shown as a diff, with **Save** / **Whole draft** / **Close
     without saving**. Loads above the guards are limited and the user is told. The website

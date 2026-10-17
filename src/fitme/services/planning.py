@@ -712,15 +712,23 @@ def judge(plan: Plan, inputs: Inputs) -> Judgement:
     return Judgement(verdicts=judgement.verdicts, fired=[*repaired, *judgement.fired, *intensity])
 
 
-def judge_workout(workout: Workout, inputs: Inputs) -> Judgement:
+def judge_workout(
+    workout: Workout, inputs: Inputs, *, location: Location | None = None
+) -> Judgement:
     """A§6.5.1: the same judging as `judge` — wording, guards, load substitution in place —
     over *one* workout with `guards.plan.validate_workout` (the gate and every
     per-prescription verdict, not the plan-wide schedule rules). Used by `/train` for the
-    review, Start and Save to plan."""
+    review, Start and Save to plan. `location` is the workout's plan's own `Plan.location`
+    (`None`: the profile's), so a workout is judged where its plan is trained."""
     wrapper = Plan(
-        name=i18n.t("plan.default_name", inputs.snapshot.language), schedule=[], workouts=[workout]
+        name=i18n.t("plan.default_name", inputs.snapshot.language),
+        location=location,
+        schedule=[],
+        workouts=[workout],
     )
-    return _judge_with(wrapper, lambda: validate_workout(workout, inputs.ctx), inputs)
+    return _judge_with(
+        wrapper, lambda: validate_workout(workout, inputs.ctx, location=location), inputs
+    )
 
 
 def _judge_with(

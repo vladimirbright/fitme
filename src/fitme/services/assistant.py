@@ -65,7 +65,15 @@ from fitme.domain.enums import (
     RefusalCode,
     WorkoutSessionStatus,
 )
-from fitme.domain.models import Block, Load, Plan, Prescription, Refusal, Workout
+from fitme.domain.models import (
+    Block,
+    Load,
+    Plan,
+    Prescription,
+    Refusal,
+    Workout,
+    is_activity_id,
+)
 from fitme.domain.results import SetResult
 from fitme.guards import stop_words
 from fitme.guards.layering import combine_with_llm_signal
@@ -132,7 +140,9 @@ def _find(workout: Workout, exercise_id: str, *, first_block: int = 0) -> tuple[
 
 
 def _check_allowed(exercise_id: str, allowed: frozenset[str]) -> None:
-    if exercise_id not in allowed:
+    # A non-catalog activity id is never in the allowed catalog set; the model's own
+    # validation decides its shape and `guards.plan` judges it.
+    if exercise_id not in allowed and not is_activity_id(exercise_id):
         raise OpError("exercise_not_allowed", f"{exercise_id} is not an allowed exercise")
 
 
@@ -179,6 +189,7 @@ def _apply_to_workout(
                 "load": op.load if op.load is not None else Load(kind="calibration"),
                 "note": None,
                 "declared_kg": None,
+                "activity_name": None,
             }
         )
         new_exercise = load_catalog().by_id(op.new_exercise_id)
@@ -889,7 +900,7 @@ class _Turn:
         except OpError as exc:
             return _error(exc.detail)
         preview = edited.model_copy(deep=True)
-        judgement = planning.judge_workout(preview, self._inputs)
+        judgement = planning.judge_workout(preview, self._inputs, location=active.location)
         if not judgement.ok:
             return _error("; ".join(verdict.detail for verdict in judgement.failures))
         if self.staged.today is None:

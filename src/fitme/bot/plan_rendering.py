@@ -18,7 +18,13 @@ from fitme.bot.callback_data import PlanDraft, PlanMenu, TrainPick
 from fitme.db.records import PlanRecord
 from fitme.domain.catalog import Catalog, Exercise
 from fitme.domain.enums import BlockRole, Measure
-from fitme.domain.models import Block, Plan, Prescription
+from fitme.domain.models import (
+    Block,
+    Plan,
+    Prescription,
+    activity_fallback_name,
+    is_activity_id,
+)
 from fitme.i18n import t, wording
 from fitme.services import prescribing, session_time, time_budget
 from fitme.services.prescribing import load_label
@@ -27,10 +33,26 @@ TELEGRAM_MESSAGE_LIMIT = 4096
 _DEFAULT_MARK = "★"
 
 
-def exercise_name(exercise: Exercise | None, exercise_id: str, lang: str) -> str:
+def exercise_name(
+    exercise: Exercise | None, exercise_id: str, lang: str, *, activity_name: str | None = None
+) -> str:
+    """A catalog exercise's name in `lang`; an activity item's own `activity_name` (or, where
+    the item isn't at hand, its slug in words) — never the raw `activity:` id."""
     if exercise is None:
+        if is_activity_id(exercise_id):
+            return activity_name or activity_fallback_name(exercise_id)
         return exercise_id
     return exercise.names.get(lang) or exercise.names.get("en") or exercise_id
+
+
+def item_name(prescription: Prescription, catalog: Catalog, lang: str) -> str:
+    """The display name of one prescription (catalog exercise or activity item)."""
+    return exercise_name(
+        catalog.by_id(prescription.exercise_id),
+        prescription.exercise_id,
+        lang,
+        activity_name=prescription.activity_name,
+    )
 
 
 def rest_text(seconds: int, lang: str) -> str:
@@ -90,7 +112,9 @@ def prescription_line(
     if exercise is not None and exercise.unilateral:
         target = t("plan.per_side", lang, target=target)  # ADR 0016
     sets_reps = t("plan.sets_reps", lang, sets=prescription.sets, reps=target)
-    name = exercise_name(exercise, prescription.exercise_id, lang)
+    name = exercise_name(
+        exercise, prescription.exercise_id, lang, activity_name=prescription.activity_name
+    )
     load = prescription_load_label(prescription, exercise, lang, role=role)
     if in_superset is None:
         rest = rest_text(prescription.rest_seconds, lang)
@@ -189,7 +213,7 @@ def plan_diff_lines(before: Plan, after: Plan, catalog: Catalog, lang: str) -> l
             lines.append(t("assistant.line_changed", lang, workout=key[0], line=line))
     for key, item in old.items():
         if key not in new:
-            name = exercise_name(catalog.by_id(item.exercise_id), item.exercise_id, lang)
+            name = item_name(item, catalog, lang)
             lines.append(t("assistant.line_removed", lang, workout=key[0], name=name))
     return lines
 
@@ -208,7 +232,7 @@ def load_change_notes(requested: Plan, judged: Plan, catalog: Catalog, lang: str
                 t(
                     "assistant.load_limited",
                     lang,
-                    name=exercise_name(exercise, asked.exercise_id, lang),
+                    name=item_name(asked, catalog, lang),
                     asked=load_label(asked.load, exercise, lang),
                     got=prescription_load_label(got, exercise, lang),
                 )
@@ -258,7 +282,11 @@ def render_plan_text(
     ADR 0016: with the user's `session_minutes`, a workout estimated longer says so once,
     under its estimate."""
     unmatched = displayable_unmatched(unmatched)
-    lines: list[str] = [title, "", t("plan.schedule_title", lang)]
+    lines: list[str] = [title]
+    if plan.location is not None:
+        location = t(f"enum.location.{plan.location.value}", lang)
+        lines.append(t("plan.location_line", lang, location=location))
+    lines.extend(["", t("plan.schedule_title", lang)])
     workouts_by_key = {workout.key: workout for workout in plan.workouts}
     for day in sorted(plan.schedule, key=lambda item: item.weekday):
         workout = workouts_by_key.get(day.workout_key)
