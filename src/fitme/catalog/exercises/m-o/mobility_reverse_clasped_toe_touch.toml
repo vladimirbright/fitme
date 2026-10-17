@@ -1,8 +1,8 @@
 id = "mobility_reverse_clasped_toe_touch"
-names = { en = "Reverse-clasped toe touch", ru = "Наклон к носкам со сцепленными за спиной руками" }
+names = { en = "Forward fold with hands clasped behind back", ru = "Наклон вперёд со сцепленными за спиной руками" }
 kind = "mobility"
 pattern = "mobility"
-measures = ["time"]
+measures = ["reps"]
 qualities = ["mobility"]
 equipment = []
 load_unit = "total"

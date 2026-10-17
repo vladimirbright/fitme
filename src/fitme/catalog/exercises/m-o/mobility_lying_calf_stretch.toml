@@ -11,4 +11,4 @@ loads_areas = ["ankle"]
 contraindicated_by = ["ankle_injury_current"]
 increment_kg = 1.0
 start = { kind = "bodyweight" }
-instructions = { en = "Lie on your back, one knee bent with the foot down and the other leg long. Hook a towel or your hands around the ball of the long leg's foot and ease the toes toward your shin until the calf feels a gentle pull. Hold 20-30 seconds per side.", ru = "Лягте на спину: одно колено согнуто, стопа на полу, другая нога вытянута. Заведите полотенце или руки за переднюю часть стопы вытянутой ноги и плавно тяните носок к голени до лёгкого натяжения в икре. Держите 20-30 секунд на каждую сторону." }
+instructions = { en = "Lie on your back, one knee bent with the foot down and the other leg long. Hook your hands around the ball of the long leg's foot and ease the toes toward your shin until the calf feels a gentle pull. Hold 20-30 seconds per side.", ru = "Лягте на спину: одно колено согнуто, стопа на полу, другая нога вытянута. Обхватите руками переднюю часть стопы вытянутой ноги и плавно тяните носок к голени до лёгкого натяжения в икре. Держите 20-30 секунд на каждую сторону." }

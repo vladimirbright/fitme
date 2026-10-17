@@ -1,5 +1,5 @@
 id = "mobility_shoulder_band_dislocate"
-names = { en = "Band shoulder dislocate", ru = "Растяжка плеч с эспандером" }
+names = { en = "Band shoulder dislocate", ru = "Выкруты плеч с лентой" }
 search = { en = "band shoulder dislocates", ru = "выкруты плеч с резинкой" }
 kind = "mobility"
 pattern = "mobility"

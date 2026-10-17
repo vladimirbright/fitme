@@ -5,11 +5,11 @@ level = "advanced"
 pattern = "core"
 measures = ["reps"]
 qualities = ["core_stability"]
-equipment = ["pull_up_bar", "weight_plate"]
+equipment = ["pull_up_bar", "weight_plate", "dip_belt"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["lower_back", "shoulder", "neck", "hip"]
 contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "neck_injury_current", "hip_injury_current", "hernia"]
 increment_kg = 2.5
 start = { kind = "calibration" }
-instructions = { en = "Hang from a bar with a weight belt or a plate secured at your hips. Raise straight legs to about hip height or higher, then lower slowly without swinging. Start with a very light load.", ru = "Повисните на перекладине, пояс с отягощением или блин закреплены на бёдрах. Поднимите прямые ноги до уровня таза или выше, затем медленно опустите без раскачки. Начинайте с очень лёгкого веса." }
+instructions = { en = "Attach a light plate to a dip belt and hang from the bar. Raise straight legs to about hip height or higher, then lower slowly without swinging.", ru = "Закрепите лёгкий блин на поясе для отягощений и повисните на перекладине. Поднимите прямые ноги до уровня таза или выше, затем медленно опустите без раскачки." }

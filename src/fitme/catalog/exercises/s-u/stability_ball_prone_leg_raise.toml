@@ -2,6 +2,7 @@ id = "stability_ball_prone_leg_raise"
 names = { en = "Stability ball plank leg raise", ru = "Подъём ноги в планке с голенями на фитболе" }
 search = { en = "exercise ball prone leg raise", ru = "подъём ног на фитболе в упоре лёжа" }
 kind = "bodyweight"
+level = "advanced"
 pattern = "core"
 measures = ["reps"]
 qualities = ["core_stability"]

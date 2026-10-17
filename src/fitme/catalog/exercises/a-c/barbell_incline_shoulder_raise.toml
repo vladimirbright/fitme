@@ -1,5 +1,5 @@
 id = "barbell_incline_shoulder_raise"
-names = { en = "Barbell incline shoulder raise", ru = "Подъём плеч со штангой на наклонной скамье" }
+names = { en = "Barbell incline shoulder raise", ru = "Протракция лопаток со штангой на наклонной скамье" }
 kind = "isolation"
 pattern = "accessory"
 measures = ["reps"]

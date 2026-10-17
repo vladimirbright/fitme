@@ -13,4 +13,4 @@ contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
 increment_kg = 2.5
 start = { kind = "bodyweight" }
 level = "advanced"
-instructions = { en = "Squat with your hands on the floor, shoulder-width, fingers forward. Lean forward and rest your knees on the backs of your upper arms, then lift your feet and hold. Put a cushion in front of you and lower your feet if your wrists tire.", ru = "Присядьте, руки на полу на ширине плеч, пальцы вперёд. Наклонитесь вперёд, поставьте колени на заднюю часть плеч, затем оторвите стопы и удерживайте. Положите перед собой подушку и опустите стопы, если запястья устали." }
+instructions = { en = "Squat with your hands on the floor, shoulder-width, fingers forward. Lean forward and rest your knees on the backs of your upper arms, then lift your feet and hold. Work over a mat and lower your feet if your wrists tire.", ru = "Присядьте, руки на полу на ширине плеч, пальцы вперёд. Наклонитесь вперёд, поставьте колени на заднюю часть плеч, затем оторвите стопы и удерживайте. Работайте над матом и опустите стопы, если запястья устали." }

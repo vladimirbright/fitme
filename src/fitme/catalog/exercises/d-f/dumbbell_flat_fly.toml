@@ -11,4 +11,4 @@ loads_areas = ["shoulder"]
 contraindicated_by = ["shoulder_injury_current"]
 increment_kg = 1.0
 start = { kind = "kg", kg = 2.0 }
-instructions = { en = "Lie on a flat bench with a dumbbell in each hand above your chest, elbows slightly bent and locked in place. Open your arms out to the sides in an arc down to chest level, then bring them back together over your chest.", ru = "Лягте на горизонтальную скамью, гантели над грудью, локти слегка согнуты и зафиксированы. Разведите руки в стороны по дуге до уровня груди, затем сведите обратно над грудью." }
+instructions = { en = "Lie on a flat bench with a dumbbell in each hand above your chest, elbows slightly bent and held at that angle. Open your arms out to the sides in an arc down to chest level, then bring them back together over your chest.", ru = "Лягте на горизонтальную скамью, гантели над грудью, локти слегка согнуты и зафиксированы. Разведите руки в стороны по дуге до уровня груди, затем сведите обратно над грудью." }

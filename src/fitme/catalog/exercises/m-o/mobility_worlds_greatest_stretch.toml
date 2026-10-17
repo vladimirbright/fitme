@@ -8,8 +8,8 @@ qualities = ["mobility"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
-loads_areas = ["hip", "shoulder", "lower_back"]
-contraindicated_by = ["hip_injury_current", "shoulder_injury_current", "lower_back_injury_current"]
+loads_areas = ["hip", "shoulder", "lower_back", "knee"]
+contraindicated_by = ["hip_injury_current", "shoulder_injury_current", "lower_back_injury_current", "knee_injury_current"]
 increment_kg = 1.0
 start = { kind = "bodyweight" }
 instructions = { en = "From a lunge with both hands inside the front foot, keep the front foot flat. Turn the chest toward the front leg and reach that arm to the ceiling. Return the hand to the floor and switch sides.", ru = "Из выпада поставьте обе руки внутри передней стопы, передняя стопа на полу. Поверните грудь в сторону передней ноги и вытяните эту руку к потолку. Верните руку на пол и смените сторону." }

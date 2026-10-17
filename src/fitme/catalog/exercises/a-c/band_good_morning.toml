@@ -12,5 +12,5 @@ loads_areas = ["hip", "lower_back"]
 contraindicated_by = ["hip_injury_current", "lower_back_injury_current", "hernia"]
 increment_kg = 2.0
 start = { kind = "calibration" }
-instructions = { en = "Stand on a light band with its loop over the shoulders. Move the hips back, then stand.", ru = "Наступите на лёгкий эспандер и заведите петлю за плечи. Отведите таз назад, затем выпрямитесь." }
+instructions = { en = "Stand on a light band with its loop over the shoulders. Push the hips back and hinge forward with a flat back and soft knees, then drive the hips forward to stand.", ru = "Наступите на лёгкий эспандер и заведите петлю за плечи. Отведите таз назад и наклонитесь вперёд с ровной спиной и мягкими коленями, затем выведите таз вперёд и выпрямитесь." }
 load_step_kg = 1.0

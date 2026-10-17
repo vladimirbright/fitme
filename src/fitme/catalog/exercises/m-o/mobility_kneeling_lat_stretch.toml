@@ -6,8 +6,8 @@ measures = ["time"]
 qualities = ["mobility"]
 equipment = []
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
-loads_areas = ["shoulder"]
-contraindicated_by = ["shoulder_injury_current"]
+loads_areas = ["shoulder", "knee"]
+contraindicated_by = ["shoulder_injury_current", "knee_injury_current"]
 increment_kg = 2.5
 start = { kind = "bodyweight" }
 instructions = { en = "Kneel with the knees hip-width apart and reach both arms overhead with fingers interlaced. Lean to one side until you feel a gentle pull along the opposite flank. Hold 20-30 seconds, return to centre and switch sides.", ru = "Встаньте на колени на ширине таза и поднимите обе руки вверх, пальцы в замок. Наклонитесь в сторону до лёгкого натяжения вдоль противоположного бока. Удерживайте 20-30 секунд, вернитесь в центр и смените сторону." }

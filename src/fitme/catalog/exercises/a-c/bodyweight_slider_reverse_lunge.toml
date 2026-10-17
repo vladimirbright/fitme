@@ -4,12 +4,12 @@ kind = "bodyweight"
 pattern = "squat"
 measures = ["reps"]
 qualities = ["strength", "muscular_endurance"]
-equipment = []
+equipment = ["towel"]
 load_unit = "total"
-locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
+locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["knee", "hip", "ankle"]
 contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current"]
 increment_kg = 1.0
 start = { kind = "bodyweight" }
-instructions = { en = "Stand with one foot on a towel or sliding disc on a smooth floor. Bend the standing knee as you slide the other foot straight back into a lunge. Pull the foot back in and stand up. Keep the movement slow and finish the reps on one side before switching.", ru = "Встаньте одной ногой на полотенце или скользящий диск на гладком полу. Сгибая опорное колено, отведите другую ногу назад по прямой в выпад. Подтяните стопу обратно и встаньте. Двигайтесь медленно, сделайте повторения на одну сторону и смените ногу." }
+instructions = { en = "Stand with one foot on a towel on a smooth floor and the other foot planted. Bend the planted leg as you slide the towel foot straight back into a lunge. Press through the planted foot to stand while sliding the towel foot forward. Move slowly and finish one side before switching.", ru = "Встаньте одной ногой на полотенце на гладком полу, другую поставьте устойчиво. Сгибайте опорную ногу и скользите ногой на полотенце прямо назад в выпад. Оттолкнитесь опорной ногой, встаньте и подтяните ногу на полотенце вперёд. Двигайтесь медленно; закончив повторы, смените сторону." }
 load_step_kg = 1.0

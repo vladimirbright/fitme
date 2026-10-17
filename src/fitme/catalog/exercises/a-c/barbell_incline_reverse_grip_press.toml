@@ -8,7 +8,7 @@ equipment = ["barbell", "rack", "bench"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]
 loads_areas = ["shoulder", "elbow_wrist"]
-contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current"]
+contraindicated_by = ["shoulder_injury_current", "elbow_wrist_injury_current", "hernia"]
 increment_kg = 2.5
 start = { kind = "calibration" }
 level = "advanced"

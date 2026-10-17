@@ -11,8 +11,8 @@ load_unit = "total"
 # conditioning pattern, but a real medicine ball weight is chosen
 kg_loadable = true
 locations = ["public_gym", "studio_gym", "home_equipment"]
-loads_areas = ["shoulder", "lower_back", "elbow_wrist"]
-contraindicated_by = ["shoulder_injury_current", "lower_back_injury_current", "elbow_wrist_injury_current", "hernia"]
+loads_areas = ["shoulder", "lower_back", "elbow_wrist", "hip", "knee"]
+contraindicated_by = ["shoulder_injury_current", "lower_back_injury_current", "elbow_wrist_injury_current", "hip_injury_current", "knee_injury_current", "hernia"]
 increment_kg = 1.0
 start = { kind = "kg", kg = 2.0 }
 instructions = { en = "Stand with feet hip-width apart, holding a slam ball overhead with both hands. Drive the ball down to the floor in front of your feet while hinging at the hips with a braced torso. Pick it up with a flat back and bring it overhead again. Use a ball made for slams and keep your feet clear of its landing spot.", ru = "Встаньте, ноги на ширине таза, держите слэмбол двумя руками над головой. Бросьте мяч в пол перед стопами, наклонившись в тазобедренных суставах и удерживая корпус напряжённым. Поднимите мяч с прямой спиной и снова выведите над головой. Используйте мяч для бросков об пол и следите, чтобы стопы были в стороне от места падения." }

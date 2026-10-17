@@ -1,5 +1,5 @@
 id = "dumbbell_decline_one_arm_hammer_press"
-names = { en = "Decline one-arm dumbbell hammer press", ru = "Жим гантели одной рукой нейтральным хватом на скамье головой вниз" }
+names = { en = "Decline one-arm dumbbell hammer press", ru = "Жим гантели одной рукой нейтральным хватом на скамье с наклоном вниз" }
 kind = "compound"
 pattern = "horizontal_push"
 measures = ["reps"]

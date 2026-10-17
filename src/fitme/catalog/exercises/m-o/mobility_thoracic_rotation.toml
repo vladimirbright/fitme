@@ -7,8 +7,8 @@ qualities = ["mobility"]
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]
-loads_areas = []
-contraindicated_by = []
+loads_areas = ["lower_back", "shoulder", "elbow_wrist"]
+contraindicated_by = ["lower_back_injury_current", "shoulder_injury_current", "elbow_wrist_injury_current"]
 increment_kg = 1.0
 start = { kind = "bodyweight" }
 instructions = { en = "On hands and knees, place one hand behind your head. Rotate your upper back to bring that elbow up toward the ceiling, following it with your eyes, then rotate back down and under. Move slowly.", ru = "Встаньте на четвереньки, одну руку заведите за голову. Поворачивайте верхнюю часть спины, поднимая локоть к потолку, следя за ним взглядом, затем возвращайтесь и заводите локоть вниз-внутрь. Двигайтесь медленно." }

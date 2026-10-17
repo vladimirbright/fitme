@@ -219,6 +219,10 @@ battle_rope = "Боевой канат"
 sled = "Сани"
 tire = "Покрышка"
 sledgehammer = "Кувалда"
+towel = "Полотенце"
+dip_belt = "Пояс для отягощений"
+suspension_straps = "Подвесные петли"
+wrist_roller = "Роллер для запястий"
 
 [enum.screening_red_flag]
 heart_condition = "Есть ли у вас заболевание сердца или сердечно-сосудистой системы?"

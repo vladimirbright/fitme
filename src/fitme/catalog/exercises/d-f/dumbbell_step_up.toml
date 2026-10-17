@@ -11,5 +11,5 @@ loads_areas = ["knee", "hip", "ankle", "lower_back"]
 contraindicated_by = ["knee_injury_current", "hip_injury_current", "ankle_injury_current", "lower_back_injury_current", "hernia"]
 increment_kg = 2.0
 start = { kind = "kg", kg = 2.0 }
-instructions = { en = "Use a low stable step. Place the whole foot on it and stand before stepping down.", ru = "Выберите низкую устойчивую платформу. Поставьте на неё всю стопу, поднимитесь и сойдите." }
+instructions = { en = "Hold a dumbbell in each hand at your sides and face a low, stable bench. Place one whole foot on the bench, stand up, then step down under control. Alternate the leading leg and keep the knee tracking over the foot.", ru = "Держите по гантели в каждой руке вдоль корпуса и встаньте перед низкой устойчивой скамьёй. Поставьте на неё всю стопу одной ноги, поднимитесь, затем под контролем сойдите. Чередуйте ведущую ногу и направляйте колено по линии стопы." }
 load_step_kg = 1.0

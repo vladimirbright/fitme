@@ -1,5 +1,5 @@
 id = "kettlebell_two_arm_clean"
-names = { en = "Kettlebell two-arm clean", ru = "Взятие гири на грудь двумя руками" }
+names = { en = "Kettlebell two-handed clean", ru = "Взятие гири на грудь двумя руками" }
 kind = "compound"
 pattern = "hinge"
 measures = ["reps"]

@@ -1,5 +1,5 @@
 id = "hanging_twisting_straight_leg_raise"
-names = { en = "Hanging twisting leg raise", ru = "Подъём прямых ног в висе с поворотом" }
+names = { en = "Hanging twisting straight leg raise", ru = "Подъём прямых ног в висе с поворотом" }
 kind = "isolation"
 pattern = "core"
 measures = ["reps"]

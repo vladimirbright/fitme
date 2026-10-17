@@ -1,5 +1,5 @@
 id = "mobility_back_chest_stretch"
-names = { en = "Back and chest stretch", ru = "Растяжка спины и груди" }
+names = { en = "Clasped-hands upper-back stretch", ru = "Растяжка верха спины со сцепленными руками" }
 kind = "mobility"
 pattern = "mobility"
 measures = ["time"]

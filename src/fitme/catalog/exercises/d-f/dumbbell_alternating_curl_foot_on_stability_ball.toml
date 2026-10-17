@@ -12,5 +12,5 @@ loads_areas = ["elbow_wrist"]
 contraindicated_by = ["elbow_wrist_injury_current"]
 increment_kg = 1.0
 start = { kind = "kg", kg = 2.0 }
-instructions = { en = "Stand with one foot on a stability ball placed behind you, a dumbbell in each hand. Curl one dumbbell toward your shoulder, lower it under control, then curl the other. Hold a wall or rack for balance if needed and switch legs between sets.", ru = "Встаньте, одна нога стоит на фитболе позади вас, в руках гантели. Согните одну руку, подняв гантель к плечу, подконтрольно опустите и повторите другой рукой. При необходимости держитесь за опору; меняйте ногу между подходами." }
+instructions = { en = "Stand with one foot on a stability ball placed behind you, a dumbbell in each hand. Curl one dumbbell toward your shoulder, lower it under control, then curl the other. Stand next to a wall for balance if needed and switch legs between sets.", ru = "Встаньте, одна нога стоит на фитболе позади вас, в руках гантели. Согните одну руку, подняв гантель к плечу, подконтрольно опустите и повторите другой рукой. При необходимости встаньте рядом со стеной для равновесия; меняйте ногу между подходами." }
 load_step_kg = 1.0
