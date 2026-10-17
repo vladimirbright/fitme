@@ -33,6 +33,7 @@ from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message
 from fitme.bot import plan_rendering as rendering
 from fitme.bot.callback_data import PlanDraft, PlanMenu
 from fitme.bot.rendering import refusal_text
+from fitme.bot.waiting import waiting_message
 from fitme.catalog import load_catalog
 from fitme.config.settings import Settings
 from fitme.db.connection import Database
@@ -187,10 +188,12 @@ async def _generate(
     lang: str,
     guidance: str | None = None,
 ) -> None:
-    # A short "generating" message: the model call takes a while, and the DB lock is never
-    # held across it (A§4.6), so other updates keep flowing meanwhile.
+    # A short "generating" message and an animated placeholder under it while the model
+    # works (deleted once it is done); the DB lock is never held across the call (A§4.6), so
+    # other updates keep flowing meanwhile.
     await message.answer(t("plan.generating", lang))
-    result = await planning.propose_new_plan(db, llm, user_id, guidance=guidance)
+    async with waiting_message(message):
+        result = await planning.propose_new_plan(db, llm, user_id, guidance=guidance)
     await _show_round(message, result, lang, db=db, user_id=user_id)
 
 
@@ -285,7 +288,8 @@ async def revise_from_base(
     lang = await _lang(db, user_id)
     await message.answer(t("plan.revising", lang))
     try:
-        result = await planning.revise_plan(db, llm, user_id, base, text)
+        async with waiting_message(message):
+            result = await planning.revise_plan(db, llm, user_id, base, text)
     except planning.StaleDraftError:
         await message.answer(t("plan.stale_draft", lang))
         return
@@ -559,21 +563,13 @@ async def handle_plan_text(
         return True
     if isinstance(pending, PendingImport):
         await message.answer(t("plan.importing", lang))
-        result = await planning.import_plan(db, llm, user_id, text)
+        async with waiting_message(message):
+            result = await planning.import_plan(db, llm, user_id, text)
         await _show_round(
             message, result, lang, db=db, user_id=user_id, title_key="plan.import_title"
         )
         return True
-    await message.answer(t("plan.revising", lang))
-    try:
-        result = await planning.revise_plan(db, llm, user_id, pending.base, text)
-    except planning.StaleDraftError:
-        await message.answer(t("plan.stale_draft", lang))
-        return True
-    except planning.PlanNotFoundError:
-        await message.answer(t("plan.not_found", lang))
-        return True
-    await _show_round(message, result, lang, db=db, user_id=user_id)
+    await revise_from_base(message, db, llm, user_id, pending.base, text)
     return True
 
 
