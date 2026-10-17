@@ -53,7 +53,7 @@
     <li>
       {{ item.activity_name or exercise_names.get(item.exercise_id) or display_name(item.exercise_id) }}:
       {% if item.exercise_id in unilateral_ids %}{{ t('plan.sets_reps', sets=item.sets, reps=t('plan.per_side', target=target_text(item))) }}{% else %}{{ t('plan.sets_reps', sets=item.sets, reps=target_text(item)) }}{% endif %}
-      @ {{ load_text(item, block.role) }}
+      {% if not item.activity_name %}@ {{ load_text(item, block.role) }}{% endif %}
       {%- if block.kind == 'superset' and not loop.last -%}
         , {% if item.rest_seconds > 0 %}{{ t('plan.superset_transition', rest=seconds_text(item.rest_seconds)) }}{% else %}{{ t('plan.superset_no_transition') }}{% endif %}
       {%- endif %}

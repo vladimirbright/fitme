@@ -31,7 +31,7 @@ import dataclasses
 import math
 
 from fitme.domain.catalog import Exercise
-from fitme.domain.enums import Location
+from fitme.domain.enums import AREA_FLAGS, Location
 from fitme.domain.guard_types import GuardVerdict
 from fitme.domain.models import Load, Plan, Prescription, Workout, is_activity_id
 from fitme.guards import ceiling, checkins, experience, screening
@@ -257,12 +257,13 @@ def prescription_verdicts(prescription: Prescription, ctx: GuardContext) -> list
     A non-catalog activity item (`activity:<slug>`, `domain.models.is_activity_id`) has no
     catalog entry to check location, equipment, contraindications, experience or a kg
     ceiling against: the model only lets it be timed, bodyweight-loaded and without reps in
-    reserve, so it gets one informational verdict. The screening *plan* gate still runs for
-    the whole plan or workout. A bare unknown id (no `activity:` prefix) still fails
+    reserve, so it gets one `plan.activity` verdict — failing whenever any area flag is
+    "yes", since there is nothing to check the flag against. The screening *plan* gate still
+    runs for the whole plan or workout. A bare unknown id (no `activity:` prefix) still fails
     `plan.catalog_id`."""
     exercise_id = prescription.exercise_id
     if is_activity_id(exercise_id):
-        return [_activity_verdict(prescription)]
+        return [_activity_verdict(prescription, ctx)]
     exercise = ctx.catalog.by_id(exercise_id)
     if exercise is None:
         return [
@@ -288,7 +289,22 @@ def _workout_prescription_verdicts(workout: Workout, ctx: GuardContext) -> list[
     return verdicts
 
 
-def _activity_verdict(prescription: Prescription) -> GuardVerdict:
+def _activity_verdict(prescription: Prescription, ctx: GuardContext) -> GuardVerdict:
+    """AGENTS.md §2: area flags gate exercise selection. A free activity has no catalog
+    contraindication or loaded-area data to check a flag against, so any current-injury area
+    flag answered "yes" refuses it (fail closed). It also never takes a load."""
+    flagged = sorted(
+        state.flag.value for state in ctx.flags if state.flag in AREA_FLAGS and state.value == "yes"
+    )
+    if flagged:
+        return GuardVerdict(
+            rule=_ACTIVITY_RULE,
+            ok=False,
+            detail=(
+                f"{prescription.exercise_id}: a non-catalog activity cannot be checked against "
+                f"the flagged area ({', '.join(flagged)})"
+            ),
+        )
     ok = prescription.load.kind == "bodyweight"  # the model enforces it; fail closed anyway
     return GuardVerdict(
         rule=_ACTIVITY_RULE,

@@ -1,11 +1,12 @@
 """A plan with a non-catalog activity item (`activity:<slug>`) and its own location
 (`Plan.location`) through the services that judge, review, time and save plans (A§4.5),
-against a real migrated temp DB. No LLM is called: the draft is written with
-`planning.record_edit_draft`, the same judging path every model draft takes."""
+against a real migrated temp DB. Drafts the user stages go through
+`planning.record_edit_draft`; the legacy agents (a `FunctionModel` `plan_generate` /
+`plan_revise`) may not add an activity item or set a plan location (`AgentScope`)."""
 
 from __future__ import annotations
 
-from test_planning_service import _settings
+from test_planning_service import FakeLlm, _settings, decisions
 
 from fitme import clock
 from fitme.catalog import load_catalog
@@ -172,3 +173,152 @@ async def test_review_timing_and_web_edit_checks_tolerate_an_activity(
     assert any(
         "outdoor_interval_jog" in e for e in plan_edit.blocking_errors(profile_located, inputs.ctx)
     )
+
+
+# Legacy agents (AgentScope): no new activity items, no plan location
+
+
+def _jog_and_class(*, location: Location | None = None, activity: bool = True) -> Plan:
+    blocks = [Block(kind="single", items=[timed("easy_jog", 1200)])]
+    if activity:
+        blocks.append(Block(kind="single", items=[timed(_ACTIVITY, 3600, name="BJJ class")]))
+    return Plan(
+        name="Jog and class",
+        location=location,
+        schedule=[ScheduledDay(weekday=1, workout_key="A")],
+        workouts=[Workout(key="A", title="Jog", blocks=blocks)],
+    )
+
+
+def _failed_rule(decision: object, rule: str) -> bool:
+    fired = getattr(decision, "guards_fired", None) or []
+    return any(g["rule"] == rule and not g["ok"] for g in fired)
+
+
+async def test_plan_generate_cannot_output_an_activity_item(db: Database, user_id: int) -> None:
+    await seed_gym_profile(db, user_id)
+    llm = FakeLlm([_jog_and_class(), _jog_and_class()])
+    result = await planning.propose_new_plan(db, llm.runtime(), user_id)
+    assert result.refusal is not None and llm.calls == 2
+    rounds = [d for d in await decisions(db, user_id) if d.kind == "plan_generate"]
+    assert len(rounds) == 2
+    assert all(_failed_rule(d, "plan.activity_not_allowed") for d in rounds)
+
+
+async def test_plan_generate_cannot_set_a_plan_location(db: Database, user_id: int) -> None:
+    await seed_gym_profile(db, user_id)
+    outdoor = _jog_and_class(location=Location.OUTDOOR, activity=False)
+    llm = FakeLlm([outdoor, outdoor])
+    result = await planning.propose_new_plan(db, llm.runtime(), user_id)
+    assert result.refusal is not None and llm.calls == 2
+    rounds = [d for d in await decisions(db, user_id) if d.kind == "plan_generate"]
+    assert len(rounds) == 2
+    assert all(_failed_rule(d, "plan.location_not_allowed") for d in rounds)
+
+
+async def test_the_same_plan_staged_by_the_user_is_accepted(db: Database, user_id: int) -> None:
+    await seed_gym_profile(db, user_id)
+    edit = await planning.record_edit_draft(
+        db,
+        _settings(),
+        user_id,
+        plan=_jog_and_class(location=Location.OUTDOOR),
+        plan_id=None,
+        user_report={"test": True},
+    )
+    assert edit.round is not None, edit.errors
+
+
+async def _saved_outdoor_plan(db: Database, user_id: int) -> int:
+    edit = await planning.record_edit_draft(
+        db, _settings(), user_id, plan=outdoor_plan(), plan_id=None, user_report={"test": True}
+    )
+    assert edit.round is not None
+    confirmed = await planning.confirm_plan(db, _settings(), user_id, edit.round.decision_id)
+    assert confirmed.plan_id is not None
+    return confirmed.plan_id
+
+
+async def test_a_revision_keeps_the_base_location_and_its_activities(
+    db: Database, user_id: int
+) -> None:
+    await seed_gym_profile(db, user_id)
+    plan_id = await _saved_outdoor_plan(db, user_id)
+    revised = outdoor_plan(location=None)  # the model leaves the location out
+    revised.workouts[0].blocks[1].items[0].seconds = 1500
+    llm = FakeLlm([revised])
+    result = await planning.revise_plan(
+        db, llm.runtime(), user_id, planning.PlanBase(plan_id=plan_id), "a longer easy jog"
+    )
+    assert result.plan is not None, result.refusal
+    assert result.plan.location == Location.OUTDOOR
+    assert result.plan.workouts[0].blocks[2].items[0].exercise_id == _ACTIVITY
+
+
+async def test_a_revision_cannot_add_an_activity(db: Database, user_id: int) -> None:
+    await seed_gym_profile(db, user_id)
+    plan_id = await _saved_outdoor_plan(db, user_id)
+    added = outdoor_plan()
+    added.workouts[0].blocks.append(
+        Block(kind="single", items=[timed("activity:yoga_class", 3600, name="Yoga")])
+    )
+    llm = FakeLlm([added, added, added])
+    result = await planning.revise_plan(
+        db, llm.runtime(), user_id, planning.PlanBase(plan_id=plan_id), "add yoga"
+    )
+    assert result.refusal is not None
+    rounds = [
+        d for d in await decisions(db, user_id) if d.kind == "plan_revise" and d.model is not None
+    ]
+    assert rounds and all(_failed_rule(d, "plan.activity_not_allowed") for d in rounds)
+
+
+async def test_session_adjust_scope_keeps_the_workouts_own_activities_only(
+    db: Database, user_id: int
+) -> None:
+    await seed_gym_profile(db, user_id)
+    inputs = await _inputs(db, user_id)
+    workout = _jog_and_class().workouts[0]
+    own = planning.AgentScope(activity_ids=frozenset({_ACTIVITY}))
+    assert planning.judge_workout(workout.model_copy(deep=True), inputs, scope=own).ok
+    refused = planning.judge_workout(workout, inputs, scope=planning.AgentScope())
+    assert any(v.rule == "plan.activity_not_allowed" for v in refused.failures)
+
+
+# Wording, time budget
+
+
+async def test_a_forbidden_term_in_an_activity_name_is_replaced(db: Database, user_id: int) -> None:
+    await seed_gym_profile(db, user_id)
+    inputs = await _inputs(db, user_id)
+    plan = _jog_and_class()
+    plan.workouts[0].blocks[1].items[0].activity_name = "Session with my coach"
+    judgement = planning.judge(plan, inputs)
+    assert judgement.ok
+    assert plan.workouts[0].blocks[1].items[0].activity_name == "Activity"
+    assert any(
+        v.rule == "wording.forbidden_term" and "activity name" in v.detail for v in judgement.fired
+    )
+
+
+def test_the_time_budget_never_trims_an_activity() -> None:
+    squat = Prescription(
+        exercise_id="barbell_back_squat",
+        sets=5,
+        reps_min=5,
+        reps_max=5,
+        load=Load(kind="calibration"),
+        rest_seconds=180,
+    )
+    workout = Workout(
+        key="A",
+        title="Squat, then class",
+        blocks=[
+            Block(kind="single", items=[squat]),
+            Block(kind="single", items=[timed(_ACTIVITY, 5400, name="BJJ class")]),
+        ],
+    )
+    time_budget.fit_workout(workout, load_catalog(), 60)
+    ids = [item.exercise_id for block in workout.blocks for item in block.items]
+    assert _ACTIVITY in ids
+    assert workout.blocks[-1].items[0].seconds == 5400

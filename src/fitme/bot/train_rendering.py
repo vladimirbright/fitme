@@ -225,8 +225,9 @@ def block_text(view: BlockView, *, catalog: Catalog, lang: str) -> str:
                 target = t("plan.per_side", lang, target=target)
             sets_line = t("train.sets_line_target", lang, sets=item.sets, target=target)
         lines.append(sets_line)
-        load = _block_load_label(item, exercise, lang, view.block.role)
-        lines.append(t("train.load_line", lang, load=load))
+        if not is_activity_id(item.exercise_id):  # an activity states no load
+            load = _block_load_label(item, exercise, lang, view.block.role)
+            lines.append(t("train.load_line", lang, load=load))
         if not superset:
             lines.append(t("train.rest_line", lang, rest=rest_text(item.rest_seconds, lang)))
         elif index < last:

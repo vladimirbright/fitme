@@ -148,6 +148,7 @@ from fitme.domain.models import (
     Prescription,
     Refusal,
     Workout,
+    is_activity_id,
     plausible_declared_kg,
 )
 from fitme.domain.screening import ScreeningFlagState
@@ -205,6 +206,8 @@ _ALLOWED_EXERCISES_RULE = "plan.allowed_exercises"
 _SUBSTITUTION_RULE = "loads.substituted"
 _IMPORT_CALIBRATION_RULE = "loads.import_calibration"  # M8b: no history -> calibration + hint
 _WORDING_RULE = "wording.forbidden_term"
+_ACTIVITY_NOT_ALLOWED_RULE = "plan.activity_not_allowed"
+_LOCATION_NOT_ALLOWED_RULE = "plan.location_not_allowed"
 _PLAN_STATUS_ACTIVE = "active"  # the only `plans.status` ever written (A§4.3: all plans are equal)
 _ORIGIN_LLM = "llm"
 _ORIGIN_IMPORT = "import"  # M8b: `plan_versions.origin` of a confirmed pasted plan
@@ -686,6 +689,15 @@ def _sanitize_wording(plan: Plan, lang: str) -> list[GuardVerdict]:
             note(f"workout {workout.key} title", term, "replaced with the default title")
         for block in workout.blocks:
             for prescription in block.items:
+                if prescription.activity_name is not None:
+                    term = wording.first_forbidden_term(prescription.activity_name)
+                    if term is not None:
+                        prescription.activity_name = i18n.t("plan.activity_fallback", lang)
+                        note(
+                            f"{prescription.exercise_id} activity name",
+                            term,
+                            "replaced with the default name",
+                        )
                 if prescription.note is None:
                     continue
                 term = wording.first_forbidden_term(prescription.note)
@@ -695,7 +707,62 @@ def _sanitize_wording(plan: Plan, lang: str) -> list[GuardVerdict]:
     return fired
 
 
-def judge(plan: Plan, inputs: Inputs) -> Judgement:
+@dataclass(frozen=True, slots=True)
+class AgentScope:
+    """What a model-written plan or workout may contain beyond catalog exercises, for the
+    agents that predate activity items and plan locations (`plan_generate`, `plan_revise`,
+    `plan_import`, `session_adjust`): only the `activity:` ids and the location of the plan
+    or workout they start from (none for a new or pasted plan). Anything else is a
+    structural failure, so their output stays what it was before activity items existed.
+    Paths that judge a plan the user staged or edited pass no scope."""
+
+    activity_ids: frozenset[str] = frozenset()
+    location: Location | None = None
+
+    @classmethod
+    def of(cls, plan: Plan) -> AgentScope:
+        return cls(
+            activity_ids=frozenset(
+                item.exercise_id
+                for workout in plan.workouts
+                for block in workout.blocks
+                for item in block.items
+                if is_activity_id(item.exercise_id)
+            ),
+            location=plan.location,
+        )
+
+
+def scope_verdicts(plan: Plan, scope: AgentScope | None) -> list[GuardVerdict]:
+    """The failing verdicts for what `plan` holds outside `scope` (none without a scope)."""
+    if scope is None:
+        return []
+    verdicts = [
+        GuardVerdict(
+            rule=_ACTIVITY_NOT_ALLOWED_RULE,
+            ok=False,
+            detail=(
+                f"{item.exercise_id}: a non-catalog activity is not allowed here; use catalog "
+                "exercises only"
+            ),
+        )
+        for workout in plan.workouts
+        for block in workout.blocks
+        for item in block.items
+        if is_activity_id(item.exercise_id) and item.exercise_id not in scope.activity_ids
+    ]
+    if plan.location is not None and plan.location != scope.location:
+        verdicts.append(
+            GuardVerdict(
+                rule=_LOCATION_NOT_ALLOWED_RULE,
+                ok=False,
+                detail=f"location {plan.location.value}: a plan location is not allowed here",
+            )
+        )
+    return verdicts
+
+
+def judge(plan: Plan, inputs: Inputs, *, scope: AgentScope | None = None) -> Judgement:
     """`validate_plan`, then A§7.3 load substitution when the only failures are load rules.
     **Mutates `plan` in place** when it substitutes a load: the object the LLM returned is
     what the caller shows, logs and (later) confirms, so the repair has to land on it — and
@@ -703,9 +770,12 @@ def judge(plan: Plan, inputs: Inputs) -> Judgement:
     pass sanitizes the model's display text (`_sanitize_wording`) and moves any prescription
     in a measure its exercise doesn't accept to the exercise's default (ADR 0009,
     `services.measures`). The `/train` review (`judge_workout`) does not: a plan saved before
-    measures existed still trains as it was saved."""
+    measures existed still trains as it was saved. With a `scope` (the legacy agents,
+    `AgentScope`), an activity item or a plan location outside it fails structurally."""
     repaired = measures.repair_measures(plan, inputs.catalog)
-    judgement = _judge_with(plan, lambda: validate_plan(plan, inputs.ctx), inputs)
+    judgement = _judge_with(
+        plan, lambda: [*validate_plan(plan, inputs.ctx), *scope_verdicts(plan, scope)], inputs
+    )
     # ADR 0011: after load substitution, so an engine-chosen calibration gets its default
     # reps in reserve too; an rir on power, speed, carry or interval work is dropped.
     intensity = prescribing.repair_intensity(plan, inputs.catalog)
@@ -713,13 +783,18 @@ def judge(plan: Plan, inputs: Inputs) -> Judgement:
 
 
 def judge_workout(
-    workout: Workout, inputs: Inputs, *, location: Location | None = None
+    workout: Workout,
+    inputs: Inputs,
+    *,
+    location: Location | None = None,
+    scope: AgentScope | None = None,
 ) -> Judgement:
     """A§6.5.1: the same judging as `judge` — wording, guards, load substitution in place —
     over *one* workout with `guards.plan.validate_workout` (the gate and every
     per-prescription verdict, not the plan-wide schedule rules). Used by `/train` for the
     review, Start and Save to plan. `location` is the workout's plan's own `Plan.location`
-    (`None`: the profile's), so a workout is judged where its plan is trained."""
+    (`None`: the profile's), so a workout is judged where its plan is trained. `scope` as in
+    `judge` (the `session_adjust` agent)."""
     wrapper = Plan(
         name=i18n.t("plan.default_name", inputs.snapshot.language),
         location=location,
@@ -727,7 +802,12 @@ def judge_workout(
         workouts=[workout],
     )
     return _judge_with(
-        wrapper, lambda: validate_workout(workout, inputs.ctx, location=location), inputs
+        wrapper,
+        lambda: [
+            *validate_workout(workout, inputs.ctx, location=location),
+            *scope_verdicts(wrapper, scope),
+        ],
+        inputs,
     )
 
 
@@ -747,7 +827,8 @@ def _judge_with(
             for prescription in block.items:
                 exercise = inputs.catalog.by_id(prescription.exercise_id)
                 if exercise is None:
-                    continue  # unreachable: a non-catalog id is a structural failure above
+                    continue  # an activity item has no load to substitute; any other
+                    # non-catalog id is a structural failure above
                 if all(v.ok for v in load_verdicts(exercise, prescription.load, inputs.ctx)):
                     continue
                 proposed = prescription.load
@@ -818,7 +899,8 @@ def judge_import(plan: Plan, inputs: Inputs) -> Judgement:
     is data collection; the ceiling guard would reject the kg anyway) with the declared kg
     kept as the hint — then the ordinary `judge` (wording, every structural rule, engine
     substitution for an exercise *with* history whose declared load breaks the cap, ceiling
-    or check-in rules)."""
+    or check-in rules). A transcription may hold no activity item and no plan location
+    (`AgentScope()`): the `plan_import` agent and the history import predate them."""
     fired: list[GuardVerdict] = []
     for workout in plan.workouts:
         for block in workout.blocks:
@@ -847,7 +929,7 @@ def judge_import(plan: Plan, inputs: Inputs) -> Judgement:
                         ),
                     )
                 )
-    judgement = judge(plan, inputs)
+    judgement = judge(plan, inputs, scope=AgentScope())
     judgement.fired = [*fired, *judgement.fired]
     return judgement
 
@@ -1418,7 +1500,7 @@ async def propose_new_plan(
         findings: list[GuardVerdict] = []
         if isinstance(output, Plan):
             restore_declared(output, {})  # nothing was pasted: no hints (M8b)
-            judgement = judge(output, inputs)
+            judgement = judge(output, inputs, scope=AgentScope())
             if judgement.ok:
                 # ADR 0016: a workout longer than the session is shortened by priority in
                 # code, then the plan as shortened is validated again and reviewed.
@@ -1627,6 +1709,7 @@ async def revise_plan(
     judgements: dict[int, Judgement] = {}
     attempts: list[_Attempt] = []
     base_declared = declared_loads_of(resolved.plan)  # M8b: hints survive a revision
+    base_scope = AgentScope.of(resolved.plan)  # only the base plan's activities and location
 
     def build_prompt(verdicts: Sequence[GuardVerdict] | None) -> str:
         feedback = (
@@ -1645,7 +1728,11 @@ async def revise_plan(
 
     def guard_check(plan: Plan) -> Sequence[GuardVerdict]:
         restore_declared(plan, base_declared)
-        judgement = judge(plan, inputs)
+        if plan.location is None:
+            # Like the declared hints: the model can't set a location, so a revision keeps
+            # its base plan's (an outdoor plan is not judged at the profile's location).
+            plan.location = resolved.plan.location
+        judgement = judge(plan, inputs, scope=base_scope)
         if judgement.ok:
             # ADR 0009: a revision's programming findings are logged with it, never a
             # refusal or an escalation (the user asked for this change; the guards decide).
@@ -2294,6 +2381,8 @@ __all__ = [
     "judge",
     "judge_import",
     "judge_workout",
+    "AgentScope",
+    "scope_verdicts",
     "list_plans",
     "list_versions",
     "load_changes_for",

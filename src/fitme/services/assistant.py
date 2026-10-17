@@ -65,15 +65,7 @@ from fitme.domain.enums import (
     RefusalCode,
     WorkoutSessionStatus,
 )
-from fitme.domain.models import (
-    Block,
-    Load,
-    Plan,
-    Prescription,
-    Refusal,
-    Workout,
-    is_activity_id,
-)
+from fitme.domain.models import Block, Load, Plan, Prescription, Refusal, Workout
 from fitme.domain.results import SetResult
 from fitme.guards import stop_words
 from fitme.guards.layering import combine_with_llm_signal
@@ -140,9 +132,7 @@ def _find(workout: Workout, exercise_id: str, *, first_block: int = 0) -> tuple[
 
 
 def _check_allowed(exercise_id: str, allowed: frozenset[str]) -> None:
-    # A non-catalog activity id is never in the allowed catalog set; the model's own
-    # validation decides its shape and `guards.plan` judges it.
-    if exercise_id not in allowed and not is_activity_id(exercise_id):
+    if exercise_id not in allowed:
         raise OpError("exercise_not_allowed", f"{exercise_id} is not an allowed exercise")
 
 

@@ -123,7 +123,15 @@ from fitme.domain.enums import (
     WorkoutSessionStatus,
 )
 from fitme.domain.guard_types import GuardVerdict
-from fitme.domain.models import Block, LoadChange, Plan, Prescription, Refusal, Workout
+from fitme.domain.models import (
+    Block,
+    LoadChange,
+    Plan,
+    Prescription,
+    Refusal,
+    Workout,
+    is_activity_id,
+)
 from fitme.domain.results import MAX_EXTRA_SETS, SetResult
 from fitme.domain.screening import ScreeningFlagState
 from fitme.guards import stop_words
@@ -359,7 +367,8 @@ def _engine_workout(
         for prescription in block.items:
             exercise = inputs.catalog.by_id(prescription.exercise_id)
             if exercise is None:
-                continue  # a non-catalog id fails `judge` structurally; nothing to compute
+                continue  # an activity item has no load to compute; any other non-catalog
+                # id fails `judge` structurally
             load, reason, verdicts = planning.engine_load(
                 exercise, inputs, prescription=prescription, plan_id=plan_id
             )
@@ -382,11 +391,17 @@ def _plan_with(plan: Plan, workout: Workout) -> Plan:
     )
 
 
-def _judge_workout(workout: Workout, inputs: planning.Inputs, plan: Plan) -> planning.Judgement:
+def _judge_workout(
+    workout: Workout,
+    inputs: planning.Inputs,
+    plan: Plan,
+    *,
+    scope: planning.AgentScope | None = None,
+) -> planning.Judgement:
     """A§6.5.1: the gate plus per-prescription verdicts over today's workout (with load
     substitution), not the plan-wide schedule rules — at `plan`'s own location, if it has
-    one (`Plan.location`)."""
-    return planning.judge_workout(workout, inputs, location=plan.location)
+    one (`Plan.location`). `scope` limits a model-written workout (`session_adjust`)."""
+    return planning.judge_workout(workout, inputs, location=plan.location, scope=scope)
 
 
 def _workout_load_changes(workout: Workout, inputs: planning.Inputs) -> list[LoadChange]:
@@ -752,6 +767,16 @@ async def adjust(
     judgements: dict[int, planning.Judgement] = {}
     # M8b: the declared hints come from the plan's stored workout, never from the model.
     plan_declared = planning.declared_loads_of(_plan_with(ctx.plan, ctx.workout))
+    # `session_adjust` may keep the workout's own activity items, never add one.
+    adjust_scope = planning.AgentScope(
+        activity_ids=frozenset(
+            item.exercise_id
+            for block in ctx.workout.blocks
+            for item in block.items
+            if is_activity_id(item.exercise_id)
+        ),
+        location=ctx.plan.location,
+    )
 
     def build_prompt(verdicts: Sequence[GuardVerdict] | None) -> str:
         feedback = (
@@ -767,7 +792,7 @@ async def adjust(
         # The adjustment is for this session's workout, whatever key the model wrote.
         workout.key = ctx.workout.key
         planning.restore_declared(_plan_with(ctx.plan, workout), plan_declared)
-        judgement = _judge_workout(workout, inputs, ctx.plan)
+        judgement = _judge_workout(workout, inputs, ctx.plan, scope=adjust_scope)
         judgements[id(workout)] = judgement
         return judgement.verdicts
 
@@ -1444,6 +1469,14 @@ def _resolve_logs(
                         f"{entry.exercise_id}: implausible load, ask the user to check it "
                         f"({'; '.join(failed)})"
                     )
+            elif is_activity_id(prescription.exercise_id) and any(
+                result.load_kg is not None for result in entry.sets
+            ):
+                # No catalog bounds to check a kg against: an activity is logged unloaded.
+                return [], (
+                    f"{entry.exercise_id}: implausible load, ask the user to check it "
+                    "(a non-catalog activity takes no kg)"
+                )
         taken.add(index)
         resolved.append(
             _ResolvedLog(

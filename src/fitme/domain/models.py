@@ -229,6 +229,8 @@ class Prescription(BaseModel):
             raise ValueError("an activity: item takes a bodyweight load")
         if self.rir is not None:
             raise ValueError("an activity: item takes no rir")
+        if self.declared_kg is not None:
+            raise ValueError("an activity: item takes no declared_kg")
         return self
 
 

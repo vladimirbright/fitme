@@ -36,10 +36,11 @@ from fitme.db.controllers.profile import upsert_profile, upsert_screening_flag
 from fitme.db.selectors.training import list_set_logs_for_session
 from fitme.domain.enums import AREA_FLAGS, RED_FLAGS, Location, Measure
 from fitme.domain.models import Block, Load, Plan, Prescription, ScheduledDay, Workout
+from fitme.domain.results import SetResult
 from fitme.i18n import t
 from fitme.services import profile as profile_service
-from fitme.services import recap
-from fitme.services.training import BlockView
+from fitme.services import recap, training
+from fitme.services.training import BlockView, ItemLog, ItemLogKind
 
 _ACTIVITY = "activity:bjj_class"
 
@@ -85,8 +86,16 @@ def test_the_plan_text_names_the_activity_and_says_where(lang: str) -> None:
     assert "BJJ class" in text
     assert "activity:" not in text
     assert "Gi class at the club" in text
+    bjj = t("plan.activity_line", lang, name="BJJ class", sets_reps="", rest="").split(":")[0]
+    line = next(line for line in text.splitlines() if bjj in line)
+    assert "@" not in line and t("plan.load_bodyweight", lang) not in line
     location = t("enum.location.outdoor", lang)
     assert t("plan.location_line", lang, location=location) in text
+
+
+def test_the_activity_line_states_no_load() -> None:
+    text = render_plan_text(_plan(), catalog=load_catalog(), lang="en", title="Plan")
+    assert "• BJJ class: 1 × 90 min, rest 1 min — Gi class at the club" in text
 
 
 def test_a_plan_without_its_own_location_has_no_location_line() -> None:
@@ -102,6 +111,7 @@ def test_the_activity_block_shows_its_name_and_note_and_no_link() -> None:
     assert "BJJ class" in text and "activity:" not in text
     assert "Gi class at the club" in text
     assert t("train.calibration_hint", "en") not in text
+    assert "Load:" not in text
     buttons = [
         b
         for row in block_markup(view, catalog=load_catalog(), lang="en").inline_keyboard
@@ -184,6 +194,22 @@ async def test_an_outdoor_activity_plan_trains_for_a_gym_profile(
     assert isinstance(markup, InlineKeyboardMarkup)
     assert not any(button.url for row in markup.inline_keyboard for button in row)
     assert any(d.startswith("tr:done:") for d in _callback_datas(_sent(session)[-1]))
+    assert "Load:" not in block  # an activity states no load
+
+    # A kg reported on an activity is refused like any implausible load; none is fine.
+    with_kg = ItemLog(
+        exercise_id=_ACTIVITY,
+        kind=ItemLogKind.RESULTS,
+        sets=(SetResult(set_index=1, seconds=5400, load_kg=20.0),),
+    )
+    problem = await training.check_item_logs(db, user_id, session_id, 1, [with_kg])
+    assert problem is not None and "implausible load" in problem
+    no_kg = ItemLog(
+        exercise_id=_ACTIVITY,
+        kind=ItemLogKind.RESULTS,
+        sets=(SetResult(set_index=1, seconds=5400),),
+    )
+    assert await training.check_item_logs(db, user_id, session_id, 1, [no_kg]) is None
 
     await _click(dispatcher, bot, _last_action(session, "done"))
     assert t("train.completed", "en", logged=2, planned=2) in _texts(session)

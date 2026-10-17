@@ -7,7 +7,14 @@ import pytest
 from pydantic import ValidationError
 
 from fitme.catalog import load_catalog
-from fitme.domain.enums import RED_FLAGS, Equipment, HealthHoldReason, Location, Measure
+from fitme.domain.enums import (
+    RED_FLAGS,
+    Equipment,
+    HealthHoldReason,
+    Location,
+    Measure,
+    ScreeningFlag,
+)
 from fitme.domain.guard_types import GuardVerdict
 from fitme.domain.models import (
     MAX_SET_SECONDS,
@@ -19,6 +26,7 @@ from fitme.domain.models import (
     Workout,
     is_activity_id,
 )
+from fitme.domain.results import SetResult
 from fitme.domain.screening import ScreeningFlagState
 from fitme.guards.context import GuardContext
 from fitme.guards.plan import load_verdicts, prescription_verdicts, validate_plan, validate_workout
@@ -124,6 +132,15 @@ def test_activity_takes_no_kg_load() -> None:
         _activity(load={"kind": "calibration"})
 
 
+def test_activity_takes_no_declared_kg() -> None:
+    with pytest.raises(ValidationError, match="declared_kg"):
+        _activity(declared_kg=40.0)
+
+
+def test_a_90_minute_result_validates() -> None:
+    assert SetResult(set_index=1, seconds=6000).seconds == 6000
+
+
 def test_activity_takes_no_rir() -> None:
     with pytest.raises(ValidationError, match="rir"):
         _activity(rir=2)
@@ -190,6 +207,22 @@ def test_an_activity_item_is_accepted_for_a_gym_profile() -> None:
     activity = [v for v in verdicts if v.rule == "plan.activity"]
     assert len(activity) == 1 and activity[0].ok
     assert not any(v.rule == "plan.catalog_id" for v in verdicts)
+
+
+def test_an_activity_item_is_refused_when_an_area_is_flagged() -> None:
+    """AGENTS.md §2: a free activity has no contraindication data to check a flag against."""
+    knee = [
+        *_ALL_RED_FLAGS_NO,
+        ScreeningFlagState(flag=ScreeningFlag.KNEE_INJURY_CURRENT, value="yes"),
+    ]
+    verdicts = validate_plan(_plan(_activity()), _ctx(flags=knee))
+    failed = [v for v in verdicts if v.rule == "plan.activity" and not v.ok]
+    assert failed and "knee_injury_current" in failed[0].detail
+    no_flag = [
+        *_ALL_RED_FLAGS_NO,
+        ScreeningFlagState(flag=ScreeningFlag.KNEE_INJURY_CURRENT, value="no"),
+    ]
+    assert not _failures(validate_plan(_plan(_activity()), _ctx(flags=no_flag)))
 
 
 def test_an_activity_item_still_needs_the_screening_gate() -> None:

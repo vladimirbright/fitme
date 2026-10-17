@@ -31,10 +31,9 @@ chat.
   (`training.edit_remaining`: judged like Start, only the changed loads counted). At the end
   the bot offers to carry those changes into the plan, as a planning-session draft.
 - At most one session is active. A training session wins.
-- **Memory:** the session's last 20 messages in both directions (raised to 100 on
-  2026-10-17, `services.conversations.HISTORY_LIMIT`). The bot's replies are now stored too
-  (`chat_messages.direction = 'out'`, linked by `conversation_id`), with the same 365-day
-  retention. Closed sessions go with their messages, and sessions are included in
+- **Memory:** the session's last 20 messages in both directions. The bot's replies are now
+  stored too (`chat_messages.direction = 'out'`, linked by `conversation_id`), with the same
+  365-day retention. Closed sessions go with their messages, and sessions are included in
   export and delete.
 
 **Tools.** The assistant has read-only lookups and *staging* tools: `edit_plan`,
