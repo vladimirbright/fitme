@@ -131,6 +131,7 @@ from fitme.domain.models import (
     Refusal,
     Workout,
     is_activity_id,
+    storage_body,
 )
 from fitme.domain.results import MAX_EXTRA_SETS, SetResult
 from fitme.domain.screening import ScreeningFlagState
@@ -700,7 +701,7 @@ async def _log_adjust_attempt(
         fired = judgement.fired
         proposed = _workout_load_changes(output, inputs) if judgement.ok else []
         proposal = {
-            "workout": output.model_dump(mode="json"),
+            "workout": storage_body(output),
             "proposed_load_changes": [change.model_dump(mode="json") for change in proposed],
         }
         if judgement.ok:
@@ -908,7 +909,7 @@ async def save_to_plan(
             conn,
             plan_id=ctx.plan_record.id,
             version=version,
-            body=new_plan.model_dump(mode="json"),
+            body=storage_body(new_plan),
             origin=_ORIGIN_LLM,
             decision_id=confirm_id,
         )
@@ -1081,7 +1082,7 @@ async def start(db: Database, settings: Settings, user_id: int, session_id: int)
             llm_input=None,
             user_report=report,
             proposal={
-                "workout": workout.model_dump(mode="json"),
+                "workout": storage_body(workout),
                 "load_changes": [change.model_dump(mode="json") for change in load_changes],
             },
             guards_fired=[verdict.model_dump() for verdict in fired],
@@ -1955,7 +1956,7 @@ async def edit_remaining(
                 "from_block": locked,
             },
             proposal={
-                "workout": workout.model_dump(mode="json"),
+                "workout": storage_body(workout),
                 "load_changes": [change.model_dump(mode="json") for change in changed],
             },
             guards_fired=[verdict.model_dump() for verdict in judgement.fired],

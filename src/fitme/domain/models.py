@@ -318,6 +318,34 @@ class Refusal(BaseModel):
 PlanProposal = Plan | Refusal
 
 
+# Keys added by activity items and plan locations that a body leaves out while unset, so a
+# body that uses neither keeps the exact shape older code reads (with `extra="forbid"`).
+_OMITTED_WHEN_UNSET: frozenset[str] = frozenset({"location", "activity_name"})
+
+
+def _strip_unset(value: object) -> object:
+    if isinstance(value, dict):
+        return {
+            key: _strip_unset(item)
+            for key, item in value.items()
+            if not (key in _OMITTED_WHEN_UNSET and item is None)
+        }
+    if isinstance(value, list):
+        return [_strip_unset(item) for item in value]
+    return value
+
+
+def storage_body(model: Plan | Workout) -> dict[str, object]:
+    """The JSON a `Plan` or `Workout` is stored as (`plan_versions.body`,
+    `decisions.proposal`): `model_dump(mode="json")` without `location` and `activity_name`
+    while they are `None`. Every other optional field keeps its explicit null. A body that
+    uses no activity item and no plan location thus parses with the models from before
+    either existed; parsing it back here gives the same model (both default to `None`)."""
+    body = _strip_unset(model.model_dump(mode="json"))
+    assert isinstance(body, dict)
+    return body
+
+
 class PlanImport(BaseModel):
     """M8b `plan_import` agent output: the user's pasted program *transcribed* into a `Plan`,
     plus the exercise names it could not map to an allowed catalog id (`unmatched`) — listed

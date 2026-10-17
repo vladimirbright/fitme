@@ -180,11 +180,11 @@ can do that from the conversation alone.
 - **No migration**: plan bodies are JSON, decision kinds are reused (`plan_revise` draft
   rounds, `plan_confirm`), and `llm_calls.purpose` / `decisions.prompt_template` say
   `planner`. No re-index.
-- **Going back is not free for data written on the branch.** `main`'s domain models use
-  `extra="forbid"`. The branch writes `location` and `activity_name` into every body it
-  dumps, as `null` when unused. So `main` refuses **every** plan version and draft written on
-  the branch, catalog-only ones included. Checked by validating a branch
-  `Plan.model_dump(mode="json")` of a one-push-up plan against `main`'s `Plan`: two
-  `extra_forbidden` errors. Old bodies parse on the branch, but not the other way round. Run
-  the branch against a copy of the database (`fitme backup`), not the real one, until this is
-  decided (for example, dumping without `None` fields).
+- **Going back works for plans that use neither new feature.** `main`'s domain models use
+  `extra="forbid"`. Every stored body (`plan_versions.body`, the plans and workouts in
+  `decisions.proposal`) is written through `domain.models.storage_body`, which leaves
+  `location` and `activity_name` out while they are unset. So a body written on the branch
+  parses on `main` unless the plan actually has an activity item or a plan location; such
+  plans have to be deleted (`/plan` → delete) before switching back. Checked by
+  `tests/integration/db/test_storage_body.py` against a copy of `main`'s models. Testing
+  against a copy of the database (`FITME_DB_PATH`, `fitme backup`) is still the safe default.
