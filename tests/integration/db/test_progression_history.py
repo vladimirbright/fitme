@@ -210,7 +210,7 @@ async def test_a_timed_target_grows_only_after_two_app_sessions_at_it(
     await _timed_session(db, user_id, version, [40, 45, 40])
     decision = await _plank_target(db, user_id)
     assert decision.kind == TargetKind.MORE
-    assert decision.change == ChangeTarget(exercise_id="plank", seconds=45)
+    assert decision.change == ChangeTarget(exercise_id="plank", from_target=40, seconds=45)
 
 
 async def test_an_incomplete_session_earns_no_longer_target(db: Database, user_id: int) -> None:
@@ -218,3 +218,15 @@ async def test_an_incomplete_session_earns_no_longer_target(db: Database, user_i
     await _timed_session(db, user_id, version, [40, 40, 40])
     await _timed_session(db, user_id, version, [40, 40, None])  # a set left unlogged
     assert (await _plank_target(db, user_id)).change is None
+
+
+async def test_only_the_newest_sessions_are_read_and_in_order(db: Database, user_id: int) -> None:
+    version = await _plan_version(db, user_id)
+    for seconds in ([10, 10, 10], [20, 20, 20], [30, 30, 30]):
+        await _timed_session(db, user_id, version, seconds)
+    async with db.read() as conn:
+        sessions = await recent_completed_set_logs(conn, user_id, "plank", limit=2)
+    assert [[row.actual_seconds for row in rows] for rows in sessions] == [
+        [30, 30, 30],
+        [20, 20, 20],
+    ]

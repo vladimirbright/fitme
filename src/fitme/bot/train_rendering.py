@@ -475,16 +475,17 @@ def plan_change_text(change: PlanChange, *, catalog: Catalog, lang: str) -> str:
             sets=change.sets,
         )
     if isinstance(change, ChangeTarget):
-        target = (
-            rest_text(change.seconds, lang)
-            if change.seconds is not None
-            else t("duration.meters", lang, m=change.meters)
-        )
+        if change.seconds is not None:
+            target, current = rest_text(change.seconds, lang), rest_text(change.from_target, lang)
+        else:
+            target = t("duration.meters", lang, m=change.meters)
+            current = t("duration.meters", lang, m=change.from_target)
         return t(
             "recap.suggestion_target",
             lang,
             name=_name(catalog, change.exercise_id, lang),
             target=target,
+            current=current,
         )
     assert isinstance(change, ChangeReps)
     return t(

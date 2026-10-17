@@ -219,21 +219,20 @@ async def recent_completed_set_logs(
     `recent_session_outcomes`), each session's rows in creation order. Imported history
     (`import_hash` set) is left out: it never counts as a success for progression (A§7.3)."""
     async with conn.execute(
-        f"SELECT {_SET_LOG_COLUMNS} FROM set_logs s "
-        "JOIN workout_sessions w ON w.id = s.session_id "
-        "WHERE w.user_id = ? AND s.exercise_id = ? AND w.status = 'completed' "
-        "AND w.import_hash IS NULL "
-        "ORDER BY w.finished_at DESC, w.id DESC, s.id ASC",
-        (user_id, exercise_id),
+        "WITH recent AS ("
+        "SELECT w.id, w.finished_at FROM workout_sessions w "
+        "WHERE w.user_id = ? AND w.status = 'completed' AND w.import_hash IS NULL "
+        "AND EXISTS (SELECT 1 FROM set_logs x WHERE x.session_id = w.id AND x.exercise_id = ?) "
+        "ORDER BY w.finished_at DESC, w.id DESC LIMIT ?) "
+        f"SELECT {_SET_LOG_COLUMNS} FROM set_logs s JOIN recent r ON r.id = s.session_id "
+        "WHERE s.exercise_id = ? "
+        "ORDER BY r.finished_at DESC, r.id DESC, s.id ASC",
+        (user_id, exercise_id, limit, exercise_id),
     ) as cursor:
         rows = await cursor.fetchall()
     sessions: dict[int, list[SetLogRecord]] = {}
     for row in rows:
-        if row[1] not in sessions:
-            if len(sessions) >= limit:
-                continue
-            sessions[row[1]] = []
-        sessions[row[1]].append(_set_log(row))
+        sessions.setdefault(row[1], []).append(_set_log(row))
     return list(sessions.values())
 
 

@@ -12,7 +12,8 @@ length by more than the estimate's tolerance. Then, until it fits:
 
 What is never touched: the warm-up, any block that directly trains the workout's main
 objective (its first `qualities` entry; without stated objectives, the power and strength
-blocks), the last working block, and every rest period — rest on heavy or fast work is what
+blocks), the last working block (in a mobility-only session, the last mobility block), and
+every rest period — rest on heavy or fast work is what
 keeps it heavy or fast, so a workout is made shorter, never denser.
 
 Priority, lowest first: accessory, core, cool-down mobility, conditioning, then other power
@@ -116,13 +117,20 @@ def fit_workout(
     changes: list[str] = []
 
     def remove(block: Block) -> bool:
+        roles = block_roles(workout, catalog)
         working = [
             other
-            for other, role in zip(workout.blocks, block_roles(workout, catalog), strict=True)
+            for other, role in zip(workout.blocks, roles, strict=True)
             if role not in (BlockRole.WARM_UP, BlockRole.MOBILITY)
         ]
+        if not working:  # a mobility-only session: its mobility blocks are the work
+            working = [
+                other
+                for other, role in zip(workout.blocks, roles, strict=True)
+                if role != BlockRole.WARM_UP
+            ]
         if any(other is block for other in working) and len(working) <= 1:
-            return False  # never the last working block
+            return False  # never the last working block: a workout is never emptied
         workout.blocks = [other for other in workout.blocks if other is not block]
         changes.append(f"removed {_names(block)}")
         return True

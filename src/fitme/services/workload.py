@@ -20,9 +20,9 @@ footwork drill and a stretch don't count the same:
 Regions are the overlaps worth watching across a week: the **hip hinge** (deadlifts,
 Romanian deadlifts, hip thrusts — and kettlebell swings, which the catalog files as
 conditioning but which load the hips and lower back the same way), **knee-dominant legs**
-(squats, lunges, and every jump or sprint) and the **shoulders** (pressing, pulling, raises,
-and upper-body conditioning like battle ropes). `services.plan_quality` turns the tally into
-warnings; nothing here refuses a plan.
+(squats, lunges, and every jump or sprint, plyometric or conditioning) and the
+**shoulders** (pressing, pulling, raises, and upper-body conditioning like battle ropes).
+`services.plan_quality` turns the tally into warnings; nothing here refuses a plan.
 """
 
 from __future__ import annotations
@@ -193,7 +193,14 @@ def regions_of(exercise: Exercise, stimulus: Stimulus) -> frozenset[Region]:
     )
     if hinge_like:
         found.add(Region.HINGE)
-    if exercise.pattern == ExercisePattern.SQUAT or stimulus == Stimulus.PLYOMETRIC:
+    # Jumps and sprints load the knees whatever their stimulus: a plyometric, or cardio such
+    # as jump rope or sprint intervals done as conditioning.
+    lower_cardio = (
+        stimulus == Stimulus.CONDITIONING
+        and exercise.kind == ExerciseKind.CARDIO
+        and "knee" in areas
+    )
+    if exercise.pattern == ExercisePattern.SQUAT or stimulus == Stimulus.PLYOMETRIC or lower_cardio:
         found.add(Region.KNEE)
     upper_body = exercise.pattern in _SHOULDER_PATTERNS or (
         exercise.pattern == ExercisePattern.CONDITIONING and stimulus == Stimulus.CONDITIONING

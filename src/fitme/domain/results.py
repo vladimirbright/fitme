@@ -107,12 +107,15 @@ class ChangeSets(BaseModel):
 class ChangeTarget(BaseModel):
     """A `PlanChange` (ADR 0016): change one timed or distance exercise's per-set target —
     a longer hold, a longer interval, a longer carry. Exactly one of `seconds` / `meters`,
-    matching the prescription's measure. Carries no load (see module docstring)."""
+    matching the prescription's measure, and `from_target` — the seconds or meters it was
+    decided from, so a change made stale by a later edit is never applied. Made by
+    `services.progression` only, never by a model. Carries no load (see module docstring)."""
 
     model_config = _STRICT_CONFIG
 
     kind: Literal["change_target"] = "change_target"
     exercise_id: str
+    from_target: Annotated[int, Field(ge=5, le=MAX_SET_SECONDS)]
     seconds: Annotated[int, Field(ge=5, le=MAX_SET_SECONDS)] | None = None
     meters: Annotated[int, Field(ge=5, le=MAX_SET_METERS)] | None = None
 
