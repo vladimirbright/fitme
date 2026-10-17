@@ -27,7 +27,8 @@ make migrate / make serve     # apply migrations / run bot + web + retention in 
 
 A checked-in Claude Code hook (`.claude/settings.json` → `.claude/hooks/ruff_autofix.sh`)
 runs ruff's safe autofixes (except F401, so an import added ahead of its first use survives)
-and the formatter on every edited `.py` file. It never blocks; `make precommit` is the gate.
+and the formatter on every edited `.py` file, from that file's own worktree root (main
+checkout or any worktree of this repo). It never blocks; `make precommit` is the gate.
 
 `make llm-eval` calls a real model and spends money — never run it unprompted. Tests always
 fake the LLM (`pydantic_ai.models.test` / `FunctionModel`) and use a real migrated temp
