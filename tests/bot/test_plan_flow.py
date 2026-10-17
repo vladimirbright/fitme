@@ -12,12 +12,13 @@ from typing import Any
 
 import pytest
 from aiogram import Bot, Dispatcher
-from aiogram.methods import AnswerCallbackQuery, SendMessage
+from aiogram.methods import AnswerCallbackQuery, DeleteMessage, SendMessage
 from pydantic_ai.messages import ModelMessage, ModelRequest, ModelResponse, ToolCallPart
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
 from conftest import FakeSession, callback_update, make_user, message_update
 from fitme import clock
+from fitme.bot import waiting
 from fitme.bot.app import build_dispatcher
 from fitme.bot.callback_data import PlanDraft, PlanMenu, TrainPick
 from fitme.config.settings import Settings
@@ -314,6 +315,34 @@ async def test_change_something_revises_over_free_text_and_confirm_saves_the_rev
     await _send(dispatcher, bot, "hello")
     assert _sent_messages(session)[-1].text == t("unknown.free_text_hint", "en")
     assert llm.calls == 2
+
+
+def _assert_animated_then_drafted(turn: list[Any], status: str) -> None:
+    """`turn`: the status message, then the animated placeholder (`bot/waiting.py`) while the
+    model works, deleted before the draft is sent."""
+    sends = [m for m in turn if isinstance(m, SendMessage)]
+    status_message, placeholder, draft = sends[0], sends[1], sends[-1]
+    assert status_message.text == status
+    assert placeholder.text in {waiting.frames(runner)[0] for runner in waiting.RUNNERS}
+    deletes = [m for m in turn if isinstance(m, DeleteMessage)]
+    assert len(deletes) == 1 and turn.index(deletes[0]) < turn.index(draft)
+    assert (draft.text or "").startswith(t("plan.draft_title", "en"))
+
+
+async def test_generating_and_revising_animate_a_placeholder_until_the_draft(
+    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
+) -> None:
+    await _ready(dispatcher, bot, db)
+    llm.responses.append(make_plan())
+    before = len(session.sent)
+    first_id = await _new_draft(dispatcher, bot, session)
+    _assert_animated_then_drafted(session.sent[before:], t("plan.generating", "en"))
+
+    await _click(dispatcher, bot, PlanDraft(action="change", decision_id=first_id))
+    llm.responses.append(make_plan(name="Revised plan"))
+    before = len(session.sent)
+    await _send(dispatcher, bot, "no superset please")
+    _assert_animated_then_drafted(session.sent[before:], t("plan.revising", "en"))
 
 
 async def test_stop_word_in_revise_text_halts_with_no_llm_call(
