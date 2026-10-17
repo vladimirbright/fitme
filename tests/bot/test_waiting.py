@@ -15,8 +15,8 @@ from aiogram.exceptions import TelegramBadRequest, TelegramRetryAfter
 from aiogram.methods import DeleteMessage, EditMessageText, SendMessage, TelegramMethod
 from aiogram.methods.base import TelegramType
 from aiogram.types import Chat, Message
-from conftest import TEST_TOKEN, FakeSession
 
+from conftest import TEST_TOKEN, FakeSession
 from fitme.bot import waiting
 from fitme.bot.waiting import WaitingMessage, frames, waiting_message
 
