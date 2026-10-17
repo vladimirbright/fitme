@@ -150,6 +150,7 @@ from fitme.domain.models import (
     Workout,
     is_activity_id,
     plausible_declared_kg,
+    storage_body,
 )
 from fitme.domain.screening import ScreeningFlagState
 from fitme.guards.context import GuardContext
@@ -1036,7 +1037,7 @@ def draft_proposal(
     (M8b) also records `declared_loads` (what the pasted plan said per exercise) and
     `unmatched` (its exercise names that map to no allowed id)."""
     proposal: dict[str, object] = {
-        "plan": plan.model_dump(mode="json"),
+        "plan": storage_body(plan),
         "proposed_load_changes": [
             change.model_dump(mode="json") for change in proposed_load_changes
         ],
@@ -1064,7 +1065,7 @@ def refusal_proposal(
     the offending value or any request/response body."""
     proposal: dict[str, object] = {"refusal": refusal.model_dump(mode="json")}
     if rejected_plan is not None:
-        proposal["rejected_plan"] = rejected_plan.model_dump(mode="json")
+        proposal["rejected_plan"] = storage_body(rejected_plan)
     if cause is not None:
         proposal["cause"] = cause
     return proposal
@@ -2114,7 +2115,7 @@ async def confirm_plan(
             conn,
             plan_id=plan_id,
             version=version,
-            body=plan.model_dump(mode="json"),
+            body=storage_body(plan),
             origin=_ORIGIN_IMPORT if decision.kind == DecisionKind.PLAN_IMPORT else _ORIGIN_LLM,
             decision_id=confirm_decision_id,
         )

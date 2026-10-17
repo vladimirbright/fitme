@@ -48,7 +48,7 @@ from fitme.db.selectors.plans import get_latest_plan_version
 from fitme.domain.catalog import Exercise
 from fitme.domain.enums import DecisionKind
 from fitme.domain.guard_types import GuardVerdict
-from fitme.domain.models import MAX_IMPLEMENT_KG, MAX_TOTAL_KG, LoadChange, Plan
+from fitme.domain.models import MAX_IMPLEMENT_KG, MAX_TOTAL_KG, LoadChange, Plan, storage_body
 from fitme.guards.context import GuardContext
 from fitme.guards.plan import at_location, prescription_verdicts
 from fitme.services import exclusions, planning
@@ -228,7 +228,7 @@ async def save_edit(
                 # increases_7d (the weekly cap), which is unaffected by this tag.
                 "over_cap_exercises": sorted(warnings) if warnings else [],
             },
-            proposal={"plan": edited.model_dump(mode="json")},
+            proposal={"plan": storage_body(edited)},
             guards_fired=[verdict.model_dump() for verdict in fired],
             load_changes=load_changes,
         )
@@ -236,7 +236,7 @@ async def save_edit(
             conn,
             plan_id=plan_id,
             version=version,
-            body=edited.model_dump(mode="json"),
+            body=storage_body(edited),
             origin="user_edit",
             decision_id=decision_id,
         )

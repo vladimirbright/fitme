@@ -111,15 +111,17 @@ in the code. No button sets it any more.
   `experiment/llm-first-planning` to use the planner and `main` to go back.
 - `FITME_LLM_AGENT_PLANNER=<provider:model>` sets the planner's model. Without it the planner
   uses the large tier, `FITME_LLM_TIER_LARGE`. Other agents are configured as before.
-- Before going back to `main`, read the data caveat in §9: `main` cannot read plans
-  written on the branch. Use a copy of the database (`FITME_DB_PATH`).
+- Before going back to `main`, read the data caveat in §9: `main` cannot read a plan
+  that uses an activity item or a plan location. Delete those plans first. Testing on a copy
+  of the database (`FITME_DB_PATH`) is the safe default.
 
 ## 6. Database changes
 
 None. No migration was added.
 
 - `plan_versions.body` and `decisions.proposal` are JSON. `activity_name` and `location` are
-  new keys in the body.
+  new keys in the body, written only when set (`domain.models.storage_body`), so a body of a
+  plan without activity items or a location has `main`'s shape.
 - `set_logs.planned_seconds` / `actual_seconds` have only a lower-bound CHECK, so 5400 s
   fits.
 - Decision kinds are reused: a staged plan is a `plan_revise` draft round with
@@ -225,11 +227,14 @@ Each item was checked in the code at 4ed05d6.
 
 **Data and going back**
 
-1. **`main` cannot read plans written on the branch.** `main`'s domain models use
-   `extra="forbid"`. The branch dumps `location` and `activity_name` (as `null` when unused)
-   into every plan body. Validating a branch body of a one-push-up plan against `main`'s
-   `Plan` gives two `extra_forbidden` errors. Old bodies parse on the branch, not the other
-   way round. Test against a copy of the database.
+1. **`main` cannot read a plan that uses an activity item or a plan location.** `main`'s
+   domain models use `extra="forbid"`. Stored bodies leave `location` and `activity_name` out
+   while unset (`domain.models.storage_body`), so every other plan written on the branch
+   parses on `main` (`tests/integration/db/test_storage_body.py` checks this against a copy
+   of `main`'s models). A plan with an activity item or a location does not; delete it
+   (`/plan` → delete) before switching back. Bodies written by branch builds before
+   `storage_body` existed still carry `"location": null` and `"activity_name": null`; `main`
+   refuses those too. Testing on a copy of the database is still the safe default.
 
 **Activity items and area flags**
 
@@ -364,7 +369,8 @@ The rendered input (context, state, history) is added to both. Its size was not 
    conflict.
 2. In the worktree (or a checkout of the branch), copy `.env` from the main checkout. Point
    `FITME_DB_PATH` at a **copy** of the database (`fitme backup --out DIR`, or copy
-   `fitme.db` while the bot is stopped). §9 item 1 explains why.
+   `fitme.db` while the bot is stopped). This is the safe default: §9 item 1 says which
+   plans `main` could not read afterwards.
 3. Run `make migrate` (a no-op: the branch adds no migration), then `make serve`.
 4. Optional: set `FITME_LLM_AGENT_PLANNER` to pick the planner's model.
 
@@ -431,8 +437,8 @@ right kinds of things, and the transcripts say whether the answer made sense.
 | 8 | Strength still supports history and set logging | met | Load engine and ceiling on staged plans (`test_a_load_above_the_guards_…`), `history_loads` check in `f_g_strength`, unchanged `/train`. |
 | 9 | History used without fabrication | met by plumbing only, pending live eval | Guards cap any kg at logged max plus one increment. `calibration` without history (`test_a_barbell_to_dumbbell_swap_…`). The model's use of history is untested live. |
 | 10 | No new sports-science subsystems | met | The branch adds no rule engine. The new guard is a fail-closed activity verdict. Content layers are bypassed, not added. |
-| 11 | Experiment isolated from legacy | met at branch level, partly within the branch | Separate branch, nothing deleted, `AgentScope` keeps legacy output as before. But shared domain, guards and bot handlers changed, there is no flag, and `main` cannot read plans saved on the branch (§9 item 1). |
-| 12 | Existing saved workouts remain compatible | met in one direction | `test_a_plan_body_stored_before_activities_and_location_still_parses`: old bodies parse on the branch. Branch bodies do not parse on `main` (§9 item 1). |
+| 11 | Experiment isolated from legacy | met at branch level, partly within the branch | Separate branch, nothing deleted, `AgentScope` keeps legacy output as before. But shared domain, guards and bot handlers changed, there is no flag, and `main` cannot read a branch plan that uses an activity item or a plan location (§9 item 1). |
+| 12 | Existing saved workouts remain compatible | met, except plans using the new features | `test_a_plan_body_stored_before_activities_and_location_still_parses`: old bodies parse on the branch. `test_storage_body.py`: branch bodies of plans without activity items or a location parse with `main`'s models; plans with either must be deleted before switching back (§9 item 1). |
 | 13 | Substantially simpler to reason about | met for the per-message path, not for the codebase | About 134 planner-only lines plus an 85-line prompt replace about 2522 generation-only lines on that path. The codebase grew by +2495 lines in `src/` because legacy is kept (§10). |
 | 14 | Scenarios exercisable end to end | met (scripted); live run pending | A and E run from message to saved plan to `/train` set logs in `test_planner_flow.py`. All six fixtures replay in both modes in `test_eval_conversations.py`. The live harness exists (`make llm-eval-conversations`). |
 

@@ -99,6 +99,7 @@ from fitme.domain.models import (
     Prescription,
     ScheduledDay,
     Workout,
+    storage_body,
 )
 from fitme.guards.plausibility import check_parsed_load
 from fitme.services import planning
@@ -802,7 +803,9 @@ async def _judge_plans(
         conn, user_id, origin=_ORIGIN_IMPORT
     ):
         saved_plan = Plan.model_validate(body)
-        known_bodies[_canonical(body)] = _PlanLinkTarget(
+        # Compared in storage form: a body stored with explicit nulls for the newer
+        # keys still matches the same plan imported again.
+        known_bodies[_canonical(storage_body(saved_plan))] = _PlanLinkTarget(
             name=saved_plan.name,
             schedule=tuple(saved_plan.schedule),
             workout_keys=frozenset(workout.key for workout in saved_plan.workouts),
@@ -812,7 +815,7 @@ async def _judge_plans(
     for item in plans:
         plan = item.plan.model_copy(deep=True)
         judgement = planning.judge_import(plan, inputs)
-        body = plan.model_dump(mode="json")
+        body = storage_body(plan)
         canonical = _canonical(body)
         existing_target = known_bodies.get(canonical)
         if existing_target is not None:
@@ -856,7 +859,7 @@ async def _write_plans(
             continue
         assert resolution.target is not None
         plan = resolution.plan
-        body = plan.model_dump(mode="json")
+        body = storage_body(plan)
         plan_id = await insert_plan(
             conn,
             user_id=user_id,

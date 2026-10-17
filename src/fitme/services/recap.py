@@ -90,7 +90,7 @@ from fitme.domain.enums import (
     WorkoutSessionStatus,
 )
 from fitme.domain.guard_types import GuardVerdict
-from fitme.domain.models import Load, Plan, Prescription, Refusal, Workout
+from fitme.domain.models import Load, Plan, Prescription, Refusal, Workout, storage_body
 from fitme.domain.results import ChangeReps, ChangeSets, ChangeTarget, PlanChange, SwapExercise
 from fitme.guards.plan import at_location, prescription_verdicts
 from fitme.i18n import wording
@@ -1218,7 +1218,7 @@ async def apply_suggestion(
             conn,
             plan_id=ctx.plan_record.id,
             version=version,
-            body=modified.model_dump(mode="json"),
+            body=storage_body(modified),
             origin=_ORIGIN_PROGRESSION,
             decision_id=confirm_id,
         )
