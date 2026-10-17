@@ -112,8 +112,8 @@ in the code. No button sets it any more.
 - `FITME_LLM_AGENT_PLANNER=<provider:model>` sets the planner's model. Without it the planner
   uses the large tier, `FITME_LLM_TIER_LARGE`. Other agents are configured as before.
 - Before going back to `main`, read the data caveat in §9: `main` cannot read a plan
-  that uses an activity item or a plan location. Delete those plans first. Testing on a copy
-  of the database (`FITME_DB_PATH`) is the safe default.
+  that uses an activity item, a plan location or a timed set longer than 60 minutes. Delete
+  those plans first. Testing on a copy of the database (`FITME_DB_PATH`) is the safe default.
 
 ## 6. Database changes
 
@@ -121,9 +121,10 @@ None. No migration was added.
 
 - `plan_versions.body` and `decisions.proposal` are JSON. `activity_name` and `location` are
   new keys in the body, written only when set (`domain.models.storage_body`), so a body of a
-  plan without activity items or a location has `main`'s shape.
+  plan without activity items, a location or a timed set over 3600 s (`main`'s cap) has
+  `main`'s shape.
 - `set_logs.planned_seconds` / `actual_seconds` have only a lower-bound CHECK, so 5400 s
-  fits.
+  fits. Logged sets of an activity item keep their `activity:` id.
 - Decision kinds are reused: a staged plan is a `plan_revise` draft round with
   `user_report.base = "planner_stage"`, and Save is `plan_confirm`. `prompt_template =
   planner`, `llm_calls.purpose = planner`.
@@ -227,12 +228,15 @@ Each item was checked in the code at 4ed05d6.
 
 **Data and going back**
 
-1. **`main` cannot read a plan that uses an activity item or a plan location.** `main`'s
-   domain models use `extra="forbid"`. Stored bodies leave `location` and `activity_name` out
-   while unset (`domain.models.storage_body`), so every other plan written on the branch
-   parses on `main` (`tests/integration/db/test_storage_body.py` checks this against a copy
-   of `main`'s models). A plan with an activity item or a location does not; delete it
-   (`/plan` → delete) before switching back. Bodies written by branch builds before
+1. **`main` cannot read a plan that uses an activity item, a plan location or a timed set
+   longer than 60 minutes.** `main`'s domain models use `extra="forbid"` and cap
+   `Prescription.seconds` at 3600 (the branch allows 10800). Stored bodies leave `location`
+   and `activity_name` out while unset (`domain.models.storage_body`), so every other plan
+   written on the branch parses on `main` (`tests/integration/db/test_storage_body.py`
+   checks this against a copy of `main`'s models and bounds). A plan with any of the three
+   does not; delete it (`/plan` → delete) before switching back. Logged sets with
+   `activity:` ids remain in `set_logs` after the plan is deleted, and `main` shows them by
+   their raw id. Bodies written by branch builds before
    `storage_body` existed still carry `"location": null` and `"activity_name": null`; `main`
    refuses those too. Testing on a copy of the database is still the safe default.
 
@@ -271,7 +275,10 @@ Each item was checked in the code at 4ed05d6.
 10. Messages during precheck or review (a `/train` session exists but is not started) go to
     the legacy assistant, which can still call `rewrite_plan` / `new_plan`.
 11. An exclusion stated in a session-less talk about a saved plan stays on that plan even if
-    the draft is then cancelled (deliberate).
+    the draft is then cancelled (deliberate). Related, and rare: tapping Change on an older
+    draft that is still current, while a draftless new-plan talk holds exclusions (the talk
+    opened after the draft's session idled out), moves those exclusions to the draft's
+    plan, and Confirm then judges the draft with them.
 12. The planner's context is the full profile context: focus, preferences, every exercise's
     history, and the allowed ids for the profile location. ADR 0017's "understood request:
     physical data only" filter is not applied. The prompt says the profile is a default, not
@@ -296,7 +303,7 @@ Each item was checked in the code at 4ed05d6.
 | Axis (§14) | Planner (experimental) | Legacy (generation pipeline) |
 |---|---|---|
 | Intent fidelity | **Only the live eval can answer.** Scripted tests show that what the model stages is what gets saved and trained, with no converter in between. | Same: live eval. Scripted: it cannot represent a BJJ class or an outdoor plan location, so E fails structurally. |
-| Conversational coherence | The model sees the session's last 100 messages and the current draft in every turn (tested). Corrections reconsider the whole plan because the model re-stages it whole. Whether it does that sensibly is for the live eval. | The legacy assistant sees history too, but a redesign goes to `plan_revise`, which sees only the request text plus the brief (ADR 0017). |
+| Conversational coherence | The model sees the session's last 100 messages and the current draft in every turn (tested). Corrections reconsider the whole plan because the model re-stages it whole. Whether it does that sensibly is for the live eval. | The legacy assistant sees history too, but a redesign goes to `plan_revise`, which sees the current plan, the request and the brief (ADR 0017), not the conversation. |
 | Simplicity | One agent run per message. The content is the model's. The app validates. | Request reader → brief → pool → `plan_generate` (≤2 attempts) → time budget → review → repair; then `plan_revise` per redesign. |
 | Practicality | Plain-language answers, then a plan. Activity items let a class or a walk be logged as what it is. | Every answer is a plan or a refusal. Activities must map to catalog ids. |
 | User effort | **Only the live eval can answer** (corrections per scenario, human verdict). Scripted tests show that one message can stage and save ("Looks good. Save it."). | Same: live eval. |
@@ -305,7 +312,7 @@ Each item was checked in the code at 4ed05d6.
 | Implementation complexity | See the numbers below. | See the numbers below. |
 | Operational cost | One large-tier run per message, ≥2 requests per staging turn, the whole plan as output tokens each time. Not measured live. | Assistant (medium) + `plan_generate` (large, ≤2 attempts) per new plan, assistant + `plan_revise` (medium, +1 escalation to large) per redesign. Not measured live. |
 
-**Numbers**, all computed at 4ed05d6.
+**Numbers**, all computed at 5f4d7ea.
 
 Code that runs only on the generation path:
 
@@ -314,16 +321,24 @@ Code that runs only on the generation path:
   `_round_from_escalation`, `existing_plans_summary`, `_log_attempt`, `_record_refusal`,
   `_resolve_base`, `_draft_plan`, `_unwrap`, `_set_aside_later_attempts` and
   `_no_allowed_exercises`: **705 lines**;
-- whole modules: `plan_quality.py` 861, `workload.py` 286, `time_budget.py` 265,
-  `plan_request.py` 248, `programming.py` 157: **1817 lines**;
-- total: **about 2522 lines**.
+- modules: `plan_quality.py` without its display part (861 − 127 = 734), `workload.py`
+  286, `plan_request.py` 248, `programming.py` 157: **1425 lines**;
+- total: **about 2130 lines**.
 
 Code that runs only on the planner path:
 
 - `_Turn.stage_plan` 64, `_inputs_for` 16, `_any_location_ids` 18 and `_facts` 14 in
   `services/assistant.py`;
-- `_stage_plan` and `planner_agent` in `llm/agents.py`: 22;
-- total: **about 134 lines**, plus the 85-line prompt.
+- `_stage_plan` and `planner_agent` in `llm/agents.py`: 22, and `_PLANNER_TOOLS`: 22;
+- `show_staged_draft` in `bot/handlers/plan.py`: 58;
+- `_retarget` and `_has_current_draft` in `services/conversations.py`: 11;
+- the routing, auto-open, retarget and `carry` lines in `services/assistant.py` and
+  `record_edit_draft`: about 40;
+- total: **about 265 lines**, plus the 85-line prompt.
+
+Shared (display): `time_budget.py` (265 lines: `render_plan_text` → `duration_warning`, and
+the web `_plan_body.html`) and the `block_roles` / `block_relevance` part of
+`plan_quality.py` with its helpers (127 lines), which `time_budget` uses: **392 lines**.
 
 Shared by both paths:
 
@@ -377,15 +392,16 @@ The rendered input (context, state, history) is added to both. Its size was not 
 **Scenario script**
 
 Send each message as plain text; Russian first, then English. Start each scenario with
-`/plan` → **New plan** / **Новый план**. The bot asks "What should the plan be?" (also with
-no plans yet). Answer with the first message.
+`/plan` → **New plan** / **Новый план**. With no plans yet the bot asks "What should the plan
+be?" (`plan.new_first_prompt`); with plans it asks "You already have: … What should the new
+plan be?" (`plan.new_guidance_prompt`). Answer with the first message.
 
 | Step | Russian | English | Expect |
 |---|---|---|---|
 | A | Давай разок в неделю по субботам легкую беговую на свежем воздухе. Мне надо понять как разминаться, как бежать | Let's do an easy outdoor run once a week, on Saturdays. I need to learn how to warm up and how to run. | A plain-language proposal (warm-up, run or run/walk, cool-down) ending with an offer to put it into a plan. No buttons, nothing saved. |
 | A (agree) | Выглядит хорошо | Looks good | The whole draft "Proposed plan (draft):" with "Where: Outdoors / park", Saturday, no kg, and **Подтвердить / Изменить что-то / Отмена** (**Confirm / Change something / Cancel**). |
-| B | Убери скакалку | Remove the jump rope, I won't take one on a run. | A new whole draft. Check that nothing needing equipment replaced the rope. |
-| C | Зачем мне брать гантели на пробежку? Убери их | Why would I bring dumbbells on a run? Take them out. | A new draft with no dumbbells, barbells, kettlebells or machines. |
+| B | Убери скакалку | Remove the jump rope, I won't take one on a run. | (If the draft has one.) A new whole draft. Check that nothing needing equipment replaced the rope. |
+| C | Зачем мне брать гантели на пробежку? Убери их | Why would I bring dumbbells on a run? Take them out. | (If the draft has them.) A new draft with no dumbbells, barbells, kettlebells or machines. |
 | H | Выглядит хорошо. Сохрани. | Looks good. Save it. | "Plan … saved as version 1", with no Confirm button under the plan. Alternatively, tap **Confirm** on the last draft. |
 | H (train) | `/train` on Saturday, or pick the plan | `/train` | **Start this workout** → the safety precheck ("Since your last session, have you had pain…?", answer **No**) → **▶ Start** → blocks one by one with **✅ Done as planned** / **⏭ Skip** / **⚠ Pain / feeling unwell**. Timed items log seconds and no kg. |
 | D | Хочу бегать около часа | I want to run for about an hour | A question (an hour of running, or an hour-long session?) or a stated interpretation. Then answer "Ок, давай" / "Ok, do that." and expect a draft with a run and no strength work. The Russian line is not in the fixtures. |
@@ -432,14 +448,14 @@ right kinds of things, and the transcripts say whether the answer made sense.
 | 3 | BJJ not auto-interpreted as strength | met by plumbing only, pending live eval | An activity item represents a class (`test_bjj_twice_a_week_…`). The question is in the prompt. Not run live. |
 | 4 | Conversational edits preserve intent | met by plumbing only, pending live eval | Draft and history reach the next turn (`test_a_change_sees_the_draft_…`). Re-staging is whole-plan. Fidelity is untested live. |
 | 5 | Activities not in the catalog can be recommended | met | `activity:` items staged, saved, trained and logged (`test_bjj_twice_a_week_…`, `tests/integration/db/test_activity_plans.py`). Refused with an area flag "yes" (by design). |
-| 6 | Persistence does not distort the agreed workout | met (for the staged plan) | `confirm_plan` saves the staged plan unchanged except guard load substitution and measure/intensity repair, which are reported (`assert bodies == [staged]` in the A and E tests). Whether the staged plan matches the prose proposal is for the live eval. |
+| 6 | Persistence does not distort the agreed workout | met (for the staged plan) | `confirm_plan` saves the staged plan unchanged except guard load substitution and measure/intensity repair: measure repair and an rir drop are reported; a default rir on a calibration load is added silently (`assert bodies == [staged]` in the A and E tests). Whether the staged plan matches the prose proposal is for the live eval. |
 | 7 | Existing Telegram buttons remain useful | met | Confirm / Change something / Cancel, Revise, New plan, `/train` buttons, set logging, all tested in `test_planner_flow.py`. |
 | 8 | Strength still supports history and set logging | met | Load engine and ceiling on staged plans (`test_a_load_above_the_guards_…`), `history_loads` check in `f_g_strength`, unchanged `/train`. |
 | 9 | History used without fabrication | met by plumbing only, pending live eval | Guards cap any kg at logged max plus one increment. `calibration` without history (`test_a_barbell_to_dumbbell_swap_…`). The model's use of history is untested live. |
 | 10 | No new sports-science subsystems | met | The branch adds no rule engine. The new guard is a fail-closed activity verdict. Content layers are bypassed, not added. |
-| 11 | Experiment isolated from legacy | met at branch level, partly within the branch | Separate branch, nothing deleted, `AgentScope` keeps legacy output as before. But shared domain, guards and bot handlers changed, there is no flag, and `main` cannot read a branch plan that uses an activity item or a plan location (§9 item 1). |
-| 12 | Existing saved workouts remain compatible | met, except plans using the new features | `test_a_plan_body_stored_before_activities_and_location_still_parses`: old bodies parse on the branch. `test_storage_body.py`: branch bodies of plans without activity items or a location parse with `main`'s models; plans with either must be deleted before switching back (§9 item 1). |
-| 13 | Substantially simpler to reason about | met for the per-message path, not for the codebase | About 134 planner-only lines plus an 85-line prompt replace about 2522 generation-only lines on that path. The codebase grew by +2495 lines in `src/` because legacy is kept (§10). |
+| 11 | Experiment isolated from legacy | met at branch level, partly within the branch | Separate branch, nothing deleted, `AgentScope` keeps legacy output as before. But shared domain, guards and bot handlers changed, there is no flag, and `main` cannot read a branch plan that uses an activity item, a plan location or a timed set over 60 minutes (§9 item 1). |
+| 12 | Existing saved workouts remain compatible | met, except plans using the new features | `test_a_plan_body_stored_before_activities_and_location_still_parses`: old bodies parse on the branch. `test_storage_body.py`: branch bodies of plans without activity items, a location or a timed set over 60 minutes parse with `main`'s models and bounds; plans with any of them must be deleted before switching back, and their activity set logs stay (§9 item 1). |
+| 13 | Substantially simpler to reason about | met for the per-message path, not for the codebase | About 265 planner-only lines plus an 85-line prompt replace about 2130 generation-only lines on that path (392 more lines are shared display code). The codebase grew by +2495 lines in `src/` because legacy is kept (§10). |
 | 14 | Scenarios exercisable end to end | met (scripted); live run pending | A and E run from message to saved plan to `/train` set logs in `test_planner_flow.py`. All six fixtures replay in both modes in `test_eval_conversations.py`. The live harness exists (`make llm-eval-conversations`). |
 
 Plans on this path, like every plan in FitMe, are AI-generated and checked by deterministic

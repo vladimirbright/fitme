@@ -6,9 +6,10 @@ and `activity_name` out while they are unset, and every write of a body goes thr
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+import pytest
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from test_activity_plans import outdoor_plan, seed_gym_profile
 from test_planning_service import _settings
 
@@ -33,21 +34,21 @@ _STRICT = ConfigDict(extra="forbid")
 class MainLoad(BaseModel):
     model_config = _STRICT
     kind: Literal["kg", "bodyweight", "calibration"]
-    kg: float | None = None
+    kg: Annotated[float, Field(gt=0)] | None = None
 
 
 class MainPrescription(BaseModel):
     model_config = _STRICT
     exercise_id: str
-    sets: int
+    sets: Annotated[int, Field(ge=1, le=10)]
     measure: str = "reps"
-    reps_min: int | None = None
-    reps_max: int | None = None
-    seconds: int | None = None
-    meters: int | None = None
-    rir: int | None = None
+    reps_min: Annotated[int, Field(ge=1, le=50)] | None = None
+    reps_max: Annotated[int, Field(ge=1, le=50)] | None = None
+    seconds: Annotated[int, Field(ge=5, le=3600)] | None = None  # main's MAX_SET_SECONDS
+    meters: Annotated[int, Field(ge=5, le=2000)] | None = None
+    rir: Annotated[int, Field(ge=0, le=5)] | None = None
     load: MainLoad
-    rest_seconds: int
+    rest_seconds: Annotated[int, Field(ge=0, le=600)]
     note: str | None = None
     declared_kg: float | None = None
 
@@ -147,6 +148,25 @@ def test_a_plan_with_a_location_and_an_activity_keeps_both_and_round_trips() -> 
     assert [i.get("activity_name") for i in items] == [None, None, "BJJ class"]
     assert "activity_name" not in items[0]
     assert Plan.model_validate(body) == plan
+
+
+def test_a_timed_set_longer_than_mains_limit_does_not_parse_on_main() -> None:
+    """`main` caps a timed set at 3600 s; the branch allows 10800 s (a class as one set).
+    A plan with such a set is one of those to delete before switching back."""
+    plan = _catalog_plan()
+    walk = Prescription(
+        exercise_id="brisk_walk",
+        sets=1,
+        measure=Measure.TIME,
+        seconds=5400,
+        load=Load(kind="bodyweight"),
+        rest_seconds=0,
+    )
+    plan.workouts[0].blocks.append(Block(kind="single", items=[walk]))
+    body = storage_body(plan)
+    assert "location" not in _keys(body) and "activity_name" not in _keys(body)
+    with pytest.raises(ValidationError, match="less than or equal to 3600"):
+        MainPlan.model_validate(body)
 
 
 def test_a_workout_is_stored_without_unset_activity_names() -> None:
