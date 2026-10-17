@@ -1185,6 +1185,11 @@ async def handle_message(
     ended_in = conversation
     if conversation is None or conversation.kind == conversations.PLANNING:
         ended_in = await conversations.current_planning(db, user_id) or conversation
+    if ended_in is None and agent_name == PLANNER_AGENT:
+        # The planner works over several messages (a proposal, then "looks good"): an
+        # exchange that started outside any session opens a new plan's planning session, so
+        # the next turn sees it in `history`.
+        ended_in = await conversations.open_planning(db, user_id, None)
     if ended_in is not None:
         moved = conversation is None or ended_in.id != conversation.id
         if chat_message_id is not None and moved:

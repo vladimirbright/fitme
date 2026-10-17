@@ -349,6 +349,17 @@ async def _open_conversations(db: Database, user_id: int) -> list[ConversationRe
         return await list_open_conversations(conn, user_id)
 
 
+async def _drafts_open(db: Database, user_id: int) -> list[int]:
+    """The draft ids of the open sessions. Experiment (llm-first planning): a planner turn
+    outside any session opens a new plan's planning session to remember the exchange, so
+    "nothing staged" means no draft, not no session."""
+    return [
+        record.draft_decision_id
+        for record in await _open_conversations(db, user_id)
+        if record.draft_decision_id is not None
+    ]
+
+
 # --- Planning sessions --------------------------------------------------------------------------
 
 
@@ -505,7 +516,7 @@ async def test_a_tool_error_lets_the_model_correct_itself_and_nothing_is_staged(
     llm.steps = [_edit(seeded.plan_id, swap), say("Такого упражнения нет в доступных.")]
     await _send(dispatcher, bot, "замени присед на тягу блока")
     assert llm.returns("edit_plan")[0]["ok"] is False
-    assert await _open_conversations(db, seeded.user_id) == []
+    assert await _drafts_open(db, seeded.user_id) == []
     assert _last_text(session).startswith("Такого упражнения нет в доступных.")
 
 
@@ -1033,7 +1044,7 @@ async def test_the_assistant_finds_exercises_and_ranked_substitutes(
     )
     assert {item["exercise_id"] for item in found} <= allowed
     assert {item["exercise_id"] for item in substitutes} <= allowed
-    assert await _open_conversations(db, seeded.user_id) == []  # nothing staged
+    assert await _drafts_open(db, seeded.user_id) == []  # nothing staged
 
 
 async def test_a_timed_and_a_distance_set_are_shown_and_logged_in_their_measure(
