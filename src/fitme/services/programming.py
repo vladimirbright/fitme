@@ -21,7 +21,7 @@ from collections.abc import Sequence
 
 from fitme.domain.enums import BlockRole, Preference, Quality
 from fitme.llm.context import UserContext
-from fitme.services import exercise_search
+from fitme.services import exercise_search, session_time
 
 # A session's usual block order (A§6.4): warm-up, fast work while fresh, the main lifts,
 # accessories, trunk, conditioning, mobility. A session uses only the parts it needs.
@@ -94,6 +94,16 @@ def split_wanted(context: UserContext, request: str | None) -> bool:
     return Preference.SPLIT in context.preferences or _SPLIT_RE.search(text) is not None
 
 
+def session_objectives(sessions_per_week: int, qualities: Sequence[Quality]) -> list[str]:
+    """ADR 0016: a suggested main objective per weekly session, spreading the main
+    qualities over the week in turn (two sessions, power and agility: one each) rather than
+    asking every session to cover all of them. Empty without requested qualities."""
+    main = list(qualities[:MAIN_QUALITIES])
+    if not main or sessions_per_week < 1:
+        return []
+    return [main[index % len(main)].value for index in range(sessions_per_week)]
+
+
 def brief(
     context: UserContext, qualities: Sequence[Quality], *, split_wanted: bool
 ) -> dict[str, object]:
@@ -105,9 +115,18 @@ def brief(
         "working_blocks_per_session": [low, high],
         "main_qualities": [quality.value for quality in qualities[:MAIN_QUALITIES]],
         "secondary_qualities": [quality.value for quality in qualities[MAIN_QUALITIES:]],
+        "session_objectives": session_objectives(context.sessions_per_week, qualities),
         "structure": structure(context.sessions_per_week, split_wanted=split_wanted),
         "session_order": [role.value for role in SESSION_ORDER],
         "fatigue_budget": fatigue_budget(context.sport_sessions_per_week),
+        # ADR 0016: the app estimates each workout's length and trims an over-long one by
+        # priority (`services.time_budget`); the model plans to fit it in the first place.
+        "time_budget": {
+            "session_minutes": context.session_minutes,
+            "tolerance": session_time.DEFAULT_MODEL.tolerance,
+            "estimated_by": "app",
+            "over_budget": "lowest-priority blocks are shortened, then removed; rests are kept",
+        },
     }
     if context.sport is not None:
         result["supporting_sport"] = {

@@ -349,6 +349,8 @@ async def test_revise_page_shows_the_current_plan_below_the_form(
     assert "Push-up" in body and "bodyweight" in body
     assert "22.5 kg each" in body and "pause at the bottom" in body
     assert "calibration" in body
+    # ADR 0016: each workout's length, labelled as an estimate.
+    assert body.count("min (estimated from the sets and rests, not measured)") == 2
 
     # The very same partial renders the detail page.
     detail = await client.get(f"/app/plans/{plan_id}")
