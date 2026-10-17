@@ -200,6 +200,10 @@ class NextTarget(BaseModel):
     exercise_id: str
     kind: TargetKind
     reason: str
+    # The rep range it was decided from (reps prescriptions only): Apply refuses a rep change
+    # as stale once the plan's range for the exercise is no longer this one.
+    from_reps_min: int | None = None
+    from_reps_max: int | None = None
 
 
 class RecapProposal(BaseModel):
@@ -421,7 +425,13 @@ def _targets(
                 continue
             decision = progression.next_target(single, exercise, history.get(exercise.id, []))
             targets.append(
-                NextTarget(exercise_id=exercise.id, kind=decision.kind, reason=decision.reason)
+                NextTarget(
+                    exercise_id=exercise.id,
+                    kind=decision.kind,
+                    reason=decision.reason,
+                    from_reps_min=single.reps_min,
+                    from_reps_max=single.reps_max,
+                )
             )
             if decision.change is not None:
                 changes.append(decision.change)
@@ -751,6 +761,32 @@ def _one_target(plan: Plan, change: ChangeTarget) -> bool:
         if item.exercise_id == change.exercise_id and item.measure == measure
     }
     return targets == {change.from_target}
+
+
+def _same_reps(plan: Plan, change: ChangeReps, targets: Sequence[NextTarget]) -> bool:
+    """ADR 0016: a rep change the app decided (`targets`) still applies only while every
+    reps prescription of the exercise has the range it was decided from. A model's rep
+    change (no target for its exercise) is applied as before."""
+    decided = next(
+        (
+            target
+            for target in targets
+            if target.exercise_id == change.exercise_id
+            and target.kind in (TargetKind.MORE, TargetKind.LESS)
+            and target.from_reps_min is not None
+        ),
+        None,
+    )
+    if decided is None:
+        return True
+    ranges = {
+        (item.reps_min, item.reps_max)
+        for workout in plan.workouts
+        for block in workout.blocks
+        for item in block.items
+        if item.exercise_id == change.exercise_id and item.measure == Measure.REPS
+    }
+    return ranges == {(decided.from_reps_min, decided.from_reps_max)}
 
 
 def _change_exercise(change: PlanChange) -> str:
@@ -1103,6 +1139,8 @@ async def apply_suggestion(
             )
             if problems:
                 return ApplyResult(status=Status.STALE)
+        if isinstance(change, ChangeReps) and not _same_reps(base, change, proposal.targets):
+            return ApplyResult(status=Status.STALE)
         if isinstance(change, ChangeTarget) and not _one_target(base, change):
             # ADR 0016: a target change applies to every prescription of the exercise in its
             # measure; if any no longer has the target it was decided from, it isn't current.
