@@ -25,8 +25,8 @@ from fitme.db.connection import Database
 from fitme.db.records import SessionOutcome
 from fitme.db.selectors.decisions import applied_to_kg_by_exercise, recent_increase_deltas
 from fitme.db.selectors.training import historical_max_kg, recent_session_outcomes
-from fitme.domain.catalog import Exercise
-from fitme.domain.enums import CheckinAnswer
+from fitme.domain.catalog import Exercise, intensity_mode
+from fitme.domain.enums import CheckinAnswer, IntensityMode, Measure
 from fitme.domain.guard_types import GuardVerdict
 from fitme.domain.models import Load
 from fitme.guards.ceiling import check_ceiling
@@ -61,6 +61,9 @@ class LoadKind(StrEnum):
     CLAMPED = "clamped"  # a hold/decrease above the ceiling, clamped down to it
     CALIBRATION = "calibration"
     BODYWEIGHT = "bodyweight"
+    # ADR 0016: power, speed and agility work keeps its load; it progresses by speed and
+    # technique, not by the strength rule (`services.progression`).
+    HOLD_SPEED = "hold_speed"
 
 
 class BlockedBy(StrEnum):
@@ -220,6 +223,24 @@ def next_load(
 
     last = history.sessions[0]
     prescribed_kg = last.planned_load_kg
+
+    if intensity_mode(exercise, Measure.REPS) == IntensityMode.SPEED:
+        # ADR 0016: a throw, a swing or a jump isn't progressed by topping its reps — more
+        # load would slow it down. Hold at the load it was done with (the logged one after
+        # calibration), under the ceiling like every hold; never an increase, never the
+        # decrease rule (fewer reps on fast work is a cue to rest, not a sign of a load
+        # that is too heavy).
+        held_kg = prescribed_kg if prescribed_kg is not None else last.load_kg
+        if held_kg is None or not _is_valid_kg(held_kg):
+            return _calibration("speed work: nothing usable logged; calibration again", [])
+        return _within_ceiling(
+            held_kg,
+            "speed work: load held; progress by speed and clean technique",
+            [],
+            exercise=exercise,
+            history=history,
+            kind=LoadKind.HOLD_SPEED,
+        )
 
     if applied_to_kg_7d is not None and not _is_valid_kg(applied_to_kg_7d):
         return _calibration(

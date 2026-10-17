@@ -300,6 +300,9 @@ trains, and with its measure decides how its effort is regulated
 (`domain.catalog.intensity_mode`: reps in reserve, speed, carry, pace or none). `specific =
 true` marks a narrow technique drill or one variation of a broader activity (left hooks only):
 retrieval ranks it after general exercises and the review won't take it as a warm-up.
+ADR 0016: `unilateral = true` marks an exercise done one side at a time (all of a set on one
+arm or leg, then the other): its target is per side, the plan view says so, and the session
+estimate counts both sides. Alternating moves are not unilateral.
 
 **Search (ADR 0007).** Derived, rebuildable indexes sit next to the catalog: the shipped
 embedding file `catalog/search_index.sqlite` (built by `fitme catalog index`) and, in the app
@@ -622,6 +625,17 @@ with the catalog `start` weight. The review adds block roles and order, direct v
 coverage (warm-ups don't count), power-set prescriptions, splits nobody asked for and session
 length.
 
+**ADR 0016.** Session length is estimated in code (`services/session_time`: reps, seconds or
+meters per set, both sides of a `unilateral` exercise, rests between sets, superset rounds,
+setup by equipment; 15% tolerance). A generated workout over the user's session length is
+shortened by priority (`services/time_budget`: redundant accessories, then a set off the
+lowest-priority blocks, then those blocks; never the warm-up, the main objective's work or a
+rest) and logged as `plan.time_budget`; revisions, imports and edits are only reviewed. The
+weekly review weighs sets by stimulus (`services/workload`: load units per region, a heavy
+set 1, a drill 0.25, a stretch 0) and adds `hinge_overlap` and `off_objective`. The brief
+adds `session_objectives` (main objectives spread over the sessions) and `time_budget`; the
+plan view shows each workout's estimate, labelled as one.
+
 1. **Gates** (guards, before any LLM call): the profile is complete; there is no open
    `health_hold`; red-flag clearance is present. Any failure returns a `Refusal`, which is
    logged as a `decision(kind=refusal)`. The bot shows a refusal by its per-code copy, except
@@ -894,6 +908,18 @@ double progression:
   written: a structural failure rejects that plan, but a load-only violation is substituted
   with the engine's value and saved, the declared number kept as the `declared_kg` hint. See
   `docs/import-format.md`.
+- **Speed work** (ADR 0016): an exercise whose first quality is power, rotational power or
+  agility (`IntensityMode.SPEED`) holds its load (`LoadKind.HOLD_SPEED`, under the ceiling
+  like every hold): topping its reps never raises it, short sets never lower it, and
+  calibration still comes first. It progresses by speed and technique, which the app
+  doesn't measure and never claims.
+- **Work the engine doesn't progress** (ADR 0016, `services/progression`): bodyweight reps,
+  and any timed or distance prescription. Two completed app sessions in a row at the current
+  target with every prescribed set at its top → one step up (rep range +1–2, or about 10%
+  more seconds or meters); two in a row short of it → one step down; otherwise hold; speed
+  work keeps its volume; at the top of a useful range a harder variation is next. The recap
+  offers the change as a `change_reps`/`change_target` suggestion, applied only on **Apply**
+  as an `origin=progression` plan version.
 - Every decision that applies a load records it in `decisions.load_changes`.
 - Otherwise → hold.
 
@@ -928,13 +954,13 @@ One pydantic-ai `Agent` per purpose. Each has a typed output, and its prompt is 
 | `plan_revise` | context + current plan + user request | `PlanProposal` | medium |
 | `session_adjust` | context + today's workout + user request | `Workout \| Refusal` | medium |
 | `plan_import` | context + `imported_text` (scrubbed) | `PlanImport{plan, unmatched} \| Refusal` | medium |
-| `recap` | planned vs actual (incl. `extra_sets`) + engine decisions | `Recap { text: str, suggestions: list[PlanChange] }` (swap, rep range, set count — ADR 0015) | large |
+| `recap` | planned vs actual (incl. `extra_sets`) + engine decisions + `next_targets` (ADR 0016) | `Recap { text: str, suggestions: list[PlanChange] }` (swap, rep range, set count — ADR 0015; timed/distance target — ADR 0016) | large |
 | `assistant` | context + `state` + session `history` + user text (scrubbed); lookup and staging tools | `AssistantTurn \| Refusal` (ADR 0003, ADR 0004) | medium |
 
 - The prompt loader returns `(template_name, version, rendered_text)`. Template name and
-  version go into `decisions`. Current versions (ADR 0011): `plan_generate.v6`,
-  `plan_revise.v4`, `plan_import.v2`, `session_adjust.v2`, `recap.v1`,
-  `assistant.v9`. (`result_parse` was removed with the ✏️ button, ADR 0013.)
+  version go into `decisions`. Current versions (ADR 0016): `plan_generate.v7`,
+  `plan_revise.v4`, `plan_import.v2`, `session_adjust.v2`, `recap.v3`,
+  `assistant.v10`. (`result_parse` was removed with the ✏️ button, ADR 0013.)
 - Each agent's model comes from its tier or override (§8.5). Nothing in the code is tied to
   one provider.
 - `llm/usage.py` wraps every run: records `llm_calls` from `result.usage` (a property), latency, and

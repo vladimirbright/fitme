@@ -8,7 +8,8 @@ hallucinating an out-of-range or non-finite number is a validation error at pars
 silently-accepted noise a guard has to catch later.
 
 `PlanChange` is deliberately minimal and structural (A§8.1): it names *what* to change
-(swap an exercise, change a rep range), never a load. Loads come only from the deterministic
+(swap an exercise, change a rep range, a set count or a timed/distance target), never a
+load. Loads come only from the deterministic
 load engine (`services/loads.py`, A§6.5 step 6, A§7.3) — an LLM-proposed `PlanChange` that
 tried to carry a `kg` value would let a model's number reach a plan without ever passing
 through a guard, which is exactly what AGENTS.md §2 rules out.
@@ -19,6 +20,8 @@ from __future__ import annotations
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+from fitme.domain.models import MAX_SET_METERS, MAX_SET_SECONDS
 
 _STRICT_CONFIG = ConfigDict(extra="forbid", allow_inf_nan=False)
 
@@ -101,7 +104,28 @@ class ChangeSets(BaseModel):
     sets: Annotated[int, Field(ge=1, le=10)]
 
 
-PlanChange = Annotated[SwapExercise | ChangeReps | ChangeSets, Field(discriminator="kind")]
+class ChangeTarget(BaseModel):
+    """A `PlanChange` (ADR 0016): change one timed or distance exercise's per-set target —
+    a longer hold, a longer interval, a longer carry. Exactly one of `seconds` / `meters`,
+    matching the prescription's measure. Carries no load (see module docstring)."""
+
+    model_config = _STRICT_CONFIG
+
+    kind: Literal["change_target"] = "change_target"
+    exercise_id: str
+    seconds: Annotated[int, Field(ge=5, le=MAX_SET_SECONDS)] | None = None
+    meters: Annotated[int, Field(ge=5, le=MAX_SET_METERS)] | None = None
+
+    @model_validator(mode="after")
+    def _exactly_one_target(self) -> ChangeTarget:
+        if (self.seconds is None) == (self.meters is None):
+            raise ValueError("a target change sets exactly one of seconds or meters")
+        return self
+
+
+PlanChange = Annotated[
+    SwapExercise | ChangeReps | ChangeSets | ChangeTarget, Field(discriminator="kind")
+]
 
 
 class Recap(BaseModel):

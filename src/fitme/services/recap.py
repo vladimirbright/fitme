@@ -77,6 +77,7 @@ from fitme.db.selectors.training import (
     list_checkins_for_session,
     list_set_logs_for_session,
     list_workout_sessions_for_user,
+    recent_completed_set_logs,
 )
 from fitme.domain.catalog import Catalog
 from fitme.domain.enums import (
@@ -89,15 +90,16 @@ from fitme.domain.enums import (
 )
 from fitme.domain.guard_types import GuardVerdict
 from fitme.domain.models import Load, Plan, Prescription, Refusal, Workout
-from fitme.domain.results import ChangeReps, ChangeSets, PlanChange, SwapExercise
+from fitme.domain.results import ChangeReps, ChangeSets, ChangeTarget, PlanChange, SwapExercise
 from fitme.guards.plan import prescription_verdicts
 from fitme.i18n import wording
 from fitme.llm.context import render_user_prompt
 from fitme.llm.models import model_for
 from fitme.llm.usage import record_llm_call, run_agent
-from fitme.services import measures, planning
+from fitme.services import measures, planning, progression
 from fitme.services.llm_runtime import LlmRuntime
 from fitme.services.loads import BlockedBy, LoadDecision, LoadKind
+from fitme.services.progression import TargetKind
 from fitme.services.safety import HaltResult, halt
 from fitme.services.training import (
     EVENT_START,
@@ -135,6 +137,7 @@ class NextKind(StrEnum):
     CLAMPED = "clamped"  # adjusted down to the ceiling (what the user has logged so far)
     CALIBRATION = "calibration"
     BODYWEIGHT = "bodyweight"
+    HOLD_SPEED = "hold_speed"  # ADR 0016: speed work keeps its load
 
 
 class ExerciseSummary(BaseModel):
@@ -187,14 +190,28 @@ class NextLoad(BaseModel):
     if_fine: Load | None = None  # `HOLD_CHECKIN`: the load once the check-in is answered fine
 
 
+class NextTarget(BaseModel):
+    """ADR 0016: the deterministic next target (`services.progression`) of an exercise the
+    load engine doesn't progress, with its reason (machine text). A `more`/`less` one is
+    also among the proposal's `suggestions`."""
+
+    model_config = _STRICT
+
+    exercise_id: str
+    kind: TargetKind
+    reason: str
+
+
 class RecapProposal(BaseModel):
     """`decisions.proposal` of the `progression` decision: the preview and the summary the
-    bot shows, plus the model's text/suggestions (or its refusal)."""
+    bot shows, plus the model's text/suggestions (or its refusal). ADR 0016: the
+    deterministic target suggestions come first in `suggestions`."""
 
     model_config = _STRICT
 
     summary: list[ExerciseSummary]
     preview: list[NextLoad]
+    targets: list[NextTarget] = Field(default_factory=list)
     recap_text: str | None = None
     suggestions: list[PlanChange] = Field(default_factory=list)
     refusal: Refusal | None = None
@@ -301,6 +318,7 @@ _KINDS: dict[LoadKind, NextKind] = {
     LoadKind.CLAMPED: NextKind.CLAMPED,
     LoadKind.CALIBRATION: NextKind.CALIBRATION,
     LoadKind.BODYWEIGHT: NextKind.BODYWEIGHT,
+    LoadKind.HOLD_SPEED: NextKind.HOLD_SPEED,
 }
 
 
@@ -359,8 +377,62 @@ def _preview(
     return preview, fired
 
 
+def _single_target(plan: Plan, workout: Workout, exercise_id: str) -> Prescription | None:
+    """Today's one prescription of `exercise_id`, when a target change can be paired with it:
+    it appears once in today's workout, outside a superset, and every prescription of it in
+    the plan has the same measure and target (a change applies to all of them)."""
+    today = [
+        (block, item)
+        for block in workout.blocks
+        for item in block.items
+        if item.exercise_id == exercise_id
+    ]
+    if len(today) != 1 or today[0][0].kind == "superset":
+        return None
+    item = today[0][1]
+    target = (item.measure, item.reps_min, item.reps_max, item.seconds, item.meters)
+    for other in (
+        p for w in plan.workouts for b in w.blocks for p in b.items if p.exercise_id == exercise_id
+    ):
+        if (other.measure, other.reps_min, other.reps_max, other.seconds, other.meters) != target:
+            return None
+    return item
+
+
+def _targets(
+    workout: Workout,
+    plan: Plan,
+    catalog: Catalog,
+    history: dict[str, list[list[SetLogRecord]]],
+) -> tuple[list[NextTarget], list[PlanChange]]:
+    """ADR 0016: the next target of every exercise the load engine doesn't progress, and the
+    suggestions for those that should change."""
+    targets: list[NextTarget] = []
+    changes: list[PlanChange] = []
+    seen: set[str] = set()
+    for block in workout.blocks:
+        for item in block.items:
+            exercise = catalog.by_id(item.exercise_id)
+            if exercise is None or exercise.id in seen or not progression.applies(item, exercise):
+                continue
+            seen.add(exercise.id)
+            single = _single_target(plan, workout, exercise.id)
+            if single is None:
+                continue
+            decision = progression.next_target(single, exercise, history.get(exercise.id, []))
+            targets.append(
+                NextTarget(exercise_id=exercise.id, kind=decision.kind, reason=decision.reason)
+            )
+            if decision.change is not None:
+                changes.append(decision.change)
+    return targets, changes
+
+
 def _recap_input(
-    summaries: Sequence[ExerciseSummary], preview: Sequence[NextLoad], catalog: Catalog
+    summaries: Sequence[ExerciseSummary],
+    preview: Sequence[NextLoad],
+    catalog: Catalog,
+    targets: Sequence[NextTarget] = (),
 ) -> dict[str, object]:
     """The `recap` agent's input (A§8.2 minimization): catalog ids and this session's numbers,
     the engine's decisions with their reasons, and each exercise's `load_unit`."""
@@ -389,6 +461,11 @@ def _recap_input(
                 "reason": item.reason,
             }
             for item in preview
+        ],
+        # ADR 0016: the deterministic next targets of work the load engine doesn't progress.
+        "next_targets": [
+            {"exercise_id": item.exercise_id, "kind": item.kind.value, "reason": item.reason}
+            for item in targets
         ],
     }
 
@@ -597,6 +674,31 @@ def _filter_suggestions(
                 continue
             kept.append(change)
             continue
+        elif isinstance(change, ChangeTarget):
+            wanted = Measure.TIME if change.seconds is not None else Measure.DISTANCE
+            source = next(
+                (
+                    p
+                    for p in prescriptions
+                    if p.exercise_id == change.exercise_id and p.measure == wanted
+                ),
+                None,
+            )
+            if source is None:
+                fired.append(
+                    GuardVerdict(
+                        rule=_SUGGESTION_RULE,
+                        ok=False,
+                        detail=(
+                            f"target change for {change.exercise_id} dropped: not in the plan "
+                            f"in {wanted.value}"
+                        ),
+                    )
+                )
+                continue
+            candidate = source.model_copy(
+                update={"seconds": change.seconds, "meters": change.meters}
+            )
         else:
             source = next((p for p in prescriptions if p.exercise_id == change.exercise_id), None)
             if source is None:
@@ -635,6 +737,10 @@ def _filter_suggestions(
             continue
         kept.append(change)
     return kept, fired
+
+
+def _change_exercise(change: PlanChange) -> str:
+    return change.from_exercise_id if isinstance(change, SwapExercise) else change.exercise_id
 
 
 def _proposal_of(decision: DecisionRecord) -> RecapProposal | None:
@@ -680,14 +786,27 @@ async def build_recap(
         rows = await list_set_logs_for_session(conn, session_id)
         previous_max = await historical_max_by_exercise_before_session(conn, user_id, session_id)
         snapshot = await planning.read_snapshot(conn, user_id)
+        history = {
+            exercise_id: await recent_completed_set_logs(
+                conn, user_id, exercise_id, limit=progression.SESSIONS_FOR_A_TREND
+            )
+            for exercise_id in {item.exercise_id for b in workout.blocks for item in b.items}
+        }
     lang = snapshot.language
     if snapshot.profile is None:
         return None
     inputs = planning.build_inputs(catalog, snapshot, llm.settings, user_id)
     summaries = _summaries(workout, rows, previous_max, catalog)
     preview, fired = _preview(workout, inputs)
+    targets, target_changes = _targets(workout, ctx.plan, catalog, history)
+    kept_targets, target_verdicts = _filter_suggestions(
+        target_changes, ctx.plan, inputs, summaries, ctx.session.workout_key, preview
+    )
+    fired.extend(target_verdicts)
 
-    rendered = render_user_prompt(language=lang, recap=_recap_input(summaries, preview, catalog))
+    rendered = render_user_prompt(
+        language=lang, recap=_recap_input(summaries, preview, catalog, targets)
+    )
     spec = model_for("recap", llm.settings)
     outcome = await run_agent(
         llm.factory("recap"),
@@ -701,16 +820,43 @@ async def build_recap(
     output = outcome.output
     if isinstance(output, Refusal):
         proposal = RecapProposal(
-            summary=summaries, preview=preview, refusal=output, cause=outcome.record.error_cause
+            summary=summaries,
+            preview=preview,
+            targets=targets,
+            suggestions=kept_targets,
+            refusal=output,
+            cause=outcome.record.error_cause,
         )
     else:
         text, text_verdicts = _check_text(output.text, _known_kg(summaries, preview))
+        # ADR 0016: one progression at a time — an exercise with a deterministic target
+        # change gets no model rep, set or target change on top.
+        progressed = {_change_exercise(change) for change in kept_targets}
+        model_changes: list[PlanChange] = []
+        for change in output.suggestions:
+            if not isinstance(change, SwapExercise) and _change_exercise(change) in progressed:
+                fired.append(
+                    GuardVerdict(
+                        rule=_SUGGESTION_RULE,
+                        ok=False,
+                        detail=(
+                            f"{change.kind} for {_change_exercise(change)} dropped: its target "
+                            "already progresses"
+                        ),
+                    )
+                )
+                continue
+            model_changes.append(change)
         suggestions, suggestion_verdicts = _filter_suggestions(
-            output.suggestions, ctx.plan, inputs, summaries, ctx.session.workout_key, preview
+            model_changes, ctx.plan, inputs, summaries, ctx.session.workout_key, preview
         )
         fired.extend([*text_verdicts, *suggestion_verdicts])
         proposal = RecapProposal(
-            summary=summaries, preview=preview, recap_text=text, suggestions=suggestions
+            summary=summaries,
+            preview=preview,
+            targets=targets,
+            recap_text=text,
+            suggestions=[*kept_targets, *suggestions],
         )
 
     async with db.transaction() as conn:
@@ -865,6 +1011,16 @@ def _apply_change(
                     prescription.reps_min = change.reps_min
                     prescription.reps_max = change.reps_max
                     changed = True
+                elif isinstance(change, ChangeTarget):
+                    # ADR 0016: a timed or distance target, on prescriptions in that measure.
+                    if prescription.exercise_id != change.exercise_id:
+                        continue
+                    if change.seconds is not None and prescription.measure == Measure.TIME:
+                        prescription.seconds = change.seconds
+                        changed = True
+                    elif change.meters is not None and prescription.measure == Measure.DISTANCE:
+                        prescription.meters = change.meters
+                        changed = True
     if isinstance(change, ChangeSets):
         # ADR 0015: today's workout only.
         for prescription in _set_change_targets(plan, workout_key, change.exercise_id):

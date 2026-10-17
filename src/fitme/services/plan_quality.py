@@ -13,10 +13,14 @@ guards in `fitme.guards` are), but obvious contradictions a model's plan can con
 - **prescription**: power work in long sets or with almost no rest;
 - **supersets**: two heavy lifts, mismatched sets, a long rest between its exercises (a
   superset's rests are transitions; the round's rest is on its last exercise);
-- **the week**: shoulder or heavy lower-body volume above conservative limits that shrink
-  when the user also trains a sport, heavy lower-body days back to back, a body region
-  trained in only one of two or three weekly sessions (a split nobody asked for), and a
-  session clearly longer than the user's session length.
+- **objectives** (ADR 0016): a workout whose working exercises include several that train
+  none of its stated objectives — a session trying to cover everything;
+- **the week** (ADR 0016: load units from `services.workload`, not raw set counts): shoulder,
+  hip-hinge or knee-dominant load above conservative limits that shrink when the user also
+  trains a sport, several distinct loaded hip-hinge exercises in one week, demanding hinge or
+  leg days back to back, a body region trained in only one of two or three weekly sessions (a
+  split nobody asked for), and a session whose estimated length (`services.session_time`)
+  exceeds the user's session length by more than the estimate's tolerance.
 
 Each finding is machine text for the planner's one repair round (A§6.4 step 4's feedback
 retry); a finding that survives it is logged with the plan, never a refusal — these are
@@ -43,21 +47,10 @@ from fitme.domain.enums import (
 from fitme.domain.guard_types import GuardVerdict
 from fitme.domain.models import Block, Plan, Prescription, Workout
 from fitme.llm.context import UserContext
-from fitme.services import programming
+from fitme.services import programming, session_time, workload
 from fitme.services.exercise_search import is_general_warm_up, requested_qualities
+from fitme.services.workload import Region
 
-# Exercises that train the shoulder girdle as work rather than as a support (a plank or a
-# carry loads it too, but isn't counted).
-_SHOULDER_PATTERNS = frozenset(
-    {
-        ExercisePattern.HORIZONTAL_PUSH,
-        ExercisePattern.HORIZONTAL_PULL,
-        ExercisePattern.VERTICAL_PUSH,
-        ExercisePattern.VERTICAL_PULL,
-        ExercisePattern.ACCESSORY,
-        ExercisePattern.CONDITIONING,
-    }
-)
 _LOWER_PATTERNS = frozenset({ExercisePattern.SQUAT, ExercisePattern.HINGE})
 _FAST_QUALITIES = frozenset({Quality.POWER, Quality.ROTATIONAL_POWER, Quality.AGILITY})
 # Body regions for the weekly distribution check: a region all in one session of a two- or
@@ -102,14 +95,31 @@ _LEG_SPORTS = frozenset({Sport.RUNNING, Sport.CYCLING, Sport.TEAM_SPORT})
 
 @dataclass(frozen=True, slots=True)
 class WorkloadLimits:
-    """Weekly working sets, deliberately generous: a plan above them is off on its face."""
+    """The review's thresholds, deliberately generous: a plan above them is off on its face.
+    ADR 0016: weekly limits are in load units (`services.workload.UNITS`: a heavy compound
+    set is 1, a moderate one 0.75, an isolation set 0.5, a throw 0.6, a 30 s interval 0.2, a
+    warm-up or stretch 0), so a footwork drill and a heavy deadlift don't count alike."""
 
     heavy_reps_max: int = 6  # a kg compound at or below this rep target counts as heavy
-    shoulder_sets: int = 36
-    lower_heavy_sets: int = 24
-    sport_shoulder_sets_per_session: int = 3  # taken off `shoulder_sets` per sport session
-    sport_lower_sets_per_session: int = 2
-    sport_floor_sets: int = 12  # never below this, however much sport
+    # Weekly units per region; a sport that loads the region takes some off per weekly
+    # session (shoulders: boxing, swimming, climbing, racket; legs: running, cycling, team
+    # sports), never below the floor. 22 shoulder units is about 29 moderate sets.
+    shoulder_units: float = 22.0
+    hinge_units: float = 9.0
+    knee_units: float = 12.0
+    sport_shoulder_units_per_session: float = 2.0
+    sport_leg_units_per_session: float = 1.5
+    sport_floor_units: float = 8.0
+    # Distinct loaded hip-hinge exercises in a week (counted when a set is worth at least
+    # `overlap_set_units`: a swing or a Romanian deadlift, not a bodyweight bridge) from which
+    # the overlap is reported: three hinges usually mean one could carry the week's work.
+    hinge_exercises: int = 3
+    overlap_set_units: float = 0.6
+    # A day with at least this many hinge or knee units, followed the next day by another.
+    consecutive_region_units: float = 3.0
+    # Working exercises that train none of a workout's stated objectives (directly or as
+    # support), from which the session is reported as unfocused.
+    off_objective_exercises: int = 2
     superset_transition_seconds: int = 45
     # ADR 0011 coverage: an exercise that directly trains a quality counts 1, one that only
     # supports it 0.5. A stated quality needs a direct exercise; the main objective (the
@@ -121,12 +131,8 @@ class WorkloadLimits:
     power_rest_min_seconds: int = 45
     # A region with at least this many weekly sets, all in one session of a 2-3 session week.
     split_region_sets: int = 6
-    # Session length: estimated minutes above `session_minutes` times this are reported. The
-    # estimate is coarse (about 4 s a rep, 1.2 s a meter, a minute of setup per block).
-    duration_tolerance: float = 1.25
-    seconds_per_rep: float = 4.0
-    seconds_per_meter: float = 1.2
-    block_setup_seconds: int = 60
+    # ADR 0016: the session-length estimate and its tolerance (`services.session_time`).
+    time: session_time.TimeModel = session_time.DEFAULT_MODEL
 
 
 DEFAULT_LIMITS = WorkloadLimits()
@@ -183,14 +189,7 @@ def is_heavy(
 ) -> bool:
     """A loaded compound lift at a low rep target: what needs a warm-up, what shouldn't
     precede power work, and what two of shouldn't share a superset."""
-    return (
-        exercise.kind == ExerciseKind.COMPOUND
-        and exercise.kg_loadable
-        and item.measure == Measure.REPS
-        and item.reps_max is not None
-        and item.reps_max <= limits.heavy_reps_max
-        and Quality.STRENGTH in exercise.qualities
-    )
+    return workload.is_heavy(item, exercise, heavy_reps_max=limits.heavy_reps_max)
 
 
 def _is_fast(exercise: Exercise) -> bool:
@@ -324,7 +323,34 @@ def _coverage_findings(workout: Workout, ctx: ReviewContext) -> list[GuardVerdic
                     f"add work that develops {quality.value} or make it a secondary objective",
                 )
             )
+    # ADR 0016: a session does its objectives well rather than everything a little.
+    # A cool-down stretch or easy cardio is not work off the objective.
+    off = [
+        exercise.id
+        for exercise in working
+        if workout.qualities
+        and not _is_warm_up(exercise)
+        and not _serves(exercise, workout.qualities)
+    ]
+    if len(off) >= ctx.limits.off_objective_exercises:
+        stated = ", ".join(quality.value for quality in workout.qualities)
+        findings.append(
+            _finding(
+                "off_objective",
+                f"workout {key} is for {stated}, but {', '.join(off)} train none of them; "
+                "drop them or move them to a session whose objective they serve — a session "
+                "doesn't need to cover every quality",
+            )
+        )
     return findings
+
+
+def _serves(exercise: Exercise, objectives: Sequence[Quality]) -> bool:
+    """Directly trains or supports (`SUPPORTS`) one of `objectives`."""
+    own = set(exercise.qualities)
+    return any(
+        quality in own or bool(own & SUPPORTS.get(quality, frozenset())) for quality in objectives
+    )
 
 
 def _role_findings(workout: Workout, ctx: ReviewContext) -> list[GuardVerdict]:
@@ -470,32 +496,6 @@ def _prescription_findings(workout: Workout, ctx: ReviewContext) -> list[GuardVe
     return findings
 
 
-def _work_seconds(item: Prescription, limits: WorkloadLimits) -> float:
-    if item.measure == Measure.TIME and item.seconds is not None:
-        return float(item.seconds)
-    if item.measure == Measure.DISTANCE and item.meters is not None:
-        return item.meters * limits.seconds_per_meter
-    return (item.reps_max or 0) * limits.seconds_per_rep
-
-
-def estimated_minutes(workout: Workout, limits: WorkloadLimits = DEFAULT_LIMITS) -> float:
-    """A coarse session length: work, rests and transitions, and a minute of setup per
-    block. A superset's round is its work plus transitions plus the round's rest."""
-    total = 0.0
-    for block in workout.blocks:
-        total += limits.block_setup_seconds
-        if block.kind == "superset":
-            rounds = max(item.sets for item in block.items)
-            per_round = sum(_work_seconds(item, limits) for item in block.items) + sum(
-                item.rest_seconds for item in block.items
-            )
-            total += rounds * per_round
-        else:
-            item = block.items[0]
-            total += item.sets * (_work_seconds(item, limits) + item.rest_seconds)
-    return total / 60
-
-
 def _workout_findings(workout: Workout, ctx: ReviewContext) -> list[GuardVerdict]:
     findings: list[GuardVerdict] = []
     catalog = ctx.catalog
@@ -537,13 +537,16 @@ def _workout_findings(workout: Workout, ctx: ReviewContext) -> list[GuardVerdict
     findings.extend(_prescription_findings(workout, ctx))
 
     if ctx.session_minutes:
-        minutes = estimated_minutes(workout, ctx.limits)
-        if minutes > ctx.session_minutes * ctx.limits.duration_tolerance:
+        time = ctx.limits.time
+        minutes = session_time.estimate(workout, catalog, time).minutes
+        if minutes > ctx.session_minutes * time.tolerance:
             findings.append(
                 _finding(
                     "duration",
-                    f"workout {key} takes about {minutes:.0f} min, the session is "
-                    f"{ctx.session_minutes} min; drop or shorten blocks",
+                    f"workout {key} takes about {minutes:.0f} min (estimated), the session is "
+                    f"{ctx.session_minutes} min; keep what serves its main objective and drop "
+                    "or shorten the lowest-priority blocks, without cutting rest on heavy or "
+                    "fast work",
                 )
             )
 
@@ -595,72 +598,132 @@ def _sport_sessions(ctx: ReviewContext, sports: frozenset[Sport]) -> int:
     return ctx.sport_sessions_per_week or 0
 
 
-def _weekly_findings(plan: Plan, ctx: ReviewContext) -> list[GuardVerdict]:
-    findings: list[GuardVerdict] = []
-    catalog = ctx.catalog
-    limits = ctx.limits
-    by_key = {workout.key: workout for workout in plan.workouts}
-    shoulder_sets = 0
-    lower_heavy_sets = 0
-    heavy_lower_days: list[int] = []
-    for day in plan.schedule:
-        workout = by_key.get(day.workout_key)
-        if workout is None:
-            continue
-        day_heavy_lower = False
-        for _, item in _items(workout):
-            exercise = catalog.by_id(item.exercise_id)
-            if exercise is None:
-                continue
-            if "shoulder" in exercise.loads_areas and exercise.pattern in _SHOULDER_PATTERNS:
-                shoulder_sets += item.sets
-            if exercise.pattern in _LOWER_PATTERNS and is_heavy(item, exercise, limits):
-                lower_heavy_sets += item.sets
-                day_heavy_lower = True
-        if day_heavy_lower:
-            heavy_lower_days.append(day.weekday)
+def _region_limit(ctx: ReviewContext | None, region: Region) -> float:
+    """ADR 0016: the weekly units a region may take, lowered for a sport that loads it."""
+    limits = DEFAULT_LIMITS if ctx is None else ctx.limits
+    if region == Region.SHOULDER:
+        base = limits.shoulder_units
+        sessions = 0 if ctx is None else _sport_sessions(ctx, _SHOULDER_SPORTS)
+        cut = limits.sport_shoulder_units_per_session * sessions
+    else:
+        base = limits.hinge_units if region == Region.HINGE else limits.knee_units
+        sessions = 0 if ctx is None else _sport_sessions(ctx, _LEG_SPORTS)
+        cut = limits.sport_leg_units_per_session * sessions
+    return max(min(base, limits.sport_floor_units), base - cut)
 
-    shoulder_cap = max(
-        limits.sport_floor_sets,
-        limits.shoulder_sets
-        - limits.sport_shoulder_sets_per_session * _sport_sessions(ctx, _SHOULDER_SPORTS),
-    )
-    if shoulder_sets > shoulder_cap:
+
+def _top_contributors(sessions: Sequence[workload.SessionLoad], region: Region) -> str:
+    units: dict[str, float] = {}
+    for session in sessions:
+        for item in session.contributions:
+            if region in item.regions and item.units > 0:
+                units[item.exercise_id] = units.get(item.exercise_id, 0.0) + item.units
+    ranked = sorted(units.items(), key=lambda pair: -pair[1])[:4]
+    return ", ".join(f"{exercise_id} {value:.1f}" for exercise_id, value in ranked)
+
+
+def weekly_load(plan: Plan, catalog: Catalog) -> list[workload.SessionLoad]:
+    """ADR 0016: the plan's scheduled sessions as load units (`services.workload`)."""
+    roles = {workout.key: block_roles(workout, catalog) for workout in plan.workouts}
+    return workload.week(plan, catalog, roles)
+
+
+def _weekly_findings(plan: Plan, ctx: ReviewContext) -> list[GuardVerdict]:
+    """ADR 0016: weighted weekly load per region, overlapping hip hinges, demanding days back
+    to back, and the split check."""
+    findings: list[GuardVerdict] = []
+    limits = ctx.limits
+    sessions = weekly_load(plan, ctx.catalog)
+    rules = {
+        Region.SHOULDER: (
+            "shoulder_volume",
+            "pressing, pulling, raises and upper-body conditioning",
+            "cut overlapping shoulder work",
+        ),
+        Region.HINGE: (
+            "lower_volume",
+            "hip-hinge work (deadlifts, swings, hip thrusts)",
+            "let fewer hinges carry the week",
+        ),
+        Region.KNEE: (
+            "lower_volume",
+            "knee-dominant leg work (squats, lunges, jumps, sprints)",
+            "spread or trim it",
+        ),
+    }
+    for region, (rule, what, fix) in rules.items():
+        total = sum(session.region_units(region) for session in sessions)
+        cap = _region_limit(ctx, region)
+        if total > cap:
+            sport = " with the user's other sport" if cap < _region_limit(None, region) else ""
+            findings.append(
+                _finding(
+                    rule,
+                    f"{total:.1f} weekly load units of {what} exceed {cap:.0f}{sport} "
+                    f"({_top_contributors(sessions, region)}); {fix}",
+                )
+            )
+
+    # Several distinct loaded hinges in one week: each is reasonable, together they stack
+    # hip-extension and lower-back demand. A warning to look at, not a rule against it.
+    hinges: dict[str, float] = {}
+    for session in sessions:
+        for item in session.contributions:
+            if Region.HINGE in item.regions:
+                hinges[item.exercise_id] = hinges.get(item.exercise_id, 0.0) + item.units
+    loaded = {
+        exercise_id: units
+        for exercise_id, units in hinges.items()
+        if _per_set_units(plan, ctx.catalog, exercise_id) >= limits.overlap_set_units
+    }
+    if len(loaded) >= limits.hinge_exercises:
         findings.append(
             _finding(
-                "shoulder_volume",
-                f"{shoulder_sets} weekly sets of pressing, pulling, raises and arm conditioning "
-                f"exceed {shoulder_cap}"
-                + (" with the user's other sport" if shoulder_cap < limits.shoulder_sets else "")
-                + "; cut overlapping shoulder work",
+                "hinge_overlap",
+                f"{len(loaded)} different hip-hinge exercises this week "
+                f"({', '.join(loaded)}; {sum(loaded.values()):.1f} units) all load the hips and "
+                "lower back; keep them if each has its own purpose, otherwise let one or two "
+                "carry the week's hinge work",
             )
         )
-    lower_cap = max(
-        limits.sport_floor_sets,
-        limits.lower_heavy_sets
-        - limits.sport_lower_sets_per_session * _sport_sessions(ctx, _LEG_SPORTS),
-    )
-    if lower_heavy_sets > lower_cap:
-        findings.append(
-            _finding(
-                "lower_volume",
-                f"{lower_heavy_sets} weekly sets of heavy squats and hinges exceed {lower_cap}",
-            )
-        )
-    days = sorted(set(heavy_lower_days))
+
+    # Demanding hinge or leg days back to back, wrapping Sunday -> Monday.
+    demanding: dict[int, list[str]] = {}
+    for session in sessions:
+        if session.weekday is None:
+            continue
+        for region in (Region.HINGE, Region.KNEE):
+            if session.region_units(region) >= limits.consecutive_region_units:
+                demanding.setdefault(session.weekday, []).append(region.value)
+    days = sorted(demanding)
     if len(days) > 1:
-        # Each heavy day and the next one, wrapping Sunday -> Monday.
         for first, second in zip(days, [*days[1:], days[0] + 7], strict=True):
-            if second - first == 1:
+            shared = set(demanding[first]) & set(demanding[second % 7])
+            if second - first == 1 and shared:
                 findings.append(
                     _finding(
                         "consecutive_heavy",
-                        f"heavy lower-body work on consecutive days (weekdays {first} and "
-                        f"{second % 7}); leave a day between them",
+                        f"demanding {' and '.join(sorted(shared))} work on consecutive days "
+                        f"(weekdays {first} and {second % 7}); leave a day between them",
                     )
                 )
     findings.extend(_split_findings(plan, ctx))
     return findings
+
+
+def _per_set_units(plan: Plan, catalog: Catalog, exercise_id: str) -> float:
+    """The highest per-set units any prescription of `exercise_id` in the plan carries."""
+    best = 0.0
+    for workout in plan.workouts:
+        roles = block_roles(workout, catalog)
+        for block, role in zip(workout.blocks, roles, strict=True):
+            for item in block.items:
+                exercise = catalog.by_id(item.exercise_id)
+                if item.exercise_id != exercise_id or exercise is None:
+                    continue
+                stimulus = workload.stimulus_of(item, exercise, role)
+                best = max(best, workload.set_units(item, exercise, stimulus))
+    return best
 
 
 def _split_findings(plan: Plan, ctx: ReviewContext) -> list[GuardVerdict]:

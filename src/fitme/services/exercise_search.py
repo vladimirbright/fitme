@@ -768,4 +768,8 @@ def exercise_facts(
         if exercise.specific:
             # A narrow technique drill, not the general activity: not a warm-up.
             facts[-1]["specific"] = True
+        if exercise.unilateral:
+            # ADR 0016: one side at a time; the target is per side and the set takes twice as
+            # long.
+            facts[-1]["unilateral"] = True
     return facts

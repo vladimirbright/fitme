@@ -20,7 +20,7 @@ from fitme.domain.catalog import Catalog, Exercise
 from fitme.domain.enums import BlockRole, Measure
 from fitme.domain.models import Block, Plan, Prescription
 from fitme.i18n import t, wording
-from fitme.services import prescribing
+from fitme.services import prescribing, session_time
 from fitme.services.prescribing import load_label
 
 TELEGRAM_MESSAGE_LIMIT = 4096
@@ -86,12 +86,10 @@ def prescription_line(
     and the last exercise (`"last"`) says no rest at all — the round's rest is said once, in
     the superset's heading."""
     exercise = catalog.by_id(prescription.exercise_id)
-    sets_reps = t(
-        "plan.sets_reps",
-        lang,
-        sets=prescription.sets,
-        reps=target_text(prescription, lang),
-    )
+    target = target_text(prescription, lang)
+    if exercise is not None and exercise.unilateral:
+        target = t("plan.per_side", lang, target=target)  # ADR 0016
+    sets_reps = t("plan.sets_reps", lang, sets=prescription.sets, reps=target)
     name = exercise_name(exercise, prescription.exercise_id, lang)
     load = prescription_load_label(prescription, exercise, lang, role=role)
     if in_superset is None:
@@ -261,6 +259,9 @@ def render_plan_text(
         if workout.qualities:
             names = ", ".join(t(f"enum.quality.{q.value}", lang) for q in workout.qualities)
             lines.append(t("plan.workout_qualities", lang, qualities=names))
+        if workout.blocks:
+            minutes = session_time.display_minutes(workout, catalog)
+            lines.append(t("plan.workout_estimate", lang, minutes=minutes))
         lines.extend(workout_block_lines(workout.blocks, catalog, lang))
     if unmatched:
         lines.extend(["", t("plan.unmatched_title", lang)])

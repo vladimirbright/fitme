@@ -25,9 +25,9 @@ from fitme.services.plan_quality import (
     ReviewContext,
     block_roles,
     coverage,
-    estimated_minutes,
     review,
 )
+from fitme.services.session_time import estimate
 
 _CATALOG = load_catalog()
 
@@ -357,7 +357,7 @@ def test_scenario_e_a_two_day_full_body_plan_with_different_emphases_passes() ->
     week = plan([(1, "A"), (4, "B")], *_coherent_two_days())
     assert repair_measures(week, _CATALOG) == []
     assert review(week, _boxing_two_days()) == []
-    assert all(estimated_minutes(w) <= 60 * 1.25 for w in week.workouts)
+    assert all(estimate(w, _CATALOG).minutes <= 60 * 1.15 for w in week.workouts)
 
 
 def test_a_session_far_longer_than_the_session_length_is_reported() -> None:

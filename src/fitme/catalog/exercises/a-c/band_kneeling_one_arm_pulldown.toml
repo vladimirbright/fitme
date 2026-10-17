@@ -4,6 +4,7 @@ kind = "compound"
 pattern = "vertical_pull"
 measures = ["reps"]
 qualities = ["strength", "hypertrophy"]
+unilateral = true
 equipment = ["resistance_bands", "pull_up_bar"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]

@@ -24,6 +24,9 @@ After editing, run `make catalog` (`fitme catalog check`). Every file here is pa
 - `specific` (optional, default false): a narrow technique drill or one variation of a
   broader activity (one punch, one footwork pattern). Retrieval ranks it after general
   exercises, and it is never accepted as a warm-up. Say why in a `#` comment.
+- `unilateral` (optional, default false, ADR 0016): done one side at a time — every rep of
+  a set on one arm or leg, then the other. The prescribed target is per side, and the
+  session-time estimate counts both sides. Alternating moves (left, right, left) are not.
 - `load_unit`: what a prescribed `kg` means (`fitme.domain.catalog.LoadUnit`): `total` (a
   barbell, a machine stack; unused for bodyweight/band/cardio), `per_implement` (two
   dumbbells or kettlebells, kg each) or `single_implement` (one dumbbell/kettlebell). Required

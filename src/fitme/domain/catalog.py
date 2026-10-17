@@ -99,6 +99,10 @@ class Exercise(BaseModel):
     # Retrieval ranks it after general exercises, and the review won't take it as a warm-up:
     # related is not the same as a substitute.
     specific: bool = False
+    # ADR 0016: done one side at a time — all of a set's target on one arm or leg, then the
+    # other — so a prescribed target is per side and the set takes about twice as long
+    # (`services.session_time`). Alternating moves (left, right, left) are not unilateral.
+    unilateral: bool = False
     equipment: list[Equipment]
     # Required in the catalog for every dumbbell/kettlebell exercise (`fitme catalog check`
     # fails on a missing one via this model); everything else defaults to `total` — see

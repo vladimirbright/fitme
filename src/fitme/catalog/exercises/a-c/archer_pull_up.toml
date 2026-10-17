@@ -4,6 +4,7 @@ kind = "bodyweight"
 pattern = "vertical_pull"
 measures = ["reps"]
 qualities = ["strength", "hypertrophy"]
+unilateral = true
 level = "advanced"
 equipment = ["pull_up_bar"]
 load_unit = "total"

@@ -5,6 +5,7 @@ kind = "bodyweight"
 pattern = "squat"
 measures = ["reps"]
 qualities = ["strength"]
+unilateral = true
 level = "advanced"
 equipment = []
 load_unit = "total"
