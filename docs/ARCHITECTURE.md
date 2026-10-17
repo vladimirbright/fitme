@@ -329,7 +329,7 @@ ADR 0011: a `Block` has an optional `role` (`warm_up`, `power`, `strength`, `acc
 before choosing exercises. The last superset exercise's rest is the one round rest, shown
 once. Bodies stored before parse unchanged (no roles; the review infers them).
 
-**Activity items.** `Prescription.exercise_id` is a catalog id, or an id in the
+**Activity items** (ADR 0018, experiment branch). `Prescription.exercise_id` is a catalog id, or an id in the
 `activity:<slug>` namespace (`domain.models.ACTIVITY_PREFIX`, `is_activity_id`: slug of
 3..60 characters `a-z0-9_`) for a non-catalog activity such as a class, a run or a walk.
 An activity item needs `activity_name` (the display name, trimmed to 60 characters), is
@@ -695,6 +695,9 @@ plan view shows each workout's estimate, labelled as one.
    plan, it becomes the default.
 
 #### 6.4.1 The conversational planner (experiment branch `experiment/llm-first-planning`)
+
+ADR 0018 (experimental, not accepted) records this path; the experiment report is
+`docs/reports/llm-first-planning-experiment.md`.
 
 On this branch, steps 1–6 above are reached only through **Generate anyway**; the default
 path is the `planner` agent (§8.1, `prompts/planner.v1.md`).

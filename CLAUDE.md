@@ -80,6 +80,8 @@ bot, web, cli ──► services ──► guards, llm, db ──► domain
   `llm/models.py` (`FITME_LLM_AGENT_<NAME>` overrides, else the agent's default tier via
   `FITME_LLM_TIER_*`); one escalation to the large tier, then `Refusal`. `llm/context.py`
   pseudonymizes everything sent to the provider (no Telegram ids, names, or screening notes).
+  On branch `experiment/llm-first-planning`, free text outside a `/train` session goes to the
+  `planner` agent, which stages whole plans with `stage_plan` (A§6.4.1, ADR 0018, experimental).
 - `prompts/<name>.vN.md` — versioned prompt files. Change behaviour by adding a new version,
   and record the version in decisions.
 - Reference data lives in version-controlled files, not SQLite: `catalog/exercises/<range>/<id>.toml` (one file per exercise; the
