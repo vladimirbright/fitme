@@ -35,6 +35,7 @@ from fitme.domain.results import (
 from fitme.i18n import t
 from fitme.services import prescribing
 from fitme.services.prescribing import load_label
+from fitme.services.progression import TargetKind
 from fitme.services.recap import NextKind, RecapView
 from fitme.services.training import BlockView, LoggedItem, ReviewView
 
@@ -412,8 +413,15 @@ def recap_text(view: RecapView, *, catalog: Catalog, lang: str) -> str:
                 load=_load(catalog, item.exercise_id, Load(kind="kg", kg=item.new_max_kg), lang),
             )
         lines.append(line)
-    if proposal.preview:
+    # ADR 0016: the app's own target decisions that come with no suggestion to tap.
+    target_lines = [
+        t(f"recap.target_{target.kind.value}", lang, name=_name(catalog, target.exercise_id, lang))
+        for target in proposal.targets
+        if target.kind in (TargetKind.SPEED, TargetKind.VARIATION)
+    ]
+    if proposal.preview or target_lines:
         lines.extend(["", t("recap.next_title", lang)])
+    lines.extend(target_lines)
     for step in proposal.preview:
         name = _name(catalog, step.exercise_id, lang)
         current = _load(catalog, step.exercise_id, step.current, lang)

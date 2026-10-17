@@ -324,12 +324,20 @@ def _coverage_findings(workout: Workout, ctx: ReviewContext) -> list[GuardVerdic
                 )
             )
     # ADR 0016: a session does its objectives well rather than everything a little.
-    # A cool-down stretch or easy cardio is not work off the objective.
+    # The warm-up and the cool-down (mobility blocks) are not work off the objective;
+    # everything else is, a conditioning block of cardio included.
+    roles = block_roles(workout, ctx.catalog)
+    working_ids = dict.fromkeys(
+        item.exercise_id
+        for block, block_role in zip(workout.blocks, roles, strict=True)
+        if block_role not in (BlockRole.WARM_UP, BlockRole.MOBILITY)
+        for item in block.items
+    )
     off = [
         exercise.id
-        for exercise in working
-        if workout.qualities
-        and not _is_warm_up(exercise)
+        for exercise_id in working_ids
+        if (exercise := ctx.catalog.by_id(exercise_id)) is not None
+        and workout.qualities
         and not _serves(exercise, workout.qualities)
     ]
     if len(off) >= ctx.limits.off_objective_exercises:

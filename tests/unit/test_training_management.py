@@ -713,3 +713,61 @@ def test_a_squat_day_then_a_deadlift_day_is_back_to_back_lower_body_work() -> No
         if f.rule == "quality.consecutive_heavy"
     ]
     assert found and "knee-dominant legs" in found[0] and "hip hinge" in found[0]
+
+
+def test_a_different_number_of_sets_restarts_the_evidence() -> None:
+    two = rx("pushup", 2, reps=(8, 12), load={"kind": "bodyweight"})
+    five = rx("pushup", 5, reps=(8, 12), load={"kind": "bodyweight"})
+    decision = progression.next_target(
+        two, _exercise("pushup"), [_session(five, *[12] * 5), _session(five, *[12] * 5)]
+    )
+    assert decision.kind == TargetKind.HOLD and decision.change is None
+
+
+def test_conditioning_blocks_of_cardio_count_toward_off_objective() -> None:
+    strength = workout(
+        "A",
+        "Strength",
+        [
+            role(BlockRole.WARM_UP, rx("jump_rope_skipping", 1, seconds=300, rest=0)),
+            role(BlockRole.STRENGTH, rx("barbell_back_squat", 4, reps=(3, 5), rest=180)),
+            role(BlockRole.CONDITIONING, rx("battle_rope_alternating_waves", 6, seconds=30)),
+            role(BlockRole.CONDITIONING, rx("jump_rope_skipping", 4, seconds=120, rest=60)),
+            role(BlockRole.MOBILITY, rx("mobility_cat_cow", 1, seconds=120, rest=0)),
+        ],
+        [Quality.STRENGTH],
+    )
+    off = [
+        f.detail
+        for f in review(plan([(0, "A")], strength), ReviewContext(_CATALOG))
+        if f.rule == "quality.off_objective"
+    ]
+    assert off and "battle_rope_alternating_waves" in off[0] and "jump_rope_skipping" in off[0]
+    assert "mobility_cat_cow" not in off[0]
+
+
+def test_the_recap_shows_the_apps_speed_and_variation_decisions_without_the_model() -> None:
+    from fitme.bot.train_rendering import recap_text
+    from fitme.services.recap import NextTarget, RecapProposal, RecapView
+
+    proposal = RecapProposal(
+        summary=[],
+        preview=[],
+        targets=[
+            NextTarget(exercise_id="stance_footwork_drill", kind=TargetKind.SPEED, reason=""),
+            NextTarget(exercise_id="plank", kind=TargetKind.VARIATION, reason=""),
+            NextTarget(exercise_id="pushup", kind=TargetKind.HOLD, reason=""),
+        ],
+    )
+    view = RecapView(
+        session_id=1,
+        decision_id=1,
+        workout=workout("A", "W", single(rx("plank", 3, seconds=120))),
+        plan_name="Plan",
+        proposal=proposal,
+        checkins=[],
+    )
+    text = recap_text(view, catalog=_CATALOG, lang="en")
+    assert "fast work progresses by speed and clean technique" in text
+    assert "• Plank: at the top of a useful range — a harder variation is the next step" in text
+    assert "Push-up" not in text  # a plain hold says nothing new
