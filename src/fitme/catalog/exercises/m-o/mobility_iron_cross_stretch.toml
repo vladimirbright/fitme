@@ -4,7 +4,6 @@ kind = "mobility"
 pattern = "mobility"
 measures = ["reps"]
 qualities = ["mobility"]
-unilateral = true
 equipment = []
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment", "apartment_no_equipment", "outdoor"]

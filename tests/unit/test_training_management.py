@@ -604,11 +604,20 @@ def test_no_unilateral_exercise_is_done_alternating() -> None:
         for exercise in _CATALOG.exercise
         if exercise.unilateral
         and any(
-            word in exercise.instructions["en"].lower()
-            for word in ("alternat", "each rep", "every rep")
+            phrase in exercise.instructions["en"].lower()
+            for phrase in (
+                "alternat",
+                "each rep",
+                "every rep",
+                "return and switch sides",
+                "floor and switch sides",
+                "switch arms halfway",
+            )
         )
     ]
     assert alternating == []
+    for exercise_id in ("mobility_iron_cross_stretch", "mobility_worlds_greatest_stretch"):
+        assert not _exercise(exercise_id).unilateral
 
 
 def test_a_skipped_set_makes_a_session_inconclusive_not_short() -> None:

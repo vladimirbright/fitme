@@ -79,11 +79,12 @@ from fitme.db.selectors.training import (
     list_workout_sessions_for_user,
     recent_completed_set_logs,
 )
-from fitme.domain.catalog import Catalog
+from fitme.domain.catalog import Catalog, intensity_mode
 from fitme.domain.enums import (
     CheckinAnswer,
     DecisionKind,
     HealthHoldReason,
+    IntensityMode,
     Measure,
     RefusalCode,
     WorkoutSessionStatus,
@@ -780,6 +781,13 @@ def _still_decided(plan: Plan, change: PlanChange, targets: Sequence[NextTarget]
     return _all_match(plan, change.exercise_id, decided.from_prescription)
 
 
+def _is_speed_work(catalog: Catalog, exercise_id: str) -> bool:
+    """Power, speed or agility work (`IntensityMode.SPEED`: decided by the exercise's main
+    quality, whatever its measure or load)."""
+    exercise = catalog.by_id(exercise_id)
+    return exercise is not None and intensity_mode(exercise, Measure.REPS) == IntensityMode.SPEED
+
+
 def _change_exercise(change: PlanChange) -> str:
     return change.from_exercise_id if isinstance(change, SwapExercise) else change.exercise_id
 
@@ -883,6 +891,22 @@ async def build_recap(
                         detail=(
                             f"{change.kind} for {_change_exercise(change)} dropped: its target "
                             "already progresses"
+                        ),
+                    )
+                )
+                continue
+            if not isinstance(change, SwapExercise) and _is_speed_work(
+                catalog, _change_exercise(change)
+            ):
+                # ADR 0016: speed work keeps its volume — no more sets or reps, whatever the
+                # model suggests; it progresses by speed and technique.
+                fired.append(
+                    GuardVerdict(
+                        rule=_SUGGESTION_RULE,
+                        ok=False,
+                        detail=(
+                            f"{change.kind} for {_change_exercise(change)} dropped: speed work "
+                            "keeps its volume"
                         ),
                     )
                 )
