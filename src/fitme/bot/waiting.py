@@ -56,6 +56,7 @@ class WaitingMessage:
         self._placeholder: Message | None = None
         self._task: asyncio.Task[None] | None = None
         self._stopping = asyncio.Event()
+        self._contested = False
         self._finished = False
 
     async def start(self) -> None:
@@ -87,25 +88,28 @@ class WaitingMessage:
 
     async def stop(self) -> None:
         """Stop the animation without cutting an edit short: an edit already sent to
-        Telegram finishes first, so it can't land after (and over) the reply. Cancelled only
-        if it hangs past `STOP_TIMEOUT`."""
+        Telegram finishes first, so it can't land after (and over) the reply. If it hangs past
+        `STOP_TIMEOUT` it is cancelled, but Telegram may still apply it, so the placeholder is
+        contested: the reply then goes out as a new message, never into the placeholder."""
         self._stopping.set()
         task, self._task = self._task, None
         if task is None:
             return
         await asyncio.wait({task}, timeout=STOP_TIMEOUT)
         if not task.done():
+            self._contested = True
             task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await task
 
     async def finish(self, text: str, reply_markup: InlineKeyboardMarkup | None = None) -> None:
-        """Stop the animation and write `text` into the placeholder. If it can't be edited,
-        `text` goes out as a new message and the placeholder is deleted; if that fails too,
-        the error is raised and `close` still deletes the placeholder."""
+        """Stop the animation and write `text` into the placeholder. If it can't be edited
+        (or is contested, see `stop`), `text` goes out as a new message and the placeholder is
+        deleted; if that fails too, the error is raised and `close` still deletes the
+        placeholder."""
         await self.stop()
         placeholder = self._placeholder
-        if placeholder is not None:
+        if placeholder is not None and not self._contested:
             try:
                 await with_retries(lambda: placeholder.edit_text(text, reply_markup=reply_markup))
             except TelegramRetryAfter:

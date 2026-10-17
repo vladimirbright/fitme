@@ -253,6 +253,23 @@ async def test_a_frame_edit_in_flight_completes_before_the_reply_is_written() ->
     assert session.chat_texts() == ["the reply"]
 
 
+async def test_a_frame_edit_hanging_past_the_stop_timeout_leaves_the_placeholder_alone(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(waiting, "STOP_TIMEOUT", 0.01)
+    session = GatedSession()  # the gate is never opened: the frame edit hangs
+    bot = Bot(token=TEST_TOKEN, session=session)
+    async with waiting_message(_incoming(bot), interval=INTERVAL) as wait:
+        await session.frame_in_flight.wait()
+        await wait.finish("the reply")
+
+    assert session.completed == []
+    sends = [m for m in session.sent if isinstance(m, SendMessage)]
+    assert sends[-1].text == "the reply"
+    assert isinstance(session.sent[-1], DeleteMessage)
+    assert session.chat_texts() == ["the reply"]
+
+
 async def test_another_error_stops_the_animation_and_the_reply_still_arrives() -> None:
     session = FlakySession([_bad_request()])
     bot = Bot(token=TEST_TOKEN, session=session)
