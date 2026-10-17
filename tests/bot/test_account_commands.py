@@ -7,8 +7,8 @@ import json
 
 from aiogram import Bot, Dispatcher
 from aiogram.methods import SendDocument
-from conftest import FakeSession, all_table_row_counts, callback_update, make_user, message_update
 
+from conftest import FakeSession, all_table_row_counts, callback_update, make_user, message_update
 from fitme.bot.callback_data import DeleteConfirm
 from fitme.db.connection import Database
 from fitme.db.selectors.users import get_telegram_account_by_telegram_user_id

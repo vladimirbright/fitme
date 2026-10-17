@@ -6,9 +6,9 @@ from __future__ import annotations
 from datetime import timedelta
 
 import pytest
-from conftest import SentCode, extract_code, get_csrf_token, login
 from httpx import AsyncClient
 
+from conftest import SentCode, extract_code, get_csrf_token, login
 from fitme import clock
 from fitme.db.connection import Database
 from fitme.db.selectors.auth import get_latest_unused_login_code

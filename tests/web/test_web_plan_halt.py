@@ -5,13 +5,13 @@ from __future__ import annotations
 
 import json
 
-from conftest import SentCode, get_csrf_token, login
 from fastapi import FastAPI
 from httpx import AsyncClient
 from pydantic_ai.messages import ModelMessage, ModelRequest, ModelResponse, ToolCallPart
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 from test_web_plans import make_plan, seed_confirmed_plan, seed_profile
 
+from conftest import SentCode, get_csrf_token, login
 from fitme.db.connection import Database
 from fitme.db.selectors.decisions import list_decisions_for_user
 from fitme.db.selectors.training import list_open_health_holds

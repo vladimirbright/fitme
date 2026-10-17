@@ -14,10 +14,11 @@ Requires `uv` and Python 3.13. The app reads real env vars only; the Makefile pa
 via `uv run --env-file` for app commands, but never for tests.
 
 ```sh
-make check                    # lint + typecheck + catalog check + tests — run before committing
+make precommit                # fmt, then check — run before every commit
+make check                    # lint + typecheck + catalog check + tests (changes nothing)
 make test                     # uv run pytest
 uv run pytest tests/guards/test_ceiling.py::test_name   # single test
-make lint / make fmt          # ruff check / ruff format + --fix
+make lint / make fmt          # ruff check + format --check / ruff check --fix + format (alias: make fix)
 make typecheck                # mypy src (strict on fitme.domain.* and fitme.guards.*)
 make catalog                  # fitme catalog check: validate catalog + locales, print content_version
 make catalog-index            # re-embed changed exercises into catalog/search_index.sqlite (needs OPENAI_API_KEY)
@@ -34,7 +35,7 @@ The repo root holds the operator's personal data (`fitme.db`, `training.toml`, `
 ## Workflow
 
 Every change goes through a pull request so an external reviewer can review it: a branch off
-an up-to-date `main`, `make check` green, then `gh pr create`. Never push to `main` directly;
+an up-to-date `main`, `make precommit` green, then `gh pr create`. Never push to `main` directly;
 review and merging are the owner's. The PR description says what changed and why, what was
 tested, and anything the operator must do after merging (e.g. `make migrate`,
 `make catalog-index`).

@@ -10,7 +10,7 @@ CATALOG_OUT ?= catalog.txt
 CAFFEINATE := $(shell command -v caffeinate >/dev/null 2>&1 && echo caffeinate -s)
 
 .DEFAULT_GOAL := help
-.PHONY: help install lock migrate serve activate test lint fmt typecheck catalog catalog-list catalog-index check export delete purge unhold hold-clear import-history llm-eval clean docker-build up down logs backup activate-docker unhold-docker
+.PHONY: help install lock migrate serve activate test lint fmt fix typecheck catalog catalog-list catalog-index check precommit export delete purge unhold hold-clear import-history llm-eval clean docker-build up down logs backup activate-docker unhold-docker
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -33,12 +33,15 @@ activate: ## Print a one-time Telegram activation code
 test: ## Run tests
 	uv run pytest
 
-lint: ## Lint with ruff
+lint: ## Lint + format check with ruff (changes nothing)
 	uv run ruff check .
+	uv run ruff format --check .
 
-fmt: ## Format and autofix with ruff
-	uv run ruff format .
+fmt: ## Autofix lint warnings and format with ruff
 	uv run ruff check --fix .
+	uv run ruff format .
+
+fix: fmt ## Alias for fmt
 
 typecheck: ## Type-check with mypy
 	uv run mypy src
@@ -52,7 +55,9 @@ catalog-list: ## Write catalog ids/names/load units to $(CATALOG_OUT) (for LLM i
 catalog-index: ## Embed new/changed exercises into the shipped search index (needs OPENAI_API_KEY in .env)
 	$(FITME) catalog index
 
-check: lint typecheck catalog test ## lint + typecheck + catalog + test (run before commit)
+check: lint typecheck catalog test ## lint + typecheck + catalog + test (changes nothing; CI-style)
+
+precommit: fmt check ## Autofix + format, then the full check: run before every commit
 
 export: ## Export all user data to $(OUT)
 	$(FITME) export --out $(OUT)

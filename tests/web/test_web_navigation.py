@@ -7,10 +7,10 @@ from __future__ import annotations
 import re
 from datetime import timedelta
 
-from conftest import SentCode, get_csrf_token, login
 from httpx import AsyncClient
 from test_web_plans import make_plan, seed_completed_session, seed_confirmed_plan, seed_profile
 
+from conftest import SentCode, get_csrf_token, login
 from fitme.db.connection import Database
 
 _CRUMB_RE = re.compile(r"<li( aria-current=\"page\")?>(?:<a href=\"([^\"]*)\">)?([^<]*)")

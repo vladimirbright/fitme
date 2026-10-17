@@ -11,8 +11,8 @@ from aiogram.client.session.base import BaseSession
 from aiogram.exceptions import TelegramUnauthorizedError
 from aiogram.methods import SetMyCommands, TelegramMethod
 from aiogram.methods.base import TelegramType
-from conftest import TEST_TOKEN, FakeSession
 
+from conftest import TEST_TOKEN, FakeSession
 from fitme.bot.commands import register_commands
 from fitme.i18n import supported_languages
 

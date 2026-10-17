@@ -7,6 +7,7 @@ as coming from an unknown sender again."""
 from __future__ import annotations
 
 from aiogram import Bot, Dispatcher
+
 from conftest import (
     FakeSession,
     all_table_row_counts,
@@ -15,7 +16,6 @@ from conftest import (
     make_user,
     message_update,
 )
-
 from fitme.bot.callback_data import SetupChoice
 from fitme.config.settings import Settings
 from fitme.db.connection import Database

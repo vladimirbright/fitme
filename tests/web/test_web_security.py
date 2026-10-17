@@ -5,9 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from conftest import SentCode, extract_code
 from httpx import AsyncClient
 
+from conftest import SentCode, extract_code
 from fitme.config.settings import Settings, SettingsError
 from fitme.services.llm_runtime import LlmRuntime
 from fitme.web.app import create_app

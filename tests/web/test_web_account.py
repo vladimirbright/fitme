@@ -9,9 +9,9 @@ from __future__ import annotations
 
 import json
 
-from conftest import SentCode, get_csrf_token, login
 from httpx import AsyncClient
 
+from conftest import SentCode, get_csrf_token, login
 from fitme.db.connection import Database
 from fitme.db.selectors.users import get_the_user
 

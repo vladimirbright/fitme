@@ -8,9 +8,9 @@ from datetime import timedelta
 from pathlib import Path
 
 from aiogram import Bot, Dispatcher
-from conftest import FakeSession, make_user, message_update
 from test_setup_flow import _run_full_setup_with_no_red_flags
 
+from conftest import FakeSession, make_user, message_update
 from fitme import clock
 from fitme.bot.app import build_dispatcher
 from fitme.config.content import content_version

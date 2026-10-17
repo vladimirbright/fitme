@@ -7,8 +7,8 @@ from datetime import timedelta
 
 import pytest
 from aiogram import Bot, Dispatcher
-from conftest import FakeSession, make_user, message_update
 
+from conftest import FakeSession, make_user, message_update
 from fitme import clock
 from fitme.db.connection import Database
 from fitme.db.controllers.auth import insert_activation_code

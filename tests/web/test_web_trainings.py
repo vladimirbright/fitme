@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from datetime import timedelta
 
-from conftest import SentCode, get_csrf_token, login
 from httpx import AsyncClient
 
+from conftest import SentCode, get_csrf_token, login
 from fitme import clock
 from fitme.catalog import load_catalog
 from fitme.config.content import content_version
