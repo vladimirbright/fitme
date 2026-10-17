@@ -6,6 +6,8 @@ against a real migrated temp DB. Drafts the user stages go through
 
 from __future__ import annotations
 
+import json
+
 from test_planning_service import FakeLlm, _settings, decisions
 
 from fitme import clock
@@ -279,10 +281,73 @@ async def test_session_adjust_scope_keeps_the_workouts_own_activities_only(
     await seed_gym_profile(db, user_id)
     inputs = await _inputs(db, user_id)
     workout = _jog_and_class().workouts[0]
-    own = planning.AgentScope(activity_ids=frozenset({_ACTIVITY}))
+    own = planning.AgentScope.of_workout(workout, location=None)
     assert planning.judge_workout(workout.model_copy(deep=True), inputs, scope=own).ok
     refused = planning.judge_workout(workout, inputs, scope=planning.AgentScope())
     assert any(v.rule == "plan.activity_not_allowed" for v in refused.failures)
+
+
+def _renamed(plan: Plan) -> Plan:
+    plan.workouts[0].blocks[2].items[0].activity_name = "Hill repeats"
+    return plan
+
+
+def _duplicated(plan: Plan) -> Plan:
+    plan.workouts[0].blocks.append(plan.workouts[0].blocks[2].model_copy(deep=True))
+    return plan
+
+
+def _lengthened(plan: Plan) -> Plan:
+    item = plan.workouts[0].blocks[2].items[0]
+    item.sets, item.seconds = 10, 10800
+    return plan
+
+
+async def test_a_revision_cannot_rename_duplicate_or_lengthen_an_activity(
+    db: Database, user_id: int
+) -> None:
+    """The scope carries each activity's name, count and total time from the base: a
+    revision keeps `activity:bjj_class` only as the BJJ class it was."""
+    await seed_gym_profile(db, user_id)
+    plan_id = await _saved_outdoor_plan(db, user_id)
+    for change in (_renamed, _duplicated, _lengthened):
+        bad = change(outdoor_plan())
+        llm = FakeLlm([bad, bad, bad])
+        result = await planning.revise_plan(
+            db, llm.runtime(), user_id, planning.PlanBase(plan_id=plan_id), "change the class"
+        )
+        assert result.refusal is not None, change.__name__
+    rounds = [
+        d for d in await decisions(db, user_id) if d.kind == "plan_revise" and d.model is not None
+    ]
+    assert rounds and all(_failed_rule(d, "plan.activity_not_allowed") for d in rounds)
+
+
+async def test_session_adjust_scope_refuses_a_renamed_duplicated_or_longer_activity(
+    db: Database, user_id: int
+) -> None:
+    await seed_gym_profile(db, user_id)
+    inputs = await _inputs(db, user_id)
+    base = outdoor_plan()
+    scope = planning.AgentScope.of_workout(base.workouts[0], location=base.location)
+    kept = outdoor_plan().workouts[0]
+    assert planning.judge_workout(kept, inputs, location=base.location, scope=scope).ok
+    for change in (_renamed, _duplicated, _lengthened):
+        workout = change(outdoor_plan()).workouts[0]
+        judgement = planning.judge_workout(workout, inputs, location=base.location, scope=scope)
+        assert any(v.rule == "plan.activity_not_allowed" for v in judgement.failures), (
+            change.__name__
+        )
+
+
+async def test_the_generator_never_sees_an_activity_id_of_another_plan(
+    db: Database, user_id: int
+) -> None:
+    await seed_gym_profile(db, user_id)
+    await _saved_outdoor_plan(db, user_id)
+    summary = await planning.existing_plans_summary(db, user_id)
+    ids = [i for w in json.loads(json.dumps(summary))[0]["workouts"] for i in w["exercise_ids"]]
+    assert ids == ["outdoor_interval_jog", "easy_jog"]
 
 
 # Wording, time budget

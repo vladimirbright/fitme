@@ -768,15 +768,7 @@ async def adjust(
     # M8b: the declared hints come from the plan's stored workout, never from the model.
     plan_declared = planning.declared_loads_of(_plan_with(ctx.plan, ctx.workout))
     # `session_adjust` may keep the workout's own activity items, never add one.
-    adjust_scope = planning.AgentScope(
-        activity_ids=frozenset(
-            item.exercise_id
-            for block in ctx.workout.blocks
-            for item in block.items
-            if is_activity_id(item.exercise_id)
-        ),
-        location=ctx.plan.location,
-    )
+    adjust_scope = planning.AgentScope.of_workout(ctx.workout, location=ctx.plan.location)
 
     def build_prompt(verdicts: Sequence[GuardVerdict] | None) -> str:
         feedback = (
