@@ -123,12 +123,15 @@ def block_seconds(block: Block, catalog: Catalog, model: TimeModel = DEFAULT_MOD
     rounds = max(item.sets for item in block.items)
     round_rest = block.items[-1].rest_seconds
     for round_index in range(rounds):
-        for position, (item, exercise) in enumerate(zip(block.items, exercises, strict=True)):
-            if item.sets <= round_index:
-                continue
+        active = [
+            (item, exercise)
+            for item, exercise in zip(block.items, exercises, strict=True)
+            if item.sets > round_index
+        ]
+        for position, (item, exercise) in enumerate(active):
             total += set_work_seconds(item, exercise, model)
-            if position < len(block.items) - 1:
-                total += item.rest_seconds  # the transition to the next exercise
+            if position < len(active) - 1:
+                total += item.rest_seconds  # the transition to the next exercise this round
         if round_index < rounds - 1:
             total += round_rest
     return total

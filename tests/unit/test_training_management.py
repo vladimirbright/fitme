@@ -796,3 +796,34 @@ def test_the_recap_shows_the_apps_speed_and_variation_decisions_without_the_mode
     assert "fast work progresses by speed and clean technique" in text
     assert "• Plank: at the top of a useful range — a harder variation is the next step" in text
     assert "Push-up" not in text  # a plain hold says nothing new
+
+
+def test_a_superset_skips_transitions_to_an_exercise_that_is_done() -> None:
+    block = superset(
+        rx("dumbbell_bench_press", 3, reps=(10, 10), rest=20),
+        rx("plank", 2, seconds=40, rest=90),
+    )
+    bench, plank = 10 * 3.5, 40
+    # Rounds 1-2: bench, 20 s, plank; round 3: bench only. Two round rests between them.
+    assert _seconds(block) == pytest.approx(45 + 2 * (bench + 20 + plank) + bench + 2 * 90)
+
+
+def test_the_only_working_block_keeps_its_volume() -> None:
+    session = workout(
+        "A",
+        "W",
+        [
+            role(BlockRole.WARM_UP, rx("jump_rope_skipping", 1, seconds=300, rest=0)),
+            role(BlockRole.CONDITIONING, rx("battle_rope_alternating_waves", 10, seconds=60)),
+        ],
+    )
+    time_budget.fit_workout(session, _CATALOG, 10)
+    assert session.blocks[-1].items[0].sets == 10
+
+
+def test_a_power_first_lift_counts_as_power_work_even_in_low_reps() -> None:
+    clean = _CATALOG.by_id("dumbbell_clean")
+    if clean is None:
+        pytest.skip("no dumbbell clean in the catalog")
+    item = rx("dumbbell_clean", 4, reps=(3, 3))
+    assert workload.stimulus_of(item, clean, BlockRole.POWER) == Stimulus.POWER

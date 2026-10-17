@@ -136,7 +136,9 @@ def stimulus_of(item: Prescription, exercise: Exercise, role: BlockRole | None) 
     if role in (BlockRole.WARM_UP, BlockRole.MOBILITY):
         return Stimulus.MOBILITY
     mode = intensity_mode(exercise, item.measure)
-    if mode == IntensityMode.SPEED and not is_heavy(item, exercise):
+    # By what it mainly trains: a clean is power work even in triples (the review's order
+    # check still treats a heavy one as tiring strength work).
+    if mode == IntensityMode.SPEED:
         if exercise.kg_loadable:
             return Stimulus.POWER
         lower = bool({"knee", "ankle"} & set(exercise.loads_areas))
