@@ -42,12 +42,13 @@ log are separate, and progression never regenerates the plan).
 ## Decision
 
 **Catalog.** `Exercise.unilateral` (default false): done one side at a time, every rep of a
-set on one arm or leg and then the other; the target is per side. Tagged on 212 files, by
+set on one arm or leg and then the other; the target is per side. Tagged on 204 files, by
 explicit id tokens (`one_arm`, `single_leg`, `split_squat`, `step_up`, `pistol`,
 `side_plank`, …) or instructions that say so ("on one side before switching", "then
-switch"). Alternating moves (walking lunges, bicycle crunches, alternating curls) are left
-out. Search documents don't use it, so the shipped index stays current. The plan view says
-"per side"; `exercise_facts` carry it.
+switch"), except where the instructions alternate sides (walking lunges, bicycle crunches,
+alternating curls, Cossack squats; a catalog test keeps it so). Search documents don't use it,
+so the shipped index stays current. The plan view and the active workout block say "per
+side"; `exercise_facts` carry it.
 
 **Session time** (`services.session_time`, pure). Work per set: reps × 3.5 s, the
 prescribed seconds, or meters at 0.4 s/m (cardio, speed, pace) or 1.0 s/m (carries).
@@ -126,9 +127,13 @@ more in, and to treat swings, RDLs, deadlifts and hip thrusts as one hinge deman
 - The recap offers the step as a suggestion, ahead of the model's: `change_reps` or the new
   `change_target` (`seconds` or `meters`). It applies only when the exercise appears once in
   today's workout outside a superset and every prescription of it in the plan has the same
-  target. The model's rep, set or target change for the same exercise is dropped (one
-  progression at a time). **Apply** is unchanged: judged, then an `origin=progression`
-  version. `recap.v3` gets `next_targets` and is told never to claim the user got faster.
+  target. A target change is the app's alone: the model's output schema has no
+  `change_target` (`ModelPlanChange`), and its rep or set change for the same exercise is
+  dropped (one progression at a time). **Apply** is judged as before and saved as an
+  `origin=progression` version; a target change is stale once the plan's prescriptions of the
+  exercise no longer share one target. A session with a skipped or unlogged set is
+  inconclusive: it neither earns a step up nor counts towards a step down. `recap.v3` gets
+  `next_targets` and is told never to claim the user got faster.
 
 ## Consequences
 

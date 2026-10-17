@@ -18,10 +18,10 @@ evidence starts again. Imported history never counts (A§7.3). Per exercise:
   exercise that gets one of these);
 - at the top of a useful range (`Caps`) -> no more of the same: a harder variation is the
   next step, which only the user (or a swap suggestion) can choose;
-- **two sessions in a row** with a performed set short of the target (below `reps_min`,
-  under the seconds or meters) -> one step down;
+- **two sessions in a row** with every prescribed set logged and one of them short of the
+  target (below `reps_min`, under the seconds or meters) -> one step down;
 - anything else, including a single session either way, a skipped set or missing results ->
-  hold. One session is not a trend.
+  hold. One session is not a trend, and a partial one is no evidence.
 """
 
 from __future__ import annotations
@@ -112,13 +112,15 @@ def session_result(item: Prescription, rows: Sequence[SetLogRecord]) -> str | No
         return None
     top, floor = _top_and_floor(item)
     values = [_value(row, item.measure) for row in prescribed]
-    performed = [value for row, value in zip(prescribed, values, strict=True) if not row.skipped]
-    if any(value is not None and value < floor for value in performed):
-        return "short"
-    if len(prescribed) >= item.sets and all(
-        not row.skipped and value is not None and value >= top
-        for row, value in zip(prescribed, values, strict=True)
+    # A skipped or unlogged set makes the session inconclusive either way: it neither earns
+    # more nor, with a short set next to it, counts as falling short.
+    if len(prescribed) < item.sets or any(
+        row.skipped or value is None for row, value in zip(prescribed, values, strict=True)
     ):
+        return "mixed"
+    if any(value is not None and value < floor for value in values):
+        return "short"
+    if all(value is not None and value >= top for value in values):
         return "met"
     return "mixed"
 

@@ -126,6 +126,9 @@ class ChangeTarget(BaseModel):
 PlanChange = Annotated[
     SwapExercise | ChangeReps | ChangeSets | ChangeTarget, Field(discriminator="kind")
 ]
+# ADR 0016: what the `recap` model may suggest. A timed or distance target is the app's alone
+# (`services.progression`), never the model's, so `change_target` isn't in its schema.
+ModelPlanChange = Annotated[SwapExercise | ChangeReps | ChangeSets, Field(discriminator="kind")]
 
 
 class Recap(BaseModel):
@@ -137,4 +140,4 @@ class Recap(BaseModel):
     model_config = _STRICT_CONFIG
 
     text: Annotated[str, Field(max_length=2000)]
-    suggestions: list[PlanChange] = Field(default_factory=list)
+    suggestions: list[ModelPlanChange] = Field(default_factory=list)

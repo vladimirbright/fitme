@@ -366,6 +366,7 @@ to_plan_offer = "Вы меняли эту тренировку по ходу. П
 to_plan_button = "📋 Перенести в план"
 sets_line = "Подходы: {sets} × {reps} повторений"
 sets_line_target = "Подходы: {sets} × {target}"
+sets_line_per_side = "Подходы: {sets} × {reps} повторений на каждую сторону"
 load_line = "Вес: {load}"
 load_calibration = "лёгкий вес, в котором уверены"
 load_calibration_rir = "вес, с которым останется около {rir} повторений в запасе"
