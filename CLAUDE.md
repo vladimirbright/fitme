@@ -25,6 +25,10 @@ make catalog-index            # re-embed changed exercises into catalog/search_i
 make migrate / make serve     # apply migrations / run bot + web + retention in one process
 ```
 
+A checked-in Claude Code hook (`.claude/settings.json` → `.claude/hooks/ruff_autofix.sh`)
+runs ruff's safe autofixes (except F401, so an import added ahead of its first use survives)
+and the formatter on every edited `.py` file. It never blocks; `make precommit` is the gate.
+
 `make llm-eval` calls a real model and spends money — never run it unprompted. Tests always
 fake the LLM (`pydantic_ai.models.test` / `FunctionModel`) and use a real migrated temp
 SQLite file; SQL is never mocked.
