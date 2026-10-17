@@ -96,7 +96,7 @@ async def _send_plan(
     *,
     title: str,
     lang: str,
-    markup: InlineKeyboardMarkup,
+    markup: InlineKeyboardMarkup | None,
     session_minutes: int | None,
     unmatched: Sequence[str] = (),
 ) -> None:
@@ -340,30 +340,44 @@ async def show_staged_draft(
 ) -> None:
     """A whole plan the planner staged (`stage_plan`): shown whole like a generated draft,
     with Confirm / Change / Cancel, then any load the guards limited; the session's history
-    notes it was shown (the session's draft was already set when it was recorded). No
-    session-length comparison: the profile's session length is a default, and the planner's
-    plan has the length the user asked for (a 90-minute class)."""
+    notes it was shown (`services.assistant` already made it the session's draft). When the
+    same turn saved it (the user said "save it"), the session is closed: the plan is shown
+    without buttons, and the saved notice follows. No session-length comparison: the
+    profile's session length is a default, and the planner's plan has the length the user
+    asked for (a 90-minute class)."""
     round_ = result.round
     if round_ is None or round_.plan is None:
         lines = [t("assistant.blocked", lang), *(f"• {e}" for e in result.errors)]
         await message.answer("\n".join(lines))
         return
     plan = round_.plan
+    session = await conversations.current_planning(db, user_id)
+    is_open = session is not None and session.draft_decision_id == round_.decision_id
     await _send_plan(
         message,
         plan,
         title=t("plan.draft_title", lang),
         lang=lang,
-        markup=rendering.draft_markup(round_.decision_id, lang),
+        markup=rendering.draft_markup(round_.decision_id, lang) if is_open else None,
         session_minutes=None,
     )
     if result.requested is not None:
         notes = rendering.load_change_notes(result.requested, plan, load_catalog(), lang)
         if notes:
             await message.answer("\n".join(notes))
-    await _draft_in_session(
-        db, user_id, plan_id=round_.plan_id, round_=round_, plan=plan, lang=lang
-    )
+    if session is not None and is_open:
+        await conversations.record_outgoing(
+            db,
+            user_id,
+            session.id,
+            t(
+                "assistant.history_draft",
+                lang,
+                name=plan.name,
+                workouts=len(plan.workouts),
+                days=len(plan.schedule),
+            ),
+        )
 
 
 async def show_edit_draft(
