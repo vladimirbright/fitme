@@ -591,3 +591,69 @@ def test_block_roles_feed_the_weekly_load() -> None:
     session = workload.session_load(week.workouts[0], _CATALOG, roles, 1)
     assert session.stimulus_units(Stimulus.MOBILITY) == 0
     assert session.region_units(Region.HINGE) == pytest.approx(4 * 0.6 + 3 * 0.75)
+
+
+def test_no_unilateral_exercise_is_done_alternating() -> None:
+    """A unilateral target is per side; an alternating move's reps are counted in total."""
+    alternating = [
+        exercise.id
+        for exercise in _CATALOG.exercise
+        if exercise.unilateral
+        and any(
+            word in exercise.instructions["en"].lower()
+            for word in ("alternat", "each rep", "every rep")
+        )
+    ]
+    assert alternating == []
+
+
+def test_a_skipped_set_makes_a_session_inconclusive_not_short() -> None:
+    pushup = rx("pushup", 3, reps=(8, 12), load={"kind": "bodyweight"})
+    partial = _session(pushup, 6, None, 9)  # one short set next to a skipped one
+    decision = progression.next_target(pushup, _exercise("pushup"), [partial, partial])
+    assert decision.kind == TargetKind.HOLD and decision.change is None
+
+
+def test_the_recap_model_cannot_suggest_a_timed_or_distance_target() -> None:
+    from pydantic import ValidationError
+
+    from fitme.domain.results import Recap
+
+    with pytest.raises(ValidationError):
+        Recap.model_validate(
+            {
+                "text": "",
+                "suggestions": [{"kind": "change_target", "exercise_id": "plank", "seconds": 3600}],
+            }
+        )
+
+
+def test_a_target_change_is_stale_once_the_plans_targets_differ() -> None:
+    from fitme.services.recap import _one_target
+
+    same = plan(
+        [(0, "A"), (3, "B")],
+        workout("A", "A", single(rx("plank", 3, seconds=30))),
+        workout("B", "B", single(rx("plank", 3, seconds=30))),
+    )
+    edited = plan(
+        [(0, "A"), (3, "B")],
+        workout("A", "A", single(rx("plank", 3, seconds=30))),
+        workout("B", "B", single(rx("plank", 3, seconds=90))),
+    )
+    change = ChangeTarget(exercise_id="plank", seconds=35)
+    assert _one_target(same, change) and not _one_target(edited, change)
+
+
+def test_the_active_workout_view_says_per_side_too() -> None:
+    from fitme.bot.train_rendering import block_text
+    from fitme.services.training import BlockView
+
+    def view(*items: Prescription) -> str:
+        block = Block(kind="single", items=list(items))
+        shown = BlockView(session_id=1, index=0, total=1, workout_key="A", title="W", block=block)
+        return block_text(shown, catalog=_CATALOG, lang="en")
+
+    assert "Sets: 3 × 10 reps per side" in view(rx("dumbbell_row", 3, reps=(10, 10)))
+    assert "Sets: 3 × 30 s per side" in view(rx("side_plank", 3, seconds=30))
+    assert "per side" not in view(rx("dumbbell_bench_press", 3, reps=(10, 10)))

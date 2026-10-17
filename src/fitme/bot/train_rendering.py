@@ -206,18 +206,21 @@ def block_text(view: BlockView, *, catalog: Catalog, lang: str) -> str:
         lines.append(exercise_name(exercise, item.exercise_id, lang))
         # One prescription has one load for every set, so the sets are stated once ("4 × 6–8")
         # with that explicit load, instead of one identical line per set.
+        # ADR 0016: a unilateral exercise's target is per side, here as in the plan view.
+        per_side = exercise is not None and exercise.unilateral
         if item.measure == Measure.REPS:
             assert item.reps_min is not None and item.reps_max is not None
             sets_line = t(
-                "train.sets_line",
+                "train.sets_line_per_side" if per_side else "train.sets_line",
                 lang,
                 sets=item.sets,
                 reps=reps_text(item.reps_min, item.reps_max),
             )
         else:
-            sets_line = t(
-                "train.sets_line_target", lang, sets=item.sets, target=target_text(item, lang)
-            )
+            target = target_text(item, lang)
+            if per_side:
+                target = t("plan.per_side", lang, target=target)
+            sets_line = t("train.sets_line_target", lang, sets=item.sets, target=target)
         lines.append(sets_line)
         load = _block_load_label(item, exercise, lang, view.block.role)
         lines.append(t("train.load_line", lang, load=load))

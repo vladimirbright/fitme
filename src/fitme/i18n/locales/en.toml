@@ -375,6 +375,7 @@ to_plan_offer = "You changed this workout during the session. Carry the changes 
 to_plan_button = "📋 Carry into the plan"
 sets_line = "Sets: {sets} × {reps} reps"
 sets_line_target = "Sets: {sets} × {target}"
+sets_line_per_side = "Sets: {sets} × {reps} reps per side"
 load_line = "Load: {load}"
 load_calibration = "a light weight you're sure about"
 load_calibration_rir = "a weight that leaves about {rir} reps in reserve"
