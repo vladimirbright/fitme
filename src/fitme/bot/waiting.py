@@ -5,8 +5,9 @@ into it when it is ready.
 Telegram documents no exact limit for edits; the practical one is about one message per
 second per chat, edits included, with a 429 (`TelegramRetryAfter`) past it. So a frame is
 shown every `FRAME_INTERVAL` seconds, a 429 is waited out, and any other Telegram error stops
-the animation (the placeholder stays; the reply then goes out as a new message). The frames
-are emoji and dots only: nothing to translate.
+the animation. The reply is what matters: it waits out a 429 (`DELIVERY_ATTEMPTS` tries), and
+if the placeholder can't be edited it goes out as a new message and the placeholder is
+deleted. The frames are emoji and dots only: nothing to translate.
 """
 
 from __future__ import annotations
@@ -14,13 +15,15 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import random
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable
 
 from aiogram.exceptions import TelegramAPIError, TelegramRetryAfter
 from aiogram.types import InlineKeyboardMarkup, Message
 
 FRAME_INTERVAL = 1.5
 TRACK_LENGTH = 7
+STOP_TIMEOUT = 10.0
+DELIVERY_ATTEMPTS = 3
 RUNNERS = ("🏃", "🚴", "🏊")
 
 
@@ -32,12 +35,27 @@ def frames(runner: str, length: int = TRACK_LENGTH) -> list[str]:
     ]
 
 
+async def with_retries[T](send: Callable[[], Awaitable[T]]) -> T:
+    """`send()`, waiting out a 429 up to `DELIVERY_ATTEMPTS` times; the last 429 is raised."""
+    for _ in range(DELIVERY_ATTEMPTS - 1):
+        try:
+            return await send()
+        except TelegramRetryAfter as error:
+            await pause(error.retry_after)
+    return await send()
+
+
+async def pause(seconds: float) -> None:
+    await asyncio.sleep(seconds)
+
+
 class WaitingMessage:
     def __init__(self, message: Message, interval: float) -> None:
         self._message = message
         self._interval = interval
         self._placeholder: Message | None = None
         self._task: asyncio.Task[None] | None = None
+        self._stopping = asyncio.Event()
         self._finished = False
 
     async def start(self) -> None:
@@ -48,47 +66,70 @@ class WaitingMessage:
             return
         self._task = asyncio.create_task(self._animate(self._placeholder, laps))
 
+    async def stopped_within(self, seconds: float) -> bool:
+        """Wait up to `seconds`; True as soon as `stop` was called."""
+        with contextlib.suppress(TimeoutError):
+            await asyncio.wait_for(self._stopping.wait(), seconds)
+        return self._stopping.is_set()
+
     async def _animate(self, placeholder: Message, laps: list[str]) -> None:
         index = 0
-        while True:
-            await asyncio.sleep(self._interval)
+        delay = self._interval
+        while not await self.stopped_within(delay):
             index = (index + 1) % len(laps)
+            delay = self._interval
             try:
                 await placeholder.edit_text(laps[index])
             except TelegramRetryAfter as error:
-                await asyncio.sleep(error.retry_after)
+                delay = error.retry_after
             except TelegramAPIError:
                 return
 
     async def stop(self) -> None:
-        if self._task is None:
+        """Stop the animation without cutting an edit short: an edit already sent to
+        Telegram finishes first, so it can't land after (and over) the reply. Cancelled only
+        if it hangs past `STOP_TIMEOUT`."""
+        self._stopping.set()
+        task, self._task = self._task, None
+        if task is None:
             return
-        self._task.cancel()
-        with contextlib.suppress(asyncio.CancelledError):
-            await self._task
-        self._task = None
+        await asyncio.wait({task}, timeout=STOP_TIMEOUT)
+        if not task.done():
+            task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await task
 
     async def finish(self, text: str, reply_markup: InlineKeyboardMarkup | None = None) -> None:
-        """Stop the animation and write `text` into the placeholder (a new message if it
-        can't be edited)."""
+        """Stop the animation and write `text` into the placeholder. If it can't be edited,
+        `text` goes out as a new message and the placeholder is deleted; if that fails too,
+        the error is raised and `close` still deletes the placeholder."""
         await self.stop()
-        self._finished = True
-        if self._placeholder is not None:
+        placeholder = self._placeholder
+        if placeholder is not None:
             try:
-                await self._placeholder.edit_text(text, reply_markup=reply_markup)
-                return
+                await with_retries(lambda: placeholder.edit_text(text, reply_markup=reply_markup))
+            except TelegramRetryAfter:
+                raise
             except TelegramAPIError:
                 pass
-        await self._message.answer(text, reply_markup=reply_markup)
+            else:
+                self._finished = True
+                return
+        await with_retries(lambda: self._message.answer(text, reply_markup=reply_markup))
+        await self._delete_placeholder()
 
     async def close(self) -> None:
         """Stop the animation; a placeholder that never got a reply is deleted."""
         await self.stop()
-        if self._finished or self._placeholder is None:
-            return
+        if not self._finished:
+            await self._delete_placeholder()
+
+    async def _delete_placeholder(self) -> None:
+        placeholder, self._placeholder = self._placeholder, None
         self._finished = True
-        with contextlib.suppress(TelegramAPIError):
-            await self._placeholder.delete()
+        if placeholder is not None:
+            with contextlib.suppress(TelegramAPIError):
+                await with_retries(placeholder.delete)
 
 
 @contextlib.asynccontextmanager
