@@ -34,6 +34,7 @@ from enum import StrEnum
 from fitme.domain.catalog import Catalog, Exercise, intensity_mode
 from fitme.domain.enums import (
     BlockRole,
+    Equipment,
     ExerciseKind,
     ExercisePattern,
     IntensityMode,
@@ -188,10 +189,13 @@ def regions_of(exercise: Exercise, stimulus: Stimulus) -> frozenset[Region]:
     """The regions whose weekly demand an exercise adds to (see the module docstring)."""
     areas = set(exercise.loads_areas)
     found: set[Region] = set()
+    # A swing is filed as conditioning but is a loaded hip hinge; a medicine-ball slam or
+    # throw loads the hips too, but it is a throw — the hinge region doesn't count it.
     hinge_like = exercise.pattern == ExercisePattern.HINGE or (
         exercise.kg_loadable
         and exercise.pattern in (ExercisePattern.CONDITIONING, ExercisePattern.ACCESSORY)
         and {"lower_back", "hip"} <= areas
+        and Equipment.MEDICINE_BALL not in exercise.equipment
     )
     if hinge_like:
         found.add(Region.HINGE)
