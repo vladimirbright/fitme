@@ -4,7 +4,6 @@ kind = "compound"
 pattern = "squat"
 measures = ["reps"]
 qualities = ["strength", "hypertrophy"]
-unilateral = true
 level = "advanced"
 equipment = ["dumbbells", "bench"]
 load_unit = "per_implement"

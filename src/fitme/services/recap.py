@@ -739,6 +739,19 @@ def _filter_suggestions(
     return kept, fired
 
 
+def _one_target(plan: Plan, change: ChangeTarget) -> bool:
+    """Every prescription of the exercise in the change's measure has the same target."""
+    measure = Measure.TIME if change.seconds is not None else Measure.DISTANCE
+    targets = {
+        (item.seconds, item.meters)
+        for workout in plan.workouts
+        for block in workout.blocks
+        for item in block.items
+        if item.exercise_id == change.exercise_id and item.measure == measure
+    }
+    return len(targets) == 1
+
+
 def _change_exercise(change: PlanChange) -> str:
     return change.from_exercise_id if isinstance(change, SwapExercise) else change.exercise_id
 
@@ -1089,6 +1102,10 @@ async def apply_suggestion(
             )
             if problems:
                 return ApplyResult(status=Status.STALE)
+        if isinstance(change, ChangeTarget) and not _one_target(base, change):
+            # ADR 0016: a target change applies to every prescription of the exercise in its
+            # measure; if they no longer share one target (an edit since), it isn't current.
+            return ApplyResult(status=Status.STALE)
         modified = base.model_copy(deep=True)
         if not _apply_change(
             modified, proposal.suggestions[index], inputs, ctx.session.workout_key
