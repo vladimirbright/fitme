@@ -42,11 +42,12 @@ log are separate, and progression never regenerates the plan).
 ## Decision
 
 **Catalog.** `Exercise.unilateral` (default false): done one side at a time, every rep of a
-set on one arm or leg and then the other; the target is per side. Tagged on 204 files, by
+set on one arm or leg and then the other; the target is per side. Tagged on 199 files, by
 explicit id tokens (`one_arm`, `single_leg`, `split_squat`, `step_up`, `pistol`,
 `side_plank`, …) or instructions that say so ("on one side before switching", "then
 switch"), except where the instructions alternate sides (walking lunges, bicycle crunches,
-alternating curls, Cossack squats; a catalog test keeps it so). Search documents don't use it,
+alternating curls, Cossack squats, stretches that switch sides every rep; a catalog test
+keeps it so). Search documents don't use it,
 so the shipped index stays current. The plan view and the active workout block say "per
 side"; `exercise_facts` carry it.
 
@@ -130,7 +131,8 @@ more in, and to treat swings, RDLs, deadlifts and hip thrusts as one hinge deman
   sets and target (a different number of sets is a different prescription, and restarts the
   evidence too). A target change is the app's alone: the model's output schema has no
   `change_target` (`ModelPlanChange`), and its rep or set change for the same exercise is
-  dropped (one progression at a time). **Apply** is judged as before and saved as an
+  dropped (one progression at a time), as is any rep or set change for speed work, which
+  keeps its volume. **Apply** is judged as before and saved as an
   `origin=progression` version; an app-decided rep or target change is stale once any
   prescription of the exercise no longer has the sets and target it was decided from. A session with a skipped or unlogged set is
   inconclusive: it neither earns a step up nor counts towards a step down. `recap.v3` gets

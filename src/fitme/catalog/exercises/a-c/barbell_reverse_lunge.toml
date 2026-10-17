@@ -4,7 +4,6 @@ kind = "compound"
 pattern = "squat"
 measures = ["reps"]
 qualities = ["strength", "hypertrophy"]
-unilateral = true
 equipment = ["barbell", "rack"]
 load_unit = "total"
 locations = ["public_gym", "studio_gym", "home_equipment"]
