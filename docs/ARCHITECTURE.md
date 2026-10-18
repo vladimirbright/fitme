@@ -329,7 +329,7 @@ ADR 0011: a `Block` has an optional `role` (`warm_up`, `power`, `strength`, `acc
 before choosing exercises. The last superset exercise's rest is the one round rest, shown
 once. Bodies stored before parse unchanged (no roles; the review infers them).
 
-**Activity items** (ADR 0018, experiment branch). `Prescription.exercise_id` is a catalog id, or an id in the
+**Activity items** (ADR 0018). `Prescription.exercise_id` is a catalog id, or an id in the
 `activity:<slug>` namespace (`domain.models.ACTIVITY_PREFIX`, `is_activity_id`: slug of
 3..60 characters `a-z0-9_`) for a non-catalog activity such as a class, a run or a walk.
 An activity item needs `activity_name` (the display name, trimmed to 60 characters), is
@@ -694,9 +694,9 @@ plan view shows each workout's estimate, labelled as one.
 7. **Confirm** stores `plans` + `plan_versions(version=1, origin=llm)`. If this is the only
    plan, it becomes the default.
 
-#### 6.4.1 The conversational planner (experiment branch `experiment/llm-first-planning`)
+#### 6.4.1 The conversational planner
 
-ADR 0018 (experimental, not accepted) records this path; the experiment report is
+ADR 0018 (accepted 2026-10-18) records this path; the experiment report is
 `docs/reports/llm-first-planning-experiment.md`.
 
 On this branch, steps 1–6 above are reached only through **Generate anyway**; the default
@@ -1043,12 +1043,12 @@ One pydantic-ai `Agent` per purpose. Each has a typed output, and its prompt is 
 | `plan_import` | context + `imported_text` (scrubbed) | `PlanImport{plan, unmatched} \| Refusal` | medium |
 | `recap` | planned vs actual (incl. `extra_sets`) + engine decisions + `next_targets` (ADR 0016) | `Recap { text: str, suggestions: list[PlanChange] }` (swap, rep range, set count — ADR 0015; timed/distance target — ADR 0016) | large |
 | `assistant` | context + `state` + session `history` + user text (scrubbed); lookup and staging tools | `AssistantTurn \| Refusal` (ADR 0003, ADR 0004) | medium |
-| `planner` | as `assistant`; lookups, `stage_plan` (a whole `Plan`) and session tools, no typed edits or logging (§6.4.1, experiment branch) | `AssistantTurn \| Refusal` | large |
+| `planner` | as `assistant`; lookups, `stage_plan` (a whole `Plan`) and session tools, no typed edits or logging (§6.4.1) | `AssistantTurn \| Refusal` | large |
 
 - The prompt loader returns `(template_name, version, rendered_text)`. Template name and
   version go into `decisions`. Current versions (ADR 0017): `plan_generate.v8`,
   `plan_revise.v5`, `plan_import.v2`, `session_adjust.v2`, `recap.v3`,
-  `assistant.v12`, `planner.v2` (experiment branch). (`result_parse` was removed with the ✏️ button, ADR 0013.)
+  `assistant.v12`, `planner.v2`. (`result_parse` was removed with the ✏️ button, ADR 0013.)
 - Each agent's model comes from its tier or override (§8.5). Nothing in the code is tied to
   one provider.
 - `llm/usage.py` wraps every run: records `llm_calls` from `result.usage` (a property), latency, and
@@ -1270,7 +1270,7 @@ session's recap, using the same service.
 | `fitme delete --yes` | Delete the user and all data. |
 | `fitme purge` | Run retention now. |
 | `fitme llm eval [--agent NAME] [--model STR]` | Run the LLM eval fixtures against a model; prints guard-pass rate, refusals, tokens, cost (§8.5). Spends money. |
-| `fitme llm eval-conversations [--mode planner\|legacy\|both] [--scenario NAME] [--model STR] --yes` | Experiment (llm-first planning): replays the conversation fixtures in `tests/fixtures/llm_eval/conversations/` turn by turn through `services.assistant.handle_message` (the planner) and the same requests through `propose_new_plan`/`revise_plan`/`confirm_plan` (legacy), each on a fresh seeded temp database, and judges every turn with deterministic data-only checks (`llm/eval_conversations.py`). Prints a planner-vs-legacy table (checks, model calls, tokens, cost, latency) and writes the full report with transcripts to `docs/reports/llm_first_eval_<YYYY-MM-DD_HHMMSS>.md`. Questions and running minutes are reported, not counted; load checks read the plan as the model asked for it. Spends money. |
+| `fitme llm eval-conversations [--mode planner\|legacy\|both] [--scenario NAME] [--model STR] --yes` | LLM-first planning evaluation (ADR 0018): replays the conversation fixtures in `tests/fixtures/llm_eval/conversations/` turn by turn through `services.assistant.handle_message` (the planner) and the same requests through `propose_new_plan`/`revise_plan`/`confirm_plan` (legacy), each on a fresh seeded temp database, and judges every turn with deterministic data-only checks (`llm/eval_conversations.py`). Prints a planner-vs-legacy table (checks, model calls, tokens, cost, latency) and writes the full report with transcripts to `docs/reports/llm_first_eval_<YYYY-MM-DD_HHMMSS>.md`. Questions and running minutes are reported, not counted; load checks read the plan as the model asked for it. Spends money. |
 | `fitme history import PATH [--dry-run]` | Import past sessions and plans (TOML/JSON; `-` = stdin). Idempotent. See `docs/import-format.md`. |
 | `fitme health` | Healthcheck: DB opens, no pending migrations, settings valid. No network. |
 | `fitme backup --out DIR [--keep N]` | Online SQLite backup (mode 0600), keeping the newest N. |
