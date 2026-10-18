@@ -16,12 +16,14 @@ from fitme.db.selectors.decisions import list_decisions_for_user
 from fitme.db.selectors.plans import list_plan_versions
 from fitme.domain.enums import AREA_FLAGS, RED_FLAGS, Location, Measure
 from fitme.domain.models import Block, Load, Plan, Prescription, ScheduledDay, Workout
+from fitme.domain.results import ChangeSets, SwapExercise
 from fitme.services import (
     measures,
     plan_edit,
     plan_quality,
     planning,
     prescribing,
+    recap,
     session_time,
     time_budget,
 )
@@ -479,3 +481,51 @@ async def test_the_web_swap_list_follows_the_plans_location(db: Database, user_i
     assert at_gym is not None and profile is not None
     assert "barbell_back_squat" in {exercise.id for exercise in at_gym}
     assert "barbell_back_squat" not in {exercise.id for exercise in profile}
+
+
+def _activity_summary(done: int) -> recap.ExerciseSummary:
+    return recap.ExerciseSummary(
+        exercise_id=_ACTIVITY,
+        planned_sets=1,
+        done_sets=done,
+        skipped_sets=0,
+        extra_sets=done - 1,
+        planned_reps_min=None,
+        planned_reps_max=None,
+        planned_load=Load(kind="bodyweight"),
+        actual_reps=[],
+        actual_kg=[],
+        total_reps=0,
+        volume_kg=0.0,
+        measure=Measure.TIME,
+        planned_seconds=5400,
+        actual_seconds=[5400] * done,
+        total_seconds=5400 * done,
+    )
+
+
+async def test_a_recap_suggestion_the_plan_model_refuses_is_dropped(
+    db: Database, user_id: int
+) -> None:
+    """A suggestion is judged on a `model_copy`, which skips validation: an activity item
+    given a second set (one extra set was logged), or a 90-minute class swapped for a
+    catalog exercise (held to an hour), would store a plan that no longer parses."""
+    await seed_gym_profile(db, user_id)
+    inputs = await _inputs(db, user_id)
+    plan = outdoor_plan()
+    kept, fired = recap._filter_suggestions(
+        [
+            ChangeSets(exercise_id=_ACTIVITY, sets=2),
+            SwapExercise(from_exercise_id=_ACTIVITY, to_exercise_id="brisk_walk"),
+        ],
+        plan,
+        inputs,
+        [_activity_summary(done=2)],
+        "A",
+        [],
+    )
+    assert kept == []
+    details = [verdict.detail for verdict in fired]
+    assert len(details) == 2, details
+    assert "exactly one set" in details[0]
+    assert "seconds" in details[1]

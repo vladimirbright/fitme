@@ -1075,6 +1075,11 @@ class _Turn:
 
     async def report_safety_concern(self) -> dict[str, object]:
         self._log_tool("report_safety_concern")
+        if self._planner:
+            # AGENTS.md §2: a safety report stops plan generation too, workout or not; the
+            # halt opens a health hold, which refuses plans until it is cleared (A§6.6).
+            self.staged.halt = True
+            return _ok(staged="planning stops after this turn; nothing else is applied")
         if self._open_block() is None:
             return _error("no workout is in progress")
         self.staged.halt = True
