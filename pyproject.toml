@@ -55,6 +55,10 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 # pattern for declaring a route's dependencies (`web/routes/*.py`, M9, A§9): a bare
 # `Depends(...)`/`Form(...)` default is how FastAPI resolves them per request, not a mutable
 # default in the Python-footgun sense the rule exists for.
+# Test modules import their siblings as `tests.<pkg>.<mod>` (tests/ is a package tree).
+[tool.ruff.lint.isort]
+known-first-party = ["fitme", "tests"]
+
 [tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = ["fastapi.Depends", "fastapi.Form", "fastapi.Query"]
 

@@ -9,14 +9,14 @@ from fastapi import FastAPI
 from httpx import AsyncClient
 from pydantic_ai.messages import ModelMessage, ModelRequest, ModelResponse, ToolCallPart
 from pydantic_ai.models.function import AgentInfo, FunctionModel
-from test_web_plans import make_plan, seed_confirmed_plan, seed_profile
 
-from conftest import SentCode, get_csrf_token, login
 from fitme.db.connection import Database
 from fitme.db.selectors.decisions import list_decisions_for_user
 from fitme.db.selectors.training import list_open_health_holds
 from fitme.llm.agents import plan_generate_agent
 from fitme.services.llm_runtime import LlmRuntime
+from tests.web.conftest import SentCode, get_csrf_token, login
+from tests.web.test_web_plans import make_plan, seed_confirmed_plan, seed_profile
 
 
 async def test_stop_word_in_revise_textarea_halts_without_calling_the_llm(

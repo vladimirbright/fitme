@@ -8,7 +8,12 @@ from __future__ import annotations
 
 from aiogram import Bot, Dispatcher
 
-from conftest import (
+from fitme.bot.callback_data import SetupChoice
+from fitme.config.settings import Settings
+from fitme.db.connection import Database
+from fitme.services import account as account_service
+from fitme.services.identity import issue_activation_code
+from tests.bot.conftest import (
     FakeSession,
     all_table_row_counts,
     callback_update,
@@ -16,11 +21,6 @@ from conftest import (
     make_user,
     message_update,
 )
-from fitme.bot.callback_data import SetupChoice
-from fitme.config.settings import Settings
-from fitme.db.connection import Database
-from fitme.services import account as account_service
-from fitme.services.identity import issue_activation_code
 
 
 async def test_unknown_user_gets_private_instance_reply_and_nothing_is_stored(

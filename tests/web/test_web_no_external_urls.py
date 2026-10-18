@@ -8,11 +8,11 @@ import re
 from pathlib import Path
 
 from httpx import AsyncClient
-from test_web_plans import make_plan, seed_confirmed_plan, seed_profile
 
-from conftest import SentCode, login
 from fitme.config.settings import Settings
 from fitme.db.connection import Database
+from tests.web.conftest import SentCode, login
+from tests.web.test_web_plans import make_plan, seed_confirmed_plan, seed_profile
 
 _URL_RE = re.compile(r"https?://[^\s\"'<>)]+")
 

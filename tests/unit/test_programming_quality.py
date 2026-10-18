@@ -11,8 +11,6 @@ from __future__ import annotations
 
 import dataclasses
 
-from test_plan_quality import plan, rules, rx, single, superset, workout
-
 from fitme.bot.plan_rendering import render_plan_text
 from fitme.catalog import load_catalog
 from fitme.domain.catalog import Exercise, intensity_mode
@@ -28,6 +26,7 @@ from fitme.services.plan_quality import (
     review,
 )
 from fitme.services.session_time import estimate
+from tests.unit.test_plan_quality import plan, rules, rx, single, superset, workout
 
 _CATALOG = load_catalog()
 

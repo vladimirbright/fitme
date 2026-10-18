@@ -21,7 +21,6 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from test_planning_service import _settings
 
 from fitme import clock
 from fitme.catalog import load_catalog
@@ -63,6 +62,7 @@ from fitme.services.history_import import (
     import_history,
 )
 from fitme.services.loads import next_load_for_exercise
+from tests.integration.db.test_planning_service import _settings
 
 _FIXTURE = Path(__file__).resolve().parents[2] / "fixtures" / "history_sample.toml"
 _SQUAT = "barbell_back_squat"

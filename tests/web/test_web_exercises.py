@@ -6,9 +6,9 @@ from pathlib import Path
 
 from httpx import AsyncClient
 
-from conftest import SentCode, login
 from fitme.config.settings import Settings
 from fitme.services.reference_exercises import reference_path
+from tests.web.conftest import SentCode, login
 
 
 async def test_library_requires_login_and_displays_local_toml(

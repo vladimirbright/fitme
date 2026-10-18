@@ -8,7 +8,6 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
-from test_plan_quality import plan, rules, rx, single, superset, workout
 
 from fitme.catalog import load_catalog
 from fitme.db.records import SessionOutcome, SetLogRecord
@@ -21,6 +20,7 @@ from fitme.services.loads import ExerciseHistory, LoadKind, next_load
 from fitme.services.plan_quality import ReviewContext, block_roles, review, weekly_load
 from fitme.services.progression import TargetKind
 from fitme.services.workload import Region, Stimulus
+from tests.unit.test_plan_quality import plan, rules, rx, single, superset, workout
 
 _CATALOG = load_catalog()
 _MODEL = session_time.DEFAULT_MODEL

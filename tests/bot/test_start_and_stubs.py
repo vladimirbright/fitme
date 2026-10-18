@@ -4,13 +4,13 @@
 from __future__ import annotations
 
 from aiogram import Bot, Dispatcher
-from test_setup_flow import _run_full_setup_with_no_red_flags
 
-from conftest import FakeSession, make_user, message_update
 from fitme.db.connection import Database
 from fitme.db.selectors.profile import get_setup_progress
 from fitme.db.selectors.users import get_telegram_account_by_telegram_user_id
 from fitme.services.identity import issue_activation_code
+from tests.bot.conftest import FakeSession, make_user, message_update
+from tests.bot.test_setup_flow import _run_full_setup_with_no_red_flags
 
 OWNER_CHAT_ID = 1
 

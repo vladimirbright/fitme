@@ -4,15 +4,15 @@ one field; changing a screening answer re-runs the remaining screening steps."""
 from __future__ import annotations
 
 from aiogram import Bot, Dispatcher
-from test_setup_flow import _click, _run_full_setup_with_no_red_flags
 
-from conftest import FakeSession, callback_update, make_user, message_update
 from fitme.bot.callback_data import ProfileFix, SetupChoice, SetupNav
 from fitme.db.connection import Database
 from fitme.db.selectors.profile import get_profile, get_setup_progress, list_screening_flags
 from fitme.db.selectors.users import get_telegram_account_by_telegram_user_id
 from fitme.domain.enums import RED_FLAGS
 from fitme.services.identity import issue_activation_code
+from tests.bot.conftest import FakeSession, callback_update, make_user, message_update
+from tests.bot.test_setup_flow import _click, _run_full_setup_with_no_red_flags
 
 OWNER_CHAT_ID = 1
 

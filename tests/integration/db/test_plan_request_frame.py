@@ -9,13 +9,12 @@ from __future__ import annotations
 
 import json
 
-from test_planning_service import FakeLlm, _saved_plan_with_squat_history
-
 from fitme.catalog import load_catalog
 from fitme.db.connection import Database
 from fitme.domain.enums import BlockRole, Location, Measure, Quality
 from fitme.domain.models import Block, Load, Plan, Prescription, ScheduledDay, Workout
 from fitme.services import planning
+from tests.integration.db.test_planning_service import FakeLlm, _saved_plan_with_squat_history
 
 _RUN_REQUEST = (
     "Давай разок в неделю по субботам легкую беговую на свежем воздухе. "

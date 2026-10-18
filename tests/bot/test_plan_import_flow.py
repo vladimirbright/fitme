@@ -20,7 +20,6 @@ from pydantic_ai.exceptions import ModelHTTPError
 from pydantic_ai.messages import ModelMessage, ModelRequest, ModelResponse, ToolCallPart
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
-from conftest import FakeSession, callback_update, make_user, message_update
 from fitme import clock
 from fitme.bot.app import build_dispatcher
 from fitme.bot.callback_data import PlanDraft, PlanMenu, TrainAction, TrainPick
@@ -40,6 +39,7 @@ from fitme.llm.agents import assistant_agent, plan_import_agent, plan_revise_age
 from fitme.services import profile as profile_service
 from fitme.services.identity import issue_activation_code
 from fitme.services.llm_runtime import LlmRuntime
+from tests.bot.conftest import FakeSession, callback_update, make_user, message_update
 
 OWNER_CHAT_ID = 1
 _FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"

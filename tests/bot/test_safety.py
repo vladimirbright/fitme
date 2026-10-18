@@ -11,7 +11,6 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from aiogram import Bot, Dispatcher
 
-from conftest import FakeSession, callback_update, edited_message_update, make_user, message_update
 from fitme import clock
 from fitme.bot.callback_data import HoldClear
 from fitme.db.connection import Database
@@ -22,6 +21,13 @@ from fitme.db.selectors.users import get_telegram_account_by_telegram_user_id
 from fitme.services import profile as profile_service
 from fitme.services import safety
 from fitme.services.identity import issue_activation_code
+from tests.bot.conftest import (
+    FakeSession,
+    callback_update,
+    edited_message_update,
+    make_user,
+    message_update,
+)
 
 OWNER_CHAT_ID = 1
 
