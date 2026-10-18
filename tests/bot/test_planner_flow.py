@@ -523,6 +523,24 @@ async def test_a_gym_plan_staged_by_an_outdoor_profile_user_is_shown(
     assert _draft_message(session) is not None
 
 
+async def test_a_safety_report_halts_planning_without_a_workout(
+    dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
+) -> None:
+    """AGENTS.md §2 / A§7.2: wording no stop word matches still halts when the planner
+    reports it, with no workout open: a hold is opened, nothing staged is applied, and the
+    fixed halt message replaces the model's words."""
+    user_id = await _fresh(dispatcher, bot, db)
+    llm.steps = [_stage(_saturday_run()), Call("report_safety_concern"), say("Staged.")]
+    await _send(dispatcher, bot, "a Saturday run please, my fingers have gone to sleep")
+    assert llm.returns("report_safety_concern")[0]["ok"] is True
+    assert _last_text(session) == t("halt.message", "en")
+    assert await _planner_drafts(db, user_id) == []
+    halts = await _decisions(db, user_id, "session_halt")
+    assert len(halts) == 1 and halts[0].user_report is not None
+    assert halts[0].user_report["trigger"] == "llm_safety_signal"
+    assert halts[0].user_report["session_id"] is None
+
+
 async def test_save_it_stages_and_saves_in_one_turn(
     dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
 ) -> None:

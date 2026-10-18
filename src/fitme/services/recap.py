@@ -54,7 +54,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import StrEnum
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from fitme.catalog import load_catalog
 from fitme.config.content import content_version
@@ -560,6 +560,16 @@ _LOAD_GOES_UP = frozenset(
 )  # `HOLD_CHECKIN`: an increase waiting only on a check-in
 
 
+def _model_problem(item: Prescription) -> str | None:
+    """Why `item` (a `model_copy(update=...)`, which skips validation) is not a valid
+    `Prescription` (e.g. an activity item given two sets), or `None`."""
+    try:
+        Prescription.model_validate(item.model_dump())
+    except ValidationError as exc:
+        return f"{item.exercise_id}: " + "; ".join(error["msg"] for error in exc.errors())
+    return None
+
+
 def _set_change_problems(
     change: ChangeSets,
     plan: Plan,
@@ -677,12 +687,14 @@ def _filter_suggestions(
                 measures.set_default_target(candidate, target)  # ADR 0009
         elif isinstance(change, ChangeSets):
             targets, problems = _set_change_problems(change, plan, workout_key, summaries, preview)
+            changed = [item.model_copy(update={"sets": change.sets}) for item in targets]
+            problems += [
+                problem for item in changed if (problem := _model_problem(item)) is not None
+            ]
             problems += [
                 verdict.detail
-                for item in targets
-                for verdict in prescription_verdicts(
-                    item.model_copy(update={"sets": change.sets}), ctx
-                )
+                for item in changed
+                for verdict in prescription_verdicts(item, ctx)
                 if not verdict.ok
             ]
             if not targets or problems:
@@ -750,6 +762,14 @@ def _filter_suggestions(
             candidate = source.model_copy(
                 update={"reps_min": change.reps_min, "reps_max": change.reps_max}
             )
+        problem = _model_problem(candidate)
+        if problem is not None:
+            fired.append(
+                GuardVerdict(
+                    rule=_SUGGESTION_RULE, ok=False, detail=f"{change.kind} dropped: {problem}"
+                )
+            )
+            continue
         failures = [v for v in prescription_verdicts(candidate, ctx) if not v.ok]
         if failures:
             fired.append(
@@ -1173,6 +1193,12 @@ async def apply_suggestion(
             modified, proposal.suggestions[index], inputs, ctx.session.workout_key
         ):
             return ApplyResult(status=Status.NOT_FOUND)  # the exercise isn't in the plan any more
+        try:
+            # `_apply_change` edits in place (no validation): a change the plan's model
+            # refuses (an activity item given more sets) is never stored.
+            modified = Plan.model_validate(modified.model_dump())
+        except ValueError:
+            return ApplyResult(status=Status.STALE)
         # The same judging as a `/plan` confirm: a stored load that no longer passes (e.g.
         # after an engine decrease) gets the engine's current value; structural failures refuse.
         judgement = planning.judge(modified, inputs)

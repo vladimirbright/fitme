@@ -968,12 +968,11 @@ async def test_a_message_with_no_open_block_gets_the_tool_answer(
     await _ready(dispatcher, bot, db)
     llm.steps = [
         Call("log_exercise_as_planned", {"exercise_id": "barbell_back_squat"}),
-        Call("report_safety_concern"),
         say("Сейчас нет открытой тренировки."),
     ]
+    # (`report_safety_concern` with no workout halts planning: test_planner_flow covers it.)
     await _send(dispatcher, bot, "done")
     assert llm.returns("log_exercise_as_planned")[0]["ok"] is False
-    assert llm.returns("report_safety_concern")[0]["ok"] is False
     assert "current_block" not in llm.prompts()[0]["state"]
     assert _last_text(session).startswith("Сейчас нет открытой тренировки.")
 
