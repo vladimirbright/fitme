@@ -42,7 +42,7 @@ from fitme.llm.context import (
     build_user_context,
     render_user_prompt,
 )
-from fitme.llm.usage import AgentRunRecord, PriceTable, run_agent
+from fitme.llm.usage import CAUSE_REQUEST_LIMIT, AgentRunRecord, PriceTable, run_agent
 from fitme.services import exclusions, programming
 from fitme.services.catalog import available_exercises
 from fitme.services.exercise_search import exercise_facts, requested_qualities
@@ -55,7 +55,11 @@ from fitme.services.prescribing import repair_intensity
 # just always come back `skipped`.
 _SUPPORTED_AGENTS: tuple[str, ...] = ("plan_generate", "plan_revise")
 
-Outcome = Literal["ok", "findings", "refusal", "guard_fail", "provider_error", "skipped"]
+# A failed call is `request_limit` when the run used up its request cap
+# (`usage.CAUSE_REQUEST_LIMIT`), else `provider_error` (the detail names the cause).
+Outcome = Literal[
+    "ok", "findings", "refusal", "guard_fail", "provider_error", "request_limit", "skipped"
+]
 
 
 @dataclass(frozen=True, slots=True)
@@ -166,8 +170,11 @@ def _classify_plan_output(
     catalog: Catalog,
 ) -> EvalResult:
     if not record.ok:
+        failure: Outcome = (
+            "request_limit" if record.error_cause == CAUSE_REQUEST_LIMIT else "provider_error"
+        )
         return EvalResult(
-            fixture_name, agent_name, "provider_error", record, "provider call failed"
+            fixture_name, agent_name, failure, record, f"call failed ({record.error_cause})"
         )
     if isinstance(output, Refusal):
         return EvalResult(fixture_name, agent_name, "refusal", record, output.code.value)
@@ -318,6 +325,7 @@ def summarize(results: Sequence[EvalResult]) -> str:
 
         refusals = sum(1 for item in runnable if item.outcome == "refusal")
         provider_errors = sum(1 for item in runnable if item.outcome == "provider_error")
+        request_limits = sum(1 for item in runnable if item.outcome == "request_limit")
         guard_checked = [
             item for item in runnable if item.outcome in ("ok", "findings", "guard_fail")
         ]
@@ -328,6 +336,8 @@ def summarize(results: Sequence[EvalResult]) -> str:
             f"{agent_name}: {len(runnable)} run(s), "
             f"{refusals} refusal(s), {provider_errors} provider error(s)"
         )
+        if request_limits:
+            line += f", {request_limits} request limit(s) hit"
         if guard_checked:
             pass_rate = 100 * guard_passes / len(guard_checked)
             line += f", guard pass rate {guard_passes}/{len(guard_checked)} ({pass_rate:.0f}%)"

@@ -36,9 +36,11 @@ class FakeEmbedder:
         self.model = model
         self.fail = fail
         self.calls = 0
+        self.texts: list[str] = []
 
     async def embed(self, texts: Sequence[str]) -> list[list[float]]:
         self.calls += 1
+        self.texts.extend(texts)
         if self.fail:
             raise EmbeddingError("provider down")
         return [self.vector(text) for text in texts]
@@ -200,6 +202,8 @@ _BULK = [
     "спина",
     "",
     "xyzzy qwerty",
+    "bench press",
+    "   ",
 ]
 
 
@@ -210,6 +214,8 @@ async def test_search_many_embeds_every_query_in_one_request(db: Database, tmp_p
     runtime = await _runtime(db, tmp_path, embedder=embedder)
     bulk = await es.search_many(db, runtime, _gym(), _BULK, limit=8)
     assert embedder.calls == 1
+    distinct = [text for text in dict.fromkeys(_BULK) if text.strip()]
+    assert embedder.texts == distinct  # no duplicate, no blank query is embedded
     assert len(bulk) == len(_BULK)
     for text, hits in zip(_BULK, bulk, strict=True):
         alone = await es.search(db, runtime, _gym(), es.ExerciseQuery(text=text, limit=8))

@@ -147,7 +147,9 @@ class AssistantTools(Protocol):
 
     async def get_session(self, session_id: int) -> dict[str, object]: ...
 
-    async def find_exercises(self, queries: list[str]) -> dict[str, object]: ...
+    async def find_exercises(self, queries: list[str]) -> dict[str, object]:
+        """Every query's ranked allowed ids, plus one `exercises` map of id -> facts."""
+        ...
 
     async def find_substitutes(
         self, exercise_id: str, avoid_areas: list[str]
@@ -229,8 +231,9 @@ async def _find_exercises(ctx: Deps, queries: list[str]) -> object:
     """Allowed catalog exercises for each of `queries` (up to 25), best first: each query is
     an exercise name or part of one, or a body region ("back", "грудь"), in any language.
     Pass EVERY name you need in one call — never one call per exercise. Answers
-    `{"results": [{"query", "exercises": [{exercise_id, names, kg_loadable, load_unit,
-    equipment, locations}]}]}` in the order asked; an empty list lists the allowed set."""
+    `{"results": [{"query", "exercise_ids"}], "exercises": {id: {names, kg_loadable,
+    load_unit, equipment, locations}}}`: each query's ranked ids in the order asked, and
+    each id's facts once; an empty list lists the allowed set."""
     return _NO_DATA if ctx.deps is None else await ctx.deps.find_exercises(list(queries))
 
 

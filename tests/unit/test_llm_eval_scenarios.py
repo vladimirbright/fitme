@@ -10,8 +10,19 @@ from pathlib import Path
 from pydantic_ai.messages import ModelMessage, ModelRequest, ModelResponse, ToolCallPart
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
-from fitme.domain.models import Block, Load, Plan, Prescription, ScheduledDay, Workout
-from fitme.llm.eval import run_eval, summarize
+from fitme.catalog import load_catalog
+from fitme.domain.enums import RefusalCode
+from fitme.domain.models import (
+    Block,
+    Load,
+    Plan,
+    Prescription,
+    Refusal,
+    ScheduledDay,
+    Workout,
+)
+from fitme.llm.eval import _classify_plan_output, run_eval, summarize
+from fitme.llm.usage import CAUSE_PROVIDER_ERROR, CAUSE_REQUEST_LIMIT, AgentRunRecord
 
 _FIXTURES = Path(__file__).parents[1] / "fixtures" / "llm_eval"
 
@@ -68,3 +79,32 @@ async def test_the_scenarios_send_their_constraints_and_judge_the_plan() -> None
     assert by_name["scenario_c_hotel"].outcome == "guard_fail"
     assert by_name["scenario_b_hypertrophy"].outcome == "findings"
     assert "review clean" in summarize(results)
+
+
+def _failed(cause: str) -> AgentRunRecord:
+    return AgentRunRecord(
+        purpose="plan_generate",
+        model="fake",
+        input_tokens=0,
+        output_tokens=0,
+        cost_estimate_usd=None,
+        latency_ms=1,
+        ok=False,
+        error_cause=cause,
+    )
+
+
+def test_a_failed_call_is_labelled_by_its_cause() -> None:
+    """A used-up request cap is `request_limit`, not a provider error."""
+    catalog = load_catalog()
+    refusal = Refusal(code=RefusalCode.LLM_UNAVAILABLE, message="unavailable")
+    limited = _classify_plan_output(
+        "f", "plan_generate", refusal, _failed(CAUSE_REQUEST_LIMIT), {}, catalog
+    )
+    failed = _classify_plan_output(
+        "g", "plan_generate", refusal, _failed(CAUSE_PROVIDER_ERROR), {}, catalog
+    )
+    assert limited.outcome == "request_limit" and "request_limit" in limited.detail
+    assert failed.outcome == "provider_error" and "provider_error" in failed.detail
+    summary = summarize([limited, failed])
+    assert "1 provider error(s), 1 request limit(s) hit" in summary

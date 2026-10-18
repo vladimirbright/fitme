@@ -1029,7 +1029,10 @@ async def test_the_assistant_finds_exercises_and_ranked_substitutes(
     ]
     await _send(dispatcher, bot, "чем заменить присед, чтобы не грузить поясницу?")
 
-    found = llm.returns("find_exercises")[0]["results"][0]["exercises"]
+    answer = llm.returns("find_exercises")[0]
+    found = [
+        {"exercise_id": i, **answer["exercises"][i]} for i in answer["results"][0]["exercise_ids"]
+    ]
     assert found and found[0]["exercise_id"] == "dumbbell_bench_press"
     substitutes, unknown, bad_area = llm.returns("find_substitutes")
     catalog = load_catalog()
