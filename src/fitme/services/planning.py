@@ -119,7 +119,7 @@ from fitme.db.selectors.training import (
     recent_session_outcomes_by_exercise,
 )
 from fitme.db.selectors.users import get_user
-from fitme.domain.catalog import LOCATION_DEFAULT_EQUIPMENT, Catalog, Exercise
+from fitme.domain.catalog import LOCATION_DEFAULT_EQUIPMENT, Catalog, Exercise, equipment_at
 from fitme.domain.enums import (
     AgeBucket,
     BarbellExperience,
@@ -309,9 +309,12 @@ class _CompleteProfile:
     preferences: list[Preference]
     focus: Focus
     location: Location
-    equipment: frozenset[Equipment]
+    equipment: frozenset[Equipment]  # at `location` (`domain.catalog.equipment_at`)
     sessions_per_week: int
     session_minutes: int
+    # The user's own home-equipment selection (`profiles.equipment`), kept whatever the
+    # location is: a plan at `home_equipment` is judged with it (`guards.plan.at_location`).
+    home_equipment: frozenset[Equipment] = frozenset()
     # ADR 0009: other sport training; `None` when never answered (read as no sport).
     sport: Sport | None = None
     sport_sessions_per_week: int | None = None
@@ -400,11 +403,7 @@ async def read_snapshot(
         and profile_record.session_minutes is not None
     ):
         location = Location(profile_record.location)
-        equipment = (
-            frozenset(Equipment(item) for item in profile_record.equipment)
-            if location == Location.HOME_EQUIPMENT
-            else LOCATION_DEFAULT_EQUIPMENT[location]
-        )
+        home_equipment = frozenset(Equipment(item) for item in profile_record.equipment)
         profile = _CompleteProfile(
             age_bucket=AgeBucket(profile_record.age_bucket),
             weight_bucket=WeightBucket(profile_record.weight_bucket),
@@ -413,7 +412,8 @@ async def read_snapshot(
             preferences=[Preference(item) for item in profile_record.preferences],
             focus=Focus(profile_record.focus),
             location=location,
-            equipment=equipment,
+            equipment=equipment_at(location, home_equipment),
+            home_equipment=home_equipment,
             sessions_per_week=profile_record.sessions_per_week,
             session_minutes=profile_record.session_minutes,
             sport=Sport(profile_record.sport) if profile_record.sport else None,
@@ -534,6 +534,7 @@ def build_inputs(catalog: Catalog, snapshot: Snapshot, settings: Settings, user_
         catalog=catalog,
         flags=snapshot.flags,
         equipment=profile.equipment,
+        home_equipment=profile.home_equipment,
         location=profile.location,
         sessions_per_week=profile.sessions_per_week,
         experience=profile.experience,
@@ -581,6 +582,26 @@ def build_inputs(catalog: Catalog, snapshot: Snapshot, settings: Settings, user_
         exclusions=[f"{row.kind}:{row.value}" for row in snapshot.exclusions],
     )
     return Inputs(catalog=catalog, ctx=ctx, snapshot=snapshot, user_context=user_context)
+
+
+def allowed_ids_at(inputs: Inputs, location: Location | None) -> frozenset[str]:
+    """The catalog ids the user may do at `location` (a plan's own `Plan.location`): its
+    equipment (`domain.catalog.equipment_at`), screening flags, experience and exclusions.
+    `None` or the profile's own location: the profile's allowed set."""
+    profile = inputs.snapshot.profile
+    if location is None or profile is None or location == profile.location:
+        return frozenset(inputs.user_context.allowed_exercise_ids)
+    return frozenset(
+        exercise.id
+        for exercise in available_exercises(
+            inputs.catalog,
+            location,
+            equipment_at(location, profile.home_equipment),
+            inputs.snapshot.flags,
+            profile.experience,
+            excluded=inputs.ctx.excluded_exercise_ids,
+        )
+    )
 
 
 # --- Judging (pure) ---------------------------------------------------------------------------

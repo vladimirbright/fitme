@@ -333,8 +333,8 @@ once. Bodies stored before parse unchanged (no roles; the review infers them).
 `activity:<slug>` namespace (`domain.models.ACTIVITY_PREFIX`, `is_activity_id`: slug of
 3..60 characters `a-z0-9_`) for a non-catalog activity such as a class, a run or a walk.
 An activity item needs `activity_name` (the display name, trimmed to 60 characters), is
-measured in `time`, takes a `bodyweight` load and no `rir`; every other item must leave
-`activity_name` empty. The guards skip the catalog, location, equipment, screening and
+exactly one set measured in `time`, takes a `bodyweight` load and no `rir`; every other
+item must leave `activity_name` empty. The guards skip the catalog, location, equipment, screening and
 experience checks for it and record one `plan.activity` verdict; the plan-wide screening
 gate still applies, and a bare unknown id still fails `plan.catalog_id`. It is rendered by
 its name, with its note as the instructions, never by its id.
@@ -343,11 +343,21 @@ its name, with its note as the instructions, never by its id.
 plan is trained when it differs from the profile (an outdoor running plan for a gym
 profile). The location-fit verdict uses it when set and the profile's location otherwise,
 for the whole plan (`validate_plan`), for a workout trained from it on Start, review and
-Save (`validate_workout(..., location=)`), and in the web editor and the recap. Equipment
-is still the profile's.
+Save (`validate_workout(..., location=)`), and in the web editor and the recap. The
+equipment follows the location: `domain.catalog.equipment_at(location, home_equipment)` is
+the location's default kit (`LOCATION_DEFAULT_EQUIPMENT`), or the user's own selection
+(`profiles.equipment`, kept in `GuardContext.home_equipment`) for `home_equipment`. The
+profile's guard context, `at_location`, the planner's any-location search, the typed ops of
+a plan or a workout (`planning.allowed_ids_at`) and the web swap list all use it, so a gym
+plan of an outdoor profile is judged with the gym's equipment.
 
-**Set length.** `MAX_SET_SECONDS` is 10800 (3 h), so a 90-minute class fits as one timed
-set. `set_logs.planned_seconds`/`actual_seconds` have only a lower-bound CHECK.
+**Set length.** A catalog exercise's timed set is at most `MAX_SET_SECONDS` = 3600 (1 h),
+as before. An activity item may run to `MAX_ACTIVITY_SECONDS` = 10800 (3 h), so a 90-minute
+class fits as one timed set. `Prescription.seconds` is bounded at the activity maximum and
+its validator holds a catalog exercise to the hour; a logged result (`SetResult.seconds`)
+likewise, with `guards.plausibility.check_parsed_seconds` refusing a catalog exercise's
+logged set above the hour. `set_logs.planned_seconds`/`actual_seconds` have only a
+lower-bound CHECK.
 
 ```python
 class Load(BaseModel):

@@ -62,7 +62,7 @@ from fitme.db.selectors.plans import list_plan_versions
 from fitme.db.selectors.training import list_set_logs_for_session
 from fitme.db.selectors.users import get_telegram_account_by_telegram_user_id
 from fitme.domain.assistant import AssistantTurn
-from fitme.domain.enums import AREA_FLAGS, RED_FLAGS, Measure, RefusalCode
+from fitme.domain.enums import AREA_FLAGS, RED_FLAGS, Location, Measure, RefusalCode
 from fitme.domain.models import Block, Load, Plan, Prescription, Refusal, ScheduledDay, Workout
 from fitme.domain.results import MAX_EXTRA_SETS
 from fitme.i18n import t
@@ -1042,15 +1042,17 @@ async def test_the_assistant_finds_exercises_and_ranked_substitutes(
         assert exercise is not None and "lower_back" not in exercise.loads_areas
         assert item["exercise_id"] != "barbell_back_squat"
     assert "error" in unknown and "error" in bad_area
-    # ADR 0007: every result is something this user may already do (location, equipment,
-    # screening) — retrieval only orders the allowed set.
+    # ADR 0007: every result is something this user may already do (equipment, screening)
+    # — retrieval only orders the allowed set. Free text goes to the planner, which searches
+    # every location with that location's equipment (a plan may set its own location).
     async with db.read() as conn:
         snapshot = await planning.read_snapshot(conn, seeded.user_id)
-    allowed = set(
-        planning.build_inputs(
-            catalog, snapshot, settings, seeded.user_id
-        ).user_context.allowed_exercise_ids
-    )
+    inputs = planning.build_inputs(catalog, snapshot, settings, seeded.user_id)
+    allowed = {
+        exercise_id
+        for location in Location
+        for exercise_id in planning.allowed_ids_at(inputs, location)
+    }
     assert {item["exercise_id"] for item in found} <= allowed
     assert {item["exercise_id"] for item in substitutes} <= allowed
     assert await _drafts_open(db, seeded.user_id) == []  # nothing staged

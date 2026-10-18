@@ -137,7 +137,7 @@ from fitme.domain.results import MAX_EXTRA_SETS, SetResult
 from fitme.domain.screening import ScreeningFlagState
 from fitme.guards import stop_words
 from fitme.guards.checkins import flagged_areas_from
-from fitme.guards.plausibility import check_parsed_results
+from fitme.guards.plausibility import check_parsed_results, check_parsed_seconds
 from fitme.llm.context import render_user_prompt
 from fitme.llm.escalation import run_with_escalation
 from fitme.llm.usage import AgentRunOutcome
@@ -1450,6 +1450,13 @@ def _resolve_logs(
                     "every set done, or ask the user for it"
                 )
             if exercise is not None:
+                seconds_verdicts = check_parsed_seconds(exercise, entry.sets)
+                failed = [verdict.detail for verdict in seconds_verdicts if not verdict.ok]
+                if failed:
+                    return [], (
+                        f"{entry.exercise_id}: implausible time, ask the user to check it "
+                        f"({'; '.join(failed)})"
+                    )
                 verdicts = check_parsed_results(
                     exercise,
                     prescription.load,
@@ -1462,6 +1469,7 @@ def _resolve_logs(
                         f"{entry.exercise_id}: implausible load, ask the user to check it "
                         f"({'; '.join(failed)})"
                     )
+                verdicts = [*verdicts, *seconds_verdicts]
             elif is_activity_id(prescription.exercise_id) and any(
                 result.load_kg is not None for result in entry.sets
             ):

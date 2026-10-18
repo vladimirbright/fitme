@@ -131,9 +131,13 @@ class Load(BaseModel):
         return self
 
 
-# A timed set may be a whole activity session (a 90-minute class as one set), not only a
-# hold or a conditioning interval.
-MAX_SET_SECONDS = 10800
+# A catalog exercise's timed set (a hold, a conditioning interval, a long easy run) is at
+# most an hour. An activity item (`activity:<slug>`, below) is a whole session as one set —
+# a 90-minute class — so it may run to three hours. `Prescription.seconds` is bounded at the
+# activity maximum (one schema for both); its validator holds a catalog exercise to
+# `MAX_SET_SECONDS`.
+MAX_SET_SECONDS = 3600
+MAX_ACTIVITY_SECONDS = 10800
 MAX_SET_METERS = 2000
 
 # A non-catalog activity item (a class, a run, a walk): `Prescription.exercise_id` in this
@@ -174,7 +178,7 @@ class Prescription(BaseModel):
     measure: Measure = Measure.REPS
     reps_min: Annotated[int, Field(ge=1, le=50)] | None = None
     reps_max: Annotated[int, Field(ge=1, le=50)] | None = None
-    seconds: Annotated[int, Field(ge=5, le=MAX_SET_SECONDS)] | None = None
+    seconds: Annotated[int, Field(ge=5, le=MAX_ACTIVITY_SECONDS)] | None = None
     meters: Annotated[int, Field(ge=5, le=MAX_SET_METERS)] | None = None
     # ADR 0009: target reps in reserve (structured intensity), mostly with a `calibration`
     # load: "pick a weight that leaves about this many reps in reserve". Optional.
@@ -220,9 +224,16 @@ class Prescription(BaseModel):
         if not is_activity_id(self.exercise_id):
             if self.activity_name is not None:
                 raise ValueError("activity_name is only for an activity: item")
+            if self.seconds is not None and self.seconds > MAX_SET_SECONDS:
+                raise ValueError(
+                    f"seconds: a catalog exercise's timed set is at most {MAX_SET_SECONDS} "
+                    f"(only an activity: item may run to {MAX_ACTIVITY_SECONDS})"
+                )
             return self
         if not self.activity_name:
             raise ValueError("an activity: item needs activity_name")
+        if self.sets != 1:
+            raise ValueError("sets: an activity: item is exactly one set")
         if self.measure != Measure.TIME:
             raise ValueError("an activity: item is measured in time")
         if self.load.kind != "bodyweight":

@@ -45,8 +45,8 @@ from fitme.db.connection import Database
 from fitme.db.controllers.decisions import insert_decision
 from fitme.db.controllers.plans import insert_plan_version
 from fitme.db.selectors.plans import get_latest_plan_version
-from fitme.domain.catalog import Exercise
-from fitme.domain.enums import DecisionKind
+from fitme.domain.catalog import Exercise, equipment_at
+from fitme.domain.enums import DecisionKind, Location
 from fitme.domain.guard_types import GuardVerdict
 from fitme.domain.models import MAX_IMPLEMENT_KG, MAX_TOTAL_KG, LoadChange, Plan, storage_body
 from fitme.guards.context import GuardContext
@@ -129,21 +129,23 @@ structural_errors = blocking_errors
 
 
 async def allowed_exercises_for_edit(
-    db: Database, user_id: int, plan_id: int
+    db: Database, user_id: int, plan_id: int, *, location: Location | None = None
 ) -> list[Exercise] | None:
     """The catalog exercises the edit form's swap dropdown may offer (A§9.1: "swap exercise
     from the allowed catalog list") — the same `location`/`equipment`/screening filter
-    `/plan` uses, without the plan's exclusions. `None` if the profile isn't complete
-    (nothing to filter by)."""
+    `/plan` uses, without the plan's exclusions, at the plan's own `location` when it has
+    one (`Plan.location`, its kit from `domain.catalog.equipment_at`), else the profile's.
+    `None` if the profile isn't complete (nothing to filter by)."""
     async with db.read() as conn:
         snapshot = await planning.read_snapshot(conn, user_id, plan_id=plan_id)
     if snapshot.profile is None:
         return None
     catalog = load_catalog()
+    where = location if location is not None else snapshot.profile.location
     return available_exercises(
         catalog,
-        snapshot.profile.location,
-        snapshot.profile.equipment,
+        where,
+        equipment_at(where, snapshot.profile.home_equipment),
         snapshot.flags,
         snapshot.profile.experience,
         excluded=exclusions.resolve(snapshot.exclusions, catalog),

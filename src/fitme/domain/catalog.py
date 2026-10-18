@@ -295,6 +295,17 @@ GYM_ONLY_EQUIPMENT: frozenset[Equipment] = frozenset(
 HOME_SELECTABLE_EQUIPMENT: frozenset[Equipment] = frozenset(Equipment) - GYM_ONLY_EQUIPMENT
 
 
+def equipment_at(location: Location, home_equipment: frozenset[Equipment]) -> frozenset[Equipment]:
+    """The equipment available at `location` (A§5.1): the user's own `home_equipment`
+    selection (`profiles.equipment`) for `home_equipment`, `LOCATION_DEFAULT_EQUIPMENT` for
+    every other location. The one resolution the profile's guard context, a plan's own
+    location (`guards.plan.at_location`) and the catalog filters share, so a gym plan of an
+    outdoor-profile user is judged with the gym's kit, not the park's."""
+    if location == Location.HOME_EQUIPMENT:
+        return frozenset(home_equipment)
+    return LOCATION_DEFAULT_EQUIPMENT[location]
+
+
 def _is_band_only(equipment: list[str]) -> bool:
     """Uses resistance bands and no kg load equipment (`_KG_LOAD_EQUIPMENT`)."""
     return Equipment.RESISTANCE_BANDS.value in equipment and not any(

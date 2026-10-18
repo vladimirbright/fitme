@@ -72,8 +72,8 @@ branch is the switch.
 | `src/fitme/llm/models.py` | `planner` default tier `large`, `max_tokens` 16000, timeout 240 s, 2 output retries. |
 | `src/fitme/services/assistant.py` (`_Turn.stage_plan`, `_inputs_for`, `_any_location_ids`, `_facts`) | Staging a whole plan, judging it for its target plan, search over every location, exercise facts in search hits. |
 | `src/fitme/services/planning.py` (`AgentScope`, `ActivityAllowance`, `scope_verdicts`, `draft_plan_id`) | Keeps activity items and plan locations out of the legacy agents' output. |
-| `src/fitme/domain/models.py` | `ACTIVITY_PREFIX`, `is_activity_id`, `activity_fallback_name`, `Prescription.activity_name`, `Plan.location`, `MAX_SET_SECONDS = 10800`. |
-| `src/fitme/guards/plan.py` (`at_location`, `_activity_verdict`) | Plan location in location fit. Activity verdict that fails closed on area flags. |
+| `src/fitme/domain/models.py` | `ACTIVITY_PREFIX`, `is_activity_id`, `activity_fallback_name`, `Prescription.activity_name`, `Plan.location`, `MAX_ACTIVITY_SECONDS = 10800` (activity items only; catalog exercises keep `MAX_SET_SECONDS = 3600`). |
+| `src/fitme/guards/plan.py` (`at_location`, `_activity_verdict`), `src/fitme/domain/catalog.py` (`equipment_at`) | Plan location in location and equipment fit. Activity verdict that fails closed on area flags. |
 | `src/fitme/bot/handlers/plan.py` (`show_staged_draft`) | Whole-draft display of a staged plan. Buttons feed the planner. |
 | `src/fitme/bot/handlers/start.py` | `/cancel` closes an open planning session. |
 | Locales (`en.toml`, `ru.toml`) | `new_first_prompt`, `changes_draft_title`, `location_line`, `activity_line`, `activity_fallback`. |
@@ -114,7 +114,7 @@ in the code. No button sets it any more.
 - `FITME_LLM_AGENT_PLANNER=<provider:model>` sets the planner's model. Without it the planner
   uses the large tier, `FITME_LLM_TIER_LARGE`. Other agents are configured as before.
 - Before going back to `main`, read the data caveat in §9: `main` cannot read a plan
-  that uses an activity item, a plan location or a timed set longer than 60 minutes. Delete
+  that uses an activity item or a plan location. Delete
   those plans first. Testing on a copy of the database (`FITME_DB_PATH`) is the safe default.
 
 ## 6. Database changes
@@ -123,8 +123,8 @@ None. No migration was added.
 
 - `plan_versions.body` and `decisions.proposal` are JSON. `activity_name` and `location` are
   new keys in the body, written only when set (`domain.models.storage_body`), so a body of a
-  plan without activity items, a location or a timed set over 3600 s (`main`'s cap) has
-  `main`'s shape.
+  plan without activity items or a location has `main`'s shape (a catalog exercise's timed
+  set keeps `main`'s 3600 s cap; only an activity item may run longer).
 - `set_logs.planned_seconds` / `actual_seconds` have only a lower-bound CHECK, so 5400 s
   fits. Logged sets of an activity item keep their `activity:` id.
 - Decision kinds are reused: a staged plan is a `plan_revise` draft round with
@@ -230,13 +230,15 @@ Items 1–17 were checked in the code at 4ed05d6, item 18 at the WP5 commits (c0
 
 **Data and going back**
 
-1. **`main` cannot read a plan that uses an activity item, a plan location or a timed set
-   longer than 60 minutes.** `main`'s domain models use `extra="forbid"` and cap
-   `Prescription.seconds` at 3600 (the branch allows 10800). Stored bodies leave `location`
-   and `activity_name` out while unset (`domain.models.storage_body`), so every other plan
-   written on the branch parses on `main` (`tests/integration/db/test_storage_body.py`
-   checks this against a copy of `main`'s models and bounds). A plan with any of the three
-   does not; delete it (`/plan` → delete) before switching back. Logged sets with
+1. **`main` cannot read a plan that uses an activity item or a plan location.** `main`'s
+   domain models use `extra="forbid"` and cap `Prescription.seconds` at 3600. The branch
+   keeps that cap for catalog exercises; only an activity item may run to 10800 s. Stored
+   bodies leave `location` and `activity_name` out while unset
+   (`domain.models.storage_body`), so every other plan written on the branch parses on
+   `main` (`tests/integration/db/test_storage_body.py` checks this against a copy of
+   `main`'s models and bounds). A plan with either does not; delete it (`/plan` → delete)
+   before switching back. A plan saved by an earlier branch build with a catalog timed set
+   over 3600 s no longer parses on the branch either. Logged sets with
    `activity:` ids remain in `set_logs` after the plan is deleted, and `main` shows them by
    their raw id. Bodies written by branch builds before
    `storage_body` existed still carry `"location": null` and `"activity_name": null`; `main`
@@ -255,8 +257,11 @@ Items 1–17 were checked in the code at 4ed05d6, item 18 at the WP5 commits (c0
 
 4. A legacy revision cannot clear `Plan.location`: `revise_plan` restores the base's location
    when the output has none. The planner can clear it by staging without one.
-5. The web swap dropdown (`plan_edit.allowed_exercises_for_edit`) and the legacy assistant's
-   typed-op allowed set use the profile location, not the plan's.
+5. The equipment follows the plan's location (`domain.catalog.equipment_at`) in the guards,
+   the planner's search, the typed-op allowed set and the web swap dropdown. The legacy
+   `plan_generate` outdoor request (`planning.apply_request`) still offers only what fits
+   both outdoors and the profile's own equipment, since that output is judged at the
+   profile's location.
 
 **Display**
 
@@ -464,8 +469,8 @@ right kinds of things, and the transcripts say whether the answer made sense.
 | 8 | Strength still supports history and set logging | met | Load engine and ceiling on staged plans (`test_a_load_above_the_guards_…`), `history_loads` check in `f_g_strength`, unchanged `/train`. |
 | 9 | History used without fabrication | met by plumbing only, pending live eval | Guards cap any kg at logged max plus one increment. `calibration` without history (`test_a_barbell_to_dumbbell_swap_…`). The model's use of history is untested live. |
 | 10 | No new sports-science subsystems | met | The branch adds no rule engine. The new guard is a fail-closed activity verdict. Content layers are bypassed, not added. |
-| 11 | Experiment isolated from legacy | met at branch level, partly within the branch | Separate branch, nothing deleted, `AgentScope` keeps legacy output as before. But shared domain, guards and bot handlers changed, there is no flag, and `main` cannot read a branch plan that uses an activity item, a plan location or a timed set over 60 minutes (§9 item 1). |
-| 12 | Existing saved workouts remain compatible | met, except plans using the new features | `test_a_plan_body_stored_before_activities_and_location_still_parses`: old bodies parse on the branch. `test_storage_body.py`: branch bodies of plans without activity items, a location or a timed set over 60 minutes parse with `main`'s models and bounds; plans with any of them must be deleted before switching back, and their activity set logs stay (§9 item 1). |
+| 11 | Experiment isolated from legacy | met at branch level, partly within the branch | Separate branch, nothing deleted, `AgentScope` keeps legacy output as before. But shared domain, guards and bot handlers changed, there is no flag, and `main` cannot read a branch plan that uses an activity item or a plan location (§9 item 1). |
+| 12 | Existing saved workouts remain compatible | met, except plans using the new features | `test_a_plan_body_stored_before_activities_and_location_still_parses`: old bodies parse on the branch. `test_storage_body.py`: branch bodies of plans without activity items or a location parse with `main`'s models and bounds; plans with any of them must be deleted before switching back, and their activity set logs stay (§9 item 1). |
 | 13 | Substantially simpler to reason about | met for the per-message path, not for the codebase | About 265 planner-only lines plus an 85-line prompt replace about 2130 generation-only lines on that path (392 more lines are shared display code). The codebase grew by +2495 lines in `src/` because legacy is kept (§10). |
 | 14 | Scenarios exercisable end to end | met (scripted); live run pending | A and E run from message to saved plan to `/train` set logs in `test_planner_flow.py`. All six fixtures replay in both modes in `test_eval_conversations.py`. The live harness exists (`make llm-eval-conversations`). |
 

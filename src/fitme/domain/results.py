@@ -21,7 +21,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from fitme.domain.models import MAX_SET_METERS, MAX_SET_SECONDS
+from fitme.domain.models import MAX_ACTIVITY_SECONDS, MAX_SET_METERS, MAX_SET_SECONDS
 
 _STRICT_CONFIG = ConfigDict(extra="forbid", allow_inf_nan=False)
 
@@ -42,8 +42,10 @@ class SetResult(BaseModel):
     set_index: Annotated[int, Field(ge=1, le=MAX_SET_INDEX)]
     reps: Annotated[int, Field(ge=0, le=100)] | None = None
     # ADR 0009: a timed set's result in seconds, a distance set's in meters (instead of
-    # `reps`; exactly one of the three for a performed set).
-    seconds: Annotated[int, Field(ge=0, le=MAX_SET_SECONDS)] | None = None
+    # `reps`; exactly one of the three for a performed set). Bounded at the activity maximum
+    # because a logged activity set (a 90-minute class) is one result; a catalog exercise's
+    # logged time is held to `MAX_SET_SECONDS` by `guards.plausibility.check_parsed_seconds`.
+    seconds: Annotated[int, Field(ge=0, le=MAX_ACTIVITY_SECONDS)] | None = None
     meters: Annotated[int, Field(ge=0, le=5000)] | None = None
     # gt=0: a real load is always positive. le=500: a coordinator-set plausibility ceiling —
     # no catalog exercise or realistic implement combination reaches this, so a model
@@ -115,6 +117,8 @@ class ChangeTarget(BaseModel):
 
     kind: Literal["change_target"] = "change_target"
     exercise_id: str
+    # A catalog exercise's target only (`services.progression` never changes an activity
+    # item), so the catalog bound.
     from_target: Annotated[int, Field(ge=5, le=MAX_SET_SECONDS)]
     seconds: Annotated[int, Field(ge=5, le=MAX_SET_SECONDS)] | None = None
     meters: Annotated[int, Field(ge=5, le=MAX_SET_METERS)] | None = None

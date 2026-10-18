@@ -7,8 +7,8 @@ import pytest
 from pydantic import ValidationError
 
 from fitme.catalog import load_catalog
-from fitme.domain.catalog import Catalog, Exercise
-from fitme.domain.enums import Measure, Quality
+from fitme.domain.catalog import LOCATION_DEFAULT_EQUIPMENT, Catalog, Exercise, equipment_at
+from fitme.domain.enums import Equipment, Location, Measure, Quality
 from fitme.domain.models import Load
 
 
@@ -211,3 +211,13 @@ def test_every_shipped_exercise_is_tagged_and_holds_are_timed() -> None:
     assert Quality.AGILITY in by_id["jump_rope_skipping"].qualities
     assert Quality.POWER in by_id["medicine_ball_overhead_slam"].qualities
     assert Quality.POWER not in by_id["barbell_back_squat"].qualities
+
+
+def test_equipment_at_resolves_each_location() -> None:
+    """`equipment_at`: the location default everywhere but home, the user's own kit at home."""
+    home = frozenset({Equipment.DUMBBELLS, Equipment.BENCH})
+    assert equipment_at(Location.HOME_EQUIPMENT, home) == home
+    assert equipment_at(Location.HOME_EQUIPMENT, frozenset()) == frozenset()
+    for location, kit in LOCATION_DEFAULT_EQUIPMENT.items():
+        assert equipment_at(location, home) == kit
+    assert equipment_at(Location.PUBLIC_GYM, frozenset()) == frozenset(Equipment)

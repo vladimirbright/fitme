@@ -17,6 +17,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, model_validator
 
 from fitme.domain.models import (
+    MAX_ACTIVITY_SECONDS,
     MAX_SET_METERS,
     MAX_SET_SECONDS,
     NAME_MAX_LENGTH,
@@ -47,7 +48,9 @@ class SetPrescription(BaseModel):
     sets: Annotated[int, Field(ge=1, le=10)] | None = None
     reps_min: Annotated[int, Field(ge=1, le=50)] | None = None
     reps_max: Annotated[int, Field(ge=1, le=50)] | None = None
-    seconds: Annotated[int, Field(ge=5, le=MAX_SET_SECONDS)] | None = None
+    # The activity maximum: the op may change an activity item's time. Applying it
+    # re-validates the prescription, which holds a catalog exercise to `MAX_SET_SECONDS`.
+    seconds: Annotated[int, Field(ge=5, le=MAX_ACTIVITY_SECONDS)] | None = None
     meters: Annotated[int, Field(ge=5, le=MAX_SET_METERS)] | None = None
     load: Load | None = None
     rest_seconds: Annotated[int, Field(ge=0, le=600)] | None = None
@@ -96,6 +99,7 @@ class AddExercise(BaseModel):
     # ADR 0009: exactly one target — reps_min/reps_max, seconds or meters.
     reps_min: Annotated[int, Field(ge=1, le=50)] | None = None
     reps_max: Annotated[int, Field(ge=1, le=50)] | None = None
+    # Catalog exercises only (the allowed set), so the catalog bound.
     seconds: Annotated[int, Field(ge=5, le=MAX_SET_SECONDS)] | None = None
     meters: Annotated[int, Field(ge=5, le=MAX_SET_METERS)] | None = None
     load: Load

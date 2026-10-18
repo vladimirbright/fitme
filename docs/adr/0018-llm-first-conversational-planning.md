@@ -5,7 +5,7 @@ base `main` 6aa2bf5, merged via PR #16). Relates to ADR 0003/0004
 (assistant, sessions: same staging pattern, new agent), ADR 0007 (catalog retrieval is
 optional on this path), ADR 0010 (exclusions follow the staged plan), and ADR 0011/0016/0017
 (brief, time budget, request reading: not run on this path). Changes A§4.5 (activity items,
-`Plan.location`, `MAX_SET_SECONDS`), A§6.3 (history length, routing), A§6.4 (new §6.4.1),
+`Plan.location`, `MAX_ACTIVITY_SECONDS`), A§6.3 (history length, routing), A§6.4 (new §6.4.1),
 A§8.1 (`planner` row, `planner.v2`) and A§11 (`llm eval-conversations`).
 
 ## Context
@@ -29,8 +29,8 @@ minutes. A multi-turn talk was cut at 20 messages.
 
 **Activity items** (`domain/models.py`). `Prescription.exercise_id` may be
 `activity:<slug>` (`ACTIVITY_PREFIX`, `is_activity_id`; slug 3..60 characters of `a-z0-9_`)
-with a required `activity_name` (trimmed to 60 characters). Such an item is measured in time,
-takes a `bodyweight` load, no `rir` and no `declared_kg`. Any other item must leave
+with a required `activity_name` (trimmed to 60 characters). Such an item is exactly one set
+measured in time, takes a `bodyweight` load, no `rir` and no `declared_kg`. Any other item must leave
 `activity_name` empty. In the guards (`guards/plan.py`), an activity item gets one
 `plan.activity` verdict instead of the catalog, location, equipment, screening, experience
 and load checks. That verdict **fails when any area flag is "yes"**: there is no
@@ -51,8 +51,10 @@ more total `sets × seconds`. Anything else fails `plan.activity_not_allowed` or
 
 **Plan location** (`Plan.location`, optional). It is where this plan is trained. The
 profile location is the default, not a limit. `guards.plan.at_location` swaps it into the
-guard context for the location-fit verdict only; equipment stays the profile's. It applies
-wherever a plan or a workout is judged:
+guard context together with that location's equipment (`domain.catalog.equipment_at`: the
+location default, or the user's own home selection, `GuardContext.home_equipment`, for
+`home_equipment`), so a gym plan of an outdoor profile is judged with the gym's kit. It
+applies wherever a plan or a workout is judged:
 
 - `validate_plan`;
 - `validate_workout(..., location=)` for the `/train` review, Start, Save to plan and
@@ -62,8 +64,11 @@ wherever a plan or a workout is judged:
 
 A legacy revision whose output has no location keeps the base plan's location.
 
-**Set length and history.** `MAX_SET_SECONDS` is 10800, so a 90-minute class is one timed
-set. `set_logs` seconds columns have only a lower-bound CHECK. `conversations.HISTORY_LIMIT`
+**Set length and history.** An activity item's one timed set may be up to
+`MAX_ACTIVITY_SECONDS` = 10800, so a 90-minute class is one set. A catalog exercise keeps
+`MAX_SET_SECONDS` = 3600, in a prescription and in a logged result
+(`guards.plausibility.check_parsed_seconds`). `set_logs` seconds columns have only a
+lower-bound CHECK. `conversations.HISTORY_LIMIT`
 is 100 messages (it was 20). Retention is unchanged.
 
 **The `planner` agent** (`llm/agents.planner_agent`, `prompts/planner.v2.md`, default tier
@@ -88,7 +93,7 @@ closed first. It replaces any `declared_kg` with the base's. It judges a copy wi
 exclusions, plus a draftless new-plan talk's exclusions when they will move to it). A failure
 goes back to the model in the same run, and nothing is staged. A success answers only load
 notes and repairs. The planner's search ranks exercises allowed at any location
-(`_any_location_ids`) and returns `kg_loadable`, `load_unit`, `equipment` and `locations`.
+(`_any_location_ids`, each location with its own equipment) and returns `kg_loadable`, `load_unit`, `equipment` and `locations`.
 
 **Nothing is written until the run ends** (ADR 0004 pattern). After the run, `_apply`
 records the staged plan with `planning.record_edit_draft`: a `plan_revise` draft round with
