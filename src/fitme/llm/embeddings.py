@@ -2,8 +2,9 @@
 
 Used in two places only: `fitme catalog index` on the operator's machine (catalog search
 documents, never user data) and, when `FITME_EMBEDDINGS_QUERY` is on, one call per
-free-text search query. A query is already stop-word-scanned by the caller and goes through
-`llm.context.scrub()` here, like every other free text sent to a provider.
+free-text search (one call for every query of a bulk lookup). A query is already
+stop-word-scanned by the caller and goes through `llm.context.scrub()` here, like every
+other free text sent to a provider.
 """
 
 from __future__ import annotations
@@ -75,3 +76,11 @@ async def embed_query(embedder: Embedder, text: str) -> list[float]:
     if len(vectors) != 1:
         raise EmbeddingError("expected exactly one query embedding")
     return vectors[0]
+
+
+async def embed_queries(embedder: Embedder, texts: Sequence[str]) -> list[list[float]]:
+    """Scrubbed free-text queries -> one vector each, in order, from one `embed` call."""
+    vectors = await embedder.embed([scrub(text) for text in texts])
+    if len(vectors) != len(texts):
+        raise EmbeddingError(f"asked for {len(texts)} query embeddings, got {len(vectors)}")
+    return vectors

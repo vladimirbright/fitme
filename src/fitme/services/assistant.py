@@ -25,6 +25,7 @@ The model never writes to the database; every write goes through the functions a
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from zoneinfo import ZoneInfo
@@ -90,6 +91,8 @@ from fitme.services.llm_runtime import LlmRuntime
 from fitme.services.plan_edit import save_edit
 from fitme.services.safety import HaltResult, halt
 
+_logger = logging.getLogger(__name__)
+
 AGENT_NAME = "assistant"
 # Experiment (llm-first planning): every message outside a started workout goes to the
 # conversational planner, which stages whole plans itself (`_Turn.stage_plan`); a started
@@ -97,9 +100,23 @@ AGENT_NAME = "assistant"
 PLANNER_AGENT = "planner"
 SOURCE = "assistant"
 UNDO_SOURCE = "assistant_undo"
-# Model requests per message: lookups, a few staged actions with corrections, the answer.
-# Hitting it is a refusal (`LLM_UNAVAILABLE`), never a partial write.
-REQUEST_LIMIT = 15
+# Model requests per message. Hitting the cap is a refusal (`LLM_UNAVAILABLE`, logged as
+# `usage.CAUSE_REQUEST_LIMIT`), never a partial write.
+# The assistant (a started workout): lookups, a few staged actions with corrections, the
+# answer.
+ASSISTANT_REQUEST_LIMIT = 15
+# The planner: a plan turn is the lookups (one bulk `find_exercises`, maybe a plan or session
+# read), `stage_plan`, possibly a re-stage or two after the guards' answer, and the closing
+# message — usually well under 10. 30 leaves room for a model that still looks exercises up
+# one at a time (seen live on 2026-10-18: 13 single lookups hit the old cap of 15) without
+# letting a runaway loop cost more than ~30 large-tier inputs.
+PLANNER_REQUEST_LIMIT = 30
+# `find_exercises`: hits per query for one query / for each of several, and the most queries
+# in one call.
+_FIND_LIMIT_SINGLE = 20
+_FIND_LIMIT_MANY = 8
+_FIND_MAX_QUERIES = 25
+_SHOW_VIEWS = frozenset({"plans", "plan", "draft", "stats", "train"})
 
 
 # --- Pure op application --------------------------------------------------------------------
@@ -500,6 +517,23 @@ class _Turn:
     def language(self) -> str:
         return self._inputs.snapshot.language
 
+    def _log_tool(self, tool: str, **summary: object) -> None:
+        """One INFO line per tool call, for seeing what a turn did. `summary` is counts and
+        ids only (catalog ids, plan/session ids, kinds) — never the user's or the model's
+        free text (AGENTS.md §5)."""
+        args = " ".join(f"{key}={value}" for key, value in summary.items()) or "-"
+        _logger.info(
+            "assistant tool call agent=%s tool=%s args=%s",
+            PLANNER_AGENT if self._planner else AGENT_NAME,
+            tool,
+            args,
+        )
+
+    def _logged_id(self, exercise_id: str) -> str:
+        """`exercise_id` for the tool-call log only when it is a catalog id: the model fills
+        the argument, so anything else is not logged as given."""
+        return exercise_id if self._catalog.by_id(exercise_id) is not None else "not_in_catalog"
+
     async def _draft_is_current(self, record: ConversationRecord | None) -> bool:
         if record is None or record.draft_decision_id is None:
             return False
@@ -513,6 +547,7 @@ class _Turn:
     # --- lookups
 
     async def list_plans(self) -> list[dict[str, object]]:
+        self._log_tool("list_plans")
         result: list[dict[str, object]] = []
         for record in await planning.list_plans(self._db, self._user_id):
             detail = await planning.get_plan_detail(self._db, self._user_id, record.id)
@@ -532,6 +567,7 @@ class _Turn:
         return result
 
     async def get_plan(self, plan_id: int) -> dict[str, object]:
+        self._log_tool("get_plan", plan_id=plan_id)
         detail = await planning.get_plan_detail(self._db, self._user_id, plan_id)
         if detail is None:
             return _error(f"no plan {plan_id}")
@@ -540,6 +576,7 @@ class _Turn:
         return {"plan_id": plan_id, "version": detail.version.version, "plan": body}
 
     async def list_recent_sessions(self, limit: int) -> list[dict[str, object]]:
+        self._log_tool("list_recent_sessions", limit=limit)
         async with self._db.read() as conn:
             sessions = await list_workout_sessions_page(conn, self._user_id, limit=limit, offset=0)
         return [
@@ -554,6 +591,7 @@ class _Turn:
         ]
 
     async def get_session(self, session_id: int) -> dict[str, object]:
+        self._log_tool("get_session", session_id=session_id)
         async with self._db.read() as conn:
             session = await get_workout_session(conn, session_id)
             if session is None or session.user_id != self._user_id:
@@ -586,23 +624,45 @@ class _Turn:
             if (exercise := self._catalog.by_id(exercise_id)) is not None
         ]
 
-    async def find_exercises(self, query: str) -> list[dict[str, object]]:
+    async def find_exercises(self, queries: list[str]) -> dict[str, object]:
         """ADR 0007: hybrid search over the allowed set (exact, full-text, pattern words,
-        semantic when enabled). An empty query lists the allowed set."""
+        semantic when enabled) for every query at once, in order — one model round trip and
+        one embedding request for a whole plan's exercises. No query (or one empty one)
+        lists the allowed set."""
+        self._log_tool("find_exercises", queries=len(queries))
+        if len(queries) > _FIND_MAX_QUERIES:
+            return _error(
+                f"at most {_FIND_MAX_QUERIES} queries per call: split them over several calls"
+            )
+        texts = queries or [""]
+        limit = _FIND_LIMIT_SINGLE if len(texts) == 1 else _FIND_LIMIT_MANY
         runtime = await exercise_search.runtime_for(self._db, self._catalog)
-        results = await exercise_search.search(
-            self._db,
-            runtime,
-            self._allowed_exercises(),
-            exercise_search.ExerciseQuery(text=query, limit=20),
+        ranked = await exercise_search.search_many(
+            self._db, runtime, self._allowed_exercises(), texts, limit=limit
         )
-        return [{"exercise_id": hit.exercise_id, **self._facts(hit.exercise_id)} for hit in results]
+        return {
+            "results": [
+                {
+                    "query": text,
+                    "exercises": [
+                        {"exercise_id": hit.exercise_id, **self._facts(hit.exercise_id)}
+                        for hit in hits
+                    ],
+                }
+                for text, hits in zip(texts, ranked, strict=True)
+            ]
+        }
 
     async def find_substitutes(
         self, exercise_id: str, avoid_areas: list[str]
     ) -> list[dict[str, object]] | dict[str, object]:
         """ADR 0007: ranked allowed replacements; the swap itself still goes through
         `edit_plan`/`edit_today` and the guards."""
+        self._log_tool(
+            "find_substitutes",
+            exercise_id=self._logged_id(exercise_id),
+            avoid_areas=len(avoid_areas),
+        )
         unknown = sorted(set(avoid_areas) - VALID_LOADS_AREAS)
         if unknown:
             return _error(f"unknown areas {unknown}; use {sorted(VALID_LOADS_AREAS)}")
@@ -645,6 +705,7 @@ class _Turn:
     # --- planning session
 
     async def edit_plan(self, plan_id: int | None, ops: list[AnyPlanOp]) -> dict[str, object]:
+        self._log_tool("edit_plan", plan_id=plan_id, ops=len(ops))
         staged = self.staged
         if staged.rewrite is not None or staged.new_plan is not None:
             return _error("a redesign or a new plan is already staged this turn")
@@ -720,6 +781,7 @@ class _Turn:
         draft (`planning.judge` with the target plan's inputs: hard guards with load-engine
         substitution, wording, measure and intensity repair). A failure is returned so the
         model can correct the plan within the turn; nothing is staged."""
+        self._log_tool("stage_plan", plan_id=plan_id, workouts=len(plan.workouts))
         staged = self.staged
         if staged.rewrite is not None or staged.new_plan is not None:
             return _error("a redesign or a new plan is already staged this turn")
@@ -779,6 +841,7 @@ class _Turn:
         )
 
     async def rewrite_plan(self, plan_id: int | None, request: str) -> dict[str, object]:
+        self._log_tool("rewrite_plan", plan_id=plan_id)
         staged = self.staged
         if staged.draft_plan is not None or staged.new_plan is not None:
             return _error("specific edits or a new plan are already staged this turn")
@@ -823,6 +886,7 @@ class _Turn:
         )
 
     async def new_plan(self, guidance: str | None) -> dict[str, object]:
+        self._log_tool("new_plan", guidance=guidance is not None)
         staged = self.staged
         if staged.draft_plan is not None or staged.rewrite is not None:
             return _error("other plan changes are already staged this turn")
@@ -839,6 +903,7 @@ class _Turn:
         return _ok(staged="the new plan's draft is generated and shown after this turn")
 
     async def save_draft(self) -> dict[str, object]:
+        self._log_tool("save_draft")
         if self.staged.rewrite is not None or self.staged.new_plan is not None:
             return _error("the redesign isn't ready yet: the user saves it once they've seen it")
         if self.staged.draft_plan is None and not await self._draft_is_current(self._planning):
@@ -847,6 +912,7 @@ class _Turn:
         return _ok(staged="saved after this turn")
 
     async def discard_draft(self) -> dict[str, object]:
+        self._log_tool("discard_draft")
         if self._planning is None and self.staged.draft_plan is None:
             return _error("no planning session is open")
         self.staged.discard = True
@@ -854,6 +920,7 @@ class _Turn:
         return _ok(staged="the session is closed without saving after this turn")
 
     async def rename_plan(self, plan_id: int, name: str) -> dict[str, object]:
+        self._log_tool("rename_plan", plan_id=plan_id)
         if await self._plan_record(plan_id) is None:
             return _error(f"no plan {plan_id}")
         if wording.first_forbidden_term(name) is not None:
@@ -862,6 +929,7 @@ class _Turn:
         return _ok()
 
     async def set_default_plan(self, plan_id: int) -> dict[str, object]:
+        self._log_tool("set_default_plan", plan_id=plan_id)
         if await self._plan_record(plan_id) is None:
             return _error(f"no plan {plan_id}")
         self.staged.default_plan_id = plan_id
@@ -891,6 +959,11 @@ class _Turn:
     async def add_exclusion(
         self, kind: str, value: str, for_all_plans: bool = False
     ) -> dict[str, object]:
+        self._log_tool(
+            "add_exclusion",
+            kind=kind if kind in set(exclusions.ExclusionKind) else "invalid",
+            for_all_plans=for_all_plans,
+        )
         try:
             found = exclusions.preview(kind, value, self._catalog)
         except exclusions.InvalidExclusionError as exc:
@@ -918,6 +991,7 @@ class _Turn:
         )
 
     async def remove_exclusion(self, exclusion_id: int) -> dict[str, object]:
+        self._log_tool("remove_exclusion", exclusion_id=exclusion_id)
         known = {row.id for row in await exclusions.list_for_user(self._db, self._user_id)}
         if exclusion_id not in known:
             return _error(f"no exclusion {exclusion_id}")
@@ -933,6 +1007,7 @@ class _Turn:
     async def fix_logged_sets(
         self, session_id: int, fixes: list[FixLoggedSet]
     ) -> dict[str, object]:
+        self._log_tool("fix_logged_sets", session_id=session_id, fixes=len(fixes))
         if not fixes:
             return _error("no fixes given")
         if self.staged.fixes is not None and self.staged.fixes[0] != session_id:
@@ -977,11 +1052,13 @@ class _Turn:
         return _ok()
 
     async def log_exercise_as_planned(self, exercise_id: str) -> dict[str, object]:
+        self._log_tool("log_exercise_as_planned", exercise_id=self._logged_id(exercise_id))
         return await self._stage_log(
             training.ItemLog(exercise_id=exercise_id, kind=training.ItemLogKind.AS_PLANNED)
         )
 
     async def skip_exercise(self, exercise_id: str) -> dict[str, object]:
+        self._log_tool("skip_exercise", exercise_id=self._logged_id(exercise_id))
         return await self._stage_log(
             training.ItemLog(exercise_id=exercise_id, kind=training.ItemLogKind.SKIPPED)
         )
@@ -989,6 +1066,9 @@ class _Turn:
     async def log_exercise_results(
         self, exercise_id: str, sets: list[SetResult]
     ) -> dict[str, object]:
+        self._log_tool(
+            "log_exercise_results", exercise_id=self._logged_id(exercise_id), sets=len(sets)
+        )
         return await self._stage_log(
             training.ItemLog(
                 exercise_id=exercise_id, kind=training.ItemLogKind.RESULTS, sets=tuple(sets)
@@ -996,12 +1076,14 @@ class _Turn:
         )
 
     async def report_safety_concern(self) -> dict[str, object]:
+        self._log_tool("report_safety_concern")
         if self._open_block() is None:
             return _error("no workout is in progress")
         self.staged.halt = True
         return _ok(staged="the workout stops after this turn; nothing else is applied")
 
     async def edit_today(self, ops: list[AnyWorkoutOp]) -> dict[str, object]:
+        self._log_tool("edit_today", ops=len(ops))
         open_block = self._open_block()
         active = self._workout
         if open_block is None or active is None:
@@ -1030,7 +1112,8 @@ class _Turn:
     # --- screens
 
     async def show(self, view: str, plan_id: int | None) -> dict[str, object]:
-        if view not in ("plans", "plan", "draft", "stats", "train"):
+        self._log_tool("show", view=view if view in _SHOW_VIEWS else "invalid", plan_id=plan_id)
+        if view not in _SHOW_VIEWS:
             return _error(f"unknown view {view!r}")
         if view == "plan" and plan_id is None:
             return _error("which plan? pass plan_id")
@@ -1219,7 +1302,9 @@ async def handle_message(
         prices=llm.prices,
         language=lang,
         deps=turn,
-        request_limit=REQUEST_LIMIT,
+        request_limit=PLANNER_REQUEST_LIMIT
+        if agent_name == PLANNER_AGENT
+        else ASSISTANT_REQUEST_LIMIT,
     )
     output = outcome.output
     prompt = PromptMeta(

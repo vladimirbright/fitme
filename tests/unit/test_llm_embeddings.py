@@ -14,6 +14,7 @@ from fitme.llm.embeddings import (
     BATCH_SIZE,
     EmbeddingError,
     OpenAICompatibleEmbedder,
+    embed_queries,
     embed_query,
 )
 
@@ -93,3 +94,11 @@ async def test_a_query_is_scrubbed_before_it_is_embedded() -> None:
     sent = recorder.texts[0]
     assert "@someone" not in sent and "me@example.org" not in sent
     assert "rows like" in sent
+
+
+async def test_every_bulk_query_is_scrubbed_and_keeps_its_order() -> None:
+    recorder = _Recorder()
+    vectors = await embed_queries(recorder, ["squat like @someone", "row", "mail me@example.org"])
+    assert len(vectors) == 3 and len(recorder.texts) == 3
+    assert not any("@someone" in text or "me@example.org" in text for text in recorder.texts)
+    assert recorder.texts[1] == "row"

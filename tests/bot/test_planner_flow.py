@@ -15,6 +15,7 @@ pseudonymized data only; the Change / Change something / New plan buttons feed t
 from __future__ import annotations
 
 import json
+import logging
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -829,18 +830,127 @@ async def test_search_gives_the_planner_exercise_facts_and_outdoor_exercises(
     await _fresh(dispatcher, bot, db, location="public_gym")
     await sync_search_index(db)
     llm.steps = [
-        Call("find_exercises", {"query": "interval run outdoors"}),
+        Call("find_exercises", {"queries": ["interval run outdoors"]}),
         Call("find_substitutes", {"exercise_id": "barbell_bench_press", "avoid_areas": []}),
         say("Found."),
     ]
     await _send(dispatcher, bot, "what can I do for intervals outside?")
-    found = llm.returns("find_exercises")[0]
-    jog = next(hit for hit in found if hit["exercise_id"] == "outdoor_interval_jog")
+    (result,) = llm.returns("find_exercises")[0]["results"]
+    assert result["query"] == "interval run outdoors"
+    jog = next(hit for hit in result["exercises"] if hit["exercise_id"] == "outdoor_interval_jog")
     assert jog["locations"] == ["outdoor"]
     assert jog["kg_loadable"] is False and jog["equipment"] == []
     substitutes = llm.returns("find_substitutes")[0]
     assert substitutes
     assert {"kg_loadable", "load_unit", "equipment", "locations"} <= set(substitutes[0])
+
+
+_STRENGTH_NAMES = [
+    "barbell back squat",
+    "bench press",
+    "dumbbell row",
+    "push-up",
+    "romanian deadlift",
+    "overhead press",
+    "lat pulldown",
+    "plank",
+    "lunge",
+    "pull-up",
+]
+
+
+async def test_one_bulk_lookup_is_enough_for_a_three_day_strength_plan(
+    dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
+) -> None:
+    """The 2026-10-18 finding: a strength plan looked up one exercise per model request and
+    hit the request cap. One `find_exercises` call with every name gives the ids and the load
+    facts for all of them, so the turn is lookup, stage, answer."""
+    user_id = await _fresh(dispatcher, bot, db)
+    await sync_search_index(db)
+    plan = _strength_plan(
+        squat_kg=20, bench=_reps("dumbbell_bench_press", Load(kind="calibration"))
+    )
+    plan.workouts[0].blocks[0].items[0].load = Load(kind="calibration")
+    llm.steps = [
+        Call("find_exercises", {"queries": _STRENGTH_NAMES}),
+        _stage(plan),
+        say("Three days, staged."),
+    ]
+    before = llm.calls
+    await _send(dispatcher, bot, "three strength days a week")
+    assert llm.calls - before <= 4
+
+    (found,) = llm.returns("find_exercises")
+    results = found["results"]
+    assert [result["query"] for result in results] == _STRENGTH_NAMES
+    for result in results:
+        assert 0 < len(result["exercises"]) <= 8, result["query"]
+        for hit in result["exercises"]:
+            assert {"exercise_id", "kg_loadable", "load_unit"} <= set(hit)
+    ids = {hit["exercise_id"] for result in results for hit in result["exercises"]}
+    assert {"barbell_back_squat", "dumbbell_bench_press", "dumbbell_row", "pushup"} <= ids
+    assert llm.returns("stage_plan")[0]["ok"] is True
+    assert len(await _planner_drafts(db, user_id)) == 1
+
+
+async def test_a_single_or_empty_lookup_keeps_twenty_hits_and_too_many_is_an_error(
+    dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
+) -> None:
+    await _fresh(dispatcher, bot, db)
+    await sync_search_index(db)
+    llm.steps = [
+        Call("find_exercises", {"queries": []}),
+        Call("find_exercises", {"queries": ["back"]}),
+        Call("find_exercises", {"queries": ["squat"] * 26}),
+        say("Found."),
+    ]
+    await _send(dispatcher, bot, "what is there?")
+    listed, single, too_many = llm.returns("find_exercises")
+    assert [r["query"] for r in listed["results"]] == [""]
+    assert len(listed["results"][0]["exercises"]) == 20
+    assert len(single["results"][0]["exercises"]) == 20
+    assert too_many["ok"] is False and "split" in too_many["error"]
+
+
+async def test_a_tool_call_is_logged_with_counts_and_not_the_query_text(
+    dispatcher: Dispatcher,
+    bot: Bot,
+    db: Database,
+    session: FakeSession,
+    llm: ScriptedLlm,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """AGENTS.md §5: the tool-call log names the agent, the tool and counts or ids, never
+    the free text the model passed."""
+    await _fresh(dispatcher, bot, db)
+    caplog.set_level(logging.INFO, logger="fitme.services.assistant")
+    llm.steps = [
+        Call("find_exercises", {"queries": ["приседания как у соседа Пети", "row"]}),
+        Call("find_substitutes", {"exercise_id": "made up text", "avoid_areas": []}),
+        say("Found."),
+    ]
+    await _send(dispatcher, bot, "squats please")
+    lines = [r.getMessage() for r in caplog.records if r.name == "fitme.services.assistant"]
+    assert "assistant tool call agent=planner tool=find_exercises args=queries=2" in lines
+    assert (
+        "assistant tool call agent=planner tool=find_substitutes "
+        "args=exercise_id=not_in_catalog avoid_areas=0"
+    ) in lines
+    logged = "\n".join(lines)
+    assert "Петя" not in logged and "соседа" not in logged and "made up" not in logged
+
+
+async def test_the_planner_may_use_more_requests_than_the_assistant(
+    dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
+) -> None:
+    """A plan turn gets `PLANNER_REQUEST_LIMIT` (30) model requests: 16 serial lookups (over
+    the assistant's 15) still end in an answer, not the "LLM unavailable" refusal."""
+    await _fresh(dispatcher, bot, db)
+    llm.steps = [Call("find_exercises", {"queries": [f"squat {n}"]}) for n in range(16)]
+    llm.steps.append(say("Sixteen lookups later."))
+    await _send(dispatcher, bot, "a leg day")
+    assert _last_text(session).startswith("Sixteen lookups later.")
+    assert len(llm.returns("find_exercises")) == 16
 
 
 async def test_cancel_closes_an_open_planning_conversation(

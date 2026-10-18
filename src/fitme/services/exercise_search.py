@@ -54,7 +54,7 @@ from fitme.db.connection import Database
 from fitme.db.selectors.catalog_search import FtsQueryError, all_embeddings, fts_match
 from fitme.domain.catalog import Catalog, Exercise, intensity_mode
 from fitme.domain.enums import ExerciseKind, ExercisePattern, Focus, Preference, Quality, Sport
-from fitme.llm.embeddings import Embedder, EmbeddingError, OpenAICompatibleEmbedder, embed_query
+from fitme.llm.embeddings import Embedder, EmbeddingError, OpenAICompatibleEmbedder, embed_queries
 from fitme.services.catalog_index import documents
 from fitme.services.vector_index import VectorError, VectorIndex, normalize
 
@@ -394,17 +394,34 @@ async def _fts_ranked(db: Database, text: str) -> list[str]:
     return [exercise_id for exercise_id, _score in rows]
 
 
-async def _semantic_ranked(
-    runtime: SearchRuntime, text: str, allowed: set[str]
+def _semantic_enabled(runtime: SearchRuntime) -> bool:
+    return (
+        runtime.embedder is not None
+        and bool(len(runtime.vectors))
+        and runtime.embedder.model == runtime.vectors.model
+    )
+
+
+async def _query_vectors(runtime: SearchRuntime, texts: Sequence[str]) -> list[list[float] | None]:
+    """One embedding request for every query text, in order; `None` for each when the
+    semantic stage is off or the provider failed (search then ranks lexically, never fails)."""
+    if not texts or runtime.embedder is None or not _semantic_enabled(runtime):
+        return [None] * len(texts)
+    try:
+        return list(await embed_queries(runtime.embedder, texts))
+    except EmbeddingError as exc:
+        _logger.warning("search: semantic search unavailable (%s); using lexical only", exc)
+        return [None] * len(texts)
+
+
+def _semantic_ranked(
+    runtime: SearchRuntime, vector: list[float] | None, allowed: set[str]
 ) -> list[tuple[str, float]]:
-    if runtime.embedder is None or not len(runtime.vectors):
-        return []
-    if runtime.embedder.model != runtime.vectors.model:
+    if vector is None:
         return []
     try:
-        vector = normalize(await embed_query(runtime.embedder, text))
-        scores = runtime.vectors.similarities(vector)
-    except (EmbeddingError, VectorError) as exc:
+        scores = runtime.vectors.similarities(normalize(vector))
+    except VectorError as exc:
         _logger.warning("search: semantic search unavailable (%s); using lexical only", exc)
         return []
     ranked = sorted(
@@ -423,6 +440,21 @@ def _structural_order(exercise: Exercise) -> tuple[int, int, str]:
     return (patterns.index(exercise.pattern), kind_rank, exercise.id)
 
 
+def _pool(candidates: Sequence[Exercise], query: ExerciseQuery) -> list[Exercise]:
+    return [
+        exercise
+        for exercise in candidates
+        if exercise.id not in query.excluded
+        and not query.avoid_areas.intersection(exercise.loads_areas)
+        and (not query.patterns or exercise.pattern in query.patterns)
+        and (not query.kinds or exercise.kind in query.kinds)
+    ]
+
+
+def _query_text(text: str | None) -> str:
+    return (text or "").strip()[:_MAX_QUERY_LENGTH]
+
+
 async def search(
     db: Database,
     runtime: SearchRuntime,
@@ -432,17 +464,52 @@ async def search(
     """Rank `candidates` (already hard-filtered by the caller) for `query`. With text,
     only exercises some signal matched are returned; without text, every candidate passing
     the structural filters, in catalog-structure order."""
-    pool = [
-        exercise
-        for exercise in candidates
-        if exercise.id not in query.excluded
-        and not query.avoid_areas.intersection(exercise.loads_areas)
-        and (not query.patterns or exercise.pattern in query.patterns)
-        and (not query.kinds or exercise.kind in query.kinds)
+    text = _query_text(query.text)
+    vectors = await _query_vectors(runtime, [text] if text else [])
+    return await _ranked(
+        db,
+        runtime,
+        _pool(candidates, query),
+        text,
+        vectors[0] if vectors else None,
+        limit=max(1, query.limit),
+    )
+
+
+async def search_many(
+    db: Database,
+    runtime: SearchRuntime,
+    candidates: Sequence[Exercise],
+    texts: Sequence[str],
+    *,
+    limit: int = 20,
+) -> list[list[ExerciseSearchResult]]:
+    """`search` for each of `texts` over the same candidates (no structural filters), in
+    order, with the query embeddings of all of them from one embedding request — a bulk
+    lookup costs one provider call, not one per name. Each result list equals what `search`
+    returns for that text alone."""
+    pool = _pool(candidates, ExerciseQuery())
+    cleaned = [_query_text(text) for text in texts]
+    distinct = [text for text in dict.fromkeys(cleaned) if text]
+    vectors = dict(zip(distinct, await _query_vectors(runtime, distinct), strict=True))
+    return [
+        await _ranked(db, runtime, pool, text, vectors.get(text), limit=max(1, limit))
+        for text in cleaned
     ]
+
+
+async def _ranked(
+    db: Database,
+    runtime: SearchRuntime,
+    pool: list[Exercise],
+    text: str,
+    vector: list[float] | None,
+    *,
+    limit: int,
+) -> list[ExerciseSearchResult]:
+    """The ranking behind `search`/`search_many`: `pool` already filtered, `text` already
+    cleaned, `vector` its query embedding (`None`: no semantic stage)."""
     allowed = {exercise.id for exercise in pool}
-    limit = max(1, query.limit)
-    text = (query.text or "").strip()[:_MAX_QUERY_LENGTH]
     if not text:
         ordered = sorted(pool, key=_structural_order)
         return [
@@ -475,7 +542,7 @@ async def search(
     for rank, exercise in enumerate(structural, start=1):
         add(exercise.id, 1.0 / (RRF_K + rank), f"pattern named: {exercise.pattern.value}")
     for rank, (exercise_id, similarity) in enumerate(
-        await _semantic_ranked(runtime, text, allowed), start=1
+        _semantic_ranked(runtime, vector, allowed), start=1
     ):
         add(exercise_id, 1.0 / (RRF_K + rank), f"semantic similarity {similarity:.2f}")
     ranked = sorted(scores, key=lambda exercise_id: (-scores[exercise_id], exercise_id))

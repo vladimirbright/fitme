@@ -27,11 +27,13 @@ _REAL_PROMPT_VERSIONS = {
     "session_adjust": 2,
     "recap": 3,  # v2: change_sets and the did-more signal (ADR 0015); v3: next_targets (0016)
     "plan_import": 2,
-    "assistant": 11,  # v4: sessions + tools (ADR 0004); v5: per-exercise logging (ADR 0005);
+    "assistant": 12,  # v4: sessions + tools (ADR 0004); v5: per-exercise logging (ADR 0005);
     # v6: find_substitutes and hybrid find_exercises (ADR 0007); v7: exclusions, measures (0009)
     # v9: sets beyond the prescription (ADR 0012); v10: logged sets are not repeated;
-    # v11: one clarifying question before a new plan or redesign, full requests (ADR 0017)
-    "planner": 1,  # experiment: the conversational planner that stages whole plans
+    # v11: one clarifying question before a new plan or redesign, full requests (ADR 0017);
+    # v12: `find_exercises` takes a list of queries, all names in one call
+    "planner": 2,  # experiment: the conversational planner that stages whole plans; v2: one
+    # bulk `find_exercises` call
 }
 _REAL_PROMPT_NAMES = tuple(_REAL_PROMPT_VERSIONS)
 

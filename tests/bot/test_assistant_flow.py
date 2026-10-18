@@ -1018,7 +1018,7 @@ async def test_the_assistant_finds_exercises_and_ranked_substitutes(
     seeded = await _ready(dispatcher, bot, db)
     await sync_search_index(db)
     llm.steps = [
-        Call("find_exercises", {"query": "жим гантелей"}),
+        Call("find_exercises", {"queries": ["жим гантелей"]}),
         Call(
             "find_substitutes",
             {"exercise_id": "barbell_back_squat", "avoid_areas": ["lower_back"]},
@@ -1029,7 +1029,7 @@ async def test_the_assistant_finds_exercises_and_ranked_substitutes(
     ]
     await _send(dispatcher, bot, "чем заменить присед, чтобы не грузить поясницу?")
 
-    found = llm.returns("find_exercises")[0]
+    found = llm.returns("find_exercises")[0]["results"][0]["exercises"]
     assert found and found[0]["exercise_id"] == "dumbbell_bench_press"
     substitutes, unknown, bad_area = llm.returns("find_substitutes")
     catalog = load_catalog()
