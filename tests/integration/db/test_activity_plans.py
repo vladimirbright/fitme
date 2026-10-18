@@ -529,3 +529,30 @@ async def test_a_recap_suggestion_the_plan_model_refuses_is_dropped(
     assert len(details) == 2, details
     assert "exactly one set" in details[0]
     assert "seconds" in details[1]
+
+
+def test_a_scope_keeps_each_name_an_activity_id_has_in_the_base() -> None:
+    """The same `activity:` id may carry a different name in each workout of a staged plan:
+    an unchanged plan passes its own scope, and only a new name is refused."""
+    plan = Plan(
+        name="Two classes",
+        schedule=[
+            ScheduledDay(weekday=0, workout_key="A"),
+            ScheduledDay(weekday=3, workout_key="B"),
+        ],
+        workouts=[
+            Workout(
+                key=key,
+                title=name,
+                blocks=[Block(kind="single", items=[timed(_ACTIVITY, 3600, name=name)])],
+            )
+            for key, name in (("A", "BJJ class"), ("B", "No-gi class"))
+        ],
+    )
+    scope = planning.AgentScope.of(plan)
+    assert planning.scope_verdicts(plan, scope) == []
+    renamed = plan.model_copy(deep=True)
+    renamed.workouts[1].blocks[0].items[0].activity_name = "Wrestling"
+    refused = planning.scope_verdicts(renamed, scope)
+    assert [verdict.rule for verdict in refused] == ["plan.activity_not_allowed"]
+    assert "wrestling" not in refused[0].detail and "no-gi class" in refused[0].detail

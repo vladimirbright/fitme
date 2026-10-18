@@ -733,9 +733,11 @@ def _sanitize_wording(plan: Plan, lang: str) -> list[GuardVerdict]:
 @dataclass(frozen=True, slots=True)
 class ActivityAllowance:
     """What an agent may keep of one activity id from the plan or workout it starts from:
-    the same display name, at most as many items, and at most as much total time."""
+    one of the display names it has there (`names`, compared trimmed and case-folded; the
+    same id may carry a different name in each workout), at most as many items, and at most
+    as much total time."""
 
-    name: str
+    names: frozenset[str]
     count: int
     total_seconds: int
 
@@ -759,15 +761,15 @@ def _allowances(workouts: Sequence[Workout]) -> dict[str, ActivityAllowance]:
     for item in _activity_items(workouts):
         known = allowances.get(item.exercise_id)
         allowances[item.exercise_id] = ActivityAllowance(
-            name=known.name if known is not None else (item.activity_name or ""),
+            names=(frozenset() if known is None else known.names) | {_name_key(item.activity_name)},
             count=(0 if known is None else known.count) + 1,
             total_seconds=(0 if known is None else known.total_seconds) + _item_seconds(item),
         )
     return allowances
 
 
-def _same_name(a: str | None, b: str) -> bool:
-    return (a or "").strip().casefold() == b.strip().casefold()
+def _name_key(name: str | None) -> str:
+    return (name or "").strip().casefold()
 
 
 @dataclass(frozen=True, slots=True)
@@ -815,9 +817,14 @@ def scope_verdicts(plan: Plan, scope: AgentScope | None) -> list[GuardVerdict]:
         allowed = scope.activities.get(item.exercise_id)
         if allowed is None:
             verdicts.append(refused(item.exercise_id, "a non-catalog activity is not allowed here"))
-        elif not _same_name(item.activity_name, allowed.name):
+        elif _name_key(item.activity_name) not in allowed.names:
             verdicts.append(
-                refused(item.exercise_id, f"the activity keeps its name {allowed.name!r}")
+                refused(
+                    item.exercise_id,
+                    "the activity keeps its name ("
+                    + " or ".join(repr(name) for name in sorted(allowed.names))
+                    + ")",
+                )
             )
     for exercise_id, got in used.items():
         allowed = scope.activities.get(exercise_id)

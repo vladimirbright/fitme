@@ -99,8 +99,9 @@ Nothing was deleted. They remain reachable through:
 - **Generate anyway** under the New plan question: `propose_new_plan` from the profile;
 - the **website**: the new-plan form (`propose_new_plan`) and the revise form (`revise_plan`)
   are unchanged;
-- **messages during a `/train` session** (precheck, review, in progress): the legacy
-  `assistant`, whose `rewrite_plan` / `new_plan` still call `plan_revise` / `plan_generate`;
+- **messages during a started workout** (`in_progress`): the legacy `assistant`, whose
+  `rewrite_plan` / `new_plan` still call `plan_revise` / `plan_generate`. Precheck and review
+  have started nothing, so their messages go to the planner;
 - `make llm-eval` (the old per-agent eval) and the legacy mode of
   `make llm-eval-conversations`.
 
@@ -280,7 +281,8 @@ Items 1–17 were checked in the code at 4ed05d6, item 18 at the WP5 commits (c0
 **Routing and sessions**
 
 10. Messages during precheck or review (a `/train` session exists but is not started) go to
-    the legacy assistant, which can still call `rewrite_plan` / `new_plan`.
+    the planner, like every message outside a started workout; only an `in_progress`
+    workout keeps the legacy assistant and its `rewrite_plan` / `new_plan`.
 11. An exclusion stated in a session-less talk about a saved plan stays on that plan even if
     the draft is then cancelled (deliberate). Related, and rare: tapping Change on an older
     draft that is still current, while a draftless new-plan talk holds exclusions (the talk
