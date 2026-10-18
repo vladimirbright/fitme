@@ -189,6 +189,53 @@ async def test_vectors_of_another_model_are_not_used(db: Database, tmp_path: Pat
     assert not any(r.startswith("semantic") for res in results for r in res.match_reasons)
 
 
+_BULK = [
+    "back squat",
+    "bench press",
+    "жим гантелей",
+    "romanian deadlift",
+    "dumbbell row",
+    "подтягивания",
+    "plank",
+    "спина",
+    "",
+    "xyzzy qwerty",
+]
+
+
+async def test_search_many_embeds_every_query_in_one_request(db: Database, tmp_path: Path) -> None:
+    """A bulk lookup is one embedding request for all its queries (the 2026-10-18 finding:
+    one request per name), and each query ranks exactly as `search` ranks it alone."""
+    embedder = FakeEmbedder()
+    runtime = await _runtime(db, tmp_path, embedder=embedder)
+    bulk = await es.search_many(db, runtime, _gym(), _BULK, limit=8)
+    assert embedder.calls == 1
+    assert len(bulk) == len(_BULK)
+    for text, hits in zip(_BULK, bulk, strict=True):
+        alone = await es.search(db, runtime, _gym(), es.ExerciseQuery(text=text, limit=8))
+        assert hits == alone, text
+    assert any(r.startswith("semantic") for r in bulk[0][0].match_reasons)
+
+
+async def test_search_many_falls_back_to_lexical_on_a_provider_failure(
+    db: Database, tmp_path: Path
+) -> None:
+    embedder = FakeEmbedder(fail=True)
+    runtime = await _runtime(db, tmp_path, embedder=embedder)
+    bulk = await es.search_many(db, runtime, _gym(), ["bench press", "dumbbell row"], limit=8)
+    assert embedder.calls == 1
+    assert "barbell_bench_press" in _ids(bulk[0]) and "dumbbell_row" in _ids(bulk[1])
+    assert not any(r.startswith("semantic") for hits in bulk for h in hits for r in h.match_reasons)
+
+
+async def test_search_many_without_text_skips_the_embedder(db: Database, tmp_path: Path) -> None:
+    embedder = FakeEmbedder()
+    runtime = await _runtime(db, tmp_path, embedder=embedder)
+    (listed,) = await es.search_many(db, runtime, _gym(), [""], limit=20)
+    assert embedder.calls == 0
+    assert len(listed) == 20
+
+
 def test_fts_expression_handles_russian_endings_and_plurals() -> None:
     assert es.fts_expression("гантелей") == '"гантел"*'
     assert es.fts_expression("спины") == '"спин"*'

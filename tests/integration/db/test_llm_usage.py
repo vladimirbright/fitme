@@ -41,6 +41,7 @@ from fitme.llm.context import build_user_context, render_user_prompt
 from fitme.llm.usage import (
     CAUSE_OUTPUT_VALIDATION,
     CAUSE_PROVIDER_ERROR,
+    CAUSE_REQUEST_LIMIT,
     record_llm_call,
     run_agent,
 )
@@ -320,3 +321,49 @@ async def test_output_validation_failure_logs_safe_diagnostics_and_no_input_valu
 
     # `model_message` (`exc.message`, never `.body`) is a short, fixed pydantic-ai phrase.
     assert record.model_message == "Exceeded maximum output retries (1)"
+
+
+def _lookup_forever(messages: list, info: AgentInfo) -> ModelResponse:
+    """A model that answers every request with one more tool call (one lookup per round
+    trip, as observed live on 2026-10-18), never with output."""
+    return ModelResponse(parts=[ToolCallPart(tool_name="lookup", args={"name": "squat"})])
+
+
+async def test_the_request_limit_is_its_own_cause_with_pydantic_ais_fixed_message(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Hitting `request_limit` is `CAUSE_REQUEST_LIMIT`, not a provider error: our own cap
+    on a tool loop, logged with pydantic-ai's fixed message. The user still gets the usual
+    `LLM_UNAVAILABLE` refusal."""
+    caplog.set_level(logging.WARNING, logger="fitme.llm.usage")
+
+    def agent_factory(model: object) -> BuiltAgent[PlanProposal]:
+        agent = PydanticAgent(
+            FunctionModel(_lookup_forever, model_name=str(model)), output_type=PlanProposal
+        )
+
+        @agent.tool_plain
+        def lookup(name: str) -> str:
+            return "nothing"
+
+        return BuiltAgent(agent=agent, template_name="test_request_limit", version=1)
+
+    outcome = await run_agent(
+        agent_factory,
+        "anthropic:claude-opus-5",
+        "a plan: секретный запрос",
+        purpose="planner",
+        model_name="anthropic:claude-opus-5",
+        prices={},
+        language="en",
+        request_limit=3,
+    )
+
+    assert isinstance(outcome.output, Refusal)
+    assert outcome.output.code == RefusalCode.LLM_UNAVAILABLE
+    assert outcome.record.error_cause == CAUSE_REQUEST_LIMIT
+    (record,) = [r for r in caplog.records if r.message == "llm call failed"]
+    assert record.cause == CAUSE_REQUEST_LIMIT
+    assert record.error_type == "UsageLimitExceeded"
+    assert "request_limit of 3" in record.model_message
+    assert "секретный запрос" not in repr(record.__dict__)

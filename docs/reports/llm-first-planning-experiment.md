@@ -65,7 +65,7 @@ branch is the switch.
 
 | File | Purpose |
 |---|---|
-| `src/fitme/prompts/planner.v1.md` | The planner prompt (85 lines, 1792 words): understand first, propose in prose, one question at most, narrow vs broad corrections, catalog vs activity items, staging rules, schema. |
+| `src/fitme/prompts/planner.v2.md` | The planner prompt (85 lines, 1822 words; v2: one bulk `find_exercises` call): understand first, propose in prose, one question at most, narrow vs broad corrections, catalog vs activity items, staging rules, schema. |
 | `src/fitme/llm/agents.py` (`planner_agent`, `_PLANNER_TOOLS`, `_stage_plan`) | The agent and its tool list. |
 | `src/fitme/llm/models.py` | `planner` default tier `large`, `max_tokens` 16000, timeout 240 s, 2 output retries. |
 | `src/fitme/services/assistant.py` (`_Turn.stage_plan`, `_inputs_for`, `_any_location_ids`, `_facts`) | Staging a whole plan, judging it for its target plan, search over every location, exercise facts in search hits. |
@@ -298,6 +298,15 @@ Each item was checked in the code at 4ed05d6.
     released, but decisions written on the branch before that commit say `planner` v1 with
     the earlier text.
 
+**Cost**
+
+18. Observed live on 2026-10-18: a strength-plan turn looked exercises up one per model
+    request (13 single `find_exercises` calls), hit the 15-request cap and ended in the
+    "LLM unavailable" refusal (logged as `provider_error`) after ~15 large-tier inputs. Fix:
+    `find_exercises(queries)` takes every name in one call (one embedding request),
+    `planner.v2` asks for that, the planner's cap is `PLANNER_REQUEST_LIMIT` = 30 (the
+    assistant keeps 15), and the cap is logged as `request_limit`.
+
 ## 10. Comparison: experimental vs legacy
 
 | Axis (§14) | Planner (experimental) | Legacy (generation pipeline) |
@@ -358,8 +367,8 @@ takes.
 LLM calls for scenario A in five messages (request, agree, two corrections, save):
 
 - **Planner**: 5 runs and 5 `llm_calls` rows, all large tier. That is ≥1 + 2 + 2 + 2 + 2 = ≥9
-  model requests, plus one per guard correction. The limit is 15 requests per message
-  (`REQUEST_LIMIT`).
+  model requests, plus one per guard correction. The limit is 30 requests per message
+  (`PLANNER_REQUEST_LIMIT`; the legacy assistant keeps 15, see §9 item 18).
 - **Legacy, bot**:
   - the request: 1 assistant run (medium) + `plan_generate` 1–2 attempts (large);
   - each correction: 1 assistant run (typed edits, or `rewrite_plan` → `plan_revise`
@@ -371,8 +380,8 @@ Prompt size (`wc -w`):
 
 | Path | Prompts | Words |
 |---|---|---|
-| Planner | `planner.v1.md` | 1792 |
-| Legacy | `plan_generate.v8.md` + `assistant.v11.md` + `plan_revise.v5.md` | 2361 + 1876 + 1140 = 5377 |
+| Planner | `planner.v2.md` | 1822 |
+| Legacy | `plan_generate.v8.md` + `assistant.v12.md` + `plan_revise.v5.md` | 2361 + 1890 + 1140 = 5391 |
 
 The rendered input (context, state, history) is added to both. Its size was not measured.
 

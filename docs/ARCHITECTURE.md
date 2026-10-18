@@ -700,7 +700,7 @@ ADR 0018 (experimental, not accepted) records this path; the experiment report i
 `docs/reports/llm-first-planning-experiment.md`.
 
 On this branch, steps 1–6 above are reached only through **Generate anyway**; the default
-path is the `planner` agent (§8.1, `prompts/planner.v1.md`).
+path is the `planner` agent (§8.1, `prompts/planner.v2.md`).
 
 - **Entry.** Every free-text message outside a started workout (`services.assistant.
   handle_message`: no active `/train` session) runs `planner`; a started workout keeps the
@@ -732,7 +732,10 @@ path is the `planner` agent (§8.1, `prompts/planner.v1.md`).
   the model in the same run; nothing is staged. A success answers only the load notes and
   what was repaired. The planner's `find_exercises`/`find_substitutes` rank what the user
   may do at any location (the plan's location is what the guards judge) and give each
-  hit's `kg_loadable`, `load_unit`, `equipment` and `locations`. The programming brief, candidate pool,
+  hit's `kg_loadable`, `load_unit`, `equipment` and `locations`; `find_exercises(queries)`
+  takes every name at once (one model request, one embedding request). A run is capped at
+  `PLANNER_REQUEST_LIMIT` (30) model requests (the assistant: 15); hitting the cap is the
+  `LLM_UNAVAILABLE` refusal, logged with cause `request_limit`. The programming brief, candidate pool,
   `plan_quality.review`, `time_budget` and `plan_generate`/`plan_revise` do **not** run.
 - **Draft, show, save.** After the run the staged plan becomes a `plan_revise` draft round
   (`planning.record_edit_draft`, `user_report.base = "planner_stage"`, the planner's prompt
@@ -1045,7 +1048,7 @@ One pydantic-ai `Agent` per purpose. Each has a typed output, and its prompt is 
 - The prompt loader returns `(template_name, version, rendered_text)`. Template name and
   version go into `decisions`. Current versions (ADR 0017): `plan_generate.v8`,
   `plan_revise.v5`, `plan_import.v2`, `session_adjust.v2`, `recap.v3`,
-  `assistant.v11`, `planner.v1` (experiment branch). (`result_parse` was removed with the ✏️ button, ADR 0013.)
+  `assistant.v12`, `planner.v2` (experiment branch). (`result_parse` was removed with the ✏️ button, ADR 0013.)
 - Each agent's model comes from its tier or override (§8.5). Nothing in the code is tied to
   one provider.
 - `llm/usage.py` wraps every run: records `llm_calls` from `result.usage` (a property), latency, and

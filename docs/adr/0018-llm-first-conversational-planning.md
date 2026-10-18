@@ -6,7 +6,7 @@ Status: **experimental** (2026-10-17). It lives on branch `experiment/llm-first-
 optional on this path), ADR 0010 (exclusions follow the staged plan), and ADR 0011/0016/0017
 (brief, time budget, request reading: not run on this path). Changes A§4.5 (activity items,
 `Plan.location`, `MAX_SET_SECONDS`), A§6.3 (history length, routing), A§6.4 (new §6.4.1),
-A§8.1 (`planner` row, `planner.v1`) and A§11 (`llm eval-conversations`).
+A§8.1 (`planner` row, `planner.v2`) and A§11 (`llm eval-conversations`).
 
 ## Context
 
@@ -66,7 +66,7 @@ A legacy revision whose output has no location keeps the base plan's location.
 set. `set_logs` seconds columns have only a lower-bound CHECK. `conversations.HISTORY_LIMIT`
 is 100 messages (it was 20). Retention is unchanged.
 
-**The `planner` agent** (`llm/agents.planner_agent`, `prompts/planner.v1.md`, default tier
+**The `planner` agent** (`llm/agents.planner_agent`, `prompts/planner.v2.md`, default tier
 large, `max_tokens` 16000, timeout 240 s, 2 output retries; override with
 `FITME_LLM_AGENT_PLANNER`). It has the same deps, input and output as `assistant`
 (`AssistantTurn | Refusal`). Its tools are the lookups (`list_plans`, `get_plan`,
@@ -177,7 +177,7 @@ can do that from the conversation alone.
 - **Still legacy.** The website's new-plan and revise forms, Generate anyway, and the legacy
   assistant's `rewrite_plan`/`new_plan`. The bot's `PendingRevision` branch is now
   unreachable from any button but kept.
-- **`content_version` changes**: guard sources, `planner.v1.md`, domain models.
+- **`content_version` changes**: guard sources, `planner.v2.md`, domain models.
 - **No migration**: plan bodies are JSON, decision kinds are reused (`plan_revise` draft
   rounds, `plan_confirm`), and `llm_calls.purpose` / `decisions.prompt_template` say
   `planner`. No re-index.

@@ -27,7 +27,12 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from pydantic import ValidationError
-from pydantic_ai.exceptions import AgentRunError, UnexpectedModelBehavior, UserError
+from pydantic_ai.exceptions import (
+    AgentRunError,
+    UnexpectedModelBehavior,
+    UsageLimitExceeded,
+    UserError,
+)
 from pydantic_ai.usage import UsageLimits
 
 from fitme import i18n
@@ -52,8 +57,13 @@ _AGENT_FAILURE_EXCEPTIONS = (AgentRunError, UserError)
 # (timeout, HTTP error, rate limit, missing/bad API key, ...) so `llm/escalation.py` can retry
 # the former on the large tier (A§8.5 rule 3) while still refusing the latter immediately, with
 # no fallback (A§8.5 rule 4), and so the operator can tell the two apart in `decisions`.
+# `CAUSE_REQUEST_LIMIT`: the run used up its `request_limit` (a tool loop that didn't finish,
+# e.g. one lookup per round trip) — our own cap, not the provider failing; like a provider
+# error it refuses at once with no escalation. Not a DB-constrained value: it is only logged
+# and kept in `decisions.proposal` JSON.
 CAUSE_OUTPUT_VALIDATION = "output_validation"
 CAUSE_PROVIDER_ERROR = "provider_error"
+CAUSE_REQUEST_LIMIT = "request_limit"
 
 _MAX_LOGGED_VALIDATION_ERRORS = 10
 
@@ -107,7 +117,7 @@ def _describe_validation_errors(errors: list[ValidationError]) -> list[dict[str,
 
 @dataclass(frozen=True, slots=True)
 class _FailureDiagnosis:
-    """What `_diagnose_failure` extracts from a caught agent failure: which of the two
+    """What `_diagnose_failure` extracts from a caught agent failure: which of the
     `CAUSE_*` buckets it belongs in, plus (for `CAUSE_OUTPUT_VALIDATION`) a safe description
     of the pydantic errors involved, for the WARNING log record. Never carries the input
     values or any request/response body."""
@@ -118,13 +128,20 @@ class _FailureDiagnosis:
 
 
 def _diagnose_failure(exc: AgentRunError | UserError) -> _FailureDiagnosis:
-    """Classify a caught agent failure. A pydantic `ValidationError` anywhere in `exc`'s
-    `__cause__`/`__context__` chain means the model's structured output kept failing our own
+    """Classify a caught agent failure. A `UsageLimitExceeded` (the run's `request_limit`
+    reached) is `CAUSE_REQUEST_LIMIT`, checked first. A pydantic `ValidationError` anywhere in
+    `exc`'s `__cause__`/`__context__` chain means the model's structured output kept failing our own
     schema through every output retry (`CAUSE_OUTPUT_VALIDATION`); anything else — a timeout, an
     HTTP error, a rate limit, a bad/missing API key, a truncated response, ... — is
     `CAUSE_PROVIDER_ERROR`. `model_message` is `exc.message` (never `.body`, which can hold the
     raw response) when `exc` is an `UnexpectedModelBehavior` — a short, fixed phrase like
-    "Exceeded maximum output retries (1)", not model- or user-authored text."""
+    "Exceeded maximum output retries (1)", not model- or user-authored text — or pydantic-ai's
+    own fixed message for a `UsageLimitExceeded` ("The next request would exceed the
+    request_limit of 15")."""
+    if isinstance(exc, UsageLimitExceeded):
+        return _FailureDiagnosis(
+            cause=CAUSE_REQUEST_LIMIT, validation_errors=None, model_message=exc.message
+        )
     validation_errors = _validation_errors_in_chain(exc)
     cause = CAUSE_OUTPUT_VALIDATION if validation_errors else CAUSE_PROVIDER_ERROR
     model_message = exc.message if isinstance(exc, UnexpectedModelBehavior) else None
@@ -256,7 +273,7 @@ async def run_agent[T](
     `deps` is handed to the agent's tools (only `assistant` has any, ADR 0003);
     `request_limit` caps model requests in one run, so a tool loop can't run away — hitting
     it is a `UsageLimitExceeded` (an `AgentRunError`), i.e. the usual `LLM_UNAVAILABLE`
-    refusal.
+    refusal, recorded with `CAUSE_REQUEST_LIMIT`.
     """
     built: BuiltAgent[T] | None = None
     start = time.monotonic()

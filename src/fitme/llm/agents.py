@@ -147,7 +147,7 @@ class AssistantTools(Protocol):
 
     async def get_session(self, session_id: int) -> dict[str, object]: ...
 
-    async def find_exercises(self, query: str) -> list[dict[str, object]]: ...
+    async def find_exercises(self, queries: list[str]) -> dict[str, object]: ...
 
     async def find_substitutes(
         self, exercise_id: str, avoid_areas: list[str]
@@ -225,11 +225,13 @@ async def _get_session(ctx: Deps, session_id: int) -> object:
     return _NO_DATA if ctx.deps is None else await ctx.deps.get_session(session_id)
 
 
-async def _find_exercises(ctx: Deps, query: str) -> object:
-    """Allowed catalog exercises matching `query`, best first: an exercise name or part of
-    one, or a body region ("back", "грудь"), in any language. Use it to map what the user
-    names to an allowed `exercise_id`."""
-    return _NO_DATA if ctx.deps is None else await ctx.deps.find_exercises(query)
+async def _find_exercises(ctx: Deps, queries: list[str]) -> object:
+    """Allowed catalog exercises for each of `queries` (up to 25), best first: each query is
+    an exercise name or part of one, or a body region ("back", "грудь"), in any language.
+    Pass EVERY name you need in one call — never one call per exercise. Answers
+    `{"results": [{"query", "exercises": [{exercise_id, names, kg_loadable, load_unit,
+    equipment, locations}]}]}` in the order asked; an empty list lists the allowed set."""
+    return _NO_DATA if ctx.deps is None else await ctx.deps.find_exercises(list(queries))
 
 
 async def _find_substitutes(ctx: Deps, exercise_id: str, avoid_areas: list[str]) -> object:
