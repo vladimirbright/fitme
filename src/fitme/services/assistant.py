@@ -85,7 +85,6 @@ from fitme.services import (
     prescribing,
     training,
 )
-from fitme.services.catalog import available_exercises
 from fitme.services.decisions import PromptMeta, prompt_columns
 from fitme.services.llm_runtime import LlmRuntime
 from fitme.services.plan_edit import save_edit
@@ -740,7 +739,7 @@ class _Turn:
             base = found
             staged.draft_before = found
         try:
-            edited = apply_plan_ops(base, ops, self._allowed)
+            edited = apply_plan_ops(base, ops, planning.allowed_ids_at(self._inputs, base.location))
         except OpError as exc:
             return _error(exc.detail)
         preview = edited.model_copy(deep=True)
@@ -1090,7 +1089,12 @@ class _Turn:
         session_id, current = open_block
         base = self.staged.today if self.staged.today is not None else active.workout
         try:
-            edited = apply_workout_ops(base, ops, self._allowed, first_block=current + 1)
+            edited = apply_workout_ops(
+                base,
+                ops,
+                planning.allowed_ids_at(self._inputs, active.location),
+                first_block=current + 1,
+            )
         except OpError as exc:
             return _error(exc.detail)
         preview = edited.model_copy(deep=True)
@@ -1130,22 +1134,13 @@ class _Turn:
 
 
 def _any_location_ids(inputs: planning.Inputs) -> frozenset[str]:
-    """The exercises the user may do at any location: their equipment, screening flags,
+    """The exercises the user may do at any location: each location's equipment
+    (`domain.catalog.equipment_at`, the user's own kit at home), screening flags,
     experience and exclusions, every `Location`."""
-    profile = inputs.snapshot.profile
-    if profile is None:
-        return frozenset(inputs.user_context.allowed_exercise_ids)
     return frozenset(
-        exercise.id
+        exercise_id
         for location in Location
-        for exercise in available_exercises(
-            inputs.catalog,
-            location,
-            profile.equipment,
-            inputs.snapshot.flags,
-            profile.experience,
-            excluded=inputs.ctx.excluded_exercise_ids,
-        )
+        for exercise_id in planning.allowed_ids_at(inputs, location)
     )
 
 

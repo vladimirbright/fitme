@@ -150,23 +150,23 @@ def test_a_plan_with_a_location_and_an_activity_keeps_both_and_round_trips() -> 
     assert Plan.model_validate(body) == plan
 
 
-def test_a_timed_set_longer_than_mains_limit_does_not_parse_on_main() -> None:
-    """`main` caps a timed set at 3600 s; the branch allows 10800 s (a class as one set).
-    A plan with such a set is one of those to delete before switching back."""
+def test_a_catalog_timed_set_stays_within_mains_limit() -> None:
+    """`main` caps a timed set at 3600 s. The branch holds a catalog exercise to the same
+    bound (only an `activity:` item, which `main` cannot read anyway, may run longer), so a
+    catalog-only plan with the longest catalog timed set still parses on `main`."""
+    walk: dict[str, Any] = {
+        "exercise_id": "brisk_walk",
+        "sets": 1,
+        "measure": "time",
+        "seconds": 3600,
+        "load": {"kind": "bodyweight"},
+        "rest_seconds": 0,
+    }
     plan = _catalog_plan()
-    walk = Prescription(
-        exercise_id="brisk_walk",
-        sets=1,
-        measure=Measure.TIME,
-        seconds=5400,
-        load=Load(kind="bodyweight"),
-        rest_seconds=0,
-    )
-    plan.workouts[0].blocks.append(Block(kind="single", items=[walk]))
-    body = storage_body(plan)
-    assert "location" not in _keys(body) and "activity_name" not in _keys(body)
-    with pytest.raises(ValidationError, match="less than or equal to 3600"):
-        MainPlan.model_validate(body)
+    plan.workouts[0].blocks.append(Block(kind="single", items=[Prescription.model_validate(walk)]))
+    MainPlan.model_validate(storage_body(plan))
+    with pytest.raises(ValidationError, match="seconds"):
+        Prescription.model_validate({**walk, "seconds": 5400})
 
 
 def test_a_workout_is_stored_without_unset_activity_names() -> None:

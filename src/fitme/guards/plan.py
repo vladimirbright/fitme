@@ -30,7 +30,7 @@ from __future__ import annotations
 import dataclasses
 import math
 
-from fitme.domain.catalog import Exercise
+from fitme.domain.catalog import Exercise, equipment_at
 from fitme.domain.enums import AREA_FLAGS, Location
 from fitme.domain.guard_types import GuardVerdict
 from fitme.domain.models import Load, Plan, Prescription, Workout, is_activity_id
@@ -162,12 +162,16 @@ def load_verdicts(exercise: Exercise, load: Load, ctx: GuardContext) -> list[Gua
 
 
 def at_location(ctx: GuardContext, location: Location | None) -> GuardContext:
-    """`ctx` with its location replaced by a plan's own `location` (`Plan.location`), or
-    `ctx` itself when the plan has none (the profile's location). Only the location-fit
-    verdict reads it; equipment stays what the service resolved for the profile."""
+    """`ctx` at a plan's own `location` (`Plan.location`), or `ctx` itself when the plan has
+    none (the profile's location). Both the location and the equipment follow the plan: the
+    equipment is that location's kit (`domain.catalog.equipment_at`, the user's
+    `ctx.home_equipment` for a home plan), so a gym plan of an outdoor-profile user is judged
+    with the gym's equipment and an outdoor plan of a home-gym user with the park's."""
     if location is None or location == ctx.location:
         return ctx
-    return dataclasses.replace(ctx, location=location)
+    return dataclasses.replace(
+        ctx, location=location, equipment=equipment_at(location, ctx.home_equipment)
+    )
 
 
 def validate_plan(plan: Plan, ctx: GuardContext) -> list[GuardVerdict]:

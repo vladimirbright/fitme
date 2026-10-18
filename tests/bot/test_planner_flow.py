@@ -498,6 +498,31 @@ async def test_a_barbell_to_dumbbell_swap_starts_from_its_own_load(
 # --- H: save in the same turn -------------------------------------------------------------------
 
 
+async def test_a_gym_plan_staged_by_an_outdoor_profile_user_is_shown(
+    dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
+) -> None:
+    """The plan's own location brings its equipment: a barbell squat in a public-gym plan
+    is not refused because the profile says outdoor."""
+    user_id = await _fresh(dispatcher, bot, db, location="outdoor")
+    squat = _reps("barbell_back_squat", Load(kind="calibration"))
+    plan = Plan(
+        name="Gym days",
+        location=Location.PUBLIC_GYM,
+        schedule=[ScheduledDay(weekday=0, workout_key="A")],
+        workouts=[Workout(key="A", title="Squat", blocks=[_single(squat)])],
+    )
+    llm.steps = [_stage(plan), say("Staged.")]
+    await _send(dispatcher, bot, "a gym day on Mondays with squats")
+    answer = llm.returns("stage_plan")[0]
+    assert answer["ok"] is True, answer
+    drafts = await _planner_drafts(db, user_id)
+    assert len(drafts) == 1 and drafts[0].proposal is not None
+    drafted = Plan.model_validate(drafts[0].proposal["plan"])
+    assert drafted.location == Location.PUBLIC_GYM
+    assert drafted.workouts[0].blocks[0].items[0].exercise_id == "barbell_back_squat"
+    assert _draft_message(session) is not None
+
+
 async def test_save_it_stages_and_saves_in_one_turn(
     dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
 ) -> None:
@@ -525,8 +550,9 @@ async def test_a_bare_unknown_id_is_returned_to_the_model_which_corrects_it(
     wrong = _bjj_plan()
     for workout in wrong.workouts:
         item = workout.blocks[0].items[0]
+        # Within a catalog exercise's hour, so the id (not the length) is what is refused.
         workout.blocks[0].items[0] = item.model_copy(
-            update={"exercise_id": "bjj_class", "activity_name": None}
+            update={"exercise_id": "bjj_class", "activity_name": None, "seconds": 3600}
         )
     llm.steps = [_stage(wrong), _stage(_bjj_plan()), say("Staged.")]
     await _send(dispatcher, bot, "put my two BJJ classes in a plan")

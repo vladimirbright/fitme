@@ -524,7 +524,9 @@ async def edit_plan_form(
     detail = await planning.get_plan_detail(db, session.user_id, plan_id)
     if detail is None:
         return redirect("/app/plans")
-    allowed = await plan_edit.allowed_exercises_for_edit(db, session.user_id, plan_id)
+    allowed = await plan_edit.allowed_exercises_for_edit(
+        db, session.user_id, plan_id, location=detail.plan.location
+    )
     return render(
         request,
         "plan_edit.html",
@@ -557,7 +559,9 @@ async def edit_plan_submit(
     edited, parse_errors = parse_edit_form(detail.plan, form_data)
     confirmed = form_data.get("confirm_over_cap") == "on"
     snapshot = await profile_service.get_snapshot(db, session.user_id)
-    allowed = await plan_edit.allowed_exercises_for_edit(db, session.user_id, plan_id)
+    allowed = await plan_edit.allowed_exercises_for_edit(
+        db, session.user_id, plan_id, location=detail.plan.location
+    )
 
     if edited is None:
         # A parse/validation failure (M9 review fix B1): re-show the *last known-good* plan

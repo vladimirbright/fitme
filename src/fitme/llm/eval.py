@@ -145,6 +145,11 @@ def _guard_context(fixture: Mapping[str, Any], catalog: Catalog) -> GuardContext
         catalog=catalog,
         flags=_flag_states(fixture),
         equipment=frozenset(Equipment(item) for item in fixture["equipment"]),
+        home_equipment=(
+            frozenset(Equipment(item) for item in fixture["equipment"])
+            if fixture["location"] == Location.HOME_EQUIPMENT.value
+            else frozenset()
+        ),
         location=Location(fixture["location"]),
         sessions_per_week=fixture["sessions_per_week"],
         experience=Experience(fixture["experience"]),

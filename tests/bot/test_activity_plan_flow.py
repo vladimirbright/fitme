@@ -185,6 +185,20 @@ async def test_an_outdoor_activity_plan_trains_for_a_gym_profile(
     # Start re-judges the workout at the plan's own location: the outdoor jog passes.
     await _click(dispatcher, bot, _last_action(session, "start"))
     assert _last_text(session).startswith(t("train.block_title", "en", index=1, total=2))
+    # A logged result may be a 90-minute class, but a catalog jog's set is at most an hour.
+    long_jog = ItemLog(
+        exercise_id="outdoor_interval_jog",
+        kind=ItemLogKind.RESULTS,
+        sets=(SetResult(set_index=1, seconds=3601),),
+    )
+    problem = await training.check_item_logs(db, user_id, session_id, 0, [long_jog])
+    assert problem is not None and "implausible time" in problem
+    hour_jog = ItemLog(
+        exercise_id="outdoor_interval_jog",
+        kind=ItemLogKind.RESULTS,
+        sets=(SetResult(set_index=1, seconds=3600),),
+    )
+    assert await training.check_item_logs(db, user_id, session_id, 0, [hour_jog]) is None
 
     await _click(dispatcher, bot, _last_action(session, "done"))
     block = _last_text(session)

@@ -29,6 +29,11 @@ class GuardContext:
     equipment: frozenset[Equipment]
     location: Location
     sessions_per_week: int
+    # The user's own home-equipment selection (`profiles.equipment`, A§5.1), whatever the
+    # profile location is: `guards.plan.at_location` resolves a plan's own location's kit
+    # from it (`domain.catalog.equipment_at`) when the plan is at `home_equipment`. Empty
+    # (the default): no home kit, so a home plan gets nothing beyond bodyweight (fail closed).
+    home_equipment: frozenset[Equipment] = frozenset()
     # The profile's training experience; `None` (unknown) keeps every `advanced` catalog
     # exercise out (`guards.experience`, fail closed).
     experience: Experience | None = None

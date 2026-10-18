@@ -18,10 +18,11 @@ from collections.abc import Sequence
 
 from fitme.domain.catalog import Exercise
 from fitme.domain.guard_types import GuardVerdict
-from fitme.domain.models import MAX_IMPLEMENT_KG, MAX_TOTAL_KG, Load
+from fitme.domain.models import MAX_IMPLEMENT_KG, MAX_SET_SECONDS, MAX_TOTAL_KG, Load
 from fitme.domain.results import SetResult
 
 _RULE = "plausibility.parsed_load"
+_SECONDS_RULE = "plausibility.parsed_seconds"
 
 # A parsed load above this multiple of the reference load is a typo or a misread, not a lift.
 _MAX_RATIO = 2.0
@@ -165,4 +166,33 @@ def check_parsed_results(
     ]
 
 
-__all__ = ["MAX_IMPLEMENT_KG", "MAX_TOTAL_KG", "check_parsed_load", "check_parsed_results"]
+def check_parsed_seconds(exercise: Exercise, sets: Sequence[SetResult]) -> list[GuardVerdict]:
+    """A parsed timed result of a *catalog* exercise is at most `MAX_SET_SECONDS` (an hour),
+    the bound its prescription has (`domain.models.Prescription`). `SetResult.seconds` itself
+    allows the activity maximum (a logged 90-minute class is one set), so this is what keeps
+    a misread "2 h plank" out of the log. One verdict per set that reports seconds."""
+    return [
+        GuardVerdict(
+            rule=_SECONDS_RULE,
+            ok=item.seconds <= MAX_SET_SECONDS,
+            detail=(
+                f"{exercise.id}: {item.seconds} s reported for one set"
+                if item.seconds <= MAX_SET_SECONDS
+                else (
+                    f"{exercise.id}: reported {item.seconds} s for one set is above the "
+                    f"{MAX_SET_SECONDS} s bound for a catalog exercise"
+                )
+            ),
+        )
+        for item in sets
+        if item.seconds is not None
+    ]
+
+
+__all__ = [
+    "MAX_IMPLEMENT_KG",
+    "MAX_TOTAL_KG",
+    "check_parsed_load",
+    "check_parsed_results",
+    "check_parsed_seconds",
+]

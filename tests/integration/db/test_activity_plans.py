@@ -25,13 +25,21 @@ from fitme.services import (
     session_time,
     time_budget,
 )
+from fitme.services.assistant import _any_location_ids
 from tests.integration.db.test_planning_service import FakeLlm, _settings, decisions
 
 _ACTIVITY = "activity:bjj_class"
 
 
-async def seed_gym_profile(db: Database, user_id: int) -> None:
-    """A complete public-gym profile, every screening flag answered "no"."""
+async def seed_gym_profile(
+    db: Database,
+    user_id: int,
+    *,
+    location: str = "public_gym",
+    equipment: tuple[str, ...] = (),
+) -> None:
+    """A complete profile (public gym unless `location` says otherwise), every screening flag
+    answered "no"."""
     async with db.transaction() as conn:
         await upsert_profile(
             conn,
@@ -41,8 +49,8 @@ async def seed_gym_profile(db: Database, user_id: int) -> None:
             experience="6m_2y",
             barbell_experience="some",
             preferences=["weight_training"],
-            location="public_gym",
-            equipment=[],
+            location=location,
+            equipment=list(equipment),
             sessions_per_week=2,
             session_minutes=90,
             focus="general_fitness",
@@ -298,7 +306,7 @@ def _duplicated(plan: Plan) -> Plan:
 
 def _lengthened(plan: Plan) -> Plan:
     item = plan.workouts[0].blocks[2].items[0]
-    item.sets, item.seconds = 10, 10800
+    item.seconds = 10800  # an activity is one set (the model refuses more), so: longer
     return plan
 
 
@@ -386,3 +394,88 @@ def test_the_time_budget_never_trims_an_activity() -> None:
     ids = [item.exercise_id for block in workout.blocks for item in block.items]
     assert _ACTIVITY in ids
     assert workout.blocks[-1].items[0].seconds == 5400
+
+
+# --- Equipment follows the plan's location ---------------------------------------------------
+
+
+def _gym_plan() -> Plan:
+    squat = Prescription(
+        exercise_id="barbell_back_squat",
+        sets=3,
+        reps_min=5,
+        reps_max=8,
+        load=Load(kind="calibration"),
+        rest_seconds=120,
+    )
+    return Plan(
+        name="Gym days",
+        location=Location.PUBLIC_GYM,
+        schedule=[ScheduledDay(weekday=0, workout_key="A")],
+        workouts=[Workout(key="A", title="Squat", blocks=[Block(kind="single", items=[squat])])],
+    )
+
+
+async def test_an_outdoor_user_confirms_a_gym_plan_with_a_barbell(
+    db: Database, user_id: int
+) -> None:
+    """The plan's own location brings its kit: an outdoor profile's gym plan is not refused
+    for `plan.equipment_fit`."""
+    await seed_gym_profile(db, user_id, location="outdoor")
+    edit = await planning.record_edit_draft(
+        db, _settings(), user_id, plan=_gym_plan(), plan_id=None, user_report={"test": True}
+    )
+    assert edit.round is not None, edit.errors
+    confirmed = await planning.confirm_plan(db, _settings(), user_id, edit.round.decision_id)
+    assert confirmed.status == planning.ConfirmStatus.SAVED
+    # Without the location it is judged at the profile's park, and refused.
+    refused = await planning.record_edit_draft(
+        db,
+        _settings(),
+        user_id,
+        plan=_gym_plan().model_copy(update={"location": None}),
+        plan_id=None,
+        user_report={"test": True},
+    )
+    assert refused.round is None
+    assert any("barbell_back_squat: missing equipment" in e for e in refused.errors)
+
+
+async def test_the_planners_search_offers_gym_exercises_to_an_outdoor_profile(
+    db: Database, user_id: int
+) -> None:
+    await seed_gym_profile(db, user_id, location="outdoor")
+    inputs = await _inputs(db, user_id)
+    assert "barbell_back_squat" not in inputs.user_context.allowed_exercise_ids
+    assert "barbell_back_squat" in _any_location_ids(inputs)
+    # The typed ops of a gym plan use the gym's set; of the profile's own place, the profile's.
+    assert "barbell_back_squat" in planning.allowed_ids_at(inputs, Location.PUBLIC_GYM)
+    assert "barbell_back_squat" not in planning.allowed_ids_at(inputs, None)
+    assert "barbell_back_squat" not in planning.allowed_ids_at(inputs, Location.OUTDOOR)
+
+
+async def test_a_home_profiles_search_keeps_its_own_kit_at_home(db: Database, user_id: int) -> None:
+    await seed_gym_profile(db, user_id, location="home_equipment", equipment=("dumbbells",))
+    inputs = await _inputs(db, user_id)
+    home = planning.allowed_ids_at(inputs, Location.HOME_EQUIPMENT)
+    assert home == frozenset(inputs.user_context.allowed_exercise_ids)
+    assert "barbell_back_squat" not in home
+    assert "barbell_back_squat" in planning.allowed_ids_at(inputs, Location.PUBLIC_GYM)
+    assert "barbell_back_squat" in _any_location_ids(inputs)
+
+
+async def test_the_web_swap_list_follows_the_plans_location(db: Database, user_id: int) -> None:
+    await seed_gym_profile(db, user_id, location="outdoor")
+    edit = await planning.record_edit_draft(
+        db, _settings(), user_id, plan=_gym_plan(), plan_id=None, user_report={"test": True}
+    )
+    assert edit.round is not None, edit.errors
+    confirmed = await planning.confirm_plan(db, _settings(), user_id, edit.round.decision_id)
+    assert confirmed.plan_id is not None
+    at_gym = await plan_edit.allowed_exercises_for_edit(
+        db, user_id, confirmed.plan_id, location=Location.PUBLIC_GYM
+    )
+    profile = await plan_edit.allowed_exercises_for_edit(db, user_id, confirmed.plan_id)
+    assert at_gym is not None and profile is not None
+    assert "barbell_back_squat" in {exercise.id for exercise in at_gym}
+    assert "barbell_back_squat" not in {exercise.id for exercise in profile}
