@@ -8,10 +8,10 @@ from datetime import timedelta
 import pytest
 from httpx import AsyncClient
 
-from conftest import SentCode, extract_code, get_csrf_token, login
 from fitme import clock
 from fitme.db.connection import Database
 from fitme.db.selectors.auth import get_latest_unused_login_code
+from tests.web.conftest import SentCode, extract_code, get_csrf_token, login
 
 
 async def test_request_code_sends_otp_to_bound_chat(

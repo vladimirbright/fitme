@@ -11,9 +11,9 @@ import json
 
 from httpx import AsyncClient
 
-from conftest import SentCode, get_csrf_token, login
 from fitme.db.connection import Database
 from fitme.db.selectors.users import get_the_user
+from tests.web.conftest import SentCode, get_csrf_token, login
 
 
 async def test_export_downloads_json_with_the_users_data(

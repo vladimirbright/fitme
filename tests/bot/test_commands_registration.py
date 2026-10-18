@@ -12,9 +12,9 @@ from aiogram.exceptions import TelegramUnauthorizedError
 from aiogram.methods import SetMyCommands, TelegramMethod
 from aiogram.methods.base import TelegramType
 
-from conftest import TEST_TOKEN, FakeSession
 from fitme.bot.commands import register_commands
 from fitme.i18n import supported_languages
+from tests.bot.conftest import TEST_TOKEN, FakeSession
 
 
 async def test_set_my_commands_is_called_per_language(bot: Bot, session: FakeSession) -> None:

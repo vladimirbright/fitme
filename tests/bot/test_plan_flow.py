@@ -16,7 +16,6 @@ from aiogram.methods import AnswerCallbackQuery, DeleteMessage, SendMessage
 from pydantic_ai.messages import ModelMessage, ModelRequest, ModelResponse, ToolCallPart
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
-from conftest import FakeSession, callback_update, make_user, message_update
 from fitme import clock
 from fitme.bot import waiting
 from fitme.bot.app import build_dispatcher
@@ -34,6 +33,7 @@ from fitme.llm.agents import plan_generate_agent, plan_revise_agent
 from fitme.services import conversations
 from fitme.services.identity import issue_activation_code
 from fitme.services.llm_runtime import LlmRuntime
+from tests.bot.conftest import FakeSession, callback_update, make_user, message_update
 
 OWNER_CHAT_ID = 1
 

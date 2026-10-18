@@ -8,8 +8,6 @@ from __future__ import annotations
 import math
 
 import pytest
-from test_plan_quality import plan, rx
-from test_training_management import _exercise, _session, role, workout
 
 from fitme.catalog import load_catalog
 from fitme.db.records import SessionOutcome
@@ -20,6 +18,8 @@ from fitme.services import progression, session_time, time_budget
 from fitme.services.loads import ExerciseHistory, next_load, scope_history
 from fitme.services.plan_quality import Relevance, ReviewContext, relevance, review
 from fitme.services.progression import TargetKind
+from tests.unit.test_plan_quality import plan, rx
+from tests.unit.test_training_management import _exercise, _session, role, workout
 
 _CATALOG = load_catalog()
 

@@ -16,9 +16,9 @@ from aiogram.methods import DeleteMessage, EditMessageText, SendMessage, Telegra
 from aiogram.methods.base import TelegramType
 from aiogram.types import Chat, Message
 
-from conftest import TEST_TOKEN, FakeSession
 from fitme.bot import waiting
 from fitme.bot.waiting import WaitingMessage, frames, waiting_message
+from tests.bot.conftest import TEST_TOKEN, FakeSession
 
 CHAT_ID = 1
 INTERVAL = 0.01

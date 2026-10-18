@@ -10,7 +10,6 @@ from __future__ import annotations
 import json
 
 import pytest
-from test_planning_service import FakeLlm, _settings
 
 from fitme import clock
 from fitme.bot.plan_rendering import render_plan_text
@@ -23,6 +22,7 @@ from fitme.domain.guard_types import GuardVerdict
 from fitme.domain.models import Block, Load, Plan, Prescription, ScheduledDay, Workout
 from fitme.guards.plan import validate_plan
 from fitme.services import planning, session_time, time_budget
+from tests.integration.db.test_planning_service import FakeLlm, _settings
 
 _GYM = [
     "dumbbells", "barbell", "rack", "bench", "pull_up_bar", "kettlebell", "resistance_bands",

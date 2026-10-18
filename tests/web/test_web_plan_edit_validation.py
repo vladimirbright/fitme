@@ -6,17 +6,17 @@ from __future__ import annotations
 
 import pytest
 from httpx import AsyncClient
-from test_web_plans import (
+
+from fitme.db.connection import Database
+from fitme.services import planning
+from tests.web.conftest import SentCode, get_csrf_token, login
+from tests.web.test_web_plans import (
     _SQUAT,
     make_plan,
     seed_completed_session,
     seed_confirmed_plan,
     seed_profile,
 )
-
-from conftest import SentCode, get_csrf_token, login
-from fitme.db.connection import Database
-from fitme.services import planning
 
 
 def _form(token: str, **over: str) -> dict[str, str]:

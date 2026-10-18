@@ -7,10 +7,10 @@ from pathlib import Path
 import pytest
 from httpx import AsyncClient
 
-from conftest import SentCode, extract_code
 from fitme.config.settings import Settings, SettingsError
 from fitme.services.llm_runtime import LlmRuntime
 from fitme.web.app import create_app
+from tests.web.conftest import SentCode, extract_code
 
 
 async def test_security_headers_present(client: AsyncClient) -> None:

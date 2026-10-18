@@ -8,9 +8,7 @@ from datetime import timedelta
 from pathlib import Path
 
 from aiogram import Bot, Dispatcher
-from test_setup_flow import _run_full_setup_with_no_red_flags
 
-from conftest import FakeSession, make_user, message_update
 from fitme import clock
 from fitme.bot.app import build_dispatcher
 from fitme.config.content import content_version
@@ -23,6 +21,8 @@ from fitme.domain.enums import DecisionKind
 from fitme.domain.models import Block, Load, Plan, Prescription, ScheduledDay, Workout
 from fitme.i18n import t
 from fitme.services import profile as profile_service
+from tests.bot.conftest import FakeSession, make_user, message_update
+from tests.bot.test_setup_flow import _run_full_setup_with_no_red_flags
 
 OWNER_CHAT_ID = 1
 _SQUAT = "barbell_back_squat"

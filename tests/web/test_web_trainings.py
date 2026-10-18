@@ -10,7 +10,6 @@ from datetime import timedelta
 
 from httpx import AsyncClient
 
-from conftest import SentCode, get_csrf_token, login
 from fitme import clock
 from fitme.catalog import load_catalog
 from fitme.config.content import content_version
@@ -34,6 +33,7 @@ from fitme.db.selectors.training import (
 from fitme.domain.enums import DecisionKind
 from fitme.domain.models import Block, Load, LoadChange, Plan, Prescription, ScheduledDay, Workout
 from fitme.guards.progression import check_weekly_increment
+from tests.web.conftest import SentCode, get_csrf_token, login
 
 _SQUAT = "barbell_back_squat"
 

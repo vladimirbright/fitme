@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from aiogram import Bot, Dispatcher
 
-from conftest import FakeSession, callback_update, make_user, message_update
 from fitme.bot.app import build_dispatcher
 from fitme.bot.callback_data import ProfileFix, SetupChoice, SetupNav, SetupToggle
 from fitme.config.settings import Settings
@@ -25,6 +24,7 @@ from fitme.domain.screening import ScreeningFlagState
 from fitme.guards.screening import plan_allowed
 from fitme.services import profile as profile_service
 from fitme.services.identity import issue_activation_code
+from tests.bot.conftest import FakeSession, callback_update, make_user, message_update
 
 OWNER_CHAT_ID = 1
 

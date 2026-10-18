@@ -8,13 +8,13 @@ from datetime import timedelta
 import pytest
 from aiogram import Bot, Dispatcher
 
-from conftest import FakeSession, make_user, message_update
 from fitme import clock
 from fitme.db.connection import Database
 from fitme.db.controllers.auth import insert_activation_code
 from fitme.db.selectors.auth import get_activation_failed_attempts
 from fitme.db.selectors.users import get_telegram_account_by_telegram_user_id, get_the_user
 from fitme.services.identity import MAX_FAILED_ATTEMPTS, _hash_code, issue_activation_code
+from tests.bot.conftest import FakeSession, make_user, message_update
 
 
 async def _the_user(db: Database):  # noqa: ANN202 - test helper, inferred return is fine

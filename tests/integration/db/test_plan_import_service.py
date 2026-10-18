@@ -17,15 +17,6 @@ from pathlib import Path
 from pydantic_ai.exceptions import ModelHTTPError
 from pydantic_ai.messages import ModelMessage, ModelRequest, ModelResponse, ToolCallPart
 from pydantic_ai.models.function import AgentInfo, FunctionModel
-from test_planning_service import (
-    _SQUAT,
-    _settings,
-    decisions,
-    llm_calls,
-    prescription,
-    seed_completed_squat_session,
-    seed_profile,
-)
 
 from fitme import clock
 from fitme.catalog import load_catalog
@@ -49,6 +40,15 @@ from fitme.llm.agents import plan_import_agent, plan_revise_agent
 from fitme.llm.usage import CAUSE_OUTPUT_VALIDATION
 from fitme.services import planning
 from fitme.services.llm_runtime import LlmRuntime
+from tests.integration.db.test_planning_service import (
+    _SQUAT,
+    _settings,
+    decisions,
+    llm_calls,
+    prescription,
+    seed_completed_squat_session,
+    seed_profile,
+)
 
 _FIXTURES = Path(__file__).resolve().parents[2] / "fixtures"
 _BENCH = "dumbbell_bench_press"  # per_implement, no history in these tests

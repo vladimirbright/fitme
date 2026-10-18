@@ -14,7 +14,34 @@ from datetime import timedelta
 import pytest
 from aiogram import Bot, Dispatcher
 from pydantic_ai.exceptions import UserError
-from test_train_flow import (
+
+from fitme import clock
+from fitme.bot.app import build_dispatcher
+from fitme.bot.callback_data import CheckinReply, TrainAction, TrainPick
+from fitme.catalog import load_catalog
+from fitme.config.settings import Settings
+from fitme.db.connection import Database
+from fitme.db.controllers.decisions import insert_decision
+from fitme.db.controllers.plans import insert_plan_version
+from fitme.db.controllers.profile import upsert_screening_flag
+from fitme.db.controllers.training import finish_workout_session
+from fitme.db.selectors.decisions import (
+    get_decision,
+    list_decision_outcomes,
+    list_decisions_for_user,
+    list_llm_calls_since,
+)
+from fitme.db.selectors.plans import list_plan_versions
+from fitme.db.selectors.training import list_checkins_for_session, list_open_health_holds
+from fitme.domain.models import Load, Plan
+from fitme.domain.results import ChangeReps, ChangeSets, Recap, SetResult, SwapExercise
+from fitme.i18n import t
+from fitme.services import planning, recap, training
+from fitme.services.decisions import PromptMeta
+from fitme.services.progression import TargetKind
+from fitme.services.training import Status
+from tests.bot.conftest import FakeSession
+from tests.bot.test_train_flow import (
     _BENCH,
     _PUSHUP,
     _SQUAT,
@@ -41,33 +68,6 @@ from test_train_flow import (
     _toasts,
     make_plan,
 )
-
-from conftest import FakeSession
-from fitme import clock
-from fitme.bot.app import build_dispatcher
-from fitme.bot.callback_data import CheckinReply, TrainAction, TrainPick
-from fitme.catalog import load_catalog
-from fitme.config.settings import Settings
-from fitme.db.connection import Database
-from fitme.db.controllers.decisions import insert_decision
-from fitme.db.controllers.plans import insert_plan_version
-from fitme.db.controllers.profile import upsert_screening_flag
-from fitme.db.controllers.training import finish_workout_session
-from fitme.db.selectors.decisions import (
-    get_decision,
-    list_decision_outcomes,
-    list_decisions_for_user,
-    list_llm_calls_since,
-)
-from fitme.db.selectors.plans import list_plan_versions
-from fitme.db.selectors.training import list_checkins_for_session, list_open_health_holds
-from fitme.domain.models import Load, Plan
-from fitme.domain.results import ChangeReps, ChangeSets, Recap, SetResult, SwapExercise
-from fitme.i18n import t
-from fitme.services import planning, recap, training
-from fitme.services.decisions import PromptMeta
-from fitme.services.progression import TargetKind
-from fitme.services.training import Status
 
 _EPOCH = "1970-01-01T00:00:00.000000Z"
 

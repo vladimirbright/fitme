@@ -28,7 +28,6 @@ from pydantic_ai.messages import (
 )
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
-from conftest import FakeSession, callback_update, make_user, message_update
 from fitme import clock
 from fitme.bot import waiting
 from fitme.bot.app import build_dispatcher
@@ -66,6 +65,7 @@ from fitme.services import exclusions, planning, training
 from fitme.services import profile as profile_service
 from fitme.services.identity import issue_activation_code
 from fitme.services.llm_runtime import LlmRuntime
+from tests.bot.conftest import FakeSession, callback_update, make_user, message_update
 
 OWNER_CHAT_ID = 1
 

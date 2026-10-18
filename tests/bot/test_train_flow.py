@@ -20,7 +20,6 @@ from aiogram.methods import AnswerCallbackQuery, SendMessage
 from pydantic_ai.messages import ModelMessage, ModelRequest, ModelResponse, ToolCallPart
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
-from conftest import FakeSession, callback_update, make_user, message_update
 from fitme import clock
 from fitme.bot.app import build_dispatcher
 from fitme.bot.callback_data import HoldClear, PlanMenu, TrainAction, TrainPick
@@ -54,6 +53,7 @@ from fitme.services import training
 from fitme.services.decisions import PromptMeta
 from fitme.services.identity import issue_activation_code
 from fitme.services.llm_runtime import LlmRuntime
+from tests.bot.conftest import FakeSession, callback_update, make_user, message_update
 
 OWNER_CHAT_ID = 1
 _SQUAT = "barbell_back_squat"

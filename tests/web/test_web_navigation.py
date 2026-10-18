@@ -8,10 +8,15 @@ import re
 from datetime import timedelta
 
 from httpx import AsyncClient
-from test_web_plans import make_plan, seed_completed_session, seed_confirmed_plan, seed_profile
 
-from conftest import SentCode, get_csrf_token, login
 from fitme.db.connection import Database
+from tests.web.conftest import SentCode, get_csrf_token, login
+from tests.web.test_web_plans import (
+    make_plan,
+    seed_completed_session,
+    seed_confirmed_plan,
+    seed_profile,
+)
 
 _CRUMB_RE = re.compile(r"<li( aria-current=\"page\")?>(?:<a href=\"([^\"]*)\">)?([^<]*)")
 _BACK_RE = re.compile(r'<a class="back" href="([^"]*)">')
