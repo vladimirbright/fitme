@@ -1,5 +1,7 @@
 # LLM-first conversational planning — experiment report
 
+> Status: the experiment was accepted and merged into `main` on 2026-10-18 (PR #16). The text below is the report as written during the experiment; the live-model evaluation table remains to be filled by the owner.
+
 Branch `experiment/llm-first-planning`, base `main` 6aa2bf5, 11 commits up to 4ed05d6, plus
 the commit that adds this report and ADR 0018. Not merged. Design record:
 `docs/adr/0018-llm-first-conversational-planning.md`; detailed path: A§6.4.1.

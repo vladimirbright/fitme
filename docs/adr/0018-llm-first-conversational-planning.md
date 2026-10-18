@@ -1,7 +1,7 @@
 # ADR 0018 — LLM-first conversational planning (experiment)
 
-Status: **experimental** (2026-10-17). It lives on branch `experiment/llm-first-planning`
-(base `main` 6aa2bf5). It is not accepted and not merged. Relates to ADR 0003/0004
+Status: **accepted** (2026-10-18; experimental 2026-10-17 on branch `experiment/llm-first-planning`,
+base `main` 6aa2bf5, merged via PR #16). Relates to ADR 0003/0004
 (assistant, sessions: same staging pattern, new agent), ADR 0007 (catalog retrieval is
 optional on this path), ADR 0010 (exclusions follow the staged plan), and ADR 0011/0016/0017
 (brief, time budget, request reading: not run on this path). Changes A§4.5 (activity items,
@@ -145,7 +145,9 @@ can do that from the conversation alone.
   structures the plan on agreement. This is a deliberate experiment within §7's intent:
   every planning flow still ends in a structured plan with buttons, and the prompt rules out
   persona, small talk and encouragement. Whether this fits §7 is the owner's decision. It
-  must be made before any of this is merged.
+  must be made before any of this is merged. Decision (2026-10-18): the owner accepted the
+  prose-first proposal within §7's intent — the dialog still ends in a structured plan with
+  buttons; no persona.
 - **Cost shape.** One agent run per message, on the large tier, with no escalation. A
   staging turn takes at least two model requests (the plan as tool arguments, then the
   closing message), plus one per guard correction and up to two output retries. The whole
