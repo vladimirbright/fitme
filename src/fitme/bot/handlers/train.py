@@ -10,7 +10,9 @@ user taps the button again.
 Free text arrives through `bot/handlers/free_text.py`, which saves it and runs the stop-word
 guard first (A§6.3; a hit halts the active session through `services.safety.halt` and never
 reaches here). `handle_train_text` then hands a pending adjustment to `adjust`, which runs
-its own stop-word scan again before any LLM call (defense in depth). Results typed during a
+its own stop-word scan again before any LLM call (defense in depth). While a model works
+(`session_adjust`, the post-workout `recap`), an animated placeholder (`bot/waiting.py`)
+stands in the chat and is deleted before the result is shown. Results typed during a
 workout are not claimed here: they go to the assistant (ADR 0005, ADR 0013).
 
 Stale buttons (A§6.3): every `TrainAction` carries the session id, the block and the item;
@@ -33,6 +35,7 @@ from fitme.bot import train_rendering as rendering
 from fitme.bot.callback_data import CheckinReply, TrainAction, TrainPick
 from fitme.bot.handlers import plan as plan_handlers
 from fitme.bot.rendering import refusal_text
+from fitme.bot.waiting import waiting_message
 from fitme.catalog import load_catalog
 from fitme.config.settings import Settings
 from fitme.db.connection import Database
@@ -150,8 +153,11 @@ async def _show_recap(
 ) -> None:
     """A§6.5 step 6 (M8): the deterministic recap with the engine's next loads (and the
     model's text when it passed), then one check-in question per flagged area loaded today,
-    then the model's structural suggestions with Apply buttons."""
-    view = await recap_service.build_recap(db, llm, user_id, session_id)
+    then the model's structural suggestions with Apply buttons. An animated placeholder shows
+    while the `recap` model works and is deleted before the recap is sent; the DB lock is
+    never held across the call (A§4.6)."""
+    async with waiting_message(message):
+        view = await recap_service.build_recap(db, llm, user_id, session_id)
     if view is None:
         return
     catalog = load_catalog()
@@ -551,7 +557,8 @@ async def handle_train_text(
     lang = await _lang(db, user_id)
 
     await message.answer(t("train.adjusting", lang))
-    result = await training.adjust(db, llm, user_id, pending.session_id, text)
+    async with waiting_message(message):
+        result = await training.adjust(db, llm, user_id, pending.session_id, text)
     if result.halt is not None:
         await _send_halt(message, result.halt, lang)
         return True
