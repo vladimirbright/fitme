@@ -43,7 +43,7 @@ from fitme.domain.models import Block, Load, Plan, Prescription, ScheduledDay, W
 from fitme.domain.results import Recap
 from fitme.i18n import t
 from fitme.llm.agents import assistant_agent, plan_generate_agent, planner_agent, recap_agent
-from fitme.services import conversations, exclusions, planning
+from fitme.services import conversations, exclusions, planning, training
 from fitme.services import profile as profile_service
 from fitme.services.identity import issue_activation_code
 from fitme.services.llm_runtime import LlmRuntime
@@ -626,6 +626,25 @@ async def test_a_started_workout_keeps_the_assistant_and_anything_else_runs_the_
     assert await _purposes(db) == ["planner", "assistant"]
 
 
+async def test_a_session_in_review_has_started_nothing_and_runs_the_planner(
+    dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
+) -> None:
+    """Precheck and review: a `/train` session exists, but no workout has started, so free
+    text goes to the planner (not the legacy assistant's `rewrite_plan`/`new_plan`)."""
+    seeded = await _ready(dispatcher, bot, db)
+    await _send(dispatcher, bot, "/train")
+    await _click(dispatcher, bot, _last_pick(session))
+    llm.steps = [say("Noted.")]
+    await _send(dispatcher, bot, "can we make it shorter?")  # precheck
+    await _click(dispatcher, bot, _last_action(session, "precheck_no"))
+    active = await training.active_session(db, seeded.user_id)
+    assert active is not None and active.session.status != "in_progress"
+    llm.steps = [Call("rewrite_plan", {"guidance": "shorter"}), say("Noted.")]
+    await _send(dispatcher, bot, "make the plan shorter")  # review
+    assert await _purposes(db) == ["planner", "planner"]
+    assert llm.returns("rewrite_plan") == []  # not a planner tool: nothing delegated
+
+
 async def test_the_planner_sees_only_pseudonymized_data(
     dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
 ) -> None:
@@ -751,6 +770,62 @@ async def test_a_talk_about_a_saved_plan_keeps_its_exclusion_and_history_when_st
     # The draft says which plan it replaces.
     title = t("plan.changes_draft_title", "en", name="Home plan")
     assert (_draft_message(session).text or "").startswith(title)
+
+
+_NO_JOGGING = {"kind": "name", "value": "jog", "for_all_plans": False}
+
+
+async def test_an_exclusion_added_earlier_in_the_turn_judges_the_staged_plan(
+    dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
+) -> None:
+    """Exclusions are written before the draft is recorded, so `stage_plan` judges with the
+    turn's own: a plan holding a just-excluded exercise is refused to the model, never
+    shown as passing and then refused at recording or Save."""
+    user_id = (await _ready(dispatcher, bot, db)).user_id
+    llm.steps = [say("Sure.")]
+    await _send(dispatcher, bot, "what could a weekend plan look like?")  # a new plan's talk
+    llm.steps = [Call("add_exclusion", _NO_JOGGING), _stage(_saturday_run()), say("Hm.")]
+    await _send(dispatcher, bot, "no jogging, and stage the Saturday run")
+    assert llm.returns("add_exclusion")[0]["ok"] is True
+    answer = llm.returns("stage_plan")[0]
+    assert answer["ok"] is False and "easy_jog: excluded" in answer["error"]
+    assert await _planner_drafts(db, user_id) == []
+
+
+async def test_an_exclusion_added_after_staging_drops_a_plan_it_hits(
+    dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
+) -> None:
+    user_id = await _fresh(dispatcher, bot, db)
+    llm.steps = [_stage(_saturday_run()), Call("add_exclusion", _NO_JOGGING), say("Staged.")]
+    await _send(dispatcher, bot, "the Saturday run, but no jogging")
+    assert llm.returns("stage_plan")[0]["ok"] is True
+    excluded = llm.returns("add_exclusion")[0]
+    assert excluded["ok"] is True and "easy_jog" in excluded["dropped"]
+    assert "earlier staged plan was dropped" in excluded["dropped"]
+    assert await _planner_drafts(db, user_id) == []
+
+
+async def test_a_failed_restage_drops_the_plan_staged_earlier_in_the_turn(
+    dispatcher: Dispatcher, bot: Bot, db: Database, session: FakeSession, llm: ScriptedLlm
+) -> None:
+    """The model is told; the earlier plan is neither recorded nor shown, nor saved."""
+    user_id = await _fresh(dispatcher, bot, db)
+    wrong = _saturday_run()
+    wrong.workouts[0].blocks[1].items[0].exercise_id = "jogging_somewhere"
+    llm.steps = [
+        _stage(_saturday_run()),
+        Call("save_draft"),
+        _stage(wrong),
+        say("I could not stage the change."),
+    ]
+    await _send(dispatcher, bot, "the Saturday run, save it, then make the jog a trail jog")
+    first, second = llm.returns("stage_plan")
+    assert first["ok"] is True
+    assert second["ok"] is False and "earlier staged plan was dropped" in second["error"]
+    assert await _planner_drafts(db, user_id) == []
+    async with db.read() as conn:
+        assert await list_plans_for_user(conn, user_id) == []
+    assert not any(d.startswith("pd:confirm:") for m in _messages(session) for d in _datas(m))
 
 
 async def test_staging_and_saving_in_the_first_message_leaves_no_session_open(

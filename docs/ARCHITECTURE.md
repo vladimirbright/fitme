@@ -713,8 +713,8 @@ On this branch, steps 1–6 above are reached only through **Generate anyway**; 
 path is the `planner` agent (§8.1, `prompts/planner.v2.md`).
 
 - **Entry.** Every free-text message outside a started workout (`services.assistant.
-  handle_message`: no active `/train` session) runs `planner`; a started workout keeps the
-  legacy `assistant` and its logging tools. **New plan** always asks what the plan should
+  handle_message`: no `/train` session `in_progress`; precheck and review included) runs
+  `planner`; a started workout keeps the legacy `assistant` and its logging tools. **New plan** always asks what the plan should
   be first (also with no plans yet), **Change** on a draft and **Change something** on a
   saved plan answer "what should change?" in that plan's planning session — none of them
   sets a pending revision, so the next text reaches the planner with the draft in

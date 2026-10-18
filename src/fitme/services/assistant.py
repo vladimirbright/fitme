@@ -25,6 +25,7 @@ The model never writes to the database; every write goes through the functions a
 
 from __future__ import annotations
 
+import dataclasses
 import logging
 from collections.abc import Sequence
 from dataclasses import dataclass, field
@@ -448,6 +449,13 @@ def _error(message: str) -> dict[str, object]:
     return {"ok": False, "error": message}
 
 
+_DROPPED = "the earlier staged plan was dropped; stage a corrected plan, or nothing is shown"
+
+
+def _plan_items(plan: Plan) -> list[Prescription]:
+    return [item for workout in plan.workouts for item in _items_of(workout)]
+
+
 def _items_of(workout: Workout) -> list[Prescription]:
     return [item for block in workout.blocks for item in block.items]
 
@@ -772,13 +780,55 @@ class _Turn:
             self._searchable = _any_location_ids(inputs)
         return inputs
 
+    def _with_staged_exclusions(
+        self, inputs: planning.Inputs, target: int | None, *, carry: bool
+    ) -> planning.Inputs:
+        """`inputs` with this turn's exclusion changes folded in (they are written before the
+        draft is recorded, `_apply_exclusions`), so `stage_plan` judges what
+        `record_edit_draft` and Save will: a removed row no longer excludes, and an added
+        one applies to every plan, to `target`'s plan, or to a new plan (also a saved
+        `target` the new-plan talk's exclusions move to, `carry`)."""
+        staged = self.staged
+        if not staged.exclusions_added and not staged.exclusions_removed:
+            return inputs
+        removed = set(staged.exclusions_removed)
+        kept = [row for row in inputs.snapshot.exclusions if row.id not in removed]
+        excluded = set(exclusions.resolve(kept, self._catalog))
+        for entry in staged.exclusions_added:
+            applies = (
+                entry.scope == exclusions.Scope.ALL
+                or (entry.scope == exclusions.Scope.PLAN and entry.plan_id == target)
+                or (entry.scope == exclusions.Scope.NEW_PLAN and (target is None or carry))
+            )
+            if applies:
+                excluded.update(entry.found.exercise_ids)
+        ctx = dataclasses.replace(inputs.ctx, excluded_exercise_ids=frozenset(excluded))
+        return dataclasses.replace(inputs, ctx=ctx)
+
+    def _drop_whole_draft(self) -> bool:
+        """Drop a plan `stage_plan` staged earlier this turn (and a save asked for it), so a
+        failed correction never leaves the earlier plan to be recorded and shown. Whether
+        there was one."""
+        staged = self.staged
+        if staged.draft_plan is None or not staged.whole_draft:
+            return False
+        staged.draft_plan = None
+        staged.draft_before = None
+        staged.draft_plan_id = None
+        staged.whole_draft = False
+        staged.carry_new_plan_exclusions = False
+        staged.save = False
+        return True
+
     async def stage_plan(self, plan: Plan, plan_id: int | None) -> dict[str, object]:
         """The planner's whole plan as a draft: `plan_id` is the saved plan it replaces,
         `None` a new plan. One plan per session (a current draft of another plan must be
         saved or closed first; a draftless session follows the staged plan). Judged like any
         draft (`planning.judge` with the target plan's inputs: hard guards with load-engine
         substitution, wording, measure and intensity repair). A failure is returned so the
-        model can correct the plan within the turn; nothing is staged."""
+        model can correct the plan within the turn; nothing is staged, and a plan staged
+        earlier this turn is dropped (the model is told). It is judged with this turn's
+        exclusion changes (`_with_staged_exclusions`)."""
         self._log_tool("stage_plan", plan_id=plan_id, workouts=len(plan.workouts))
         staged = self.staged
         if staged.rewrite is not None or staged.new_plan is not None:
@@ -820,9 +870,15 @@ class _Turn:
             and session.plan_id is None
             and not await self._draft_is_current(session)
         )
-        judgement = planning.judge(preview, await self._inputs_for(target, carry=carry))
+        inputs = self._with_staged_exclusions(
+            await self._inputs_for(target, carry=carry), target, carry=carry
+        )
+        judgement = planning.judge(preview, inputs)
         if not judgement.ok:
-            return _error("; ".join(verdict.detail for verdict in judgement.failures))
+            error = "; ".join(verdict.detail for verdict in judgement.failures)
+            if self._drop_whole_draft():
+                error += f"; {_DROPPED}"
+            return _error(error)
         staged.draft_plan = plan
         staged.draft_plan_id = target
         staged.whole_draft = True
@@ -981,12 +1037,26 @@ class _Turn:
         scope, plan_id = target
         self.staged.exclusions_added.append(StagedExclusion(found, scope, plan_id))
         names = [self._catalog_name(exercise_id) for exercise_id in found.exercise_ids[:_EXAMPLES]]
-        return _ok(
-            staged=f"{found.kind.value}:{found.value}",
-            applies_to="every plan" if scope == exclusions.Scope.ALL else "this plan only",
-            excludes=len(found.exercise_ids),
-            examples=names,
+        answer: dict[str, object] = {
+            "staged": f"{found.kind.value}:{found.value}",
+            "applies_to": "every plan" if scope == exclusions.Scope.ALL else "this plan only",
+            "excludes": len(found.exercise_ids),
+            "examples": names,
+        }
+        # The exclusion applies to a plan staged earlier this turn (it is that turn's target),
+        # and is written before the draft is recorded: a plan holding an excluded exercise
+        # would be refused then, so it is dropped now and the model told.
+        draft = self.staged.draft_plan
+        hit = (
+            set()
+            if draft is None or not self.staged.whole_draft
+            else {item.exercise_id for item in _plan_items(draft)} & set(found.exercise_ids)
         )
+        if hit and self._drop_whole_draft():
+            answer["dropped"] = (
+                f"the staged plan holds excluded {', '.join(sorted(hit))}: {_DROPPED}"
+            )
+        return _ok(**answer)
 
     async def remove_exclusion(self, exclusion_id: int) -> dict[str, object]:
         self._log_tool("remove_exclusion", exclusion_id=exclusion_id)
@@ -1264,7 +1334,15 @@ async def handle_message(
         if conversation is None
         else await conversations.history(db, conversation.id, exclude_message_id=chat_message_id)
     )
-    workout = await training.active_session(db, user_id)
+    active = await training.active_session(db, user_id)
+    # Only a *started* workout (blocks being logged) keeps the legacy assistant; a `/train`
+    # session still in precheck or review has started nothing, so its free text is the
+    # planner's like any other.
+    workout = (
+        active
+        if active is not None and active.session.status == WorkoutSessionStatus.IN_PROGRESS.value
+        else None
+    )
 
     inputs = planning.build_inputs(catalog, snapshot, llm.settings, user_id)
     state = await _state(

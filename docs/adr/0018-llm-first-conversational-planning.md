@@ -104,9 +104,10 @@ The bot shows it whole with Confirm / Change something / Cancel
 guards limited. Confirm, or `save_draft` in the same turn, is the unchanged
 `planning.confirm_plan`. A "save it" whose draft fails when recorded saves nothing.
 
-**Routing** (`services.assistant.handle_message`). With an active `/train` session (status
-`draft`, `confirmed` or `in_progress`: precheck, review or started), a message goes to the
-legacy `assistant`. Every other message goes to `planner`. A planner exchange outside any
+**Routing** (`services.assistant.handle_message`). With a started workout (a `/train`
+session `in_progress`), a message goes to the legacy `assistant`. Every other message goes
+to `planner`, including one during precheck or review (`draft`/`confirmed`), where no
+workout has started. A planner exchange outside any
 session opens a new plan's planning session, so the next message sees it. A plan staged
 later in that session moves the draftless session to the staged plan, and its new-plan
 exclusions move with it (`open_planning(retarget=)`). `/cancel` closes an open planning
@@ -173,8 +174,6 @@ can do that from the conversation alone.
     sets carry no `activity_name`.
   - Raw ids can reach the user in blocked-draft lines, failed set-correction and
     undo-blocked details, and the `exercise_name` fallback.
-  - Messages during precheck or review go to the legacy assistant, which can still call
-    `rewrite_plan`/`new_plan`.
   - An exclusion stated in a session-less talk about a saved plan stays on that plan when
     the draft is cancelled.
   - `confirm_plan` never renames an existing plan's record: a re-staged plan's new name
