@@ -16,11 +16,12 @@ from typing import Any
 
 import pytest
 from aiogram import Bot, Dispatcher
-from aiogram.methods import AnswerCallbackQuery, SendMessage
+from aiogram.methods import AnswerCallbackQuery, DeleteMessage, SendMessage
 from pydantic_ai.messages import ModelMessage, ModelRequest, ModelResponse, ToolCallPart
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
 from fitme import clock
+from fitme.bot import waiting
 from fitme.bot.app import build_dispatcher
 from fitme.bot.callback_data import HoldClear, PlanMenu, TrainAction, TrainPick
 from fitme.config.settings import Settings
@@ -1361,3 +1362,95 @@ async def test_adjust_cannot_set_or_change_a_declared_hint(
         item for block in adjust_decision.proposal["workout"]["blocks"] for item in block["items"]
     ]
     assert [item["declared_kg"] for item in items] == [80.0, None, None]
+
+
+# --- The waiting placeholder while a model works (bot/waiting.py) -----------------------------
+
+
+def _assert_animated_before(turn: list[Any], shown: SendMessage) -> None:
+    """In `turn`: the animated placeholder is sent, then deleted (once), before `shown`."""
+    sends = [m for m in turn if isinstance(m, SendMessage)]
+    placeholders = [
+        m for m in sends if m.text in {waiting.frames(runner)[0] for runner in waiting.RUNNERS}
+    ]
+    assert len(placeholders) == 1
+    deletes = [m for m in turn if isinstance(m, DeleteMessage)]
+    assert len(deletes) == 1
+    assert turn.index(placeholders[0]) < turn.index(deletes[0]) < turn.index(shown)
+
+
+def _recap_send(turn: list[Any]) -> SendMessage:
+    title = t("recap.title", "en", workout="A — Full body")
+    return next(m for m in turn if isinstance(m, SendMessage) and (m.text or "").startswith(title))
+
+
+async def test_finishing_a_workout_animates_a_placeholder_until_the_recap(
+    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
+) -> None:
+    user_id, _, version_id = await _ready(dispatcher, bot, db)
+    await _seed_completed_session(db, user_id, version_id, loads={_SQUAT: 40.0})
+    await _to_first_block(dispatcher, bot, session)
+    await _click(dispatcher, bot, _last_action(session, "done"))
+    llm.recap_responses.append(Recap(text="Steady work today."))
+    before = len(session.sent)
+    await _click(dispatcher, bot, _last_action(session, "done"))
+
+    turn = session.sent[before:]
+    completed = next(
+        m
+        for m in turn
+        if isinstance(m, SendMessage) and m.text == t("train.completed", "en", logged=9, planned=9)
+    )
+    recap_message = _recap_send(turn)
+    assert "Steady work today." in (recap_message.text or "")
+    _assert_animated_before(turn, recap_message)
+    sends = [m for m in turn if isinstance(m, SendMessage)]
+    assert sends.index(completed) < sends.index(recap_message)
+    # The placeholder comes after "completed": the user sees the save, then the wait.
+    placeholder = next(
+        m for m in sends if m.text in {waiting.frames(r)[0] for r in waiting.RUNNERS}
+    )
+    assert turn.index(completed) < turn.index(placeholder)
+    assert llm.calls == 1
+
+
+async def test_adjust_text_animates_a_placeholder_until_the_adjusted_review(
+    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
+) -> None:
+    await _ready(dispatcher, bot, db)
+    await _to_review(dispatcher, bot, session)
+    llm.adjust_responses.append(_adjusted_workout(42.5, sets=2))
+    await _click(dispatcher, bot, _last_action(session, "adjust"))
+    before = len(session.sent)
+    await _send(dispatcher, bot, "only 2 sets of squats today")
+
+    turn = session.sent[before:]
+    sends = [m for m in turn if isinstance(m, SendMessage)]
+    assert sends[0].text == t("train.adjusting", "en")
+    review = sends[-1]
+    assert t("train.review_adjusted", "en") in (review.text or "")
+    _assert_animated_before(turn, review)
+    assert turn.index(sends[0]) < turn.index(sends[1])  # the status first, then the wait
+    assert llm.calls == 1
+
+
+async def test_a_pending_recap_on_train_animates_a_placeholder_until_the_recap(
+    dispatcher: Dispatcher, bot: Bot, session: FakeSession, db: Database, llm: FakeLlm
+) -> None:
+    """A session finished without its recap (as after a crash mid-recap): `/train` builds it
+    behind the placeholder (`show_pending_recap`)."""
+    user_id, _, _ = await _ready(dispatcher, bot, db)
+    session_id = await _to_first_block(dispatcher, bot, session)
+    # Both blocks done through the service, so no recap is built yet.
+    await training.complete_block_as_planned(db, user_id, session_id, 0)
+    advance = await training.complete_block_as_planned(db, user_id, session_id, 1)
+    assert advance.completion is not None
+    assert llm.calls == 0
+
+    llm.recap_responses.append(Recap(text="Steady work today."))
+    before = len(session.sent)
+    await _send(dispatcher, bot, "/train")
+
+    turn = session.sent[before:]
+    _assert_animated_before(turn, _recap_send(turn))
+    assert llm.calls == 1
