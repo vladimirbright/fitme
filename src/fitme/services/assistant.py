@@ -628,7 +628,9 @@ class _Turn:
         """ADR 0007: hybrid search over the allowed set (exact, full-text, pattern words,
         semantic when enabled) for every query at once, in order — one model round trip and
         one embedding request for a whole plan's exercises. No query (or one empty one)
-        lists the allowed set."""
+        lists the allowed set. Each query answers its ranked ids; each id's facts appear
+        once, in `exercises` (a run keeps every tool answer in its history, so a hit found
+        by several queries is not repeated)."""
         self._log_tool("find_exercises", queries=len(queries))
         if len(queries) > _FIND_MAX_QUERIES:
             return _error(
@@ -640,17 +642,14 @@ class _Turn:
         ranked = await exercise_search.search_many(
             self._db, runtime, self._allowed_exercises(), texts, limit=limit
         )
+        ids = [[hit.exercise_id for hit in hits] for hits in ranked]
+        found = dict.fromkeys(exercise_id for per_query in ids for exercise_id in per_query)
         return {
             "results": [
-                {
-                    "query": text,
-                    "exercises": [
-                        {"exercise_id": hit.exercise_id, **self._facts(hit.exercise_id)}
-                        for hit in hits
-                    ],
-                }
-                for text, hits in zip(texts, ranked, strict=True)
-            ]
+                {"query": text, "exercise_ids": per_query}
+                for text, per_query in zip(texts, ids, strict=True)
+            ],
+            "exercises": {exercise_id: self._facts(exercise_id) for exercise_id in found},
         }
 
     async def find_substitutes(
@@ -1332,7 +1331,7 @@ async def handle_message(
                 **prompt_columns(prompt),
                 content_version=content_version(),
                 user_report={"source": SOURCE},
-                proposal=planning.refusal_proposal(output, None),
+                proposal=planning.refusal_proposal(output, None, cause=outcome.record.error_cause),
                 guards_fired=[],
             )
         await record_llm_call(db, decision_id=decision_id, record=outcome.record)

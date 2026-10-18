@@ -835,9 +835,12 @@ async def test_search_gives_the_planner_exercise_facts_and_outdoor_exercises(
         say("Found."),
     ]
     await _send(dispatcher, bot, "what can I do for intervals outside?")
-    (result,) = llm.returns("find_exercises")[0]["results"]
+    answer = llm.returns("find_exercises")[0]
+    (result,) = answer["results"]
     assert result["query"] == "interval run outdoors"
-    jog = next(hit for hit in result["exercises"] if hit["exercise_id"] == "outdoor_interval_jog")
+    assert "outdoor_interval_jog" in result["exercise_ids"]
+    assert set(answer["exercises"]) == set(result["exercise_ids"])
+    jog = answer["exercises"]["outdoor_interval_jog"]
     assert jog["locations"] == ["outdoor"]
     assert jog["kg_loadable"] is False and jog["equipment"] == []
     substitutes = llm.returns("find_substitutes")[0]
@@ -878,17 +881,19 @@ async def test_one_bulk_lookup_is_enough_for_a_three_day_strength_plan(
     ]
     before = llm.calls
     await _send(dispatcher, bot, "three strength days a week")
-    assert llm.calls - before <= 4
+    assert llm.calls - before == 3  # lookup, stage, answer
 
     (found,) = llm.returns("find_exercises")
     results = found["results"]
     assert [result["query"] for result in results] == _STRENGTH_NAMES
     for result in results:
-        assert 0 < len(result["exercises"]) <= 8, result["query"]
-        for hit in result["exercises"]:
-            assert {"exercise_id", "kg_loadable", "load_unit"} <= set(hit)
-    ids = {hit["exercise_id"] for result in results for hit in result["exercises"]}
-    assert {"barbell_back_squat", "dumbbell_bench_press", "dumbbell_row", "pushup"} <= ids
+        assert 0 < len(result["exercise_ids"]) <= 8, result["query"]
+    ids = {exercise_id for result in results for exercise_id in result["exercise_ids"]}
+    assert set(found["exercises"]) == ids  # each hit's facts once
+    for facts in found["exercises"].values():
+        assert {"names", "kg_loadable", "load_unit", "equipment", "locations"} <= set(facts)
+    staged = {item.exercise_id for w in plan.workouts for b in w.blocks for item in b.items}
+    assert staged <= ids
     assert llm.returns("stage_plan")[0]["ok"] is True
     assert len(await _planner_drafts(db, user_id)) == 1
 
@@ -907,8 +912,8 @@ async def test_a_single_or_empty_lookup_keeps_twenty_hits_and_too_many_is_an_err
     await _send(dispatcher, bot, "what is there?")
     listed, single, too_many = llm.returns("find_exercises")
     assert [r["query"] for r in listed["results"]] == [""]
-    assert len(listed["results"][0]["exercises"]) == 20
-    assert len(single["results"][0]["exercises"]) == 20
+    assert len(listed["results"][0]["exercise_ids"]) == 20
+    assert len(single["results"][0]["exercise_ids"]) == 20
     assert too_many["ok"] is False and "split" in too_many["error"]
 
 
@@ -937,7 +942,7 @@ async def test_a_tool_call_is_logged_with_counts_and_not_the_query_text(
         "args=exercise_id=not_in_catalog avoid_areas=0"
     ) in lines
     logged = "\n".join(lines)
-    assert "Петя" not in logged and "соседа" not in logged and "made up" not in logged
+    assert "Пети" not in logged and "соседа" not in logged and "made up" not in logged
 
 
 async def test_the_planner_may_use_more_requests_than_the_assistant(
@@ -951,6 +956,33 @@ async def test_the_planner_may_use_more_requests_than_the_assistant(
     await _send(dispatcher, bot, "a leg day")
     assert _last_text(session).startswith("Sixteen lookups later.")
     assert len(llm.returns("find_exercises")) == 16
+
+
+async def test_a_started_workout_keeps_the_assistants_cap_and_says_why_it_stopped(
+    dispatcher: Dispatcher,
+    bot: Bot,
+    db: Database,
+    session: FakeSession,
+    llm: ScriptedLlm,
+    settings: Settings,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """The legacy assistant (a started workout) keeps `ASSISTANT_REQUEST_LIMIT` (15): 16
+    serial lookups end in the "LLM unavailable" refusal, recorded and logged with cause
+    `request_limit`, not `provider_error`."""
+    seeded = await _ready(dispatcher, bot, db)
+    await _start_workout(db, settings, seeded)
+    caplog.set_level(logging.WARNING, logger="fitme.llm.usage")
+    llm.steps = [Call("find_exercises", {"queries": [f"squat {n}"]}) for n in range(16)]
+    llm.steps.append(say("Sixteen lookups later."))
+    await _send(dispatcher, bot, "which squat next?")
+
+    assert len(llm.returns("find_exercises")) == 14  # the 15th request is the last allowed
+    assert t("refusal.llm_unavailable", "en") in "\n".join(_texts(session))
+    (refusal,) = await _decisions(db, seeded.user_id, "refusal")
+    assert refusal.proposal is not None and refusal.proposal["cause"] == "request_limit"
+    (failure,) = [r for r in caplog.records if r.getMessage() == "llm call failed"]
+    assert failure.cause == "request_limit" and failure.purpose == "assistant"
 
 
 async def test_cancel_closes_an_open_planning_conversation(

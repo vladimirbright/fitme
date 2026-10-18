@@ -224,7 +224,7 @@ corrections did it need?
 
 ## 9. Known limitations
 
-Each item was checked in the code at 4ed05d6.
+Items 1–17 were checked in the code at 4ed05d6, item 18 at the WP5 commits (c0a6547 and its follow-up).
 
 **Data and going back**
 
