@@ -23,21 +23,7 @@ import pytest
 from aiogram import Bot, Dispatcher
 from aiogram.methods import SendMessage
 from pydantic_ai.models.function import FunctionModel
-from test_assistant_flow import (
-    Call,
-    ScriptedLlm,
-    _click,
-    _datas,
-    _last_text,
-    _messages,
-    _ready,
-    _send,
-    _start_workout,
-    _texts,
-    say,
-)
 
-from conftest import FakeSession, make_user, message_update
 from fitme import clock
 from fitme.bot.app import build_dispatcher
 from fitme.bot.callback_data import PlanDraft, PlanMenu, TrainAction, TrainPick
@@ -61,6 +47,20 @@ from fitme.services import conversations, exclusions, planning
 from fitme.services import profile as profile_service
 from fitme.services.identity import issue_activation_code
 from fitme.services.llm_runtime import LlmRuntime
+from tests.bot.conftest import FakeSession, make_user, message_update
+from tests.bot.test_assistant_flow import (
+    Call,
+    ScriptedLlm,
+    _click,
+    _datas,
+    _last_text,
+    _messages,
+    _ready,
+    _send,
+    _start_workout,
+    _texts,
+    say,
+)
 
 OWNER_CHAT_ID = 1
 _SATURDAY_NOON_UTC = datetime(2026, 10, 3, 12, 0, tzinfo=UTC)

@@ -8,8 +8,6 @@ from __future__ import annotations
 
 import json
 
-from test_planning_service import FakeLlm, _settings, decisions
-
 from fitme import clock
 from fitme.catalog import load_catalog
 from fitme.db.connection import Database
@@ -27,6 +25,7 @@ from fitme.services import (
     session_time,
     time_budget,
 )
+from tests.integration.db.test_planning_service import FakeLlm, _settings, decisions
 
 _ACTIVITY = "activity:bjj_class"
 
