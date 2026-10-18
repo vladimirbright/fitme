@@ -10,8 +10,6 @@ from typing import Annotated, Any, Literal
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
-from test_activity_plans import outdoor_plan, seed_gym_profile
-from test_planning_service import _settings
 
 from fitme.db.connection import Database
 from fitme.db.selectors.decisions import list_decisions_for_user
@@ -27,6 +25,8 @@ from fitme.domain.models import (
     storage_body,
 )
 from fitme.services import planning
+from tests.integration.db.test_activity_plans import outdoor_plan, seed_gym_profile
+from tests.integration.db.test_planning_service import _settings
 
 _STRICT = ConfigDict(extra="forbid")
 

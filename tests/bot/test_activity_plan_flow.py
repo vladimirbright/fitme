@@ -9,22 +9,7 @@ from __future__ import annotations
 import pytest
 from aiogram import Bot, Dispatcher
 from aiogram.types import InlineKeyboardMarkup
-from test_train_flow import (
-    _TUESDAY_NOON_UTC,
-    FakeLlm,
-    _activate,
-    _callback_datas,
-    _click,
-    _last_action,
-    _last_text,
-    _seed_plan,
-    _sent,
-    _session_status,
-    _texts,
-    _to_review,
-)
 
-from conftest import FakeSession
 from fitme import clock
 from fitme.bot.app import build_dispatcher
 from fitme.bot.plan_rendering import render_plan_text
@@ -41,6 +26,21 @@ from fitme.i18n import t
 from fitme.services import profile as profile_service
 from fitme.services import recap, training
 from fitme.services.training import BlockView, ItemLog, ItemLogKind
+from tests.bot.conftest import FakeSession
+from tests.bot.test_train_flow import (
+    _TUESDAY_NOON_UTC,
+    FakeLlm,
+    _activate,
+    _callback_datas,
+    _click,
+    _last_action,
+    _last_text,
+    _seed_plan,
+    _sent,
+    _session_status,
+    _texts,
+    _to_review,
+)
 
 _ACTIVITY = "activity:bjj_class"
 
